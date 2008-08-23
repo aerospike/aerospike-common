@@ -9,7 +9,6 @@
 #include "atomic.h"
 #include "alloc.h"
 #include "digest.h"
-#include "event.h"
 #include "fault.h"
 #include "lock.h"
 #include "queue.h"

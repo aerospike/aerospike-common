@@ -7,6 +7,7 @@
  *  ABOVE DOES NOT EVIDENCE ANY ACTUAL OR INTENDED PUBLICATION.
  */
 #include <errno.h>
+#include <fcntl.h>
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -26,9 +27,9 @@ cf_socket_set_nonblocking(int s)
 {
 	int flags;
 
-	if (-1 == (flags = fcntl(s->sock, F_GETFL, 0)))
+	if (-1 == (flags = fcntl(s, F_GETFL, 0)))
 		flags = 0;
-	if (-1 == fcntl(s->sock, F_SETFL, flags | O_NONBLOCK)) {
+	if (-1 == fcntl(s, F_SETFL, flags | O_NONBLOCK)) {
 		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "fcntl(): %s", cf_strerror(errno));
 		return(0);
 	}
@@ -75,7 +76,6 @@ int
 cf_socket_init_svc(cf_socket_cfg *s)
 {
 	struct timespec delay;
-	int flags;
 
 	cf_assert(s, CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_CRITICAL, "invalid argument");
 
@@ -110,7 +110,7 @@ cf_socket_init_svc(cf_socket_cfg *s)
 	}
 
 	/* Unblock the socket */
-	if (-1 == cf_socket_set_nonblocking(int s))
+	if (-1 == cf_socket_set_nonblocking(s->sock))
 		return(-1);
 
 	return(0);

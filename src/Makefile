@@ -9,13 +9,6 @@ HEADERS = alloc.h atomic.h cf.h digest.h fault.h lock.h queue.h rb.h socket.h
 SOURCES = alloc.c fault.c queue.c rb.c socket.c
 TARGET = libcf.a
 
-SYSTEM = $(shell uname -s)
-ifeq (${SYSTEM},Linux)
-	SOURCES += event_epoll.c
-else
-	SOURCES += event_kevent.c
-endif
-
 CC = gcc
 CFLAGS = -m64 -g -fno-common -fomit-frame-pointer -O3 -std=gnu99 -Wall -D_REENTRANT
 CFLAGS += -MMD
