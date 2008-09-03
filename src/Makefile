@@ -1,19 +1,14 @@
 # Citrusleaf Foundation
 # Makefile
 
-DIR_INCLUDE = ../include
-DIR_OBJECT = ../obj
-DIR_TARGET = ../lib
+DEPTH = ../..
+include $(DEPTH)/make_in/Makefile.in
 
 HEADERS = alloc.h atomic.h cf.h digest.h fault.h lock.h queue.h rb.h socket.h
 SOURCES = alloc.c fault.c queue.c rb.c socket.c
 TARGET = libcf.a
 
-CC = gcc
-CFLAGS = -m64 -g -fno-common -fomit-frame-pointer -O3 -std=gnu99 -Wall -D_REENTRANT
-CFLAGS += -MMD
-LDFLAGS = $(CFLAGS)
-INCLUDES = -I$(DIR_INCLUDE)
+INCLUDES = -I$(DIR_CF_INCLUDE)
 
 OBJECTS = $(SOURCES:%.c=$(DIR_OBJECT)/%.o)
 DEPENDENCIES = $(OBJECTS:%.o=%.d)
@@ -36,4 +31,4 @@ libcf: $(OBJECTS)
 -include $(DEPENDENCIES)
 
 $(DIR_OBJECT)/%.o: %.c
-	$(CC) $(CFLAGS)  -o $@ -c $(INCLUDES) $<
+	$(CC) $(CFLAGS) -MMD -o $@ -c $(INCLUDES) $<
