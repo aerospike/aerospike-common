@@ -4,6 +4,10 @@
 DEPTH = ../..
 include $(DEPTH)/make_in/Makefile.in
 
+DIR_INCLUDE = ../include
+DIR_OBJECT = ../obj
+DIR_TARGET = ../lib
+
 HEADERS = alloc.h atomic.h cf.h digest.h fault.h lock.h queue.h rb.h socket.h
 SOURCES = alloc.c fault.c queue.c rb.c socket.c
 TARGET = libcf.a

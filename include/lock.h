@@ -55,7 +55,7 @@ cf_mcslock_lock(cf_mcslock *lock, cf_mcslock_qnode *qn)
 	qn->locked = 1;
 	CF_MEMORY_BARRIER_WRITE();
 
-	qp = cf_atomic_fas(&lock->tail, qp);
+	qp = cf_atomic_p_fas_m(&lock->tail, qp);
 	if (NULL != qp) {
 		qp->next = qn;
 		while (qn->locked)
@@ -77,7 +77,7 @@ cf_mcslock_unlock(cf_mcslock *lock, cf_mcslock_qnode *qn)
 	CF_MEMORY_BARRIER();
 
 	if (NULL == qt) {
-		if (qn == (cf_atomic_cas(&lock->tail, qn, NULL)))
+		if (qn == (cf_atomic_p_cas_m(&lock->tail, qn, NULL)))
 			return;
 		while (NULL == (qt = qn->next))
 			CF_MEMORY_BARRIER_READ();

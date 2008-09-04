@@ -49,9 +49,9 @@ cf_rc_reserve_region(void *addr, int initial)
 	/* Extract the address of the reference counter, then increment it */
 	rc = addr - sizeof(cf_rc_counter);
 	if (initial)
-		return(cf_atomic64_add(rc, 1));
+		return(cf_atomic_int_add(rc, 1));
 	else
-		return(cf_atomic64_addunless(rc, 0, 1));
+		return(cf_atomic_int_addunless(rc, 0, 1));
 }
 
 
@@ -67,8 +67,8 @@ cf_rc_release(void *addr)
 	/* Release the reservation; if this reduced the reference count to zero,
 	 * then free the block */
 	rc = addr - sizeof(cf_rc_counter);
-	cf_atomic64_decr(rc);
-	if (0 == (int64_t)cf_atomic64_get(*(cf_atomic64 *)rc))
+	cf_atomic_int_decr(rc);
+	if (0 == (cf_atomic_int)cf_atomic_int_get(*(cf_atomic_int *)rc))
 		free((void *)rc);
 
 	return(0);
@@ -88,7 +88,7 @@ cf_rc_alloc(size_t sz)
 	if (NULL == addr)
 		return(NULL);
 
-	cf_atomic64_set((cf_atomic64 *)addr, 0);
+	cf_atomic_int_set((cf_atomic_int *)addr, 0);
 	bzero(addr, sizeof(asz));
 
 	return(addr + sizeof(cf_rc_counter));
@@ -104,7 +104,7 @@ cf_rc_free(void *addr)
 
 	rc = addr - sizeof(cf_rc_counter);
 
-	if (0 == (int64_t)cf_atomic64_get(*(cf_atomic64 *)rc))
+	if (0 == (cf_atomic_int)cf_atomic_int_get(*(cf_atomic_int *)rc))
 		free(addr);
 
 	return;

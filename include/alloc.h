@@ -30,7 +30,7 @@
 
 /* cf_rc_counter
  * A reference counter */
-typedef cf_atomic64 cf_rc_counter;
+typedef cf_atomic_int cf_rc_counter;
 
 
 /* Function declarations */
