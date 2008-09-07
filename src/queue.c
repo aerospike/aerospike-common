@@ -94,7 +94,10 @@ cf_queue_pop(cf_queue *q, int block)
 		return(NULL);
 
 	/* FIXME error checking */
-	if (0 == q->utilsz) {
+	/* Note that we apparently have to use a while() loop.  Careful reading
+	 * of the pthread_cond_signal() documentation says that AT LEAST ONE
+	 * waiting thread will be awakened... */
+	while (0 == q->utilsz) {
 		if (TRUE == block)
 			pthread_cond_wait(&q->CV, &q->LOCK);
 		else {
