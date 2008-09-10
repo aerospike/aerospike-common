@@ -15,11 +15,16 @@
 #include "rb.h"
 #include "socket.h"
 
-extern void  cf_rc_test();
+
 
 /* Truth and falsehood */
 #define FALSE 0
 #define TRUE 1
+
+
+/* Basic definitions */
+typedef uint8_t cf_byte;
+
 
 /* cf_compare_ptr
  * Compare the first sz bytes from two regions referenced by pointers */
