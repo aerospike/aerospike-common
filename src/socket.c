@@ -128,13 +128,19 @@ cf_socket_init_client(cf_socket_cfg *s)
 		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "socket: %s", cf_strerror(errno));
 		return(errno);
 	}
-
+	
+	memset(&s->saddr,0,sizeof(s->saddr));
 	s->saddr.sin_family = AF_INET;
-	inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr);
+	if (0 >= inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr)) {
+		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "inet_pton: %s", cf_strerror(errno));
+		close(s->sock);
+		return(errno);
+	}
 	s->saddr.sin_port = htons(s->port);
 
 	if (0 > (connect(s->sock, (struct sockaddr *)&s->saddr, sizeof(s->saddr)))) {
 		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "connect: %s", cf_strerror(errno));
+		close(s->sock);
 		return(errno);
 	}
 
@@ -142,28 +148,49 @@ cf_socket_init_client(cf_socket_cfg *s)
 }
 
 
-/* FIXME this code is hideous */
 /* cf_svcmsocket_init
- * Initialize a multicast service socket */
-/*
-void
-cf_svcsocket_mcast_init(cf_mcastsocket_cfg *s)
+ * Initialize a multicast service/receive socket */
+int
+cf_svcsocket_mcast_init(cf_mcastsocket_cfg *ms)
 {
-	if (0 >= (s->lsock = socket(PF_INET, SOCK_DGRAM, 0)))
-		fprintf(stderr, "couldn't open socket");
+	cf_socket_cfg *s = &(ms->s);
 
-	s->laddr.sin_family = AF_INET;
-	inet_pton(AF_INET, s->addr, &s->laddr.sin_addr.s_addr);
-	s->laddr.sin_port = htons(s->port);
+	if (0 > (s->sock = socket(AF_INET, SOCK_DGRAM, 0))) {
+		fprintf(stderr, "mcast socket open errno %d",errno);
+		return(errno);
+	}
 
-	while (0 > (bind(s->lsock, (struct sockaddr *)&s->laddr, sizeof(struct sockaddr))))
-		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_CRITICAL, NULL, 0, "bind: %s", cf_strerror(errno));
+	/* want to allow multiple listners on the same port? Could be cool. Looks like:
+	uint yes=1;
+ 	if (setsockopt(s->sock, SOL_SOCKET, SO_REUSEADDR,&yes,sizeof(yes))<0) {
+		fprintf(stderr, "reuse of mcast socket failed errno %d\n",errno);
+		return(errno);
+	}
+	*/
 
-	inet_pton(AF_INET, s->addr, &s->ireq.imr_multiaddr.s_addr);
-	s->ireq.imr_interface.s_addr = INADDR_ANY;
+	memset(&s->saddr, 0, sizeof(s->saddr));
+	s->saddr.sin_family = AF_INET;
+	if (0 >= inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr)) {
+		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "inet_pton: %s", cf_strerror(errno));
+		close(s->sock);
+		return(errno);
+	}
+	s->saddr.sin_port = htons(s->port);
 
-	setsockopt(s->lsock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const void *)&s->ireq, sizeof(struct ip_mreq));
+	while (0 > (bind(s->sock, (struct sockaddr *)&s->saddr, sizeof(struct sockaddr))))
+		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "mcase bind: %s", cf_strerror(errno));
 
-	return;
+	inet_pton(AF_INET, s->addr, &ms->ireq.imr_multiaddr.s_addr);
+	ms->ireq.imr_interface.s_addr = htonl(INADDR_ANY);
+	setsockopt(s->sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const void *)&ms->ireq, sizeof(struct ip_mreq));
+
+	return(0);
 }
-*/
+
+void
+cf_svcsocket_mcast_close(cf_mcastsocket_cfg *ms)
+{
+	cf_socket_cfg *s = &(ms->s);
+
+	close(s->sock);
+}

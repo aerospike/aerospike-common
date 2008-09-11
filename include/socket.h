@@ -30,7 +30,8 @@ typedef struct cf_socket_cfg_t cf_socket_cfg;
 /* cf_mcastsocket_cfg
  * A multicast socket */
 struct cf_mcastsocket_cfg_t {
-	cf_socket_cfg socket;
+	
+	cf_socket_cfg s;
 	struct ip_mreq ireq;
 };
 typedef struct cf_mcastsocket_cfg_t cf_mcastsocket_cfg;
