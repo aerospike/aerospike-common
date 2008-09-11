@@ -6,6 +6,10 @@
  *  ABOVE DOES NOT EVIDENCE ANY ACTUAL OR INTENDED PUBLICATION.
  */
 #pragma once
+
+// requird for memcmp
+#include <string.h>
+
 #include "atomic.h"
 #include "alloc.h"
 #include "digest.h"
