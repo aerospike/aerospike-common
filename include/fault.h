@@ -61,6 +61,7 @@ typedef struct cf_fault_recovery_stack_t cf_fault_recovery_stack;
 #define cf_fault_stop() abort()
 extern void cf_fault_event(const cf_fault_scope, const cf_fault_severity, const char *fn, const int line, char *msg, ...);
 #define cf_assert(a, severity, scope, msg, ...) ((void)((a) ? (void)0 : cf_fault_event(severity, scope, __func__, __LINE__, msg, ##__VA_ARGS__)))
+#define D(msg, ...) cf_fault_event(CF_FAULT_SEVERITY_DEBUG, CF_FAULT_SCOPE_THREAD,__func__, __LINE__, msg, ##__VA_ARGS__)
 extern char *cf_strerror(const int err);
 extern int cf_fault_recovery_globalinit(cf_fault_recovery_key *rkey);
 extern int cf_fault_recovery_localinit(cf_fault_recovery_key *rkey, cf_fault_recovery_stack *stack);
@@ -68,3 +69,4 @@ extern int cf_fault_recovery_push(cf_fault_recovery_key *rkey, void (*fn)(void *
 extern int cf_fault_recovery_pop(cf_fault_recovery_key *rkey, int exec);
 extern void cf_fault_recovery(cf_fault_recovery_key *rkey);
 extern void cf_fault_init(const int argc, char **argv);
+

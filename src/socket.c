@@ -41,11 +41,11 @@ cf_socket_set_nonblocking(int s)
 /* cf_socket_recv
  * Read from a service socket */
 int
-cf_socket_recv(int s, void *buf, size_t buflen, int flags)
+cf_socket_recv(int sock, void *buf, size_t buflen, int flags)
 {
 	int i;
 
-	if (0 >= (i = recv(s, buf, buflen, flags))) {
+	if (0 >= (i = recv(sock, buf, buflen, flags))) {
 		if (ECONNRESET == errno || 0 == i)
 			cf_fault_event(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_INFO, NULL, 0, "socket disconnected");
 		else
@@ -59,11 +59,11 @@ cf_socket_recv(int s, void *buf, size_t buflen, int flags)
 /* cf_socket_send
  * Send to a socket */
 int
-cf_socket_send(int s, void *buf, size_t buflen, int flags)
+cf_socket_send(int sock, void *buf, size_t buflen, int flags)
 {
 	int i;
 
-	if (0 >= (i = send(s, buf, buflen, flags)))
+	if (0 >= (i = send(sock, buf, buflen, flags)))
 		cf_fault_event(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_INFO, NULL, 0, "send() failed: %s", cf_strerror(errno));
 
 	return(i);
@@ -151,7 +151,7 @@ cf_socket_init_client(cf_socket_cfg *s)
 /* cf_svcmsocket_init
  * Initialize a multicast service/receive socket */
 int
-cf_svcsocket_mcast_init(cf_mcastsocket_cfg *ms)
+cf_mcastsocket_init(cf_mcastsocket_cfg *ms)
 {
 	cf_socket_cfg *s = &(ms->s);
 
@@ -188,7 +188,7 @@ cf_svcsocket_mcast_init(cf_mcastsocket_cfg *ms)
 }
 
 void
-cf_svcsocket_mcast_close(cf_mcastsocket_cfg *ms)
+cf_mcastsocket_close(cf_mcastsocket_cfg *ms)
 {
 	cf_socket_cfg *s = &(ms->s);
 

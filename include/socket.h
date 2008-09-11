@@ -38,8 +38,9 @@ typedef struct cf_mcastsocket_cfg_t cf_mcastsocket_cfg;
 
 /* Function declarations */
 extern int cf_socket_set_nonblocking(int s);
-extern int cf_socket_recv(int s, void *buf, size_t buflen, int flags);
-extern int cf_socket_send(int s, void *buf, size_t buflen, int flags);
+extern int cf_socket_recv(int sock, void *buf, size_t buflen, int flags);
+extern int cf_socket_send(int sock, void *buf, size_t buflen, int flags);
 extern int cf_socket_init_svc(cf_socket_cfg *s);
 extern int cf_socket_init_client(cf_socket_cfg *s);
-extern void cf_mcastsocket_init(cf_mcastsocket_cfg *s);
+extern int cf_mcastsocket_init(cf_mcastsocket_cfg *ms);
+extern void cf_mcastsocket_close(cf_mcastsocket_cfg *ms);
