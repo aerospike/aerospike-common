@@ -37,3 +37,8 @@ cf_compare_ptr(const void *a, const void *b, ssize_t sz)
 {
 	return(memcmp(a, b, sz));
 }
+
+// Sorry, too lazy to create a whole new file for just one function
+
+extern int cf_id_get( uint64_t *id );
+

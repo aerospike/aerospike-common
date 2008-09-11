@@ -187,6 +187,7 @@ cf_mcastsocket_init(cf_mcastsocket_cfg *ms)
 	return(0);
 }
 
+
 void
 cf_mcastsocket_close(cf_mcastsocket_cfg *ms)
 {
