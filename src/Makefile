@@ -8,8 +8,8 @@ DIR_INCLUDE = ../include
 DIR_OBJECT = ../obj
 DIR_TARGET = ../lib
 
-HEADERS = alloc.h atomic.h cf.h digest.h fault.h lock.h queue.h rb.h socket.h
-SOURCES = alloc.c fault.c queue.c rb.c socket.c id.c
+HEADERS = alloc.h atomic.h cf.h digest.h fault.h lock.h queue.h rb.h socket.h msg.h
+SOURCES = alloc.c fault.c queue.c rb.c socket.c id.c msg.c
 TARGET = libcf.a
 
 INCLUDES = -I$(DIR_CF_INCLUDE)
