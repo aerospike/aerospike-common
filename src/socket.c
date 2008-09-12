@@ -18,6 +18,28 @@
 #include <unistd.h>
 #include "cf.h"
 
+typedef uint8_t byte;
+
+void
+cf_sockaddr_convertto(const struct sockaddr_in *src, cf_sockaddr *dst)
+{
+	if (src->sin_family != AF_INET)	return;
+	byte *b = (byte *) dst;
+	memcpy(b, &(src->sin_addr.s_addr),4);
+	memcpy(b+4,&(src->sin_port),2);
+	memset(b+6,0,2);
+}
+
+void
+cf_sockaddr_convertfrom(const cf_sockaddr src, struct sockaddr_in *dst)
+{
+	dst->sin_family = AF_INET;
+	byte *b = (byte *) &src;
+	
+	memcpy(&dst->sin_addr.s_addr,b,4);
+	memcpy(&dst->sin_port, b+4, 2);
+}
+
 
 
 /* cf_socket_set_nonblocking
@@ -36,7 +58,6 @@ cf_socket_set_nonblocking(int s)
 
 	return(1);
 }
-
 
 /* cf_socket_recv
  * Read from a service socket */
@@ -69,6 +90,42 @@ cf_socket_send(int sock, void *buf, size_t buflen, int flags)
 	return(i);
 }
 
+
+
+/* cf_socket_recvfrom
+ * Read from a service socket */
+int
+cf_socket_recvfrom(int sock, void *buf, size_t buflen, int flags, cf_sockaddr *from)
+{
+	int i;
+	struct sockaddr_in f;
+	socklen_t fl = sizeof(f);
+
+	if (0 >= (i = recvfrom(sock, buf, buflen, flags, (struct sockaddr *) &f, &fl))) {
+			cf_fault_event(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_INFO, NULL, 0, "recv() failed: %s", cf_strerror(errno));
+	}
+	
+	cf_sockaddr_convertto( &f, from); 
+
+	return(i);
+}
+
+
+/* cf_socket_send
+ * Send to a socket */
+int
+cf_socket_sendto(int sock, void *buf, size_t buflen, int flags, cf_sockaddr to)
+{
+	int i;
+	struct sockaddr_in s;
+	
+	cf_sockaddr_convertfrom(to, &s);
+	
+	if (0 >= (i = sendto(sock, buf, buflen, flags, (struct sockaddr *) &s, sizeof(const struct sockaddr))))
+		cf_fault_event(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_INFO, NULL, 0, "send() failed: %s", cf_strerror(errno));
+
+	return(i);
+}
 
 /* cf_socket_init_svc
  * Initialize a socket for listening */
@@ -149,7 +206,9 @@ cf_socket_init_client(cf_socket_cfg *s)
 
 
 /* cf_svcmsocket_init
- * Initialize a multicast service/receive socket */
+ * Initialize a multicast service/receive socket
+ * Bind is done to INADDR_ANY - all interfaces
+ *  */
 int
 cf_mcastsocket_init(cf_mcastsocket_cfg *ms)
 {
@@ -160,26 +219,22 @@ cf_mcastsocket_init(cf_mcastsocket_cfg *ms)
 		return(errno);
 	}
 
-	/* want to allow multiple listners on the same port? Could be cool. Looks like:
+	// allows multiple readers on the same address
 	uint yes=1;
  	if (setsockopt(s->sock, SOL_SOCKET, SO_REUSEADDR,&yes,sizeof(yes))<0) {
 		fprintf(stderr, "reuse of mcast socket failed errno %d\n",errno);
 		return(errno);
 	}
-	*/
 
+	// Bind to the incoming port on inaddr any
 	memset(&s->saddr, 0, sizeof(s->saddr));
 	s->saddr.sin_family = AF_INET;
-	if (0 >= inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr)) {
-		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "inet_pton: %s", cf_strerror(errno));
-		close(s->sock);
-		return(errno);
-	}
+	s->saddr.sin_addr.s_addr = INADDR_ANY;
 	s->saddr.sin_port = htons(s->port);
-
 	while (0 > (bind(s->sock, (struct sockaddr *)&s->saddr, sizeof(struct sockaddr))))
-		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "mcase bind: %s", cf_strerror(errno));
+		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "mcast bind: %s", cf_strerror(errno));
 
+	// Register for the multicast group
 	inet_pton(AF_INET, s->addr, &ms->ireq.imr_multiaddr.s_addr);
 	ms->ireq.imr_interface.s_addr = htonl(INADDR_ANY);
 	setsockopt(s->sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const void *)&ms->ireq, sizeof(struct ip_mreq));
