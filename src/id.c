@@ -24,7 +24,6 @@
  */
 
 
-#define pNIC "eth0"
 
 int
 cf_id_get( uint64_t *id )
@@ -34,17 +33,23 @@ cf_id_get( uint64_t *id )
 	struct ifreq req;
 	int err;
 
-	if (0 >= (fdesc = socket(PF_INET, SOCK_DGRAM, IPPROTO_IP))) {
+	if (0 >= (fdesc = socket(AF_INET, SOCK_STREAM, 0))) {
+		D("cf_id_get: can't open socket error %d %s",errno, cf_strerror(errno));
 		return(-1);
 	}
-
-	strcpy(req.ifr_name, pNIC);
-	if (0 > (err = ioctl(fdesc, SIOCGIFHWADDR, &req))) {
-		close(fdesc);
-		return(-1);
+	int i;
+	for (i=0;i<10;i++) {
+		sprintf(req.ifr_name, "eth%d",i);
+		if (0 == ioctl(fdesc, SIOCGIFHWADDR, &req)) 
+			break;
+		D("cf_id_get: can't get mac id eth%d %d %s",i,errno, cf_strerror(errno));
 	}
-
 	close(fdesc);
+	if (i == 10) {
+		D("cf_id_get: can't get mac id %d %s",errno, strerror(errno));
+		return(-1);
+	}
+
 	*id = 0;
 	memcpy(id, req.ifr_hwaddr.sa_data, 6);
 
