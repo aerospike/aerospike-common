@@ -18,8 +18,6 @@
 #include <unistd.h>
 #include "cf.h"
 
-typedef uint8_t byte;
-
 void
 cf_sockaddr_convertto(const struct sockaddr_in *src, cf_sockaddr *dst)
 {

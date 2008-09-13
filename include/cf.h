@@ -9,6 +9,18 @@
 
 // requird for memcmp
 #include <string.h>
+// required for true and false and bool
+#include <stdbool.h>
+// We have lots of use of basic types like uint8_t
+#include <inttypes.h>
+
+/* Truth and falsehood !!! use C99 bool types instead, dude !!! */
+#define FALSE 0
+#define TRUE 1
+
+
+/* Basic definitions */
+typedef uint8_t byte;
 
 #include "atomic.h"
 #include "alloc.h"
@@ -19,15 +31,6 @@
 #include "rb.h"
 #include "socket.h"
 #include "msg.h"
-
-
-/* Truth and falsehood */
-#define FALSE 0
-#define TRUE 1
-
-
-/* Basic definitions */
-typedef uint8_t cf_byte;
 
 
 /* cf_compare_ptr
