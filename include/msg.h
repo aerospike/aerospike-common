@@ -13,6 +13,8 @@
 
 #include "cf.h"
 
+// NOTE: These values are actually used on the wire right now!
+
 typedef enum field_type_t {
 	M_FT_INT32 = 1,
 	M_FT_UINT32 = 2,
@@ -45,8 +47,8 @@ typedef struct msg_field_t {
 	unsigned int 		id; // really probabaly don't need this in the represenation we have
 	field_type 	type; 		// don't actually need this - but leave for faster access
 	int 		field_len;  // used only for str and buf
-	bool		is_set;     // keep track of whether the field was ever set
 	bool		is_valid;   // DEBUG - helps return errors on invalid types
+	bool		is_set;     // keep track of whether the field was ever set
 	bool		is_copy;    // if the 'str' or 'buf' is a copy, I must free
 	union {
 		uint32_t	ui32;
@@ -79,10 +81,14 @@ typedef struct msg_t {
 extern int msg_create(msg **m, const msg_desc *md, size_t md_sz, byte *stack_buf, size_t stack_buf_sz);
 
 // msg_parse - parse a buffer into a message, which thus can be accessed
-extern int msg_parse(msg *m, const void *buf, const size_t buflen);
+extern int msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy);
+
+// If you've received a little bit of a buffer, grab the size header.
+// return = -2 means "not enough to tell yet"
+extern int msg_get_size(size_t *size, const byte *buf, const size_t buflen);
 
 // msg_tobuf - parse a message out into a buffer. Ret
-extern int msg_fillbuf(const msg *m, void *buf, size_t *buflen);
+extern int msg_fillbuf(const msg *m, byte *buf, size_t *buflen);
 
 // Getters and setters
 
@@ -104,6 +110,9 @@ extern int msg_set_uint64(msg *m, int field_id, const uint64_t v);
 extern int msg_set_int64(msg *m, int field_id, const int64_t v);
 extern int msg_set_str(msg *m, int field_id, const char *v, bool copy);
 extern int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, bool copy);
+
+// A little routine that's good for testing
+extern int msg_compare(const msg *m1, const msg *m2);
 
 // And, finally, the destruction of a message
 extern void msg_destroy(msg *m);
