@@ -70,7 +70,7 @@ msg_create(msg **m_r, const msg_desc *md, size_t md_sz, byte *stack_buf, size_t 
 	// fill in the fields - rather minimalistic, save the dcache
 	for (int i=0;i<md_rows;i++) {
 		msg_field *f = &(m->f[ md[i].id ] );
-		f->id = i;
+		f->id = md[i].id;
 		f->type = md[i].type;
 		f->is_set = false;
 		f->is_valid = true;
@@ -100,6 +100,7 @@ msg_create(msg **m_r, const msg_desc *md, size_t md_sz, byte *stack_buf, size_t 
 // 		1 byte - field type
 //      3 bytes - field size
 //      [x] - field
+//      (6 + field sz)
 
 // htonll - an 8 byte swap
 //   swaps in flight between two buffers
@@ -123,20 +124,22 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 		return(-2);
 	}
 	uint32_t len = *(uint32_t *) buf;
-	len = htonl(len);
-	buf += 4;
-	if (buflen < len) {
+	len = htonl(len) ;
+	if (buflen < len + 4) {
 		D("msg_parse: but not enough data! can't handle that yet.");
 		return(-2);
 	}
-		
+	buf += 4;
+
 	const byte *eob = buf + len;
 	
 	while (buf < eob) {
+		
 		// Grab the ID
-		uint32_t id = (buf[0] << 8) + buf[1];
-		id = htons(id);
+		uint32_t id = (buf[0] << 8) | buf[1];
 		buf += 2;
+		
+		// find the field in the message
 		msg_field *mf;
 		if (id >= m->len) {
 			D(" received message with id greater than current definition, kind of OK, ignoring field");
@@ -151,7 +154,7 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 		}
 		
 		field_type ft = (field_type) *buf;
-		uint32_t flen = (buf[1] << 16) + (buf[2] << 8) + (buf[3]);
+		uint32_t flen = (buf[1] << 16) | (buf[2] << 8) | (buf[3]);
 		buf += 4;
 		
 		if (mf && (ft != mf->type)) {
@@ -245,7 +248,7 @@ msg_get_wire_field_size(const msg_field *mf) {
 	return(0);
 }
 
-// returns the number of bytes consumed
+// returns the number of bytes written
 
 static inline size_t
 msg_stamp_field(byte *buf, const msg_field *mf)
@@ -306,7 +309,7 @@ msg_stamp_field(byte *buf, const msg_field *mf)
 	buf[-2] = (flen >> 8) & 0xff;
 	buf[-1] = flen & 0xff;
 
-	return(4 + flen);
+	return(6 + flen);
 }
 
 
@@ -319,13 +322,16 @@ msg_stamp_field(byte *buf, const msg_field *mf)
 int 
 msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 {
+	// debug!
+	memset(buf, 0xff, *buflen);
+	
 	// Figure out the size
 	size_t	sz = 4;
 	
 	for (int i=0;i<m->len;i++) {
 		const msg_field *mf = &m->f[i];
 		if (mf->is_valid && mf->is_set) {
-			sz += 4 + msg_get_wire_field_size(mf);
+			sz += 6 + msg_get_wire_field_size(mf);
 		}
 	}
 	
@@ -387,7 +393,7 @@ int msg_get_int32(const msg *m, int field_id, int32_t *r)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
-	if ( m->f[field_id].type != M_FT_UINT32 ) {
+	if ( m->f[field_id].type != M_FT_INT32 ) {
 		cf_fault_event(CF_FAULT_SEVERITY_ERROR, CF_FAULT_SCOPE_THREAD, __func__, __LINE__, 
 			"msg: mismatch getter field type wants %d has %d",m->f[field_id].type, M_FT_INT32);
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
@@ -412,7 +418,7 @@ int msg_get_uint64(const msg *m, int field_id, uint64_t *r)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
-	if ( m->f[field_id].type != M_FT_UINT32 ) {
+	if ( m->f[field_id].type != M_FT_UINT64 ) {
 		cf_fault_event(CF_FAULT_SEVERITY_ERROR, CF_FAULT_SCOPE_THREAD, __func__, __LINE__, 
 			"msg: mismatch getter field type wants %d has %d",m->f[field_id].type, M_FT_UINT64);
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
@@ -437,7 +443,7 @@ int msg_get_int64(const msg *m, int field_id, int64_t *r)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
-	if ( m->f[field_id].type != M_FT_UINT32 ) {
+	if ( m->f[field_id].type != M_FT_INT64 ) {
 		cf_fault_event(CF_FAULT_SEVERITY_ERROR, CF_FAULT_SCOPE_THREAD, __func__, __LINE__, 
 			"msg: mismatch getter field type wants %d has %d",m->f[field_id].type, M_FT_INT64);
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
@@ -594,7 +600,7 @@ msg_set_int64(msg *m, int field_id, const int64_t v)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
-	if ( m->f[field_id].type != M_FT_UINT32 ) {
+	if ( m->f[field_id].type != M_FT_INT64 ) {
 		cf_fault_event(CF_FAULT_SEVERITY_ERROR, CF_FAULT_SCOPE_THREAD, __func__, __LINE__, 
 			"msg: mismatch setter field type wants %d has %d",m->f[field_id].type, M_FT_INT64);
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
