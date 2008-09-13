@@ -13,7 +13,7 @@
 
 #include "cf.h"
 
-// NOTE: These values are actually used on the wire right now!
+// NOTE: These values are actually used on the wire right now!type
 
 typedef enum field_type_t {
 	M_FT_INT32 = 1,
@@ -58,7 +58,6 @@ typedef struct msg_field_t {
 		char 		*str;
 		byte		*buf;
 		struct msg *m; // expansion - allows recursion - but how to describe?
-		
 	} u;
 } msg_field;
 

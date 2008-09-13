@@ -24,13 +24,15 @@ msg_create(msg **m_r, const msg_desc *md, size_t md_sz, byte *stack_buf, size_t 
 {
 	// Figure out how many bytes you need
 	int md_rows = md_sz / sizeof(msg_desc);
-	int max_id = -1;
+	cf_assert(md_rows > 0, CF_FAULT_SEVERITY_CRITICAL, CF_FAULT_SCOPE_THREAD, "msg create: invalid parameter");
+	unsigned int max_id = 0;
 	for (int i=0;i<md_rows;i++) {
 		if (md[i].id >= max_id) {
 			max_id = md[i].id;
 		}
 	}
-
+	max_id++;
+	
 	// DEBUG - can tell if it's so sparse that we're wasting lots of memory
 	if (max_id > md_rows * 2) {
 		// It would be nice if there was a human readable string for debugging
@@ -38,14 +40,17 @@ msg_create(msg **m_r, const msg_desc *md, size_t md_sz, byte *stack_buf, size_t 
 		D("msg_create: found sparse message, %d ids, only %d rows consider recoding",max_id,md_rows);
 	}
 	
+	
 	// allocate memory (if necessary)
 	size_t m_sz = sizeof(msg_field) * max_id;
 	msg *m;
 	if ((stack_buf == 0) || (m_sz > stack_buf_sz)) {
-		m = malloc(sizeof(msg) + m_sz);
+		size_t a_sz = sizeof(msg) + m_sz;
+		a_sz = ((a_sz / 512) + 1) + 512;
+		m = malloc(a_sz);
 		cf_assert(m, CF_FAULT_SEVERITY_CRITICAL, CF_FAULT_SCOPE_THREAD, "malloc");
 		m->len = max_id;
-		m->bytes_used = m->bytes_alloc = sizeof(msg) + m_sz;
+		m->bytes_used = m->bytes_alloc = a_sz;
 		m->is_stack = false;
 	} else {
 		m = (msg *) stack_buf;
@@ -329,6 +334,7 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 		D("msg_fillbuf: passed in size too small");
 		return(-2);
 	}
+	*buflen = sz;
 	
 	// stamp the size in the buf
 	(* (uint32_t *) buf) = htonl(sz - 4);
@@ -341,7 +347,7 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 			buf += msg_stamp_field(buf, mf);
 		}		
 	}
-
+	
 	return(0);
 }
 	
