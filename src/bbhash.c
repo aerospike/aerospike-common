@@ -14,7 +14,7 @@
 // #include "bbhash.h"
 
 int
-bbhash_create(bbhash **h_r, bbhash_hash_fn h_fn, int key_len, int value_len, uint sz, uint flags)
+bbhash_create(bbhash **h_r, bbhash_hash_fn h_fn, uint32 key_len, uint32 value_len, uint32 sz, uint flags)
 {
 	bbhash *h;
 
@@ -47,7 +47,7 @@ bbhash_create(bbhash **h_r, bbhash_hash_fn h_fn, int key_len, int value_len, uin
 }
 
 int
-bbhash_put(bbhash *h, void *key, int key_len, void *value, int value_len)
+bbhash_put(bbhash *h, void *key, uint32 key_len, void *value, uint32 value_len)
 {
 	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
 	if ((h->value_len) && (h->value_len != value_len) ) return(BB_ERR);
@@ -102,7 +102,7 @@ Copy:
 }
 
 int
-bbhash_get(bbhash *h, void *key, int key_len, void *value, int *value_len)
+bbhash_get(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len)
 {
 	int rv = BB_ERR;
 	
@@ -139,6 +139,72 @@ Out:
 					
 }
 
+int
+bbhash_delete(bbhash *h, void *key, uint32 key_len)
+{
+	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
+
+	// Calculate hash
+	uint hash = h->h_fn(key, key_len);
+	hash %= h->table_len;
+	int rv = BB_ERR;
+
+	if (h->flags & BBHASH_CR_MT_BIGLOCK) {
+		pthread_mutex_lock(&h->biglock);
+	}
+		
+	bbhash_elem *e = (bbhash_elem *) ( ((uint8_t *)h->table) + (sizeof(bbhash_elem) * hash));	
+
+	// If bucket empty, def can't delete
+	if ( ( e->next == 0 ) && (e->key_len == 0) ) {
+		rv = BB_ERR_NOTFOUND;
+		goto Out;
+	}
+
+	bbhash_elem *e_prev = 0;
+
+	// Look for teh element and destroy if found
+	while (e) {
+		if ( ( key_len == e->key_len ) &&
+			 ( memcmp(e->key, key, key_len) == 0) ) {
+			// Found it
+			free(e->key);
+			free(e->value);
+			// patchup pointers & free element if not head
+			if (e_prev) {
+				e_prev->next = e->next;
+				free (e);
+			}
+			// am at head - more complicated
+			else {
+				// at head with no next - easy peasy!
+				if (0 == e->next) {
+					memset(e, 0, sizeof(bbhash_elem));
+				}
+				// at head with a next - more complicated
+				else {
+					bbhash_elem *_t = e->next;
+					memcpy(e, e->next, sizeof(bbhash_elem));
+					free(_t);
+				}
+			}
+			rv = BB_OK;
+			goto Out;
+
+		}
+		e_prev = e;
+		e = e->next;
+	}
+	rv = BB_ERR_NOTFOUND;
+
+Out:
+	if (h->flags & BBHASH_CR_MT_BIGLOCK) 
+		pthread_mutex_unlock(&h->biglock);
+	return(rv);	
+	
+
+}
+
 // Call the function over every node in the tree
 // Can be lock-expensive at the moment, until we improve the lockfree code
 
@@ -155,7 +221,8 @@ bbhash_reduce(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 
 		bbhash_elem *list_he = he;
 		while (list_he) {
-			reduce_fn(he->key, he->key_len, he->value, he->value_len, udata);
+			if (he->key_len)
+				reduce_fn(he->key, he->key_len, he->value, he->value_len, udata);
 			list_he = list_he->next;
 		};
 		

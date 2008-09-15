@@ -32,29 +32,29 @@
 /*
  * A generic call for hash functions the user can create
  */
-typedef uint32 (*bbhash_hash_fn) (void *value, int value_len);
+typedef uint32 (*bbhash_hash_fn) (void *value, uint32 value_len);
 
 /*
 ** Typedef for a "reduce" fuction that is called on every node3
 */
-typedef void (*bbhash_reduce_fn) (void *key, int keylen, void *data, int datalen, void *udata);
+typedef void (*bbhash_reduce_fn) (void *key, uint32 keylen, void *data, uint32 datalen, void *udata);
 
 // Simple (and slow) element is when
-// everything is variable
+// everything is variable (although a very nicely packed structure for 32 or 64
 typedef struct bbhash_elem_s {
 	struct bbhash_elem_s *next;
+	uint32 key_len;
+	uint32 value_len;
 	void *key;
-	uint key_len;
 	void *value;
-	uint value_len;
 } bbhash_elem;
 
 
 
 typedef struct bbhash_s {
 	uint elements;
-	uint key_len;
-	uint value_len;
+	uint32 key_len;
+	uint32 value_len;
 	uint flags;
 	bbhash_hash_fn	h_fn;
 	
@@ -80,13 +80,13 @@ typedef struct bbhash_s {
  */
 
 int
-bbhash_create(bbhash **h, bbhash_hash_fn h_fn, int key_len, int value_len, uint sz, uint flags);
+bbhash_create(bbhash **h, bbhash_hash_fn h_fn, uint32 key_len, uint32 value_len, uint32 sz, uint flags);
 
 /* Place a value into the hash
  * Value will be copied into the hash
  */
 int
-bbhash_put(bbhash *h, void *key, int key_len, void *value, int value_len);
+bbhash_put(bbhash *h, void *key, uint32 key_len, void *value, uint32 value_len);
 
 /* If you think you know how much space it will take, 
  * call with the buffer you want filled
@@ -94,8 +94,13 @@ bbhash_put(bbhash *h, void *key, int key_len, void *value, int value_len);
  * will be filled in with the value you should have passed
  */
 int
-bbhash_get(bbhash *h, void *key, int key_len, void *value, int *value_len);
+bbhash_get(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len);
 
+/*
+** Got a key you want removed - this is the function to call
+*/
+int
+bbhash_delete(bbhash *h, void *key, uint32 key_len);
 
 /*
  * An interesting idea: readv / writev for these functions?
@@ -106,7 +111,7 @@ bbhash_get(bbhash *h, void *key, int key_len, void *value, int *value_len);
  * return call
  */
 int
-bbhash_grab(bbhash *h, void *key, int key_len, void **value, int *value_len);
+bbhash_grab(bbhash *h, void *key, uint32 key_len, void **value, uint32 *value_len);
 
 /* Return a value that has been gotten
  */
