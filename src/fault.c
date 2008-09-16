@@ -7,6 +7,7 @@
  *  ABOVE DOES NOT EVIDENCE ANY ACTUAL OR INTENDED PUBLICATION.
  */
 #include <errno.h>
+#include <execinfo.h>
 #include <pthread.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -177,11 +178,19 @@ cf_fault_event(const cf_fault_scope scope, const cf_fault_severity severity, con
 	char mbuf[2048];
 	time_t now;
 	struct tm nowtm;
+	void *bt[CF_FAULT_BACKTRACE_DEPTH];
+	char **btstr = NULL;
+	size_t btsz;
+	int i;
 
 	/* Generate a timestamp */
 	now = time(NULL);
 	gmtime_r(&now, &nowtm);
 	strftime(mbuf, sizeof(mbuf), "%b %d %Y %T: ", &nowtm);
+
+	/* Get the backtrace information */
+	btsz = backtrace(bt, CF_FAULT_BACKTRACE_DEPTH);
+	btstr = backtrace_symbols(bt, btsz);
 
 	/* Construct the scope/severity tag */
 	if (CF_FAULT_SEVERITY_CRITICAL >= severity)
@@ -203,6 +212,11 @@ cf_fault_event(const cf_fault_scope scope, const cf_fault_severity severity, con
 
 	/* Take the appropriate action */
 	if (CF_FAULT_SEVERITY_CRITICAL >= severity) {
+		/* Dump a backtrace if the error is fatal */
+		if (NULL != btstr)
+			for (i = 0; i < btsz; i++)
+				fprintf(stderr, "  %s\n", btstr[i]);
+
 		switch(scope) {
 			case CF_FAULT_SCOPE_GLOBAL:
 				abort();

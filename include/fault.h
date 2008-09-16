@@ -42,6 +42,10 @@ typedef enum {
 	CF_FAULT_SCOPE_THREAD
 } cf_fault_scope;
 
+/* CF_FAULT_BACKTRACE_DEPTH
+ * The maximum depth of a backtrace */
+#define CF_FAULT_BACKTRACE_DEPTH 32
+
 
 /* cf_fault_recovery_key, cf_fault_recovery_stack
  * */
