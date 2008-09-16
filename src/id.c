@@ -31,7 +31,6 @@ cf_id_get( uint64_t *id )
 
 	int fdesc;
 	struct ifreq req;
-	int err;
 
 	if (0 >= (fdesc = socket(AF_INET, SOCK_STREAM, 0))) {
 		D("cf_id_get: can't open socket error %d %s",errno, cf_strerror(errno));
