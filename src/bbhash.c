@@ -221,8 +221,13 @@ bbhash_reduce(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 
 		bbhash_elem *list_he = he;
 		while (list_he) {
-			if (he->key_len)
-				reduce_fn(he->key, he->key_len, he->value, he->value_len, udata);
+			
+			// 0 length means an unused head pointer - break
+			if (he->key_len == 0)
+				break;
+			
+			reduce_fn(he->key, he->key_len, he->value, he->value_len, udata);
+			
 			list_he = list_he->next;
 		};
 		
@@ -234,6 +239,82 @@ bbhash_reduce(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 
 	return;
 }
+
+// A special version of 'reduce' that supports deletion
+// In this case, if you return '-1' from the reduce fn, that node will be
+// deleted
+void
+bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
+{
+	
+	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+		pthread_mutex_lock(&h->biglock);
+
+	bbhash_elem *he = h->table;
+	
+	for (uint i=0; i<h->table_len ; i++) {
+
+		bbhash_elem *list_he = he;
+		bbhash_elem *prev_he = 0;
+		int rv;
+
+		
+		while (list_he) {
+			// This kind of structure might have the head as an empty element,
+			// that's a signal to move along
+			if (list_he->key_len == 0)
+				break;
+			
+			rv = reduce_fn(list_he->key, list_he->key_len, list_he->value, list_he->value_len, udata);
+			
+			// Delete is requested
+			// Leave the pointers in a "next" state
+			if (rv == -1) {
+				free(list_he->key);
+				free(list_he->value);
+				// patchup pointers & free element if not head
+				if (prev_he) {
+					prev_he->next = list_he->next;
+					free (list_he);
+					list_he = prev_he->next;
+				}
+				// am at head - more complicated
+				else {
+					// at head with no next - easy peasy!
+					if (0 == list_he->next) {
+						memset(list_he, 0, sizeof(bbhash_elem));
+						list_he = 0;
+					}
+					// at head with a next - more complicated -
+					// copy next into current and free next
+					// (the old trick of how to delete from a singly
+					// linked list without a prev pointer)
+					// Somewhat confusingly, prev_he stays 0
+					// and list_he stays where it is
+					else {
+						bbhash_elem *_t = list_he->next;
+						memcpy(list_he, list_he->next, sizeof(bbhash_elem));
+						free(_t);
+					}
+				}
+
+			}
+			else { // don't delete, just forward everything
+				prev_he = list_he;
+				list_he = list_he->next;
+			}	
+				
+		};
+		
+		he++;
+	}
+
+	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+		pthread_mutex_unlock(&h->biglock);
+
+	return;
+}
+
 
 void
 bbhash_destroy(bbhash *h)

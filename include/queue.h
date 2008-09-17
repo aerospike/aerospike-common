@@ -9,7 +9,6 @@
 #pragma once
 
 
-
 /* SYNOPSIS
  * Queue
  */
@@ -29,5 +28,12 @@ typedef struct cf_queue_t cf_queue;
 
 /* External functions */
 extern cf_queue *cf_queue_create();
+
 extern int cf_queue_push(cf_queue *q, void *ptr);
-extern void *cf_queue_pop(cf_queue *q, int block);
+
+// mswait < 0 wait forever
+// mswait == 0 wait not at all
+// mswait > 0 wait that number of ms
+#define CF_QUEUE_FOREVER -1
+#define CF_QUEUE_NOWAIT 0
+extern void *cf_queue_pop(cf_queue *q, int mswait);

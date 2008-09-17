@@ -35,9 +35,11 @@
 typedef uint32 (*bbhash_hash_fn) (void *value, uint32 value_len);
 
 /*
-** Typedef for a "reduce" fuction that is called on every node3
+** Typedef for a "reduce" fuction that is called on every node
+** (Note about return value: some kinds of reduces can manipulate the hash table,
+**  allowing deletion. See the particulars of the reduce call.)
 */
-typedef void (*bbhash_reduce_fn) (void *key, uint32 keylen, void *data, uint32 datalen, void *udata);
+typedef int (*bbhash_reduce_fn) (void *key, uint32 keylen, void *data, uint32 datalen, void *udata);
 
 // Simple (and slow) element is when
 // everything is variable (although a very nicely packed structure for 32 or 64
@@ -120,10 +122,21 @@ bbhash_return(bbhash *h, void *value);
 
 /*
 ** Map/Reduce pattern - call the callback on every element in the hash
-** This is meant to be quick.
+** Warning: the entire traversal can hold the lock in the 'biglock' case,
+** so make the reduce_fn lightweight! Consider queuing or soemthing if you
+** want to do something fancy
 */
 void
 bbhash_reduce(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata);
+
+/*
+** Map/Reduce pattern - call the callback on every element in the hash
+** This instance allows deletion of hash elements during the reduce:
+** return -1 to cause the deletion of the element visisted
+*/
+void
+bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata);
+
 
 /*
  * Destroy the entire hash - all memory will be freed

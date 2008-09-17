@@ -80,9 +80,12 @@ cf_queue_push(cf_queue *q, void *ptr)
 
 
 /* cf_queue_pop
+ * if ms_wait < 0, wait forever
+ * if ms_wait = 0, don't wait at all
+ * if ms_wait > 0, wait that number of ms
  * */
 void *
-cf_queue_pop(cf_queue *q, int block)
+cf_queue_pop(cf_queue *q, int ms_wait)
 {
 	void *ptr = NULL;
 
@@ -92,17 +95,32 @@ cf_queue_pop(cf_queue *q, int block)
 	/* FIXME error checking */
 	if (0 != pthread_mutex_lock(&q->LOCK))
 		return(NULL);
+	
+	struct timespec tp;
+	if (ms_wait > 0) {
+		clock_gettime( CLOCK_REALTIME, &tp); 
+		tp.tv_sec += ms_wait / 1000;
+		tp.tv_nsec += ms_wait % 1000;
+		if (tp.tv_nsec > 1000000000) {
+			tp.tv_nsec -= 1000000000;
+			tp.tv_sec++;
+		}
+	}
 
 	/* FIXME error checking */
 	/* Note that we apparently have to use a while() loop.  Careful reading
 	 * of the pthread_cond_signal() documentation says that AT LEAST ONE
 	 * waiting thread will be awakened... */
 	while (0 == q->utilsz) {
-		if (TRUE == block)
+		if (CF_QUEUE_FOREVER == ms_wait) {
 			pthread_cond_wait(&q->CV, &q->LOCK);
-		else {
+		}
+		else if (CF_QUEUE_NOWAIT == ms_wait) {
 			pthread_mutex_unlock(&q->LOCK);
 			return(NULL);
+		}
+		else {
+			pthread_cond_timedwait(&q->CV, &q->LOCK, &tp);
 		}
 	}
 
