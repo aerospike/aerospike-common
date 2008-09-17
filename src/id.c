@@ -26,7 +26,7 @@
 
 
 int
-cf_id_get( uint64_t *id )
+cf_nodeid_get( cf_node *id )
 {
 
 	int fdesc;

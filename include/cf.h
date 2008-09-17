@@ -47,6 +47,6 @@ cf_compare_ptr(const void *a, const void *b, ssize_t sz)
 }
 
 // Sorry, too lazy to create a whole new file for just one function
-
-extern int cf_id_get( uint64_t *id );
+typedef uint64_t cf_node;
+extern int cf_nodeid_get( cf_node *id );
 
