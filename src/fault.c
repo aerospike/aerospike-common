@@ -39,13 +39,14 @@ static const char *cf_fault_scope_strings[] = { "GLOBAL", "PROCESS", "THREAD" };
  * unknown: this is traditionally done with a static buffer.  Unfortunately,
  * this causes strerror to not be thread-safe.  cf_strerror() acts properly
  * and simply returns "Unknown error", avoiding thread safety issues */
-/* the use of sys_errlist is depricated and does not exist in recent versions
- * of Linux. The thread safety issues are answered with strerror_r in POSIX.
- */
 char *
 cf_strerror(const int err)
 {
-	return(strerror(err));
+	if (err < sys_nerr && err >= 0)
+		return ((char *)sys_errlist[err]);
+
+	errno = EINVAL;
+	return("Unknown error");
 }
 
 
