@@ -27,15 +27,16 @@
 /* cf_queue_create
  * Initialize a queue */
 cf_queue *
-cf_queue_create()
+cf_queue_create(size_t elementsz)
 {
 	cf_queue *q = NULL;
 
-	q = calloc(1, sizeof(cf_queue) + (CF_QUEUE_ALLOCSZ * sizeof(void *)));
+	q = calloc(1, sizeof(cf_queue) + (CF_QUEUE_ALLOCSZ * elementsz));
 	/* FIXME error msg */
 	if (NULL == q)
 		return(q);
 	q->allocsz = CF_QUEUE_ALLOCSZ;
+	q->elementsz = elementsz;
 
 	if (0 != pthread_mutex_init(&q->LOCK, NULL)) {
 		/* FIXME error msg */
@@ -61,14 +62,15 @@ cf_queue_push(cf_queue *q, void *ptr)
 		return(-1);
 
 	/* Check queue length */
-	if (q->allocsz <= q->utilsz + 1) {
+	if (q->allocsz <= q->utilsz + q->elementsz) {
 		/* FIXME freak out */
-		if (NULL == (q = realloc(q, (sizeof(cf_queue) + ((q->allocsz + CF_QUEUE_ALLOCSZ) * sizeof(void *))))))
+		if (NULL == (q = realloc(q, (sizeof(cf_queue) + ((q->allocsz + CF_QUEUE_ALLOCSZ) * q->elementsz)))))
 			return(-1);
 		q->allocsz += CF_QUEUE_ALLOCSZ;
 	}
 
-	q->queue[q->utilsz++] = ptr;
+	memcpy(&q->queue[q->utilsz], ptr, q->elementsz);
+	q->utilsz += q->elementsz;
 	pthread_cond_signal(&q->CV);
 
 	/* FIXME blow a gasket */
@@ -84,17 +86,15 @@ cf_queue_push(cf_queue *q, void *ptr)
  * if ms_wait = 0, don't wait at all
  * if ms_wait > 0, wait that number of ms
  * */
-void *
-cf_queue_pop(cf_queue *q, int ms_wait)
+int
+cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 {
-	void *ptr = NULL;
-
 	if (NULL == q)
-		return(NULL);
+		return(-1);
 
 	/* FIXME error checking */
 	if (0 != pthread_mutex_lock(&q->LOCK))
-		return(NULL);
+		return(-1);
 	
 	struct timespec tp;
 	if (ms_wait > 0) {
@@ -117,21 +117,21 @@ cf_queue_pop(cf_queue *q, int ms_wait)
 		}
 		else if (CF_QUEUE_NOWAIT == ms_wait) {
 			pthread_mutex_unlock(&q->LOCK);
-			return(NULL);
+			return(-1);
 		}
 		else {
 			pthread_cond_timedwait(&q->CV, &q->LOCK, &tp);
 		}
 	}
 
-	/* FIXME this is not the right behavior */
-	ptr = q->queue[--q->utilsz];
+	q->utilsz -= q->elementsz;
+	memcpy(buf, &q->queue[q->utilsz], q->elementsz);
 
 	/* FIXME blow a gasket */
 	if (0 != pthread_mutex_unlock(&q->LOCK)) {
 		fprintf(stderr, "unlock failed\n");
-		return(NULL);
+		return(-1);
 	}
 
-	return(ptr);
+	return(0);
 }
