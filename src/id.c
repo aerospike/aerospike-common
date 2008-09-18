@@ -17,8 +17,10 @@
 #include "cf.h"
 
 /*
- * Gets a unique id for this machine
+ * Gets a unique id for this process instance
  * Uses the mac address right now
+ * And combine with the unique port number, which is why it needs to be passed in
+ *   (kind of grody ass shit)
  * Needs to be a little more subtle:
  * Should stash the mac address or something, in case you have to replace a card.
  */
@@ -26,7 +28,7 @@
 
 
 int
-cf_nodeid_get( cf_node *id )
+cf_nodeid_get( unsigned short port, cf_node *id )
 {
 
 	int fdesc;
@@ -51,6 +53,8 @@ cf_nodeid_get( cf_node *id )
 
 	*id = 0;
 	memcpy(id, req.ifr_hwaddr.sa_data, 6);
+	
+	memcpy( ((byte *)id) + 6, &port, 2);
 
 	return(0);
 }
