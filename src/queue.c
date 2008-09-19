@@ -128,10 +128,12 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 		}
 		else if (CF_QUEUE_NOWAIT == ms_wait) {
 			pthread_mutex_unlock(&q->LOCK);
-			return(-1);
+			return(CF_QUEUE_EMPTY);
 		}
 		else {
 			pthread_cond_timedwait(&q->CV, &q->LOCK, &tp);
+			if (0 == q->utilsz)
+				return(CF_QUEUE_EMPTY);
 		}
 	}
 

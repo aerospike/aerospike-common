@@ -40,6 +40,9 @@ extern int cf_queue_push(cf_queue *q, void *ptr);
 // But understand this makes it LIFO, the least fair of queues
 // Elements added at the very beginning might not make it out
 
+#define CF_QUEUE_EMPTY -2
+#define CF_QUEUE_ERR -1
+
 // mswait < 0 wait forever
 // mswait == 0 wait not at all
 // mswait > 0 wait that number of ms
