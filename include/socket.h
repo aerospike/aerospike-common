@@ -54,4 +54,5 @@ extern int cf_socket_sendto(int sock, void *buf, size_t buflen, int flags, cf_so
 
 extern void cf_sockaddr_convertto(const struct sockaddr_in *src, cf_sockaddr *dst);
 extern void cf_sockaddr_convertfrom(const cf_sockaddr src, struct sockaddr_in *dst);
+extern void cf_sockaddr_setport(cf_sockaddr *so, unsigned short port);
 

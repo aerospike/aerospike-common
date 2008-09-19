@@ -49,6 +49,17 @@ cf_queue_create(size_t elementsz)
 	return(q);
 }
 
+// TODO: probably need to wait until whoever is inserting or removing is finished 
+
+void
+cf_queue_destroy(cf_queue *q)
+{
+	pthread_cond_destroy(&q->CV);
+	pthread_mutex_destroy(&q->LOCK);
+	memset(q, 0, sizeof(cf_queue) + (q->allocsz * q->elementsz) );
+	free(q);
+}
+
 
 /* cf_queue_push
  * */

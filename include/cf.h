@@ -47,6 +47,8 @@ cf_compare_ptr(const void *a, const void *b, ssize_t sz)
 }
 
 // Sorry, too lazy to create a whole new file for just one function
+#define CF_NODE_UNSET (0xFFFFFFFFFFFFFFFF)
 typedef uint64_t cf_node;
+extern uint32 cf_nodeid_hash_fn(void *value, uint32 value_len);
 extern int cf_nodeid_get( unsigned short port, cf_node *id );
 

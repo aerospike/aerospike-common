@@ -17,6 +17,22 @@
 #include "cf.h"
 
 /*
+** nodeids are great things to use as keys in the hash table 
+*/
+
+
+uint32
+cf_nodeid_hash_fn(void *value, uint32 value_len)
+{
+	byte *b = value;
+	uint32 acc = 0;
+	for (int i=0;i<value_len;i++) {
+		acc += *b;
+	}
+	return(acc);
+}
+
+/*
  * Gets a unique id for this process instance
  * Uses the mac address right now
  * And combine with the unique port number, which is why it needs to be passed in

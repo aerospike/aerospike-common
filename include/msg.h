@@ -89,6 +89,10 @@ extern int msg_get_size(size_t *size, const byte *buf, const size_t buflen);
 // msg_tobuf - parse a message out into a buffer. Ret
 extern int msg_fillbuf(const msg *m, byte *buf, size_t *buflen);
 
+// msg_reset - after a message has been parsed, and the information consumed,
+// reset all the internal pointers for another parse
+extern int msg_reset(msg *m);
+
 // Getters and setters
 
 // Note! get_str and get_buf

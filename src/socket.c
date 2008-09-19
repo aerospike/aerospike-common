@@ -38,6 +38,13 @@ cf_sockaddr_convertfrom(const cf_sockaddr src, struct sockaddr_in *dst)
 	memcpy(&dst->sin_port, b+4, 2);
 }
 
+void
+cf_sockaddr_setport(cf_sockaddr *so, unsigned short port)
+{
+	byte *b = (byte *) so;
+	memcpy(b+4,&(port),2);	
+}
+
 
 
 /* cf_socket_set_nonblocking

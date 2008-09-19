@@ -30,7 +30,15 @@ typedef struct cf_queue_t cf_queue;
 /* External functions */
 extern cf_queue *cf_queue_create(size_t elementsz);
 
+extern void cf_queue_destroy(cf_queue *q);
+
+// Always pushes to the end of the queue
 extern int cf_queue_push(cf_queue *q, void *ptr);
+
+
+// POP pops from the end of the queue, which is the most efficient
+// But understand this makes it LIFO, the least fair of queues
+// Elements added at the very beginning might not make it out
 
 // mswait < 0 wait forever
 // mswait == 0 wait not at all
@@ -38,3 +46,5 @@ extern int cf_queue_push(cf_queue *q, void *ptr);
 #define CF_QUEUE_FOREVER -1
 #define CF_QUEUE_NOWAIT 0
 extern int cf_queue_pop(cf_queue *q, void *buf, int mswait);
+
+
