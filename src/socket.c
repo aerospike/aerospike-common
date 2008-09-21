@@ -133,7 +133,9 @@ cf_socket_sendto(int sock, void *buf, size_t buflen, int flags, cf_sockaddr to)
 }
 
 /* cf_socket_init_svc
- * Initialize a socket for listening */
+ * Initialize a socket for listening 
+ * Leaves the socket in a blocking state - if you want nonblocking, set nonblocking
+ */
 int
 cf_socket_init_svc(cf_socket_cfg *s)
 {
@@ -170,10 +172,6 @@ cf_socket_init_svc(cf_socket_cfg *s)
 		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "listen: %s", cf_strerror(errno));
 		return(errno);
 	}
-
-	/* Unblock the socket */
-	if (-1 == cf_socket_set_nonblocking(s->sock))
-		return(-1);
 
 	return(0);
 }
