@@ -42,6 +42,7 @@ void
 cf_sockaddr_setport(cf_sockaddr *so, unsigned short port)
 {
 	byte *b = (byte *) so;
+	port = htons(port);
 	memcpy(b+4,&(port),2);	
 }
 
@@ -227,13 +228,16 @@ cf_socket_connect_nb(cf_sockaddr so)
 	
 	cf_socket_set_nonblocking(fd);
 	
+	byte *b = &sa.sin_addr;
+	D("connecting: %02x.%02x.%02x.%02x : %d",b[0],b[1],b[2],b[3] ,sa.sin_port );
+	
 	if (0 > (connect(fd, (struct sockaddr *)&sa, sizeof(sa)))) {
 		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "connect: %s", cf_strerror(errno));
 		close(fd);
 		return(errno);
 	}
 
-	return(0);
+	return(fd);
 }
 
 

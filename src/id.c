@@ -75,3 +75,16 @@ cf_nodeid_get( unsigned short port, cf_node *id )
 	return(0);
 }
 
+/*
+** if I receive one of these encoded node_ids, I might want to pluck out the port
+*/
+unsigned short
+cf_nodeid_get_port(cf_node id)
+{
+	byte *b = &id;
+	unsigned short port;
+	memcpy(&port, &b[6], 2);
+	return(port);
+	
+}
+

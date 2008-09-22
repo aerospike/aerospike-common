@@ -51,4 +51,5 @@ cf_compare_ptr(const void *a, const void *b, ssize_t sz)
 typedef uint64_t cf_node;
 extern uint32 cf_nodeid_hash_fn(void *value, uint32 value_len);
 extern int cf_nodeid_get( unsigned short port, cf_node *id );
+extern unsigned short cf_nodeid_get_port(cf_node id);
 
