@@ -356,7 +356,20 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 	
 	return(0);
 }
+
+//
+// Purpose of msg_reset is to reset its internal state and make it ready for more reading or parsing
+
+void
+msg_reset(msg *m)
+{
+	m->bytes_used = m->bytes_alloc;
+	for (int i=0;i<m->len;i++) {
+		m->f[i].is_set = false;
+		if (m->f[i].is_copy)	free(m->f[i].u.buf);
+	}
 	
+}
 
 // Getters and setters
 int 

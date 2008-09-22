@@ -207,6 +207,36 @@ cf_socket_init_client(cf_socket_cfg *s)
 	return(0);
 }
 
+/* cf_socket_init_client
+ * Connect a socket to a remote endpoint
+ * In the nonblocking fashion
+ * returns the file descriptor
+ */
+int
+cf_socket_connect_nb(cf_sockaddr so)
+{
+
+	struct sockaddr_in sa;
+	cf_sockaddr_convertfrom(so, &sa);
+	
+	int fd;	
+	if (0 > (fd = socket(AF_INET, SOCK_STREAM, 0))) {
+		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "socket connect: %s", cf_strerror(errno));
+		return(errno);
+	}
+	
+	cf_socket_set_nonblocking(fd);
+	
+	if (0 > (connect(fd, (struct sockaddr *)&sa, sizeof(sa)))) {
+		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "connect: %s", cf_strerror(errno));
+		close(fd);
+		return(errno);
+	}
+
+	return(0);
+}
+
+
 
 /* cf_svcmsocket_init
  * Initialize a multicast service/receive socket

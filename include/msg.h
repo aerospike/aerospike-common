@@ -91,7 +91,7 @@ extern int msg_fillbuf(const msg *m, byte *buf, size_t *buflen);
 
 // msg_reset - after a message has been parsed, and the information consumed,
 // reset all the internal pointers for another parse
-extern int msg_reset(msg *m);
+extern void msg_reset(msg *m);
 
 // Getters and setters
 
