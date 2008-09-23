@@ -214,7 +214,7 @@ cf_socket_init_client(cf_socket_cfg *s)
  * returns the file descriptor
  */
 int
-cf_socket_connect_nb(cf_sockaddr so)
+cf_socket_connect_nb(cf_sockaddr so, int *fd_r)
 {
 
 	struct sockaddr_in sa;
@@ -222,22 +222,25 @@ cf_socket_connect_nb(cf_sockaddr so)
 	
 	int fd;	
 	if (0 > (fd = socket(AF_INET, SOCK_STREAM, 0))) {
-		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "socket connect: %s", cf_strerror(errno));
+		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "socket connect error: %d %s", errno, cf_strerror(errno));
 		return(errno);
 	}
 	
 	cf_socket_set_nonblocking(fd);
 	
-	byte *b = &sa.sin_addr;
-	D("connecting: %02x.%02x.%02x.%02x : %d",b[0],b[1],b[2],b[3] ,sa.sin_port );
-	
 	if (0 > (connect(fd, (struct sockaddr *)&sa, sizeof(sa)))) {
-		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "connect: %s", cf_strerror(errno));
-		close(fd);
-		return(errno);
+		if (errno != EINPROGRESS) {
+			cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "socket connect error: %d %s", errno, cf_strerror(errno));
+			close(fd);
+			return(errno);
+		}
 	}
 
-	return(fd);
+	byte *b = &sa.sin_addr;
+	D("creating connection: fd %d %02x.%02x.%02x.%02x : %d",fd, b[0],b[1],b[2],b[3] ,htons(sa.sin_port) );
+
+	*fd_r = fd; 
+	return(0);
 }
 
 

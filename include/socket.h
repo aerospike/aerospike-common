@@ -52,7 +52,7 @@ extern void cf_mcastsocket_close(cf_mcastsocket_cfg *ms);
 extern int cf_socket_recvfrom(int sock, void *buf, size_t buflen, int flags, cf_sockaddr *from);
 extern int cf_socket_sendto(int sock, void *buf, size_t buflen, int flags, cf_sockaddr to);
 
-extern int cf_socket_connect_nb(cf_sockaddr so);
+extern int cf_socket_connect_nb(cf_sockaddr so, int *fd);
 extern void cf_sockaddr_convertto(const struct sockaddr_in *src, cf_sockaddr *dst);
 extern void cf_sockaddr_convertfrom(const cf_sockaddr src, struct sockaddr_in *dst);
 extern void cf_sockaddr_setport(cf_sockaddr *so, unsigned short port);

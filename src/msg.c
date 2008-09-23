@@ -465,6 +465,7 @@ int msg_get_int64(const msg *m, int field_id, int64_t *r)
 int 
 msg_get_str(const msg *m, int field_id, char **r, size_t *len, bool copy)  // this length is strlen+1, the allocated size
 {
+	
 	if (! m->f[field_id].is_valid) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field get",field_id);
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
@@ -487,7 +488,8 @@ msg_get_str(const msg *m, int field_id, char **r, size_t *len, bool copy)  // th
 	else
 		*r = m->f[field_id].u.str;
 
-	*len = m->f[field_id].field_len;
+	if (len)
+		*len = m->f[field_id].field_len;
 	
 	return(0);
 }
@@ -518,7 +520,8 @@ msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, bool copy)
 	else
 		*r = m->f[field_id].u.buf;
 
-	*len = m->f[field_id].field_len;
+	if (len)
+		*len = m->f[field_id].field_len;
 	
 	return(0);
 }
@@ -536,6 +539,7 @@ msg_set_uint32(msg *m, int field_id, const uint32_t v)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 
+	m->f[field_id].is_copy = false;
 	m->f[field_id].is_set = true;
 	m->f[field_id].u.ui32 = v;
 	
@@ -555,6 +559,7 @@ msg_set_int32(msg *m, int field_id, const int32_t v)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 
+	m->f[field_id].is_copy = false;
 	m->f[field_id].is_set = true;
 	m->f[field_id].u.i32 = v;
 	
@@ -574,6 +579,7 @@ msg_set_uint64(msg *m, int field_id, const uint64_t v)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
+	m->f[field_id].is_copy = false;
 	m->f[field_id].is_set = true;
 	m->f[field_id].u.ui64 = v;
 	
@@ -593,6 +599,7 @@ msg_set_int64(msg *m, int field_id, const int64_t v)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
+	m->f[field_id].is_copy = false;
 	m->f[field_id].is_set = true;
 	m->f[field_id].u.i64 = v;
 	

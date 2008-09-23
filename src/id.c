@@ -72,6 +72,8 @@ cf_nodeid_get( unsigned short port, cf_node *id )
 	
 	memcpy( ((byte *)id) + 6, &port, 2);
 
+	D("cf_nodeid_get: port %d result %"PRIx64,port,*id);
+	
 	return(0);
 }
 
@@ -81,7 +83,7 @@ cf_nodeid_get( unsigned short port, cf_node *id )
 unsigned short
 cf_nodeid_get_port(cf_node id)
 {
-	byte *b = &id;
+	byte *b = (byte *) &id;
 	unsigned short port;
 	memcpy(&port, &b[6], 2);
 	return(port);
