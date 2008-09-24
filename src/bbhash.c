@@ -46,6 +46,12 @@ bbhash_create(bbhash **h_r, bbhash_hash_fn h_fn, uint32 key_len, uint32 value_le
 	return(BB_OK);
 }
 
+uint32
+bbhash_get_size(bbhash *h)
+{
+	return(h->elements);
+}
+
 int
 bbhash_put(bbhash *h, void *key, uint32 key_len, void *value, uint32 value_len)
 {

@@ -105,6 +105,12 @@ int
 bbhash_delete(bbhash *h, void *key, uint32 key_len);
 
 /*
+** Get the number of elements currently in the hash
+*/
+uint32
+bbhash_get_size(bbhash *h);
+
+/*
  * An interesting idea: readv / writev for these functions?
  */
 
