@@ -68,6 +68,8 @@ typedef struct msg_t {
 	size_t	 bytes_alloc;
 	bool     is_stack; // allocated on stack no need to free
 	const msg_desc    *md;  // the message descriptor used to create this
+	void	*udata1;
+	void 	*udata2;
 	msg_field   f[];
 } msg;
 
