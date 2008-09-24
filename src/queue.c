@@ -31,20 +31,33 @@ cf_queue_create(size_t elementsz)
 {
 	cf_queue *q = NULL;
 
-	q = calloc(1, sizeof(cf_queue) + (CF_QUEUE_ALLOCSZ * elementsz));
+	q = malloc( sizeof(cf_queue));
 	/* FIXME error msg */
-	if (NULL == q)
-		return(q);
+	if (!q)
+		return(NULL);
 	q->allocsz = CF_QUEUE_ALLOCSZ;
+	q->utilsz = 0;
 	q->elementsz = elementsz;
 
-	if (0 != pthread_mutex_init(&q->LOCK, NULL)) {
-		/* FIXME error msg */
+	q->queue = malloc(CF_QUEUE_ALLOCSZ * elementsz);
+	if (! q->queue) {
 		free(q);
 		return(NULL);
 	}
-	/* FIXME error checking */
-	pthread_cond_init(&q->CV, NULL);
+	
+	if (0 != pthread_mutex_init(&q->LOCK, NULL)) {
+		/* FIXME error msg */
+		free(q->queue);
+		free(q);
+		return(NULL);
+	}
+
+	if (0 != pthread_cond_init(&q->CV, NULL)) {
+		pthread_mutex_destroy(&q->LOCK);
+		free(q->queue);
+		free(q);
+		return(NULL);
+	}
 
 	return(q);
 }
@@ -56,7 +69,9 @@ cf_queue_destroy(cf_queue *q)
 {
 	pthread_cond_destroy(&q->CV);
 	pthread_mutex_destroy(&q->LOCK);
-	memset(q, 0, sizeof(cf_queue) + (q->allocsz * q->elementsz) );
+	memset(q->queue, 0, sizeof(q->allocsz * q->elementsz));
+	free(q->queue);
+	memset(q, 0, sizeof(cf_queue) );
 	free(q);
 }
 
@@ -73,15 +88,16 @@ cf_queue_push(cf_queue *q, void *ptr)
 		return(-1);
 
 	/* Check queue length */
-	if (q->allocsz <= q->utilsz + q->elementsz) {
+	if (q->allocsz == q->utilsz) {
 		/* FIXME freak out */
-		if (NULL == (q = realloc(q, (sizeof(cf_queue) + ((q->allocsz + CF_QUEUE_ALLOCSZ) * q->elementsz)))))
-			return(-1);
+		D("QQQQ: realloc!");
 		q->allocsz += CF_QUEUE_ALLOCSZ;
+		if (NULL == (q->queue = realloc(q->queue, q->allocsz * q->elementsz)))
+			return(-1);
 	}
 
-	memcpy(&q->queue[q->utilsz], ptr, q->elementsz);
-	q->utilsz += q->elementsz;
+	memcpy(&q->queue[q->utilsz * q->elementsz], ptr, q->elementsz);
+	q->utilsz++;
 	pthread_cond_signal(&q->CV);
 
 	/* FIXME blow a gasket */
@@ -106,7 +122,7 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 	/* FIXME error checking */
 	if (0 != pthread_mutex_lock(&q->LOCK))
 		return(-1);
-	
+
 	struct timespec tp;
 	if (ms_wait > 0) {
 		clock_gettime( CLOCK_REALTIME, &tp); 
@@ -137,8 +153,8 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 		}
 	}
 
-	q->utilsz -= q->elementsz;
-	memcpy(buf, &q->queue[q->utilsz], q->elementsz);
+	q->utilsz--;
+	memcpy(buf, &q->queue[q->utilsz * q->elementsz], q->elementsz);
 
 	/* FIXME blow a gasket */
 	if (0 != pthread_mutex_unlock(&q->LOCK)) {

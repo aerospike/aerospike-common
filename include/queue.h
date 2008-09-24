@@ -18,11 +18,12 @@
  * A queue */
 #define CF_QUEUE_ALLOCSZ 64
 struct cf_queue_t {
-	uint16_t allocsz, utilsz;
+	uint16_t allocsz; 
+	uint16_t utilsz;
 	size_t elementsz;
 	pthread_mutex_t LOCK;
 	pthread_cond_t CV;
-	void *queue[];
+	byte *queue;
 };
 typedef struct cf_queue_t cf_queue;
 
