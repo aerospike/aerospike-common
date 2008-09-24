@@ -72,6 +72,7 @@ msg_create(msg **m_r, const msg_desc *md, size_t md_sz, byte *stack_buf, size_t 
 		msg_field *f = &(m->f[ md[i].id ] );
 		f->id = md[i].id;
 		f->type = md[i].type;
+		f->is_copy = false; // this is not strictly necessary, but valgrind is complaining?
 		f->is_set = false;
 		f->is_valid = true;
 	}
@@ -714,6 +715,7 @@ msg_compare(const msg *m1, const msg *m2) {
 // And, finally, the destruction of a message
 void msg_destroy(msg *m) 
 {
+	
 	for (int i=0;i<m->len;i++) {
 		if (m->f[i].is_valid && m->f[i].is_set && m->f[i].is_copy)
 			free(m->f[i].u.buf);
