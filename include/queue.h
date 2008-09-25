@@ -46,6 +46,7 @@ extern int cf_queue_sz(cf_queue *q);
 
 #define CF_QUEUE_EMPTY -2
 #define CF_QUEUE_ERR -1
+#define CF_QUEUE_OK 0
 
 // mswait < 0 wait forever
 // mswait == 0 wait not at all
