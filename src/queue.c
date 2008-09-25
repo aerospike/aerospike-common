@@ -156,7 +156,6 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 		}
 		else if (CF_QUEUE_NOWAIT == ms_wait) {
 			pthread_mutex_unlock(&q->LOCK);
-			D("cf_queue_pop: EMPTY returning %d",CF_QUEUE_EMPTY);
 			return(CF_QUEUE_EMPTY);
 		}
 		else {
