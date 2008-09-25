@@ -26,14 +26,14 @@ cf_rc_test()
 
 /* cf_rc_count
  * Get the reservation count for a memory region */
-void
+uint64_t
 cf_rc_count(void *addr)
 {
 	cf_rc_counter *rc;
 
 	rc = addr - sizeof(cf_rc_counter);
 
-	return;
+	return((uint64_t)rc);
 }
 
 
@@ -59,6 +59,7 @@ int
 _cf_rc_release(void *addr, bool autofree)
 {
 	cf_rc_counter *rc;
+	uint64_t c;
 
 	cf_assert(addr, CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_CRITICAL, "invalid argument");
 
@@ -66,13 +67,11 @@ _cf_rc_release(void *addr, bool autofree)
 	 * then free the block if autofree is set, and return 1.  Otherwise,
 	 * return 0 */
 	rc = addr - sizeof(cf_rc_counter);
-	if (0 == cf_atomic_int_decr(rc)) {
+	if (0 == (c = cf_atomic_int_decr(rc)))
 		if (autofree)
 			free((void *)rc);
 
-		return(1);
-	} else
-		return(0);
+	return(c);
 }
 
 
