@@ -53,10 +53,10 @@ cf_rc_reserve(void *addr)
 }
 
 
-/* cf_rc_release_region
+/* _cf_rc_release
  * Release a reservation on a memory region */
 int
-cf_rc_release_region(void *addr, bool autofree)
+_cf_rc_release(void *addr, bool autofree)
 {
 	cf_rc_counter *rc;
 
