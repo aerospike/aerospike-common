@@ -35,8 +35,9 @@ typedef cf_atomic_int cf_rc_counter;
 
 /* Function declarations */
 extern void cf_rc_count(void *addr);
-extern int cf_rc_reserve_region(void *addr, int initial);
-#define cf_rc_reserve(a) cf_rc_reserve_region(a, 0)
-extern int cf_rc_release(void *addr);
 extern void *cf_rc_alloc(size_t sz);
+extern int cf_rc_reserve(void *addr);
+extern int _cf_rc_release(void *addr, bool autofree);
+#define cf_rc_release(a) (_cf_rc_release((a), FALSE))
+#define cf_rc_releaseandfree(a) (_cf_rc_release((a), TRUE))
 extern void cf_rc_free(void *addr);

@@ -37,10 +37,10 @@ cf_rc_count(void *addr)
 }
 
 
-/* cf_rc_reserve_region
+/* cf_rc_reserve
  * Get a reservation on a memory region */
 int
-cf_rc_reserve_region(void *addr, int initial)
+cf_rc_reserve(void *addr)
 {
 	cf_rc_counter *rc;
 
@@ -48,30 +48,31 @@ cf_rc_reserve_region(void *addr, int initial)
 
 	/* Extract the address of the reference counter, then increment it */
 	rc = addr - sizeof(cf_rc_counter);
-	if (initial)
-		return(cf_atomic_int_add(rc, 1));
-	else
-		return(cf_atomic_int_addunless(rc, 0, 1));
+
+	return(cf_atomic_int_addunless(rc, 0, 1));
 }
 
 
-/* cf_rc_release
+/* cf_rc_release_region
  * Release a reservation on a memory region */
 int
-cf_rc_release(void *addr)
+cf_rc_release_region(void *addr, bool autofree)
 {
 	cf_rc_counter *rc;
 
 	cf_assert(addr, CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_CRITICAL, "invalid argument");
 
 	/* Release the reservation; if this reduced the reference count to zero,
-	 * then free the block */
+	 * then free the block if autofree is set, and return 1.  Otherwise,
+	 * return 0 */
 	rc = addr - sizeof(cf_rc_counter);
-	cf_atomic_int_decr(rc);
-	if (0 == (cf_atomic_int)cf_atomic_int_get(*(cf_atomic_int *)rc))
-		free((void *)rc);
+	if (0 == cf_atomic_int_decr(rc)) {
+		if (autofree)
+			free((void *)rc);
 
-	return(0);
+		return(1);
+	} else
+		return(0);
 }
 
 
@@ -88,7 +89,7 @@ cf_rc_alloc(size_t sz)
 	if (NULL == addr)
 		return(NULL);
 
-	cf_atomic_int_set((cf_atomic_int *)addr, 0);
+	cf_atomic_int_set((cf_atomic_int *)addr, 1);
 	bzero(addr, sizeof(asz));
 
 	return(addr + sizeof(cf_rc_counter));
