@@ -55,7 +55,7 @@ cf_rc_reserve(void *addr)
 
 /* _cf_rc_release
  * Release a reservation on a memory region */
-int
+uint64_t
 _cf_rc_release(void *addr, bool autofree)
 {
 	cf_rc_counter *rc;
