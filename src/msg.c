@@ -20,7 +20,7 @@
 #include "cf.h"
 
 int 
-msg_create(msg **m_r, const msg_desc *md, size_t md_sz, byte *stack_buf, size_t stack_buf_sz)
+msg_create(msg **m_r, const msg_desc *md, size_t md_sz)
 {
 	// Figure out how many bytes you need
 	int md_rows = md_sz / sizeof(msg_desc);
@@ -44,21 +44,13 @@ msg_create(msg **m_r, const msg_desc *md, size_t md_sz, byte *stack_buf, size_t 
 	// allocate memory (if necessary)
 	size_t m_sz = sizeof(msg_field) * max_id;
 	msg *m;
-	if ((stack_buf == 0) || (m_sz > stack_buf_sz)) {
-		size_t a_sz = sizeof(msg) + m_sz;
-		a_sz = ((a_sz / 512) + 1) + 512;
-		m = malloc(a_sz);
-		cf_assert(m, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "malloc");
-		m->len = max_id;
-		m->bytes_used = m->bytes_alloc = a_sz;
-		m->is_stack = false;
-	} else {
-		m = (msg *) stack_buf;
-		m->len = max_id;
-		m->bytes_used = sizeof(msg) + m_sz;
-		m->bytes_alloc = stack_buf_sz;
-		m->is_stack = true;
-	}
+	size_t a_sz = sizeof(msg) + m_sz;
+	a_sz = (a_sz / 512) + 512;
+	m = cf_rc_alloc(a_sz);
+	cf_assert(m, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "malloc");
+	cf_rc_reserve(m); // the initial reservation
+	m->len = max_id;
+	m->bytes_used = m->bytes_alloc = a_sz;
 	
 	m->md = md;
 	
@@ -72,7 +64,7 @@ msg_create(msg **m_r, const msg_desc *md, size_t md_sz, byte *stack_buf, size_t 
 		msg_field *f = &(m->f[ md[i].id ] );
 		f->id = md[i].id;
 		f->type = md[i].type;
-		f->is_copy = false; // this is not strictly necessary, but valgrind is complaining?
+		f->is_copy = false;
 		f->is_set = false;
 		f->is_valid = true;
 	}
@@ -81,6 +73,18 @@ msg_create(msg **m_r, const msg_desc *md, size_t md_sz, byte *stack_buf, size_t 
 	
 	return(0);
 }
+
+//
+// Increment the reference count of the message.
+// Everyone must call destroy in the end, and that must all be matched up
+
+void
+msg_incr_ref(msg *m)
+{
+	cf_rc_reserve(m);
+}
+
+
 
 // THE MEAT!
 // YOU'VE FOUND THE MEAT!
@@ -121,13 +125,13 @@ int
 msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 {
 	if (buflen < 4) {
-		D("msg_parse: but not enough data! can't handle that yet.");
+		D("msg_parse: but not enough data! can't handle that yet len %d need 4.",buflen);
 		return(-2);
 	}
 	uint32_t len = *(uint32_t *) buf;
 	len = htonl(len) ;
 	if (buflen < len + 4) {
-		D("msg_parse: but not enough data! can't handle that yet.");
+		D("msg_parse: but not enough data! can't handle that yet. len %d need %d",buflen, (len + 4));
 		return(-2);
 	}
 	buf += 4;
@@ -365,9 +369,11 @@ void
 msg_reset(msg *m)
 {
 	m->bytes_used = m->bytes_alloc;
-	for (int i=0;i<m->len;i++) {
-		m->f[i].is_set = false;
-		if (m->f[i].is_copy)	free(m->f[i].u.buf);
+	for (int i=0 ; i < m->len ; i++) {
+		if (m->f[i].is_valid) {
+			if (m->f[i].is_set && m->f[i].is_copy)	free(m->f[i].u.buf);
+			m->f[i].is_set = false;
+		}
 	}
 	
 }
@@ -715,15 +721,14 @@ msg_compare(const msg *m1, const msg *m2) {
 // And, finally, the destruction of a message
 void msg_destroy(msg *m) 
 {
-	
-	for (int i=0;i<m->len;i++) {
-		if (m->f[i].is_valid && m->f[i].is_set && m->f[i].is_copy)
-			free(m->f[i].u.buf);
+	if (cf_rc_release(m)) {
+		for (int i=0;i<m->len;i++) {
+			if (m->f[i].is_valid && m->f[i].is_set && m->f[i].is_copy)
+				free(m->f[i].u.buf);
+		}
+			
+		cf_rc_free(m);
 	}
-		
-	if (! m->is_stack)
-		free(m);
-
 	return;
 }
 

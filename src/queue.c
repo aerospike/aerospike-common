@@ -75,6 +75,18 @@ cf_queue_destroy(cf_queue *q)
 	free(q);
 }
 
+int
+cf_queue_sz(cf_queue *q)
+{
+	int rv;
+	
+	pthread_mutex_lock(&q->LOCK);
+	rv = q->utilsz;
+	pthread_mutex_unlock(&q->LOCK);
+	return(rv);
+	
+}
+
 
 /* cf_queue_push
  * */

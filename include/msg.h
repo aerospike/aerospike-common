@@ -68,8 +68,6 @@ typedef struct msg_t {
 	size_t	 bytes_alloc;
 	bool     is_stack; // allocated on stack no need to free
 	const msg_desc    *md;  // the message descriptor used to create this
-	void	*udata1;
-	void 	*udata2;
 	msg_field   f[];
 } msg;
 
@@ -79,7 +77,7 @@ typedef struct msg_t {
 // too. If everything fits, it stays. We use the msg_desc as a hint
 // Slightly unusually, the 'md_sz' field is in bytes. This is a good shortcut
 // to avoid terminator fields or anything similar
-extern int msg_create(msg **m, const msg_desc *md, size_t md_sz, byte *stack_buf, size_t stack_buf_sz);
+extern int msg_create(msg **m, const msg_desc *md, size_t md_sz);
 
 // msg_parse - parse a buffer into a message, which thus can be accessed
 extern int msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy);
@@ -94,6 +92,10 @@ extern int msg_fillbuf(const msg *m, byte *buf, size_t *buflen);
 // msg_reset - after a message has been parsed, and the information consumed,
 // reset all the internal pointers for another parse
 extern void msg_reset(msg *m);
+
+// Messages are reference counted. If you need to take a reference,
+// call this function. Everyone calls destroy.
+extern void msg_incr_ref(msg *m);
 
 // Getters and setters
 
