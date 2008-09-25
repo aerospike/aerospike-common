@@ -27,16 +27,16 @@ typedef enum field_type_t {
 } field_type;
 
 
-typedef struct msg_field_desc_t {
+typedef struct msg_field_template_t {
 	unsigned int		id;
 	field_type 			type;
-} msg_field_desc;
+} msg_field_template;
 
 // TODO: consider that a msg_desc should have a human readable string
 // Can play other interesting macro games to make sure we don't have 
 // the problem of needing to add a length field to the message descriptions
 
-typedef msg_field_desc msg_desc;
+typedef msg_field_template msg_template;
 
 // This is a very simple linear system for representing a message
 // Insert/read efficiency is paramount, but we think messages will tend
@@ -67,7 +67,7 @@ typedef struct msg_t {
 	size_t   bytes_used;
 	size_t	 bytes_alloc;
 	bool     is_stack; // allocated on stack no need to free
-	const msg_desc    *md;  // the message descriptor used to create this
+	const msg_template    *mt;  // the message descriptor used to create this
 	msg_field   f[];
 } msg;
 
@@ -77,7 +77,7 @@ typedef struct msg_t {
 // too. If everything fits, it stays. We use the msg_desc as a hint
 // Slightly unusually, the 'md_sz' field is in bytes. This is a good shortcut
 // to avoid terminator fields or anything similar
-extern int msg_create(msg **m, const msg_desc *md, size_t md_sz);
+extern int msg_create(msg **m, const msg_template *mt, size_t mt_sz);
 
 // msg_parse - parse a buffer into a message, which thus can be accessed
 extern int msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy);

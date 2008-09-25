@@ -20,24 +20,24 @@
 #include "cf.h"
 
 int 
-msg_create(msg **m_r, const msg_desc *md, size_t md_sz)
+msg_create(msg **m_r, const msg_template *mt, size_t mt_sz)
 {
 	// Figure out how many bytes you need
-	int md_rows = md_sz / sizeof(msg_desc);
-	cf_assert(md_rows > 0, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "msg create: invalid parameter");
+	int mt_rows = mt_sz / sizeof(msg_template);
+	cf_assert(mt_rows > 0, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "msg create: invalid parameter");
 	unsigned int max_id = 0;
-	for (int i=0;i<md_rows;i++) {
-		if (md[i].id >= max_id) {
-			max_id = md[i].id;
+	for (int i=0;i<mt_rows;i++) {
+		if (mt[i].id >= max_id) {
+			max_id = mt[i].id;
 		}
 	}
 	max_id++;
 	
 	// DEBUG - can tell if it's so sparse that we're wasting lots of memory
-	if (max_id > md_rows * 2) {
+	if (max_id > mt_rows * 2) {
 		// It would be nice if there was a human readable string for debugging
 		// in the message descriptor
-		D("msg_create: found sparse message, %d ids, only %d rows consider recoding",max_id,md_rows);
+		D("msg_create: found sparse message, %d ids, only %d rows consider recoding",max_id,mt_rows);
 	}
 	
 	
@@ -52,7 +52,7 @@ msg_create(msg **m_r, const msg_desc *md, size_t md_sz)
 	m->len = max_id;
 	m->bytes_used = m->bytes_alloc = a_sz;
 	
-	m->md = md;
+	m->mt = mt;
 	
 	// debug - not strictly necessary, but saves the user if they
 	// have an invalid field
@@ -60,10 +60,10 @@ msg_create(msg **m_r, const msg_desc *md, size_t md_sz)
 		m->f[i].is_valid = false;
 	
 	// fill in the fields - rather minimalistic, save the dcache
-	for (int i=0;i<md_rows;i++) {
-		msg_field *f = &(m->f[ md[i].id ] );
-		f->id = md[i].id;
-		f->type = md[i].type;
+	for (int i=0;i<mt_rows;i++) {
+		msg_field *f = &(m->f[ mt[i].id ] );
+		f->id = mt[i].id;
+		f->type = mt[i].type;
 		f->is_copy = false;
 		f->is_set = false;
 		f->is_valid = true;
@@ -668,7 +668,7 @@ int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, bool copy)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
-	if ( m->f[field_id].type != M_FT_STR ) {
+	if ( m->f[field_id].type != M_FT_BUF ) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: mismatch setter field type wants %d has %d",m->f[field_id].type, M_FT_STR);
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
