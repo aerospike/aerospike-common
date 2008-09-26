@@ -101,6 +101,7 @@ Copy:
 	e->value = malloc(value_len);
 	memcpy(e->value, value, value_len);
 	e->value_len = value_len;
+	h->elements++;
 	if (h->flags & BBHASH_CR_MT_BIGLOCK) 
 		pthread_mutex_unlock(&h->biglock);
 	return(BB_OK);	
@@ -194,6 +195,7 @@ bbhash_delete(bbhash *h, void *key, uint32 key_len)
 					free(_t);
 				}
 			}
+			h->elements--;
 			rv = BB_OK;
 			goto Out;
 
