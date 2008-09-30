@@ -176,3 +176,102 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 
 	return(0);
 }
+
+// Iterate over all queue members calling the callback
+
+int 
+cf_queue_reduce(cf_queue *q,  cf_queue_reduce_fn cb, void *udata)
+{
+	if (NULL == q)
+		return(-1);
+
+	/* FIXME error checking */
+	if (0 != pthread_mutex_lock(&q->LOCK))
+		return(-1);
+
+	if (q->utilsz) {
+		byte *qp = q->queue;
+		byte *qbase = qp;
+		// this is a little goofy, but we want to delete while
+		// doing the callback, this is always up to date
+		while (qp - qbase < q->utilsz * q->elementsz) {
+			
+			int rv = cb(qp, udata);
+			
+			if (rv == 0) {
+				qp += q->elementsz;
+			}
+			else if (rv == -1) {
+				break; // found what it was looking for
+			}
+			else if (rv == -2) { // delete!
+				int curpos = (qp - qbase) / q->elementsz;
+				if (curpos != q->utilsz - 1) {
+					memmove(qp, qp+q->elementsz, (q->utilsz - curpos - 1) * q->elementsz);
+				}	
+				q->utilsz--;
+			}
+		};
+	}
+	
+	if (0 != pthread_mutex_unlock(&q->LOCK)) {
+		fprintf(stderr, "unlock failed\n");
+		return(-1);
+	}
+
+	return(0);
+	
+}
+
+// Special case: delete elements from the queue
+// pass 'true' as the 'only_one' parameter if you know there can be only one element
+// with this value on the queue
+
+int
+cf_queue_delete(cf_queue *q, void *buf, bool only_one)
+{
+	if (NULL == q)
+		return(CF_QUEUE_ERR);
+
+	/* FIXME error checking */
+	if (0 != pthread_mutex_lock(&q->LOCK))
+		return(CF_QUEUE_ERR);
+
+	bool found = false;
+	
+	if (q->utilsz) {
+		byte *qp = q->queue;
+		byte *qbase = qp;
+		// this is a little goofy, but we want to delete while
+		// doing the callback, this is always up to date
+		while (qp - qbase < q->utilsz * q->elementsz) {
+			
+			int rv = memcmp(qp, buf, q->elementsz);
+			
+			if (rv != 0) {
+				qp += q->elementsz;
+			}
+			else if (rv == 0) { // delete!
+				int curpos = (qp - qbase) / q->elementsz;
+				if (curpos != q->utilsz - 1) {
+					memmove(qp, qp+q->elementsz, (q->utilsz - curpos - 1) * q->elementsz);
+				}	
+				q->utilsz--;
+				found = true;
+				if (only_one == true)	goto Done;
+			}
+		};
+	}
+	
+Done:	
+	if (0 != pthread_mutex_unlock(&q->LOCK)) {
+		fprintf(stderr, "unlock failed\n");
+		return(-1);
+	}
+
+	if (found == false)
+		return(CF_QUEUE_EMPTY);
+	else
+		return(CF_QUEUE_OK);
+	
+}

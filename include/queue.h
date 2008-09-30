@@ -55,4 +55,22 @@ extern int cf_queue_sz(cf_queue *q);
 #define CF_QUEUE_NOWAIT 0
 extern int cf_queue_pop(cf_queue *q, void *buf, int mswait);
 
+// Queue Reduce
+// Run the entire queue, calling the callback, with the lock held
+// You can return values in the callback to cause deletes
+// Great for purging dying stuff out of a queue synchronously
+//
+// Return -2 from the callback to trigger a delete
+// return -1 stop iterating the queue
+// return 0 for success
+typedef int (*cf_queue_reduce_fn) (void *buf, void *udata);
+
+extern int cf_queue_reduce(cf_queue *q, cf_queue_reduce_fn cb, void *udata);
+
+//
+// The most common reason to want to 'reduce' is delete - so provide
+// a simple delete function
+extern int cf_queue_delete(cf_queue *q, void *buf, bool only_one);
+
+
 
