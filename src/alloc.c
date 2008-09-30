@@ -17,23 +17,17 @@
 #include <unistd.h>
 #include "cf.h"
 
-/* test */
-void
-cf_rc_test()
-{
-	printf("hello cruel library\n");
-}
 
 /* cf_rc_count
  * Get the reservation count for a memory region */
-uint64_t
+cf_atomic_int_t
 cf_rc_count(void *addr)
 {
 	cf_rc_counter *rc;
 
-	rc = addr - sizeof(cf_rc_counter);
+	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 
-	return((uint64_t)rc);
+	return(*rc);
 }
 
 
@@ -47,7 +41,7 @@ cf_rc_reserve(void *addr)
 	cf_assert(addr, CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_CRITICAL, "invalid argument");
 
 	/* Extract the address of the reference counter, then increment it */
-	rc = addr - sizeof(cf_rc_counter);
+	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 
 	return(cf_atomic_int_addunless(rc, 0, 1));
 }
@@ -55,7 +49,7 @@ cf_rc_reserve(void *addr)
 
 /* _cf_rc_release
  * Release a reservation on a memory region */
-uint64_t
+cf_atomic_int_t
 _cf_rc_release(void *addr, bool autofree)
 {
 	cf_rc_counter *rc;
@@ -66,7 +60,7 @@ _cf_rc_release(void *addr, bool autofree)
 	/* Release the reservation; if this reduced the reference count to zero,
 	 * then free the block if autofree is set, and return 1.  Otherwise,
 	 * return 0 */
-	rc = addr - sizeof(cf_rc_counter);
+	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 	if (0 == (c = cf_atomic_int_decr(rc)))
 		if (autofree)
 			free((void *)rc);
@@ -81,7 +75,7 @@ _cf_rc_release(void *addr, bool autofree)
 void *
 cf_rc_alloc(size_t sz)
 {
-	void *addr;
+	byte *addr;
 	size_t asz = sizeof(cf_rc_counter) + sz;
 
 	addr = malloc(asz);
@@ -89,9 +83,10 @@ cf_rc_alloc(size_t sz)
 		return(NULL);
 
 	cf_atomic_int_set((cf_atomic_int *)addr, 1);
-	bzero(addr, sizeof(asz));
+	byte *base = addr + sizeof(asz);
+	memset(base, 0, sz);
 
-	return(addr + sizeof(cf_rc_counter));
+	return(base);
 }
 
 
@@ -102,7 +97,7 @@ cf_rc_free(void *addr)
 {
 	cf_rc_counter *rc;
 
-	rc = addr - sizeof(cf_rc_counter);
+	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 
 	if (0 == (cf_atomic_int)cf_atomic_int_get(*(cf_atomic_int *)rc))
 		free(addr);

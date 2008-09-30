@@ -48,7 +48,6 @@ msg_create(msg **m_r, const msg_template *mt, size_t mt_sz)
 	a_sz = (a_sz / 512) + 512;
 	m = cf_rc_alloc(a_sz);
 	cf_assert(m, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "malloc");
-	cf_rc_reserve(m); // the initial reservation
 	m->len = max_id;
 	m->bytes_used = m->bytes_alloc = a_sz;
 	
@@ -384,16 +383,20 @@ msg_get_uint32(const msg *m, int field_id, uint32_t *r)
 {
 	if (! m->f[field_id].is_valid) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field get",field_id);
+		*r = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 
 	if ( m->f[field_id].type != M_FT_UINT32 ) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: mismatch getter field type wants %d has %d",m->f[field_id].type, M_FT_UINT32);
+		*r = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 
 	if ( ! m->f[field_id].is_set ) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg: attempt to retrieve unset field %d",field_id);
+		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
+		msg_dump(m);
+		*r = 0;
 		return(-2);
 	}
 
@@ -406,16 +409,20 @@ int msg_get_int32(const msg *m, int field_id, int32_t *r)
 {
 	if (! m->f[field_id].is_valid) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field get",field_id);
+		*r = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
 	if ( m->f[field_id].type != M_FT_INT32 ) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: mismatch getter field type wants %d has %d",m->f[field_id].type, M_FT_INT32);
+		*r = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 
 	if ( ! m->f[field_id].is_set ) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg: attempt to retrieve unset field %d",field_id);
+		msg_dump(m);
+		*r = 0;
 		return(-2);
 	}
 	
@@ -428,16 +435,20 @@ int msg_get_uint64(const msg *m, int field_id, uint64_t *r)
 {
 	if (! m->f[field_id].is_valid) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field get",field_id);
+		*r = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
 	if ( m->f[field_id].type != M_FT_UINT64 ) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: mismatch getter field type wants %d has %d",m->f[field_id].type, M_FT_UINT64);
+		*r = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 
 	if ( ! m->f[field_id].is_set ) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg: attempt to retrieve unset field %d",field_id);
+		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
+		msg_dump(m);
+		*r = 0;
 		return(-2);
 	}
 	
@@ -450,16 +461,20 @@ int msg_get_int64(const msg *m, int field_id, int64_t *r)
 {
 	if (! m->f[field_id].is_valid) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field get",field_id);
+		*r = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
 	if ( m->f[field_id].type != M_FT_INT64 ) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: mismatch getter field type wants %d has %d",m->f[field_id].type, M_FT_INT64);
+		*r = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 
 	if ( ! m->f[field_id].is_set ) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg: attempt to retrieve unset field %d",field_id);
+		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
+		msg_dump(m);
+		*r = 0;
 		return(-2);
 	}
 	
@@ -475,16 +490,20 @@ msg_get_str(const msg *m, int field_id, char **r, size_t *len, bool copy)  // th
 	
 	if (! m->f[field_id].is_valid) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field get",field_id);
+		*r = 0; *len = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
 	if ( m->f[field_id].type != M_FT_STR ) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: mismatch getter field type wants %d has %d",m->f[field_id].type, M_FT_STR);
+		*r = 0; *len = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 
 	if ( ! m->f[field_id].is_set ) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg: attempt to retrieve unset field %d",field_id);
+		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
+		msg_dump(m);
+		*r = 0; *len = 0;
 		return(-2);
 	}
 	
@@ -505,17 +524,21 @@ int
 msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, bool copy)
 {
 	if (! m->f[field_id].is_valid) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field get",field_id);
+		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field get",m,field_id);
+		*r = 0; *len = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
 	if ( m->f[field_id].type != M_FT_BUF ) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: mismatch getter field type wants %d has %d",m->f[field_id].type, M_FT_BUF);
+		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg %p: mismatch getter field type wants %d has %d",m,m->f[field_id].type, M_FT_BUF);
+		*r = 0; *len = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 
 	if ( ! m->f[field_id].is_set ) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg: attempt to retrieve unset field %d",field_id);
+		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
+		msg_dump(m);
+		*r = 0; *len = 0;
 		return(-2);
 	}
 	
@@ -730,5 +753,49 @@ void msg_destroy(msg *m)
 		cf_rc_free(m);
 	}
 	return;
+}
+
+//
+// Debug routine to dump all the information about a msg to stdout
+//
+
+void
+msg_dump(const msg *m)
+{
+	printf("msg_dump: msg %p acount %d flen %d bytesused %d bytesallocd %d  mt %p\n",
+		m,(int)cf_rc_count((void *)m),m->len,m->bytes_used,m->bytes_alloc,m->mt);
+	for (int i=0;i<m->len;i++) {
+		printf("mf %02d: id %d isvalid %d iset %d iscopy %d\n",i,m->f[i].id,m->f[i].is_valid,m->f[i].is_set,m->f[i].is_copy);
+		if (m->f[i].is_valid && m->f[i].is_set) {
+			switch(m->f[i].type) {
+				case M_FT_INT32:
+					printf("   type INT32 value %d\n",m->f[i].u.i32);
+					break;
+				case M_FT_UINT32:
+					printf("   type UINT32 value %u\n",m->f[i].u.ui32);
+					break;
+				case M_FT_INT64:
+					printf("   type INT64 value %"PRId64"\n",m->f[i].u.i64);
+					break;
+				case M_FT_UINT64:
+					printf("   type UINT64 value %"PRIu64"\n",m->f[i].u.ui64);
+					break;
+				case M_FT_STR:
+					printf("   type STR len %d value %s\n",m->f[i].field_len,m->f[i].u.str);
+					break;
+				case M_FT_BUF:
+					printf("   type BUF len %d\n",m->f[i].field_len);
+					for (int j=0;j<m->f[i].field_len;j++) {
+						printf("%02x ",m->f[i].u.buf[j]);
+						if (j % 16 == 8) printf(" : ");
+						if (j % 16 == 15) printf("\n");
+					}
+					break;
+				default:
+					printf("   type %d unknown\n",m->f[i].type);
+					break;
+			}
+		}
+	}
 }
 

@@ -27,6 +27,8 @@
 typedef volatile uint32_t cf_atomic32;
 typedef volatile uint32_t cf_atomic_p;
 typedef volatile uint32_t cf_atomic_int;
+#define SIZEOF_ATOMIC_INT 4
+typedef uint32_t cf_atomic_int_t; // the point here is a type of the same size as cf_atomic_int but isn't atomic
 #endif
 
 #ifdef MARCH_x86_64
@@ -34,6 +36,8 @@ typedef volatile uint64_t cf_atomic64;
 typedef volatile uint32_t cf_atomic32;
 typedef volatile uint64_t cf_atomic_p;
 typedef volatile uint64_t cf_atomic_int;
+#define SIZEOF_ATOMIC_INT 8
+typedef uint64_t cf_atomic_int_t; // the point here is a type of the same size as cf_atomic_int but isn't atomic
 #endif
 
 /*
