@@ -109,7 +109,7 @@ extern int msg_get_int32(const msg *m, int field_id, int32_t *r);
 extern int msg_get_uint64(const msg *m, int field_id, uint64_t *r);
 extern int msg_get_int64(const msg *m, int field_id, int64_t *r);
 extern int msg_get_str(const msg *m, int field_id, char **r, size_t *len, bool copy);  // this length is strlen+1, the allocated size
-extern int msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, bool copy);
+extern int msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, bool copy, bool alloc);
 
 extern int msg_set_uint32(msg *m, int field_id, const uint32_t v);
 extern int msg_set_int32(msg *m, int field_id, const int32_t v);

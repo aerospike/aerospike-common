@@ -521,7 +521,7 @@ msg_get_str(const msg *m, int field_id, char **r, size_t *len, bool copy)  // th
 }
 
 int 
-msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, bool copy)
+msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, bool copy, bool alloc)
 {
 	if (! m->f[field_id].is_valid) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field get",m,field_id);
@@ -543,8 +543,10 @@ msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, bool copy)
 	}
 	
 	if (copy) {
-		*r = malloc( m->f[field_id].field_len );
-		cf_assert(*r, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "malloc");
+		if (alloc) {
+			*r = malloc( m->f[field_id].field_len );
+			cf_assert(*r, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "malloc");
+		}
 		memcpy(*r, m->f[field_id].u.buf, m->f[field_id].field_len );
 	}
 	else
