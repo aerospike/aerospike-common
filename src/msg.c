@@ -112,9 +112,9 @@ msg_incr_ref(msg *m)
 //     (should be ';' if htonl(1) == 1) ;-)
 //   ripe for assembly language here!!! this is a little freakin GNARLY!!!
 
-#define htonll_p(__llp_dst, __llp_src) \
-	*(uint32_t *) (__llp_dst) = htonl( *(uint32_t *) ( ((byte *)__llp_src) + 4)); \
-	*(uint32_t *) (((byte *)__llp_dst) + 4) = htonl( *(uint32_t *) (__llp_src)); 
+//#define htonll_p(__llp_dst, __llp_src) \
+//	*(uint32_t *) (__llp_dst) = htonl( *(uint32_t *) ( ((byte *)__llp_src) + 4)); \
+//	*(uint32_t *) (((byte *)__llp_dst) + 4) = htonl( *(uint32_t *) (__llp_src)); 
 
 	
 
@@ -176,10 +176,12 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 					mf->u.ui32 = htonl( *(uint32_t *) buf );
 					break;
 				case M_FT_INT64:
-					htonll_p( &(mf->u.i64) , buf);
+					mf->u.i64 = __bswap_64( *(uint64_t *) buf);
+					// htonll_p( &(mf->u.i64) , buf);
 					break;
 				case M_FT_UINT64:
-					htonll_p( &(mf->u.i64) , buf);
+					mf->u.ui64 = __bswap_64( *(uint64_t *) buf);
+					// htonll_p( &(mf->u.i64) , buf);
 					break;
 				case M_FT_STR:
 				case M_FT_BUF:
@@ -287,12 +289,16 @@ msg_stamp_field(byte *buf, const msg_field *mf)
 			
 		case M_FT_INT64:
 			flen = 8;
-			htonll_p(buf, (&mf->u.i64) );
+			int64_t *b_i64 = (int64_t *)buf;
+			*b_i64 = __bswap_64(mf->u.i64);
+//			htonll_p(buf, (&mf->u.i64) );
 			break;
 
 		case M_FT_UINT64:
 			flen = 8;
-			htonll_p(buf, (&mf->u.ui64) );
+			uint64_t *b_ui64 = (uint64_t *)buf;
+			*b_ui64 = __bswap_64(mf->u.ui64);
+//			htonll_p(buf, (&mf->u.ui64) );
 			break;
 			
 		case M_FT_STR:
