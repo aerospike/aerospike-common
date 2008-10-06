@@ -41,7 +41,7 @@ typedef uint8_t byte;
  * An array of bytes */
 struct cf_bytearray_t {
 	uint64_t sz;
-	void *contents;
+	void *data;
 };
 typedef struct cf_bytearray_t cf_bytearray;
 
