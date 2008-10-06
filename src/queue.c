@@ -165,8 +165,11 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 		}
 	}
 
+	/* This is a naive FIFO queue; we ought to come up with a nicer
+	 * implementation at some point */
+	memcpy(buf, &q->queue[0], q->elementsz);
 	q->utilsz--;
-	memcpy(buf, &q->queue[q->utilsz * q->elementsz], q->elementsz);
+	memmove(&q->queue[0], &q->queue[0] + q->elementsz, q->elementsz * q->utilsz);
 
 	/* FIXME blow a gasket */
 	if (0 != pthread_mutex_unlock(&q->LOCK)) {
