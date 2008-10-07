@@ -400,8 +400,8 @@ msg_get_uint32(const msg *m, int field_id, uint32_t *r)
 	}
 
 	if ( ! m->f[field_id].is_set ) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
-		msg_dump(m);
+//		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
+//		msg_dump(m);
 		*r = 0;
 		return(-2);
 	}
@@ -426,8 +426,8 @@ int msg_get_int32(const msg *m, int field_id, int32_t *r)
 	}
 
 	if ( ! m->f[field_id].is_set ) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg: attempt to retrieve unset field %d",field_id);
-		msg_dump(m);
+//		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg: attempt to retrieve unset field %d",field_id);
+//		msg_dump(m);
 		*r = 0;
 		return(-2);
 	}
@@ -452,8 +452,8 @@ int msg_get_uint64(const msg *m, int field_id, uint64_t *r)
 	}
 
 	if ( ! m->f[field_id].is_set ) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
-		msg_dump(m);
+//		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
+//		msg_dump(m);
 		*r = 0;
 		return(-2);
 	}
@@ -478,8 +478,8 @@ int msg_get_int64(const msg *m, int field_id, int64_t *r)
 	}
 
 	if ( ! m->f[field_id].is_set ) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
-		msg_dump(m);
+//		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
+//		msg_dump(m);
 		*r = 0;
 		return(-2);
 	}
@@ -507,8 +507,8 @@ msg_get_str(const msg *m, int field_id, char **r, size_t *len, bool copy)  // th
 	}
 
 	if ( ! m->f[field_id].is_set ) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
-		msg_dump(m);
+//		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
+//		msg_dump(m);
 		*r = 0; *len = 0;
 		return(-2);
 	}
@@ -542,8 +542,8 @@ msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, bool copy)
 	}
 
 	if ( ! m->f[field_id].is_set ) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
-		msg_dump(m);
+//		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
+//		msg_dump(m);
 		*r = 0; *len = 0;
 		return(-2);
 	}

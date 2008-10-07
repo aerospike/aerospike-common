@@ -231,10 +231,10 @@ bbhash_reduce(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 		while (list_he) {
 			
 			// 0 length means an unused head pointer - break
-			if (he->key_len == 0)
+			if (list_he->key_len == 0)
 				break;
 			
-			reduce_fn(he->key, he->key_len, he->value, he->value_len, udata);
+			reduce_fn(list_he->key, list_he->key_len, list_he->value, list_he->value_len, udata);
 			
 			list_he = list_he->next;
 		};
