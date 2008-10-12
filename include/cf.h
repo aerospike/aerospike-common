@@ -26,6 +26,15 @@ typedef uint64_t uint64;
 typedef int64_t int64;
 typedef uint8_t byte;
 
+/* cf_bytearray
+ * An array of bytes */
+struct cf_bytearray_t {
+	uint64_t sz;
+	void *data;
+};
+typedef struct cf_bytearray_t cf_bytearray;
+
+
 #include "atomic.h"
 #include "alloc.h"
 #include "digest.h"
@@ -37,13 +46,6 @@ typedef uint8_t byte;
 #include "msg.h"
 #include "bbhash.h"
 
-/* cf_bytearray
- * An array of bytes */
-struct cf_bytearray_t {
-	uint64_t sz;
-	void *data;
-};
-typedef struct cf_bytearray_t cf_bytearray;
 
 
 /* cf_compare_ptr

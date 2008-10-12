@@ -63,7 +63,7 @@ msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 		msg_field *f = &(m->f[ mt[i].id ] );
 		f->id = mt[i].id;
 		f->type = mt[i].type;
-		f->is_copy = false;
+		f->free = 0;
 		f->is_set = false;
 		f->is_valid = true;
 	}
@@ -113,11 +113,6 @@ msg_incr_ref(msg *m)
 //     (should be ';' if htonl(1) == 1) ;-)
 //   ripe for assembly language here!!! this is a little freakin GNARLY!!!
 
-//#define htonll_p(__llp_dst, __llp_src) \
-//	*(uint32_t *) (__llp_dst) = htonl( *(uint32_t *) ( ((byte *)__llp_src) + 4)); \
-//	*(uint32_t *) (((byte *)__llp_dst) + 4) = htonl( *(uint32_t *) (__llp_src)); 
-
-	
 
 
 // msg_parse - parse a buffer into a message, which thus can be accessed
@@ -199,11 +194,11 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 						mf->u.buf = malloc(flen);
 						// TODO: add assert
 						memcpy(mf->u.buf, buf, flen);
-						mf->is_copy = true;
+						mf->free = mf->u.buf;
 					}
 					else {
 						mf->u.buf = (byte *) buf; // compiler whinges here correctly, I bless this cast
-						mf->is_copy = false;						
+						mf->free = 0;						
 					}
 					break;
 				case M_FT_ARRAY:
@@ -394,7 +389,7 @@ msg_reset(msg *m)
 	m->bytes_used = m->bytes_alloc;
 	for (int i=0 ; i < m->len ; i++) {
 		if (m->f[i].is_valid) {
-			if (m->f[i].is_set && m->f[i].is_copy)	free(m->f[i].u.buf);
+			if (m->f[i].is_set && m->f[i].free)	free(m->f[i].free);
 			m->f[i].is_set = false;
 		}
 	}
@@ -581,6 +576,37 @@ msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, bool copy)
 }
 
 int 
+msg_get_bytearray(const msg *m, int field_id, cf_bytearray **r)
+{
+	if (! m->f[field_id].is_valid) {
+		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field get",m,field_id);
+		*r = 0;
+		return(-1); // not sure the meaning of ERROR - will it throw or not?
+	}
+	
+	if ( m->f[field_id].type != M_FT_BUF ) {
+		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg %p: mismatch getter field type wants %d has %d",m,m->f[field_id].type, M_FT_BUF);
+		*r = 0;
+		return(-1); // not sure the meaning of ERROR - will it throw or not?
+	}
+
+	if ( ! m->f[field_id].is_set ) {
+//		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg %p: attempt to retrieve unset field %d",m,field_id);
+//		msg_dump(m);
+		*r = 0;
+		return(-2);
+	}
+	uint64_t field_len = m->f[field_id].field_len;
+	*r = malloc( field_len + sizeof(cf_bytearray) );
+	cf_assert(*r, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "malloc");
+	(*r)->sz = field_len;
+	memcpy((*r)->data, m->f[field_id].u.buf, field_len );
+	
+	return(0);
+}
+
+
+int 
 msg_set_uint32(msg *m, int field_id, const uint32_t v)
 {
 	if (! m->f[field_id].is_valid) {
@@ -593,7 +619,7 @@ msg_set_uint32(msg *m, int field_id, const uint32_t v)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 
-	m->f[field_id].is_copy = false;
+	m->f[field_id].free = 0; // pains me. Should be unnecessary. valgrind complains.
 	m->f[field_id].is_set = true;
 	m->f[field_id].u.ui32 = v;
 	
@@ -613,7 +639,7 @@ msg_set_int32(msg *m, int field_id, const int32_t v)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 
-	m->f[field_id].is_copy = false;
+	m->f[field_id].free = 0; // pains me. Should be unnecessary. valgrind complains.
 	m->f[field_id].is_set = true;
 	m->f[field_id].u.i32 = v;
 	
@@ -633,7 +659,7 @@ msg_set_uint64(msg *m, int field_id, const uint64_t v)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
-	m->f[field_id].is_copy = false;
+	m->f[field_id].free = 0; // pains me. Should be unnecessary. valgrind complains.
 	m->f[field_id].is_set = true;
 	m->f[field_id].u.ui64 = v;
 	
@@ -653,7 +679,7 @@ msg_set_int64(msg *m, int field_id, const int64_t v)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
-	m->f[field_id].is_copy = false;
+	m->f[field_id].free = 0; // pains me. Should be unnecessary. valgrind complains.
 	m->f[field_id].is_set = true;
 	m->f[field_id].u.i64 = v;
 	
@@ -676,9 +702,9 @@ msg_set_str(msg *m, int field_id, const char *v, bool copy)
 	msg_field *mf = &(m->f[field_id]);
 	
 	// free auld value if necessary
-	if (mf->is_set && mf->is_copy) {
-		free(mf->u.str);
-		mf->u.str = 0;
+	if (mf->is_set && mf->free) {
+		free(mf->free);
+		mf->free = 0;
 	}
 	
 	mf->field_len = strlen(v)+1;
@@ -689,17 +715,17 @@ msg_set_str(msg *m, int field_id, const char *v, bool copy)
 		if (m->bytes_alloc - m->bytes_used >= len) {
 			mf->u.str = (char *) (((byte *)m) + m->bytes_used);
 			m->bytes_alloc += len;
-			mf->is_copy = false;
+			mf->free = 0;
 			memcpy(mf->u.str, v, len);
 		}
 		else {
 			mf->u.str = strdup(v);
 			cf_assert(mf->u.str, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "malloc");
-			mf->is_copy = true;
+			mf->free = mf->u.str;
 		}
 	} else {
 		mf->u.str = (char *)v; // compiler winges here, correctly, but I bless this -b
-		mf->is_copy = false;
+		mf->free = 0;
 	}
 		
 	mf->is_set = true;
@@ -723,9 +749,9 @@ int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, bool copy)
 	msg_field *mf = &(m->f[field_id]);
 	
 	// free auld value if necessary
-	if (mf->is_set && mf->is_copy) {
-		free(mf->u.buf);
-		mf->u.buf = 0;
+	if (mf->is_set && mf->free) {
+		free(mf->free);
+		mf->free = 0;
 	}
 	
 	mf->field_len = len;
@@ -735,26 +761,58 @@ int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, bool copy)
 		if (m->bytes_alloc - m->bytes_used >= len) {
 			mf->u.buf = ((byte *)m) + m->bytes_used;
 			m->bytes_alloc += len;
-			mf->is_copy = false;
+			mf->free = 0;
 		}
 		// Or just malloc if we have to. Sad face.
 		else {
 			mf->u.buf = malloc(len);
 			cf_assert(mf->u.buf, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "malloc");
-			mf->is_copy = true;
+			mf->free = mf->u.buf; // free on exit/reset
 		}
 
 		memcpy(mf->u.buf, v, len);
 
 	} else {
 		mf->u.str = (void *)v; // compiler winges here, correctly, but I bless this -b
-		mf->is_copy = false;
+		mf->free = 0;
 	}
 		
 	mf->is_set = true;
 	
 	return(0);
 }
+
+int msg_set_bytearray(msg *m, int field_id, const cf_bytearray *v)
+{
+	if (! m->f[field_id].is_valid) {
+		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field set",field_id);
+		return(-1); // not sure the meaning of ERROR - will it throw or not?
+	}
+	
+	if ( m->f[field_id].type != M_FT_BUF ) {
+		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: mismatch setter field type wants %d has %d",m->f[field_id].type, M_FT_STR);
+		return(-1); // not sure the meaning of ERROR - will it throw or not?
+	}
+
+	msg_field *mf = &(m->f[field_id]);
+	
+	// free auld value if necessary
+	if (mf->is_set && mf->free) {
+		free(mf->free);
+		mf->free = 0;
+	}
+	
+	mf->field_len = v->sz;
+	mf->u.buf = v->data;
+	mf->free = (void *) v;
+			
+	mf->is_set = true;
+	
+	return(0);
+}
+
+
+
 
 // very useful for test code! one can encode and decode messages and see if
 // they're the same!
@@ -770,8 +828,8 @@ void msg_destroy(msg *m)
 {
 	if (cf_rc_release(m)) {
 		for (int i=0;i<m->len;i++) {
-			if (m->f[i].is_valid && m->f[i].is_set && m->f[i].is_copy)
-				free(m->f[i].u.buf);
+			if (m->f[i].is_valid && m->f[i].is_set && m->f[i].free)
+				free(m->f[i].free);
 		}
 			
 		cf_rc_free(m);
@@ -789,7 +847,7 @@ msg_dump(const msg *m)
 	printf("msg_dump: msg %p acount %d flen %d bytesused %d bytesallocd %d  mt %p\n",
 		m,(int)cf_rc_count((void *)m),m->len,m->bytes_used,m->bytes_alloc,m->mt);
 	for (int i=0;i<m->len;i++) {
-		printf("mf %02d: id %d isvalid %d iset %d iscopy %d\n",i,m->f[i].id,m->f[i].is_valid,m->f[i].is_set,m->f[i].is_copy);
+		printf("mf %02d: id %d isvalid %d iset %d\n",i,m->f[i].id,m->f[i].is_valid,m->f[i].is_set);
 		if (m->f[i].is_valid && m->f[i].is_set) {
 			switch(m->f[i].type) {
 				case M_FT_INT32:
@@ -805,10 +863,10 @@ msg_dump(const msg *m)
 					printf("   type UINT64 value %"PRIu64"\n",m->f[i].u.ui64);
 					break;
 				case M_FT_STR:
-					printf("   type STR len %d value %s\n",m->f[i].field_len,m->f[i].u.str);
+					printf("   type STR len %d value %s free %p\n",m->f[i].field_len,m->f[i].u.str,m->f[i].free);
 					break;
 				case M_FT_BUF:
-					printf("   type BUF len %d\n",m->f[i].field_len);
+					printf("   type BUF len %d free %p\n",m->f[i].field_len,m->f[i].free);
 					for (int j=0;j<m->f[i].field_len;j++) {
 						printf("%02x ",m->f[i].u.buf[j]);
 						if (j % 16 == 8) printf(" : ");

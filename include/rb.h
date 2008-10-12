@@ -15,7 +15,7 @@
  * */
 
 
-
+                                                                          
 /* cf_rb_node
  * A red-black tree node */
 struct cf_rb_node_t
@@ -53,3 +53,6 @@ extern void cf_rb_delete(cf_rb_tree *tree, void *key, ssize_t keysz);
 extern cf_rb_tree *cf_rb_create();
 extern void cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r);
 extern void cf_rb_destroy(cf_rb_tree *tree);
+
+typedef void (*cf_rb_reduce_fn) (cf_digest digest, void *value, void *udata);
+extern void cf_rb_reduce(cf_rb_tree *tree, cf_rb_reduce_fn cb, void *udata);

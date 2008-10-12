@@ -33,9 +33,9 @@ typedef enum msg_type_t {
 	M_TYPE_FABRIC = 0,   // fabric's internal msg
 	M_TYPE_HEARTBEAT = 1,
 	M_TYPE_PAXOS = 2, // paxos' msg
-	M_TYPE_MIGRATION = 3,
+	M_TYPE_MIGRATE = 3,
 	M_TYPE_TEST = 4,
-	M_TYPE_MAX = 5
+	M_TYPE_MAX = 5  /* highest + 1 is correct */
 } msg_type;
 
 
@@ -61,7 +61,6 @@ typedef struct msg_field_t {
 	int 		field_len;  // used only for str and buf
 	bool		is_valid;   // DEBUG - helps return errors on invalid types
 	bool		is_set;     // keep track of whether the field was ever set
-	bool		is_copy;    // if the 'str' or 'buf' is a copy, I must free
 	union {
 		uint32_t	ui32;
 		int32_t		i32;
@@ -71,6 +70,8 @@ typedef struct msg_field_t {
 		byte		*buf;
 		struct msg *m; // expansion - allows recursion - but how to describe?
 	} u;
+	void 		*free;  // this is a pointer that must be freed on destruction,
+						// where exactly it points is a slight mystery
 } msg_field;
 
 
@@ -117,12 +118,20 @@ extern void msg_incr_ref(msg *m);
 // interface (where the 'copy' interface would return the length regardless,
 // thus is also a 'getlet' method
 
+// Note about 'get_buf' and 'get_bytearray'. These both operate on 'buf' type
+// fields. The 'buf' calls, however, will either consume your pointer (and not free it later, does this still make sense?)
+// or will take a copy of the data.
+// The cf_bytearray version of 'get' will malloc you up a new cf_bytearray that you can take
+// away for yoursef. The set_bytearray will do the same thing, take your cf_bytearray and free
+// it later when the message is destroyed.
+
 extern int msg_get_uint32(const msg *m, int field_id, uint32_t *r);
 extern int msg_get_int32(const msg *m, int field_id, int32_t *r);
 extern int msg_get_uint64(const msg *m, int field_id, uint64_t *r);
 extern int msg_get_int64(const msg *m, int field_id, int64_t *r);
 extern int msg_get_str(const msg *m, int field_id, char **r, size_t *len, bool copy);  // this length is strlen+1, the allocated size
 extern int msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, bool copy);
+extern int msg_get_bytearray(const msg *m, int field_id, cf_bytearray **r);
 
 extern int msg_set_uint32(msg *m, int field_id, const uint32_t v);
 extern int msg_set_int32(msg *m, int field_id, const int32_t v);
@@ -130,6 +139,7 @@ extern int msg_set_uint64(msg *m, int field_id, const uint64_t v);
 extern int msg_set_int64(msg *m, int field_id, const int64_t v);
 extern int msg_set_str(msg *m, int field_id, const char *v, bool copy);
 extern int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, bool copy);
+extern int msg_set_bytearray(msg *m, int field_id, const cf_bytearray *ba);
 
 // A little routine that's good for testing
 extern int msg_compare(const msg *m1, const msg *m2);
