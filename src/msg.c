@@ -20,7 +20,7 @@
 #include "cf.h"
 
 int 
-msg_create(msg **m_r, const msg_template *mt, size_t mt_sz)
+msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 {
 	// Figure out how many bytes you need
 	int mt_rows = mt_sz / sizeof(msg_template);
@@ -50,7 +50,7 @@ msg_create(msg **m_r, const msg_template *mt, size_t mt_sz)
 	cf_assert(m, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "malloc");
 	m->len = max_id;
 	m->bytes_used = m->bytes_alloc = a_sz;
-	
+	m->type = type;
 	m->mt = mt;
 	
 	// debug - not strictly necessary, but saves the user if they
@@ -100,6 +100,7 @@ msg_incr_ref(msg *m)
 //
 // Current protocol:
 // uint32_t size-in-bytes (not including this header, network byte order)
+// uint16_t type (still included in the header)
 //      2 byte - field id
 // 		1 byte - field type
 //      3 bytes - field size
@@ -123,17 +124,25 @@ msg_incr_ref(msg *m)
 int 
 msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 {
-	if (buflen < 4) {
+	if (buflen < 6) {
 		D("msg_parse: but not enough data! can't handle that yet len %d need 4.",buflen);
 		return(-2);
 	}
 	uint32_t len = *(uint32_t *) buf;
 	len = htonl(len) ;
-	if (buflen < len + 4) {
+	if (buflen < len + 6) {
 		D("msg_parse: but not enough data! can't handle that yet. len %d need %d",buflen, (len + 4));
 		return(-2);
 	}
 	buf += 4;
+	
+	uint16_t type = *(uint16_t *) buf;
+	type = ntohs(type);
+	if (m->type != type) {
+		D("msg_parse: trying to parse incoming type %d into msg type %d, bad bad",type, m->type);
+		return(-1);
+	}
+	buf += 2;
 
 	const byte *eob = buf + len;
 	
@@ -157,7 +166,7 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 			}
 		}
 		
-		field_type ft = (field_type) *buf;
+		msg_field_type ft = (msg_field_type) *buf;
 		uint32_t flen = (buf[1] << 16) | (buf[2] << 8) | (buf[3]);
 		buf += 4;
 		
@@ -212,19 +221,25 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 
 //
 int
-msg_get_size(size_t *size_r, const byte *buf, const size_t buflen)
+msg_get_initial(size_t *size_r, msg_type *type_r, const byte *buf, const size_t buflen)
 {
 	// enuf bytes to tell yet?
-	if (buflen < 4)
+	if (buflen < 6)
 		return(-2);
+	
 	// grab from the buf, nevermind alignment (see note)
 	size_t size = * (uint32_t *) buf;
 	// !paws
-	size = htonl(size);
+	size = ntohl(size);
 	// size does not include this header
-	size += 4;
+	size += 6;
 	// bob's you're uncle
 	*size_r = size;
+	
+	buf += 4;
+	uint16_t type = * (uint16_t *) buf;
+	type = ntohs(type);
+	*type_r = type;
 	
 	return( 0 );
 
@@ -269,7 +284,7 @@ msg_stamp_field(byte *buf, const msg_field *mf)
 	buf += 2;
 
 	// stamp the type
-	*buf++ = (field_type) mf->type;
+	*buf++ = (msg_field_type) mf->type;
 	
 	// Stamp the field itself (forward over the length, we'll patch that later
 	size_t flen;
@@ -336,7 +351,7 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 	memset(buf, 0xff, *buflen);
 	
 	// Figure out the size
-	size_t	sz = 4;
+	size_t	sz = 6;
 	
 	for (int i=0;i<m->len;i++) {
 		const msg_field *mf = &m->f[i];
@@ -353,8 +368,11 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 	*buflen = sz;
 	
 	// stamp the size in the buf
-	(* (uint32_t *) buf) = htonl(sz - 4);
+	(* (uint32_t *) buf) = htonl(sz - 6);
 	buf += 4;
+	// stamp the type
+	(* (uint16_t *) buf) = htons(m->type);
+	buf += 2;
 	
 	// copy the fields
 	for (int i=0;i<m->len;i++) {

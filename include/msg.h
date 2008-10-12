@@ -15,7 +15,7 @@
 
 // NOTE: These values are actually used on the wire right now!type
 
-typedef enum field_type_t {
+typedef enum msg_field_type_t {
 	M_FT_INT32 = 1,
 	M_FT_UINT32 = 2,
 	M_FT_INT64 = 3,
@@ -24,12 +24,24 @@ typedef enum field_type_t {
 	M_FT_BUF = 6,
 	M_FT_ARRAY = 7,
 	M_FT_MESSAGE = 8,
-} field_type;
+} msg_field_type;
+
+// this is somewhat of a helper, because 
+// in reality we never look at this values - they're for the caller to use.
+// it's only important that the maximum value is respected
+typedef enum msg_type_t {
+	M_TYPE_FABRIC = 0,   // fabric's internal msg
+	M_TYPE_HEARTBEAT = 1,
+	M_TYPE_PAXOS = 2, // paxos' msg
+	M_TYPE_MIGRATION = 3,
+	M_TYPE_TEST = 4,
+	M_TYPE_MAX = 5
+} msg_type;
 
 
 typedef struct msg_field_template_t {
 	unsigned int		id;
-	field_type 			type;
+	msg_field_type 			type;
 } msg_field_template;
 
 // TODO: consider that a msg_desc should have a human readable string
@@ -45,7 +57,7 @@ typedef msg_field_template msg_template;
 
 typedef struct msg_field_t {
 	unsigned int 		id; // really probabaly don't need this in the represenation we have
-	field_type 	type; 		// don't actually need this - but leave for faster access
+	msg_field_type 	type; 		// don't actually need this - but leave for faster access
 	int 		field_len;  // used only for str and buf
 	bool		is_valid;   // DEBUG - helps return errors on invalid types
 	bool		is_set;     // keep track of whether the field was ever set
@@ -67,6 +79,7 @@ typedef struct msg_t {
 	size_t   bytes_used;
 	size_t	 bytes_alloc;
 	bool     is_stack; // allocated on stack no need to free
+	msg_type type;
 	const msg_template    *mt;  // the message descriptor used to create this
 	msg_field   f[];
 } msg;
@@ -77,14 +90,14 @@ typedef struct msg_t {
 // too. If everything fits, it stays. We use the msg_desc as a hint
 // Slightly unusually, the 'md_sz' field is in bytes. This is a good shortcut
 // to avoid terminator fields or anything similar
-extern int msg_create(msg **m, const msg_template *mt, size_t mt_sz);
+extern int msg_create(msg **m, msg_type type, const msg_template *mt, size_t mt_sz);
 
 // msg_parse - parse a buffer into a message, which thus can be accessed
 extern int msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy);
 
-// If you've received a little bit of a buffer, grab the size header.
+// If you've received a little bit of a buffer, grab the size header and type
 // return = -2 means "not enough to tell yet"
-extern int msg_get_size(size_t *size, const byte *buf, const size_t buflen);
+extern int msg_get_initial(size_t *size, msg_type *type, const byte *buf, const size_t buflen);
 
 // msg_tobuf - parse a message out into a buffer. Ret
 extern int msg_fillbuf(const msg *m, byte *buf, size_t *buflen);
