@@ -423,14 +423,16 @@ cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r)
 ** call a function on all the nodes in the tree
 */
 void
-cf_rb_reduce_traverse( cf_rb_node *r, cf_rb_reduce_fn cb, void *udata)
+cf_rb_reduce_traverse(  cf_rb_node *r, cf_rb_node *sentinel, cf_rb_reduce_fn cb, void *udata)
 {
-	
-	(cb) (r->key, r->value, udata);
+	if (r->value)
+		(cb) (r->key, r->value, udata);
 
-	if (r->left) 	cf_rb_reduce_traverse(r->left, cb, udata);
+	if (r->left != sentinel)		
+		cf_rb_reduce_traverse(r->left, sentinel, cb, udata);
 	
-	if (r->right)	cf_rb_reduce_traverse(r->right, cb, udata);
+	if (r->right != sentinel)
+		cf_rb_reduce_traverse(r->right, sentinel, cb, udata);
 	
 }
 
@@ -442,8 +444,10 @@ cf_rb_reduce(cf_rb_tree *tree, cf_rb_reduce_fn cb, void *udata)
     if (0 != pthread_mutex_lock(&tree->TREE_LOCK))
         perror("rb_delete: failed to acquire lock");
 	
-	if (tree->root && tree->root->left)
-		cf_rb_reduce_traverse(tree->root->left, cb, udata);
+	if ( (tree->root) && 
+		 (tree->root->left) && 
+		 (tree->root->left != tree->sentinel) )
+		cf_rb_reduce_traverse(tree->root->left, tree->sentinel, cb, udata);
 
 release:
     if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))

@@ -30,7 +30,7 @@ typedef uint8_t byte;
  * An array of bytes */
 struct cf_bytearray_t {
 	uint64_t sz;
-	void *data;
+	byte data[];
 };
 typedef struct cf_bytearray_t cf_bytearray;
 
@@ -45,8 +45,6 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "socket.h"
 #include "msg.h"
 #include "bbhash.h"
-
-
 
 /* cf_compare_ptr
  * Compare the first sz bytes from two regions referenced by pointers */

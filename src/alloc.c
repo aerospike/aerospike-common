@@ -43,7 +43,8 @@ cf_rc_reserve(void *addr)
 	/* Extract the address of the reference counter, then increment it */
 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 
-	return(cf_atomic_int_addunless(rc, 0, 1));
+//	return(cf_atomic_int_addunless(rc, 0, 1));
+	return(cf_atomic_int_add(rc, 1));
 }
 
 

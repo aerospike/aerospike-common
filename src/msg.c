@@ -63,7 +63,7 @@ msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 		msg_field *f = &(m->f[ mt[i].id ] );
 		f->id = mt[i].id;
 		f->type = mt[i].type;
-		f->free = 0;
+		f->rc_free = f->free = 0;
 		f->is_set = false;
 		f->is_valid = true;
 	}
@@ -120,13 +120,13 @@ int
 msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 {
 	if (buflen < 6) {
-		D("msg_parse: but not enough data! can't handle that yet len %d need 4.",buflen);
+		D("msg_parse: but not enough data! will get called again len %d need 6.",buflen);
 		return(-2);
 	}
 	uint32_t len = *(uint32_t *) buf;
-	len = htonl(len) ;
+	len = ntohl(len) ;
 	if (buflen < len + 6) {
-		D("msg_parse: but not enough data! can't handle that yet. len %d need %d",buflen, (len + 4));
+		D("msg_parse: but not enough data! will get called again. len %d need %d",buflen, (len + 6));
 		return(-2);
 	}
 	buf += 4;
@@ -223,7 +223,7 @@ msg_get_initial(size_t *size_r, msg_type *type_r, const byte *buf, const size_t 
 		return(-2);
 	
 	// grab from the buf, nevermind alignment (see note)
-	size_t size = * (uint32_t *) buf;
+	uint32_t size = * (uint32_t *) buf;
 	// !paws
 	size = ntohl(size);
 	// size does not include this header
@@ -389,7 +389,10 @@ msg_reset(msg *m)
 	m->bytes_used = m->bytes_alloc;
 	for (int i=0 ; i < m->len ; i++) {
 		if (m->f[i].is_valid) {
-			if (m->f[i].is_set && m->f[i].free)	free(m->f[i].free);
+			if (m->f[i].is_set) {
+				if (m->f[i].free)	free(m->f[i].free);
+				if (m->f[i].rc_free) cf_rc_releaseandfree(m->f[i].rc_free);
+			}
 			m->f[i].is_set = false;
 		}
 	}
@@ -619,7 +622,7 @@ msg_set_uint32(msg *m, int field_id, const uint32_t v)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 
-	m->f[field_id].free = 0; // pains me. Should be unnecessary. valgrind complains.
+	m->f[field_id].rc_free = m->f[field_id].free = 0; // pains me. Should be unnecessary. valgrind complains.
 	m->f[field_id].is_set = true;
 	m->f[field_id].u.ui32 = v;
 	
@@ -639,7 +642,7 @@ msg_set_int32(msg *m, int field_id, const int32_t v)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 
-	m->f[field_id].free = 0; // pains me. Should be unnecessary. valgrind complains.
+	m->f[field_id].rc_free = m->f[field_id].free = 0; // pains me. Should be unnecessary. valgrind complains.
 	m->f[field_id].is_set = true;
 	m->f[field_id].u.i32 = v;
 	
@@ -659,7 +662,7 @@ msg_set_uint64(msg *m, int field_id, const uint64_t v)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
-	m->f[field_id].free = 0; // pains me. Should be unnecessary. valgrind complains.
+	m->f[field_id].rc_free = m->f[field_id].free = 0; // pains me. Should be unnecessary. valgrind complains.
 	m->f[field_id].is_set = true;
 	m->f[field_id].u.ui64 = v;
 	
@@ -679,7 +682,7 @@ msg_set_int64(msg *m, int field_id, const int64_t v)
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
-	m->f[field_id].free = 0; // pains me. Should be unnecessary. valgrind complains.
+	m->f[field_id].rc_free = m->f[field_id].free = 0; // pains me. Should be unnecessary. valgrind complains.
 	m->f[field_id].is_set = true;
 	m->f[field_id].u.i64 = v;
 	
@@ -702,9 +705,9 @@ msg_set_str(msg *m, int field_id, const char *v, bool copy)
 	msg_field *mf = &(m->f[field_id]);
 	
 	// free auld value if necessary
-	if (mf->is_set && mf->free) {
-		free(mf->free);
-		mf->free = 0;
+	if (mf->is_set) {
+		if (mf->free) {	free(mf->free); mf->free = 0; }
+		if (mf->rc_free) { cf_rc_releaseandfree(mf->rc_free); mf->rc_free = 0; }
 	}
 	
 	mf->field_len = strlen(v)+1;
@@ -725,7 +728,7 @@ msg_set_str(msg *m, int field_id, const char *v, bool copy)
 		}
 	} else {
 		mf->u.str = (char *)v; // compiler winges here, correctly, but I bless this -b
-		mf->free = 0;
+		mf->rc_free = mf->free = 0;
 	}
 		
 	mf->is_set = true;
@@ -749,9 +752,9 @@ int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, bool copy)
 	msg_field *mf = &(m->f[field_id]);
 	
 	// free auld value if necessary
-	if (mf->is_set && mf->free) {
-		free(mf->free);
-		mf->free = 0;
+	if (mf->is_set) {
+		if (mf->free) {	free(mf->free); mf->free = 0; }
+		if (mf->rc_free) { cf_rc_releaseandfree(mf->rc_free); mf->rc_free = 0; }
 	}
 	
 	mf->field_len = len;
@@ -761,7 +764,7 @@ int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, bool copy)
 		if (m->bytes_alloc - m->bytes_used >= len) {
 			mf->u.buf = ((byte *)m) + m->bytes_used;
 			m->bytes_alloc += len;
-			mf->free = 0;
+			mf->rc_free = mf->free = 0;
 		}
 		// Or just malloc if we have to. Sad face.
 		else {
@@ -774,7 +777,7 @@ int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, bool copy)
 
 	} else {
 		mf->u.str = (void *)v; // compiler winges here, correctly, but I bless this -b
-		mf->free = 0;
+		mf->rc_free = mf->free = 0;
 	}
 		
 	mf->is_set = true;
@@ -797,14 +800,14 @@ int msg_set_bytearray(msg *m, int field_id, const cf_bytearray *v)
 	msg_field *mf = &(m->f[field_id]);
 	
 	// free auld value if necessary
-	if (mf->is_set && mf->free) {
-		free(mf->free);
-		mf->free = 0;
+	if (mf->is_set) {
+		if (mf->free) {	free(mf->free); mf->free = 0; }
+		if (mf->rc_free) { cf_rc_releaseandfree(mf->rc_free); mf->rc_free = 0; }
 	}
 	
 	mf->field_len = v->sz;
 	mf->u.buf = v->data;
-	mf->free = (void *) v;
+	mf->rc_free = v;
 			
 	mf->is_set = true;
 	

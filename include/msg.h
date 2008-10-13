@@ -72,6 +72,7 @@ typedef struct msg_field_t {
 	} u;
 	void 		*free;  // this is a pointer that must be freed on destruction,
 						// where exactly it points is a slight mystery
+	void 		*rc_free;
 } msg_field;
 
 
