@@ -13,6 +13,8 @@
 #include <stdbool.h>
 // We have lots of use of basic types like uint8_t
 #include <inttypes.h>
+// Some people use ssize_t (signed size), which is in unistd.h
+#include <unistd.h>
 
 /* Truth and falsehood !!! use C99 bool types instead, dude !!! */
 #define FALSE 0
@@ -61,3 +63,5 @@ extern uint32 cf_nodeid_hash_fn(void *value, uint32 value_len);
 extern int cf_nodeid_get( unsigned short port, cf_node *id );
 extern unsigned short cf_nodeid_get_port(cf_node id);
 
+// This is even shorter!
+extern uint64_t cf_getms();

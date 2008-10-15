@@ -83,6 +83,12 @@ msg_incr_ref(msg *m)
 	cf_rc_reserve(m);
 }
 
+void
+msg_decr_ref(msg *m)
+{
+	cf_rc_release(m);
+}
+
 
 
 // THE MEAT!

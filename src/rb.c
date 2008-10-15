@@ -72,14 +72,14 @@ cf_rb_rotate_right(cf_rb_tree *tree, cf_rb_node *r)
 /* cf_rb_insert
  * Insert a node with a given key into a red-black tree */
 cf_rb_node *
-cf_rb_insert(cf_rb_tree *tree, void *key, ssize_t keysz, void *value)
+cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
 {
     cf_rb_node *n, *s, *t, *u;
 
     /* Allocate memory for the new node and set the node parameters */
     if (NULL == (n = (cf_rb_node *)calloc(1, sizeof(cf_rb_node))))
         return(NULL);
-	cf_digest_compute(key, keysz, n->key);
+	memcpy(n->key, key, CF_DIGEST_KEY_SZ);
 	n->value = value;
     n->left = n->right = tree->sentinel;
     n->color = CF_RB_RED;
@@ -254,18 +254,15 @@ cf_rb_deleterebalance(cf_rb_tree *tree, cf_rb_node *r)
 /* cf_rb_search_lockless
  * Perform a lockless search for a node in a red-black tree */
 cf_rb_node *
-cf_rb_search_lockless(cf_rb_tree *tree, void *key, ssize_t keysz)
+cf_rb_search_lockless(cf_rb_tree *tree, cf_digest dkey)
 {
     cf_rb_node *r = tree->root->left;
     cf_rb_node *s = NULL;
     int c;
-	cf_digest dkey;
 
     /* If there are no entries in the tree, we're done */
     if (r == tree->sentinel)
         goto miss;
-
-	cf_digest_compute(key, keysz, dkey);
 
     s = r;
     while (s != tree->sentinel) {
@@ -285,7 +282,7 @@ miss:
 /* cf_rb_search
  * Search a red-black tree for a node with a particular key */
 cf_rb_node *
-cf_rb_search(cf_rb_tree *tree, void *key, ssize_t keysz)
+cf_rb_search(cf_rb_tree *tree, cf_digest key)
 {
     cf_rb_node *r;
 
@@ -293,7 +290,7 @@ cf_rb_search(cf_rb_tree *tree, void *key, ssize_t keysz)
     if (0 != pthread_mutex_lock(&tree->TREE_LOCK))
         perror("rb_search: failed to acquire lock");
 
-    r = cf_rb_search_lockless(tree, key, keysz);
+    r = cf_rb_search_lockless(tree, key);
 
     /* Unlock the tree */
     if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
@@ -306,7 +303,7 @@ cf_rb_search(cf_rb_tree *tree, void *key, ssize_t keysz)
 /* cf_rb_delete
  * Remove a node from a red-black tree */
 void
-cf_rb_delete(cf_rb_tree *tree, void *key, ssize_t keysz)
+cf_rb_delete(cf_rb_tree *tree, cf_digest key)
 {
     cf_rb_node *r, *s, *t;
 
@@ -315,9 +312,8 @@ cf_rb_delete(cf_rb_tree *tree, void *key, ssize_t keysz)
         perror("rb_delete: failed to acquire lock");
 
     /* Find a node with the matching key; if none exists, eject immediately */
-    if (NULL == (r = cf_rb_search_lockless(tree, key, keysz)))
+    if (NULL == (r = cf_rb_search_lockless(tree, key)))
         goto release;
-
 
     s = ((tree->sentinel == r->left) || (tree->sentinel == r->right)) ? r : cf_rb_successor(tree, r);
     t = (tree->sentinel == s->left) ? s->right : s->left;
@@ -449,7 +445,6 @@ cf_rb_reduce(cf_rb_tree *tree, cf_rb_reduce_fn cb, void *udata)
 		 (tree->root->left != tree->sentinel) )
 		cf_rb_reduce_traverse(tree->root->left, tree->sentinel, cb, udata);
 
-release:
     if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
         perror("rb_delete: failed to release lock");
     return;

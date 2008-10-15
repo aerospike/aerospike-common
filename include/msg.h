@@ -111,6 +111,7 @@ extern void msg_reset(msg *m);
 // Messages are reference counted. If you need to take a reference,
 // call this function. Everyone calls destroy.
 extern void msg_incr_ref(msg *m);
+extern void msg_decr_ref(msg *m); // this isn't used much, but helps when unwinding errors
 
 // Getters and setters
 
