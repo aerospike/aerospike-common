@@ -24,8 +24,8 @@
 /* cf_digest
  * Storage for a message digest */
 #define CF_DIGEST_KEY_SZ RIPEMD160_DIGEST_LENGTH
-typedef uint8_t cf_digest[CF_DIGEST_KEY_SZ];
+typedef struct { uint8_t digest[CF_DIGEST_KEY_SZ]; } cf_digest;
 
 /* cf_digest_compute
  * Compute the digest of an input */
-#define cf_digest_compute(_u, _v, _w) RIPEMD160((_u), (_v), (_w))
+#define cf_digest_compute(_u, _v, _w) RIPEMD160((_u), (_v), (unsigned char *)(_w.digest))

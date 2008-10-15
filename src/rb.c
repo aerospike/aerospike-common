@@ -79,7 +79,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     /* Allocate memory for the new node and set the node parameters */
     if (NULL == (n = (cf_rb_node *)calloc(1, sizeof(cf_rb_node))))
         return(NULL);
-	memcpy(n->key, key, CF_DIGEST_KEY_SZ);
+	n->key = key;
 	n->value = value;
     n->left = n->right = tree->sentinel;
     n->color = CF_RB_RED;
@@ -96,12 +96,12 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     t = tree->root->left;
     while (t != tree->sentinel) {
         s = t;
-        t = (0 <= memcmp(n->key, t->key, CF_DIGEST_KEY_SZ)) ? t->left : t->right;
+        t = (0 <= memcmp(n->key.digest, t->key.digest, CF_DIGEST_KEY_SZ)) ? t->left : t->right;
     }
     n->parent = s;
 
     /* If the node already exists, stop a double-insertion */
-    if ((s != tree->root) && (0 == memcmp(n->key, s->key, CF_DIGEST_KEY_SZ))) {
+    if ((s != tree->root) && (0 == memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ))) {
         free(n);
         if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
             perror("rb_insert: failed to release lock on double insertion");
@@ -109,7 +109,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     }
 
     /* Insert the node */
-    if ((s == tree->root) || (0 < memcmp(n->key, s->key, CF_DIGEST_KEY_SZ)))
+    if ((s == tree->root) || (0 < memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ)))
         s->left = n;
     else
         s->right = n;
@@ -266,7 +266,7 @@ cf_rb_search_lockless(cf_rb_tree *tree, cf_digest dkey)
 
     s = r;
     while (s != tree->sentinel) {
-        c = memcmp(dkey, s->key, CF_DIGEST_KEY_SZ);
+        c = memcmp(dkey.digest, s->key.digest, CF_DIGEST_KEY_SZ);
         if (c)
             s = (c > 0) ? s->left : s->right;
         else
@@ -332,7 +332,8 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
             cf_rb_deleterebalance(tree, t);
 
         /* Free memory for the node contents */
-        free(r->key);
+		/* this is an as_record, can't simply be freed */
+        // free(r->value);
 
         /* Reassign pointers and coloration */
         s->left = r->left;
@@ -347,7 +348,9 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
             r->parent->right = s;
         free(r);
     } else {
-        free(s->key);
+		// free memory of node contents - this is an as_record,
+		// can't simply be freed
+        // free(s->value);
         if (CF_RB_BLACK == s->color)
             cf_rb_deleterebalance(tree, t);
         free(s);
@@ -409,7 +412,10 @@ cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r)
     cf_rb_purge(tree, r->right);
 
     /* Release this node's memory */
-    free(r->key);
+	// this is terribly wrong - the destructor for the value type
+	// is not well known - in our case an as_record, which is complex and
+	// refcounted
+    // free(r->value);
     free(r);
 
     return;
