@@ -29,6 +29,7 @@ typedef volatile uint32_t cf_atomic_p;
 typedef volatile uint32_t cf_atomic_int;
 #define SIZEOF_ATOMIC_INT 4
 typedef uint32_t cf_atomic_int_t; // the point here is a type of the same size as cf_atomic_int but isn't atomic
+#define HAS_ATOMIC_32 1
 #endif
 
 #ifdef MARCH_x86_64
@@ -38,7 +39,11 @@ typedef volatile uint64_t cf_atomic_p;
 typedef volatile uint64_t cf_atomic_int;
 #define SIZEOF_ATOMIC_INT 8
 typedef uint64_t cf_atomic_int_t; // the point here is a type of the same size as cf_atomic_int but isn't atomic
+#define HAS_ATOMIC_32 1
+#define HAS_ATOMIC_64 1
 #endif
+
+
 
 /*
  * cf_atomicX_add
@@ -62,7 +67,7 @@ typedef uint64_t cf_atomic_int_t; // the point here is a type of the same size a
 
 /* cf_atomic64_get
  * Read an atomic value */
-#ifdef MARCH_x86_64
+#ifdef HAS_ATOMIC_64
 
 #define cf_atomic64_get(a) (a)
 #define cf_atomic64_set(a, b) (*(a) = (b))
@@ -143,7 +148,7 @@ cf_atomic64_addunless(cf_atomic64 *a, int64_t b, int64_t x)
 
 #endif // uint64
 
-#ifdef MARCH_i686
+#ifdef HAS_ATOMIC_32
 
 
 #define cf_atomic32_get(a) (a)
