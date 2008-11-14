@@ -47,6 +47,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "socket.h"
 #include "msg.h"
 #include "bbhash.h"
+#include "rchash.h"
 
 /* cf_compare_ptr
  * Compare the first sz bytes from two regions referenced by pointers */

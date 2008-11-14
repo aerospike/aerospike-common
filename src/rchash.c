@@ -1,6 +1,11 @@
 /*
  * A general purpose hashtable implementation
- * Good at multithreading
+ * Which supports the citrusleaf reference counting
+ * natively
+ *
+ * You can only put a pointer in. Having the pointer in the table holds
+ * its reference count. Doing a delete decreases the reference count
+ * internally. As 
  * Just, hopefully, the last reasonable hash table you'll ever need
  * Copywrite 2008 Brian Bulkowski
  * All rights reserved
@@ -10,13 +15,11 @@
 #include <stdlib.h>
 
 #include "cf.h"
-// standalone version is different
-// #include "bbhash.h"
 
 int
-bbhash_create(bbhash **h_r, bbhash_hash_fn h_fn, uint32 key_len, uint32 value_len, uint32 sz, uint flags)
+rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint32 key_len, uint32 sz, uint flags)
 {
-	bbhash *h;
+	rchash *h;
 
 	h = malloc(sizeof(bbhash));
 	if (!h)	return(BB_ERR);
@@ -24,11 +27,11 @@ bbhash_create(bbhash **h_r, bbhash_hash_fn h_fn, uint32 key_len, uint32 value_le
 	h->elements = 0;
 	h->table_len = sz;
 	h->key_len = key_len;
-	h->value_len = value_len;
 	h->flags = flags;
 	h->h_fn = h_fn;
+	h->d_fn = d_fn;
 
-	h->table = calloc(sz, sizeof(bbhash_elem));
+	h->table = calloc(sz, sizeof(rchash_elem));
 	if (!h->table) {
 		free(h);
 		return(BB_ERR);
@@ -47,42 +50,50 @@ bbhash_create(bbhash **h_r, bbhash_hash_fn h_fn, uint32 key_len, uint32 value_le
 }
 
 uint32
-bbhash_get_size(bbhash *h)
+rchash_get_size(rchash *h)
 {
 	return(h->elements);
 }
 
+void
+rchash_free(rchash *h, void *object)
+{
+	if (cf_rc_release(object) == 0) {
+		
+		if (h->d_fn)	(h->d_fn) (object) ;
+		cf_rc_free(object);
+	}
+}
+
 int
-bbhash_put(bbhash *h, void *key, uint32 key_len, void *value, uint32 value_len)
+rchash_put(rchash *h, void *key, uint32 key_len, void *object)
 {
 	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
-	if ((h->value_len) && (h->value_len != value_len) ) return(BB_ERR);
 
 	// Calculate hash
 	uint hash = h->h_fn(key, key_len);
 	hash %= h->table_len;
 
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) {
+	if (h->flags & RCHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_lock(&h->biglock);
 	}
 		
-	bbhash_elem *e = (bbhash_elem *) ( ((uint8_t *)h->table) + (sizeof(bbhash_elem) * hash));	
+	rchash_elem *e = (rchash_elem *) ( ((uint8_t *)h->table) + (sizeof(rchash_elem) * hash));	
 
 	// most common case should be insert into empty bucket, special case
 	if ( ( e->next == 0 ) && (e->key_len == 0) ) {
 		goto Copy;
 	}
 
-	bbhash_elem *e_head = e;
+	rchash_elem *e_head = e;
 
 	// This loop might be skippable if you know the key is not already in the hash
 	// (like, you just searched and it's single-threaded)	
 	while (e) {
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
-			free(e->value);
-			e->value = malloc(value_len);
-			memcpy(e->value, value, value_len);
+			rchash_free(h,e->object);
+			e->object = object;
 			if (h->flags & BBHASH_CR_MT_BIGLOCK)
 				pthread_mutex_unlock(&h->biglock);
 			return(BB_OK);
@@ -90,7 +101,7 @@ bbhash_put(bbhash *h, void *key, uint32 key_len, void *value, uint32 value_len)
 		e = e->next;
 	}
 
-	e = (bbhash_elem *) malloc(sizeof(bbhash_elem));
+	e = (rchash_elem *) malloc(sizeof(rchash_elem));
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -98,9 +109,9 @@ Copy:
 	e->key = malloc(key_len);
 	memcpy(e->key, key, key_len);
 	e->key_len = key_len;
-	e->value = malloc(value_len);
-	memcpy(e->value, value, value_len);
-	e->value_len = value_len;
+
+	e->object = object;
+
 	h->elements++;
 	if (h->flags & BBHASH_CR_MT_BIGLOCK) 
 		pthread_mutex_unlock(&h->biglock);
@@ -109,7 +120,7 @@ Copy:
 }
 
 int
-bbhash_get(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len)
+rchash_get(rchash *h, void *key, uint32 key_len, void **object)
 {
 	int rv = BB_ERR;
 	
@@ -119,18 +130,13 @@ bbhash_get(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len)
 	if (h->flags & BBHASH_CR_MT_BIGLOCK)
 		pthread_mutex_lock(&h->biglock);
 	
-	bbhash_elem *e = (bbhash_elem *) ( ((byte *)h->table) + (sizeof(bbhash_elem) * hash));	
+	rchash_elem *e = (rchash_elem *) ( ((byte *)h->table) + (sizeof(rchash_elem) * hash));	
 
 	do {
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(key, e->key, key_len) == 0) ) {
-			if ( *value_len < e->value_len ) {
-				*value_len = e->value_len; // give em a hint so they can call again
-				rv = BB_ERR_BUFSZ; 
-				goto Out;
-			}
-			memcpy(value, e->value, e->value_len);
-			*value_len = e->value_len;
+			cf_rc_reserve( e->object );
+			*object = e->object;
 			rv = BB_OK; 
 			goto Out;
 		}
@@ -139,7 +145,7 @@ bbhash_get(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len)
 	rv = BB_ERR_NOTFOUND;
 	
 Out:
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & RCHASH_CR_MT_BIGLOCK)
 		pthread_mutex_unlock(&h->biglock);
 
 	return(rv);
@@ -147,7 +153,7 @@ Out:
 }
 
 int
-bbhash_delete(bbhash *h, void *key, uint32 key_len)
+rchash_delete(rchash *h, void *key, uint32 key_len)
 {
 	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
 
@@ -160,7 +166,7 @@ bbhash_delete(bbhash *h, void *key, uint32 key_len)
 		pthread_mutex_lock(&h->biglock);
 	}
 		
-	bbhash_elem *e = (bbhash_elem *) ( ((uint8_t *)h->table) + (sizeof(bbhash_elem) * hash));	
+	rchash_elem *e = (rchash_elem *) ( ((uint8_t *)h->table) + (sizeof(rchash_elem) * hash));	
 
 	// If bucket empty, def can't delete
 	if ( ( e->next == 0 ) && (e->key_len == 0) ) {
@@ -168,15 +174,15 @@ bbhash_delete(bbhash *h, void *key, uint32 key_len)
 		goto Out;
 	}
 
-	bbhash_elem *e_prev = 0;
+	rchash_elem *e_prev = 0;
 
 	// Look for teh element and destroy if found
 	while (e) {
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
-			// Found it
+			// Found it, kill it
 			free(e->key);
-			free(e->value);
+			rchash_free(h, e->object);
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
@@ -186,12 +192,12 @@ bbhash_delete(bbhash *h, void *key, uint32 key_len)
 			else {
 				// at head with no next - easy peasy!
 				if (0 == e->next) {
-					memset(e, 0, sizeof(bbhash_elem));
+					memset(e, 0, sizeof(rchash_elem));
 				}
 				// at head with a next - more complicated
 				else {
-					bbhash_elem *_t = e->next;
-					memcpy(e, e->next, sizeof(bbhash_elem));
+					rchash_elem *_t = e->next;
+					memcpy(e, e->next, sizeof(rchash_elem));
 					free(_t);
 				}
 			}
@@ -206,7 +212,7 @@ bbhash_delete(bbhash *h, void *key, uint32 key_len)
 	rv = BB_ERR_NOTFOUND;
 
 Out:
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) 
+	if (h->flags & RCHASH_CR_MT_BIGLOCK) 
 		pthread_mutex_unlock(&h->biglock);
 	return(rv);	
 	
@@ -217,24 +223,24 @@ Out:
 // Can be lock-expensive at the moment, until we improve the lockfree code
 
 void
-bbhash_reduce(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
+rchash_reduce(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 {
 	
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & RCHASH_CR_MT_BIGLOCK)
 		pthread_mutex_lock(&h->biglock);
 
-	bbhash_elem *he = h->table;
+	rchash_elem *he = h->table;
 	
 	for (uint i=0; i<h->table_len ; i++) {
 
-		bbhash_elem *list_he = he;
+		rchash_elem *list_he = he;
 		while (list_he) {
 			
 			// 0 length means an unused head pointer - break
 			if (list_he->key_len == 0)
 				break;
 			
-			reduce_fn(list_he->key, list_he->key_len, list_he->value, list_he->value_len, udata);
+			reduce_fn(list_he->key, list_he->key_len, list_he->object, udata);
 			
 			list_he = list_he->next;
 		};
@@ -242,7 +248,7 @@ bbhash_reduce(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 		he++;
 	}
 
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & RCHASH_CR_MT_BIGLOCK)
 		pthread_mutex_unlock(&h->biglock);
 
 	return;
@@ -252,18 +258,18 @@ bbhash_reduce(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 // In this case, if you return '-1' from the reduce fn, that node will be
 // deleted
 void
-bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
+rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 {
 	
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & RCHASH_CR_MT_BIGLOCK)
 		pthread_mutex_lock(&h->biglock);
 
-	bbhash_elem *he = h->table;
+	rchash_elem *he = h->table;
 	
 	for (uint i=0; i<h->table_len ; i++) {
 
-		bbhash_elem *list_he = he;
-		bbhash_elem *prev_he = 0;
+		rchash_elem *list_he = he;
+		rchash_elem *prev_he = 0;
 		int rv;
 
 		
@@ -273,13 +279,13 @@ bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 			if (list_he->key_len == 0)
 				break;
 			
-			rv = reduce_fn(list_he->key, list_he->key_len, list_he->value, list_he->value_len, udata);
+			rv = reduce_fn(list_he->key, list_he->key_len, list_he->object, udata);
 			
 			// Delete is requested
 			// Leave the pointers in a "next" state
 			if (rv == -1) {
 				free(list_he->key);
-				free(list_he->value);
+				rchash_free(h, list_he->object);
 				// patchup pointers & free element if not head
 				if (prev_he) {
 					prev_he->next = list_he->next;
@@ -290,7 +296,7 @@ bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 				else {
 					// at head with no next - easy peasy!
 					if (0 == list_he->next) {
-						memset(list_he, 0, sizeof(bbhash_elem));
+						memset(list_he, 0, sizeof(rchash_elem));
 						list_he = 0;
 					}
 					// at head with a next - more complicated -
@@ -300,8 +306,8 @@ bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 					// Somewhat confusingly, prev_he stays 0
 					// and list_he stays where it is
 					else {
-						bbhash_elem *_t = list_he->next;
-						memcpy(list_he, list_he->next, sizeof(bbhash_elem));
+						rchash_elem *_t = list_he->next;
+						memcpy(list_he, list_he->next, sizeof(rchash_elem));
 						free(_t);
 					}
 				}
@@ -317,7 +323,7 @@ bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 		he++;
 	}
 
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & RCHASH_CR_MT_BIGLOCK)
 		pthread_mutex_unlock(&h->biglock);
 
 	return;
@@ -325,25 +331,23 @@ bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 
 
 void
-bbhash_destroy(bbhash *h)
+rchash_destroy(rchash *h)
 {
-	bbhash_elem *e_table = h->table;
+	rchash_elem *e_table = h->table;
 	for (uint i=0;i<h->table_len;i++) {
 		if (e_table->next) {
-			bbhash_elem *e = e_table->next;
-			bbhash_elem *t;
+			rchash_elem *e = e_table->next;
+			rchash_elem *t;
 			while (e) {
 				t = e->next;
-				free(e->key);
-				free(e->value);
 				free(e);
 				e = t;
 			}
 		}
-		e_table = (bbhash_elem *) ( ((byte *) e_table) + sizeof(bbhash_elem) );
+		e_table = (rchash_elem *) ( ((byte *) e_table) + sizeof(rchash_elem) );
 	}
 
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & RCHASH_CR_MT_BIGLOCK)
 		pthread_mutex_destroy(&h->biglock);
 
 
