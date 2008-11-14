@@ -42,6 +42,7 @@ struct cf_rb_tree_t
 	 * root node */
 	cf_rb_node *root;
 	cf_rb_node *sentinel;
+	uint32      elements; // no bother in making this atomic, it's not very exact
 };
 typedef struct cf_rb_tree_t cf_rb_tree;
 

@@ -151,7 +151,8 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
         }
     }
     tree->root->left->color = CF_RB_BLACK;
-
+	tree->elements++;
+	
     if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
         perror("rb_insert: failed to release lock on successful insert");
     return(u);
@@ -355,7 +356,8 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
             cf_rb_deleterebalance(tree, t);
         free(s);
     }
-
+	tree->elements--;
+	
 release:
     if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
         perror("rb_delete: failed to release lock");
@@ -372,7 +374,8 @@ cf_rb_create() {
     /* Allocate memory for the tree and initialize the tree lock */
     if (NULL == (tree = (cf_rb_tree *)calloc(1, sizeof(cf_rb_tree))))
         return(NULL);
-    if (0 != pthread_mutex_init(&tree->TREE_LOCK, NULL))
+    
+	if (0 != pthread_mutex_init(&tree->TREE_LOCK, NULL))
         return(NULL);
 
     /* Allocate memory for the sentinel; note that it's pointers are all set
