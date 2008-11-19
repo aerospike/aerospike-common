@@ -156,6 +156,11 @@ cf_socket_init_svc(cf_socket_cfg *s)
 	inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr);
 	s->saddr.sin_port = htons(s->port);
 
+	if (s->reuse_addr) {
+		int v = 1;
+		setsockopt(s->sock, SOL_SOCKET, SO_REUSEADDR, &v, sizeof(v) );
+	}
+	
 	/* Bind to the socket; if we can't, nanosleep() and retry */
 	while (0 > (bind(s->sock, (struct sockaddr *)&s->saddr, sizeof(struct sockaddr)))) {
 		if (EADDRINUSE != errno) {
@@ -236,7 +241,7 @@ cf_socket_connect_nb(cf_sockaddr so, int *fd_r)
 		}
 	}
 
-	byte *b = &sa.sin_addr;
+	byte *b = (byte *) &sa.sin_addr;
 	D("creating connection: fd %d %02x.%02x.%02x.%02x : %d",fd, b[0],b[1],b[2],b[3] ,htons(sa.sin_port) );
 
 	*fd_r = fd; 

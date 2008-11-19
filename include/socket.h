@@ -26,6 +26,8 @@ typedef uint64_t cf_sockaddr;
 struct cf_socket_cfg_t {
 	char *addr;
 	int port;
+	int reuse_addr; // set if you want 'reuseaddr' for server socket setup
+					 // not recommended for production use, rather nice for debugging
 
 	int sock;
 	struct sockaddr_in saddr;
