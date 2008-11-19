@@ -21,7 +21,7 @@ rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint
 {
 	rchash *h;
 
-	h = malloc(sizeof(bbhash));
+	h = malloc(sizeof(rchash));
 	if (!h)	return(BB_ERR);
 
 	h->elements = 0;
