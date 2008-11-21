@@ -22,6 +22,7 @@ struct cf_rb_node_t
 {
 	enum { CF_RB_BLACK, CF_RB_RED } color;
 	cf_digest key;
+    pthread_mutex_t VALUE_LOCK;
 	void *value;
 
 	struct cf_rb_node_t *left, *right, *parent;
@@ -49,7 +50,9 @@ typedef struct cf_rb_tree_t cf_rb_tree;
 
 /* External functions */
 extern cf_rb_node *cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value);
+extern cf_rb_node *cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t **vlock);
 extern cf_rb_node *cf_rb_search(cf_rb_tree *tree, cf_digest key);
+extern cf_rb_node *cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock);
 extern void cf_rb_delete(cf_rb_tree *tree, cf_digest key);
 extern cf_rb_tree *cf_rb_create();
 extern void cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r);

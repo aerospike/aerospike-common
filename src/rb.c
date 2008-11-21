@@ -83,6 +83,10 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
 	n->value = value;
     n->left = n->right = tree->sentinel;
     n->color = CF_RB_RED;
+	if (0 != pthread_mutex_init(&n->VALUE_LOCK, NULL)) {
+        free(n);
+        return(NULL);
+    }
     u = n;
 
     /* Lock the tree */
@@ -152,7 +156,107 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     }
     tree->root->left->color = CF_RB_BLACK;
 	tree->elements++;
-	
+
+    if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
+        perror("rb_insert: failed to release lock on successful insert");
+    return(u);
+}
+
+
+/* cf_rb_insert_vlock
+ * Insert a node with a given key into a red-black tree and acquire the
+ * value lock */
+cf_rb_node *
+cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t **vlock)
+{
+    cf_rb_node *n, *s, *t, *u;
+
+    /* Allocate memory for the new node and set the node parameters */
+    if (NULL == (n = (cf_rb_node *)calloc(1, sizeof(cf_rb_node))))
+        return(NULL);
+	n->key = key;
+	n->value = value;
+    n->left = n->right = tree->sentinel;
+    n->color = CF_RB_RED;
+	if (0 != pthread_mutex_init(&n->VALUE_LOCK, NULL)) {
+        free(n);
+        return(NULL);
+    }
+    u = n;
+
+    /* Lock the tree and the value */
+    if (0 != pthread_mutex_lock(&tree->TREE_LOCK))
+        perror("rb_insert: failed to acquire lock");
+
+    /* Insert the node directly into the tree, via the typical method of
+     * binary tree insertion */
+    n->left = n->right = tree->sentinel;
+    s = tree->root;
+    t = tree->root->left;
+    while (t != tree->sentinel) {
+        s = t;
+        t = (0 <= memcmp(n->key.digest, t->key.digest, CF_DIGEST_KEY_SZ)) ? t->left : t->right;
+    }
+    n->parent = s;
+
+    /* If the node already exists, stop a double-insertion */
+    if ((s != tree->root) && (0 == memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ))) {
+        free(n);
+        if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
+            perror("rb_insert: failed to release lock on double insertion");
+        *vlock = NULL;
+        return(NULL);
+    }
+
+    /* Insert the node */
+    if ((s == tree->root) || (0 < memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ)))
+        s->left = n;
+    else
+        s->right = n;
+
+    /* Rebalance the tree */
+    while (CF_RB_RED == n->parent->color) {
+        if (n->parent == n->parent->parent->left) {
+            s = n->parent->parent->right;
+            if (CF_RB_RED == s->color) {
+                n->parent->color = CF_RB_BLACK;
+                s->color = CF_RB_BLACK;
+                n->parent->parent->color = CF_RB_RED;
+                n = n->parent->parent;
+            } else {
+                if (n == n->parent->right) {
+                    n = n->parent;
+                    cf_rb_rotate_left(tree, n);
+                }
+                n->parent->color = CF_RB_BLACK;
+                n->parent->parent->color = CF_RB_RED;
+                cf_rb_rotate_right(tree, n->parent->parent);
+            }
+        } else {
+            s = n->parent->parent->left;
+            if (CF_RB_RED == s->color) {
+                n->parent->color = CF_RB_BLACK;
+                s->color = CF_RB_BLACK;
+                n->parent->parent->color = CF_RB_BLACK;
+                n = n->parent->parent;
+            } else {
+                if (n == n->parent->left) {
+                    n = n->parent;
+                    cf_rb_rotate_right(tree, n);
+                }
+                n->parent->color = CF_RB_BLACK;
+                n->parent->parent->color = CF_RB_RED;
+                cf_rb_rotate_left(tree, n->parent->parent);
+            }
+        }
+    }
+    tree->root->left->color = CF_RB_BLACK;
+	tree->elements++;
+
+    if (0 != pthread_mutex_lock(&n->VALUE_LOCK))
+        perror("rb_insert: failed to acquire lock");
+    *vlock = &n->VALUE_LOCK;
+
     if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
         perror("rb_insert: failed to release lock on successful insert");
     return(u);
@@ -301,6 +405,35 @@ cf_rb_search(cf_rb_tree *tree, cf_digest key)
 }
 
 
+/* cf_rb_search_vlock
+ * Search a red-black tree for a node with a particular key and acquire the
+ * value lock */
+cf_rb_node *
+cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock)
+{
+    cf_rb_node *r;
+
+    /* Lock the tree */
+    if (0 != pthread_mutex_lock(&tree->TREE_LOCK))
+        perror("rb_search_vlock: failed to acquire lock");
+
+    r = cf_rb_search_lockless(tree, key);
+
+    /* Acquire the value lock */
+    if (r) {
+        if (0 != pthread_mutex_lock(&r->VALUE_LOCK))
+            perror("rb_search_vlock: failed to acquire vlock");
+        *vlock = &r->VALUE_LOCK;
+    }
+
+    /* Unlock the tree */
+    if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
+        perror("rb_search_vlock: failed to release lock");
+
+    return(r);
+}
+
+
 /* cf_rb_delete
  * Remove a node from a red-black tree */
 void
@@ -430,8 +563,11 @@ cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r)
 void
 cf_rb_reduce_traverse(  cf_rb_node *r, cf_rb_node *sentinel, cf_rb_reduce_fn cb, void *udata)
 {
-	if (r->value)
+	if (r->value) {
+        pthread_mutex_lock(&r->VALUE_LOCK);
 		(cb) (r->key, r->value, udata);
+        pthread_mutex_unlock(&r->VALUE_LOCK);
+    }
 
 	if (r->left != sentinel)		
 		cf_rb_reduce_traverse(r->left, sentinel, cb, udata);
