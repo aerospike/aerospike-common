@@ -34,8 +34,9 @@ typedef enum msg_type_t {
 	M_TYPE_HEARTBEAT = 1,
 	M_TYPE_PAXOS = 2, // paxos' msg
 	M_TYPE_MIGRATE = 3,
-	M_TYPE_TEST = 4,
-	M_TYPE_MAX = 5  /* highest + 1 is correct */
+	M_TYPE_PROXY = 4,
+	M_TYPE_TEST = 5,
+	M_TYPE_MAX = 6  /* highest + 1 is correct */
 } msg_type;
 
 

@@ -213,6 +213,85 @@ Out:
 
 }
 
+int
+bbhash_get_and_delete(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len)
+{
+	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
+
+	// Calculate hash
+	uint hash = h->h_fn(key, key_len);
+	hash %= h->table_len;
+	int rv = BB_ERR;
+
+	if (h->flags & BBHASH_CR_MT_BIGLOCK) {
+		pthread_mutex_lock(&h->biglock);
+	}
+		
+	bbhash_elem *e = (bbhash_elem *) ( ((uint8_t *)h->table) + (sizeof(bbhash_elem) * hash));	
+
+	// If bucket empty, def can't delete
+	if ( ( e->next == 0 ) && (e->key_len == 0) ) {
+		rv = BB_ERR_NOTFOUND;
+		goto Out;
+	}
+
+	bbhash_elem *e_prev = 0;
+
+	// Look for teh element and destroy if found
+	while (e) {
+		if ( ( key_len == e->key_len ) &&
+			 ( memcmp(e->key, key, key_len) == 0) ) {
+		
+			// Found it - check length of buffer and copy to destination
+			if (*value_len < e->value_len) {
+				*value_len = e->value_len;
+				rv = -2;
+				goto Out;
+			}
+			memcpy(value, e->value, e->value_len);
+			*value_len = e->value_len;
+			
+			// free the underlying data
+			free(e->key);
+			free(e->value);
+			// patchup pointers & free element if not head
+			if (e_prev) {
+				e_prev->next = e->next;
+				free (e);
+			}
+			// am at head - more complicated
+			else {
+				// at head with no next - easy peasy!
+				if (0 == e->next) {
+					memset(e, 0, sizeof(bbhash_elem));
+				}
+				// at head with a next - more complicated
+				else {
+					bbhash_elem *_t = e->next;
+					memcpy(e, e->next, sizeof(bbhash_elem));
+					free(_t);
+				}
+			}
+			h->elements--;
+			rv = BB_OK;
+			goto Out;
+
+		}
+		e_prev = e;
+		e = e->next;
+	}
+	rv = BB_ERR_NOTFOUND;
+
+Out:
+	if (h->flags & BBHASH_CR_MT_BIGLOCK) 
+		pthread_mutex_unlock(&h->biglock);
+	return(rv);	
+	
+
+}
+
+
+
 // Call the function over every node in the tree
 // Can be lock-expensive at the moment, until we improve the lockfree code
 

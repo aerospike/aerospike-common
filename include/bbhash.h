@@ -98,6 +98,13 @@ bbhash_put(bbhash *h, void *key, uint32 key_len, void *value, uint32 value_len);
 int
 bbhash_get(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len);
 
+/* Does a get and delete at the same time so you can make sure only one person
+ * gets what was inserted
+ */
+int
+bbhash_get_delete(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len);
+
+
 /*
 ** Got a key you want removed - this is the function to call
 */
