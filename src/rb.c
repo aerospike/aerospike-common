@@ -171,6 +171,9 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
 {
     cf_rb_node *n, *s, *t, *u;
 
+    /* We'll update this later if we succeed */
+    *vlock = NULL;
+
     /* Allocate memory for the new node and set the node parameters */
     if (NULL == (n = (cf_rb_node *)calloc(1, sizeof(cf_rb_node))))
         return(NULL);
@@ -204,7 +207,6 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
         free(n);
         if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
             perror("rb_insert: failed to release lock on double insertion");
-        *vlock = NULL;
         return(NULL);
     }
 
