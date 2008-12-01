@@ -24,7 +24,8 @@ msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 {
 	// Figure out how many bytes you need
 	int mt_rows = mt_sz / sizeof(msg_template);
-	cf_assert(mt_rows > 0, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "msg create: invalid parameter");
+	if (mt_rows <= 0)
+		cf_assert(0, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "msg create: invalid parameter");
 	unsigned int max_id = 0;
 	for (int i=0;i<mt_rows;i++) {
 		if (mt[i].id >= max_id) {
@@ -812,8 +813,8 @@ int msg_set_bytearray(msg *m, int field_id, const cf_bytearray *v)
 	}
 	
 	mf->field_len = v->sz;
-	mf->u.buf = v->data;
-	mf->rc_free = v;
+	mf->u.buf = (void *) v->data; // yes, discarding const, and it's OK
+	mf->rc_free = (void *) v;
 			
 	mf->is_set = true;
 	
@@ -853,8 +854,8 @@ void msg_destroy(msg *m)
 void
 msg_dump(const msg *m)
 {
-	printf("msg_dump: msg %p acount %d flen %d bytesused %d bytesallocd %d  mt %p\n",
-		m,(int)cf_rc_count((void *)m),m->len,m->bytes_used,m->bytes_alloc,m->mt);
+	printf("msg_dump: msg %p acount %d flen %d bytesused %d bytesallocd %d type %d  mt %p\n",
+		m,(int)cf_rc_count((void *)m),m->len,m->bytes_used,m->bytes_alloc,m->type,m->mt);
 	for (int i=0;i<m->len;i++) {
 		printf("mf %02d: id %d isvalid %d iset %d\n",i,m->f[i].id,m->f[i].is_valid,m->f[i].is_set);
 		if (m->f[i].is_valid && m->f[i].is_set) {

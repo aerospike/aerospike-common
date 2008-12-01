@@ -102,7 +102,7 @@ bbhash_get(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len)
  * gets what was inserted
  */
 int
-bbhash_get_delete(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len);
+bbhash_get_and_delete(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len);
 
 
 /*
