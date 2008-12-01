@@ -50,7 +50,8 @@ msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 	m = cf_rc_alloc(a_sz);
 	cf_assert(m, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "malloc");
 	m->len = max_id;
-	m->bytes_used = m->bytes_alloc = a_sz;
+	m->bytes_used = sizeof(msg) + m_sz; 
+	m->bytes_alloc = a_sz;
 	m->type = type;
 	m->mt = mt;
 	
@@ -393,14 +394,15 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 void
 msg_reset(msg *m)
 {
-	m->bytes_used = m->bytes_alloc;
+	m->bytes_used = (m->len * sizeof(msg_field)) + sizeof(msg);
 	for (int i=0 ; i < m->len ; i++) {
 		if (m->f[i].is_valid) {
-			if (m->f[i].is_set) {
+			if (m->f[i].is_set == true) {
+//				D("msg_reset: freeing %p rcfree %p",m->f[i].free,m->f[i].rc_free);
 				if (m->f[i].free)	free(m->f[i].free);
 				if (m->f[i].rc_free) cf_rc_releaseandfree(m->f[i].rc_free);
+				m->f[i].is_set = false;
 			}
-			m->f[i].is_set = false;
 		}
 	}
 	
