@@ -34,7 +34,7 @@ typedef struct cf_rb_node_t cf_rb_node;
  * A red-black tree */
 struct cf_rb_tree_t
 {
-	pthread_mutex_t TREE_LOCK;
+	cf_mcslock lock;
 
 	/* Note: in this implementation of a red-black tree, the "root" node
 	 * is not actually the root of the tree: it is merely a placeholder.

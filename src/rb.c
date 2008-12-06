@@ -75,6 +75,7 @@ cf_rb_node *
 cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
 {
     cf_rb_node *n, *s, *t, *u;
+	cf_mcslock_qnode ql;
 
     /* Allocate memory for the new node and set the node parameters */
     if (NULL == (n = (cf_rb_node *)calloc(1, sizeof(cf_rb_node))))
@@ -90,8 +91,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     u = n;
 
     /* Lock the tree */
-    if (0 != pthread_mutex_lock(&tree->TREE_LOCK))
-        perror("rb_insert: failed to acquire lock");
+	cf_mcslock_lock(&tree->lock, &ql);
 
     /* Insert the node directly into the tree, via the typical method of
      * binary tree insertion */
@@ -107,8 +107,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     /* If the node already exists, stop a double-insertion */
     if ((s != tree->root) && (0 == memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ))) {
         free(n);
-        if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
-            perror("rb_insert: failed to release lock on double insertion");
+		cf_mcslock_unlock(&tree->lock, &ql);
         return(NULL);
     }
 
@@ -157,8 +156,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     tree->root->left->color = CF_RB_BLACK;
 	tree->elements++;
 
-    if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
-        perror("rb_insert: failed to release lock on successful insert");
+	cf_mcslock_unlock(&tree->lock, &ql);
     return(u);
 }
 
@@ -170,6 +168,7 @@ cf_rb_node *
 cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t **vlock)
 {
     cf_rb_node *n, *s, *t, *u;
+	cf_mcslock_qnode ql;
 
     /* We'll update this later if we succeed */
     *vlock = NULL;
@@ -187,9 +186,8 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
     }
     u = n;
 
-    /* Lock the tree and the value */
-    if (0 != pthread_mutex_lock(&tree->TREE_LOCK))
-        perror("rb_insert: failed to acquire lock");
+    /* Lock the tree */
+	cf_mcslock_lock(&tree->lock, &ql);
 
     /* Insert the node directly into the tree, via the typical method of
      * binary tree insertion */
@@ -205,8 +203,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
     /* If the node already exists, stop a double-insertion */
     if ((s != tree->root) && (0 == memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ))) {
         free(n);
-        if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
-            perror("rb_insert: failed to release lock on double insertion");
+		cf_mcslock_unlock(&tree->lock, &ql);
         return(NULL);
     }
 
@@ -259,8 +256,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
         perror("rb_insert: failed to acquire lock");
     *vlock = &n->VALUE_LOCK;
 
-    if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
-        perror("rb_insert: failed to release lock on successful insert");
+	cf_mcslock_unlock(&tree->lock, &ql);
     return(u);
 }
 
@@ -392,16 +388,15 @@ cf_rb_node *
 cf_rb_search(cf_rb_tree *tree, cf_digest key)
 {
     cf_rb_node *r;
+	cf_mcslock_qnode ql;
 
     /* Lock the tree */
-    if (0 != pthread_mutex_lock(&tree->TREE_LOCK))
-        perror("rb_search: failed to acquire lock");
+	cf_mcslock_lock(&tree->lock, &ql);
 
     r = cf_rb_search_lockless(tree, key);
 
     /* Unlock the tree */
-    if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
-        perror("rb_search: failed to release lock");
+	cf_mcslock_unlock(&tree->lock, &ql);
 
     return(r);
 }
@@ -414,10 +409,10 @@ cf_rb_node *
 cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock)
 {
     cf_rb_node *r;
+	cf_mcslock_qnode ql;
 
     /* Lock the tree */
-    if (0 != pthread_mutex_lock(&tree->TREE_LOCK))
-        perror("rb_search_vlock: failed to acquire lock");
+	cf_mcslock_lock(&tree->lock, &ql);
 
     r = cf_rb_search_lockless(tree, key);
 
@@ -429,8 +424,7 @@ cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock)
     }
 
     /* Unlock the tree */
-    if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
-        perror("rb_search_vlock: failed to release lock");
+	cf_mcslock_unlock(&tree->lock, &ql);
 
     return(r);
 }
@@ -442,10 +436,10 @@ void
 cf_rb_delete(cf_rb_tree *tree, cf_digest key)
 {
     cf_rb_node *r, *s, *t;
+	cf_mcslock_qnode ql;
 
     /* Lock the tree */
-    if (0 != pthread_mutex_lock(&tree->TREE_LOCK))
-        perror("rb_delete: failed to acquire lock");
+	cf_mcslock_lock(&tree->lock, &ql);
 
     /* Find a node with the matching key; if none exists, eject immediately */
     if (NULL == (r = cf_rb_search_lockless(tree, key)))
@@ -494,8 +488,8 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
 	tree->elements--;
 	
 release:
-    if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
-        perror("rb_delete: failed to release lock");
+	cf_mcslock_unlock(&tree->lock, &ql);
+
     return;
 }
 
@@ -510,8 +504,7 @@ cf_rb_create() {
     if (NULL == (tree = (cf_rb_tree *)calloc(1, sizeof(cf_rb_tree))))
         return(NULL);
     
-	if (0 != pthread_mutex_init(&tree->TREE_LOCK, NULL))
-        return(NULL);
+	cf_mcslock_init(&tree->lock);
 
     /* Allocate memory for the sentinel; note that it's pointers are all set
      * to itself */
@@ -583,17 +576,17 @@ cf_rb_reduce_traverse(  cf_rb_node *r, cf_rb_node *sentinel, cf_rb_reduce_fn cb,
 void
 cf_rb_reduce(cf_rb_tree *tree, cf_rb_reduce_fn cb, void *udata)
 {
+	cf_mcslock_qnode ql;
+
     /* Lock the tree */
-    if (0 != pthread_mutex_lock(&tree->TREE_LOCK))
-        perror("rb_delete: failed to acquire lock");
+	cf_mcslock_lock(&tree->lock, &ql);
 	
 	if ( (tree->root) && 
 		 (tree->root->left) && 
 		 (tree->root->left != tree->sentinel) )
 		cf_rb_reduce_traverse(tree->root->left, tree->sentinel, cb, udata);
 
-    if (0 != pthread_mutex_unlock(&tree->TREE_LOCK))
-        perror("rb_delete: failed to release lock");
+	cf_mcslock_unlock(&tree->lock, &ql);
     return;
 	
 }

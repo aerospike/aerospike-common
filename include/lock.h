@@ -55,7 +55,7 @@ cf_mcslock_lock(cf_mcslock *lock, cf_mcslock_qnode *qn)
 	qn->locked = 1;
 	CF_MEMORY_BARRIER_WRITE();
 
-	qp = cf_atomic_p_fas_m(&lock->tail, qp);
+	qp = cf_atomic_p_fas_m(&lock->tail, qn);
 	if (NULL != qp) {
 		qp->next = qn;
 		while (qn->locked)
