@@ -726,7 +726,7 @@ msg_set_str(msg *m, int field_id, const char *v, bool copy)
 		// If we've got a little extra memory here already, use it
 		if (m->bytes_alloc - m->bytes_used >= len) {
 			mf->u.str = (char *) (((byte *)m) + m->bytes_used);
-			m->bytes_alloc += len;
+			m->bytes_used += len;
 			mf->free = 0;
 			memcpy(mf->u.str, v, len);
 		}
@@ -772,7 +772,7 @@ int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, bool copy)
 		// If we've got a little extra memory here already, use it
 		if (m->bytes_alloc - m->bytes_used >= len) {
 			mf->u.buf = ((byte *)m) + m->bytes_used;
-			m->bytes_alloc += len;
+			m->bytes_used += len;
 			mf->rc_free = mf->free = 0;
 		}
 		// Or just malloc if we have to. Sad face.
@@ -879,11 +879,13 @@ msg_dump(const msg *m)
 					break;
 				case M_FT_BUF:
 					printf("   type BUF len %d free %p\n",m->f[i].field_len,m->f[i].free);
-					for (int j=0;j<m->f[i].field_len;j++) {
+					int j = 0;
+					for ( ;j<m->f[i].field_len ; j++) {
 						printf("%02x ",m->f[i].u.buf[j]);
 						if (j % 16 == 8) printf(" : ");
 						if (j % 16 == 15) printf("\n");
 					}
+					if (j % 16 != 15) printf("\n");
 					break;
 				default:
 					printf("   type %d unknown\n",m->f[i].type);
