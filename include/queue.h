@@ -18,14 +18,24 @@
  * A queue */
 #define CF_QUEUE_ALLOCSZ 64
 struct cf_queue_t {
-	uint16_t allocsz; 
-	uint16_t utilsz;
-	size_t elementsz;
-	pthread_mutex_t LOCK;
-	pthread_cond_t CV;
-	byte *queue;
+	unsigned int allocsz;      // number of queue elements currently allocated
+	unsigned int write_offset; // 0 offset is first queue element.
+						   // write is always greater than or equal to read
+	unsigned int read_offset; // 
+	size_t elementsz;     // number of bytes in an element
+	pthread_mutex_t LOCK;  // the mutex lock
+	pthread_cond_t CV;    // hte condvar
+	byte *queue;         // the actual bytes that make up the queue
 };
 typedef struct cf_queue_t cf_queue;
+
+#define CF_Q_SZ(__q) (__q->write_offset - __q->read_offset)
+
+#define CF_Q_EMPTY(__q) (__q->write_offset == __q->read_offset)
+
+// todo: maybe it's faster to keep the read and write offsets in bytes,
+// to avoid the extra multiply?
+#define CF_Q_ELEM_PTR(__q, __i) (&q->queue[ (__i % __q->allocsz) * q->elementsz ] )
 
 
 /* External functions */
@@ -73,4 +83,8 @@ extern int cf_queue_reduce(cf_queue *q, cf_queue_reduce_fn cb, void *udata);
 extern int cf_queue_delete(cf_queue *q, void *buf, bool only_one);
 
 
+//
+// Call this function to do a set of internal validation unit tests
+// 0 means success, and it blocks until complete
 
+extern int cf_queue_test();
