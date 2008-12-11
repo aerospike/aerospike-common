@@ -106,7 +106,6 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
 
     /* If the node already exists, stop a double-insertion */
     if ((s != tree->root) && (0 == memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ))) {
-		pthread_mutex_destroy(&n->VALUE_LOCK);
         free(n);
 		cf_mcslock_unlock(&tree->lock, &ql);
         return(NULL);
@@ -185,16 +184,8 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
         free(n);
         return(NULL);
     }
-	// lock now because cleaning up later if failure is hard
-    if (0 != pthread_mutex_lock(&n->VALUE_LOCK)) {
-		pthread_mutex_destroy(&n->VALUE_LOCK);
-		free(n);
-        perror("rb_insert: failed to acquire lock");
-		return(NULL);
-	}
-
     u = n;
-
+	
     /* Lock the tree */
 	cf_mcslock_lock(&tree->lock, &ql);
 
@@ -262,9 +253,16 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
     tree->root->left->color = CF_RB_BLACK;
 	tree->elements++;
 
-    *vlock = &n->VALUE_LOCK;
+	// TODO: Bug. This error case can't really be handled without removing the element
+	// from the tree again, we're handing back an unlocked lock and shit.
+	if (0 != pthread_mutex_lock(&n->VALUE_LOCK)) {
+		D(" what? can't lock mutex? So BONED!");
+	}
 
 	cf_mcslock_unlock(&tree->lock, &ql);
+
+    *vlock = &n->VALUE_LOCK;
+
     return(u);
 }
 
