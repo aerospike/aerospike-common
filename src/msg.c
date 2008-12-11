@@ -780,6 +780,7 @@ int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, bool copy)
 			mf->u.buf = malloc(len);
 			cf_assert(mf->u.buf, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "malloc");
 			mf->free = mf->u.buf; // free on exit/reset
+			mf->rc_free = 0;
 		}
 
 		memcpy(mf->u.buf, v, len);
@@ -817,6 +818,7 @@ int msg_set_bytearray(msg *m, int field_id, const cf_bytearray *v)
 	mf->field_len = v->sz;
 	mf->u.buf = (void *) v->data; // yes, discarding const, and it's OK
 	mf->rc_free = (void *) v;
+	mf->free = 0;
 			
 	mf->is_set = true;
 	
