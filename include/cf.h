@@ -49,6 +49,61 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "bbhash.h"
 #include "rchash.h"
 
+/* cf_hash_fnv
+ * The 64-bit Fowler-Noll-Voll hash function (FNV-1a) */
+static inline uint64_t
+cf_hash_fnv(void *buf, size_t bufsz)
+{
+	uint64_t hash = 0xcbf29ce484222325ULL;
+	uint8_t *bufp = (uint8_t *)buf, *bufe = bufp + bufsz;
+
+	while (bufp < bufe) {
+		/* XOR the current byte into the bottom of the hash */
+		hash ^= (uint64_t)*bufp++;
+
+		/* Multiply by the 64-bit FNV magic prime */
+		hash *= 0x100000001b3ULL;
+	}
+
+	return(hash);
+}
+
+
+/* cf_hash_oneatatime
+ * The 64-bit One-at-a-Time hash function */
+static inline uint64_t
+cf_hash_oneatatime(void *buf, size_t bufsz)
+{
+	size_t i;
+	uint64_t hash = 0;
+	uint8_t *b = (uint8_t *)buf;
+
+	for (i = 0; i < bufsz; i++) {
+		hash += b[i];
+		hash += (hash << 10);
+		hash ^= (hash >> 6);
+	}
+	hash += (hash << 3);
+	hash ^= (hash >> 11);
+	hash += (hash << 15);
+
+	return(hash);
+}
+
+
+/* cf_swap64
+ * Swap a 64-bit value */
+static inline void
+cf_swap64(uint64_t *v, int a, int b)
+{
+	v[a] ^= v[b];
+	v[b] ^= v[a];
+	v[a] ^= v[b];
+
+	return;
+}
+
+
 /* cf_compare_ptr
  * Compare the first sz bytes from two regions referenced by pointers */
 static inline int

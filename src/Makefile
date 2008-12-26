@@ -9,7 +9,7 @@ DIR_OBJECT = ../obj
 DIR_TARGET = ../lib
 
 HEADERS = alloc.h atomic.h cf.h digest.h fault.h lock.h queue.h rb.h socket.h msg.h bbhash.h rchash.h
-SOURCES = alloc.c fault.c queue.c rb.c socket.c id.c msg.c bbhash.c clock.c rchash.c
+SOURCES = alloc.c fault.c queue.c rb.c socket.c id.c msg.c bbhash.c clock.c rchash.c sort.c
 TARGET = libcf.a
 
 INCLUDES = -I$(DIR_CF_INCLUDE)
