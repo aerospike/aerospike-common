@@ -28,17 +28,17 @@ cf_sort_firstk_partition(uint64_t *v, int left, int right, int index)
     int i, s;
 
     /* Set the pivot to the beginning */
-    cf_swap64(v, index, right);
+    cf_swap64(v[index], v[right]);
 
     s = left;
     for (i = left; i < right; i++) {
         /* Don't swap equal elements */
         if (v[i] > pivot) {
-            cf_swap64(v, s, i);
+            cf_swap64(v[s], v[i]);
             s++;
         }
     }
-    cf_swap64(v, right, s);
+    cf_swap64(v[right], v[s]);
 
 	return(s);
 }

@@ -93,15 +93,7 @@ cf_hash_oneatatime(void *buf, size_t bufsz)
 
 /* cf_swap64
  * Swap a 64-bit value */
-static inline void
-cf_swap64(uint64_t *v, int a, int b)
-{
-	v[a] ^= v[b];
-	v[b] ^= v[a];
-	v[a] ^= v[b];
-
-	return;
-}
+#define cf_swap64(a, b) (((a) == (b)) || (((a) ^= (b)), ((b) ^= (a)), ((a) ^= (b))))
 
 
 /* cf_compare_ptr
@@ -118,6 +110,8 @@ typedef uint64_t cf_node;
 extern uint32 cf_nodeid_hash_fn(void *value, uint32 value_len);
 extern int cf_nodeid_get( unsigned short port, cf_node *id );
 extern unsigned short cf_nodeid_get_port(cf_node id);
+
+extern void cf_sort_firstk(uint64_t *v, size_t sz, int k);
 
 // This is even shorter!
 extern uint64_t cf_getms();
