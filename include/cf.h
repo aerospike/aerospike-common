@@ -96,6 +96,19 @@ cf_hash_oneatatime(void *buf, size_t bufsz)
 #define cf_swap64(a, b) (((a) == (b)) || (((a) ^= (b)), ((b) ^= (a)), ((a) ^= (b))))
 
 
+/* cf_contains64
+ * See if a vector of uint64s contains an certain value */
+static inline int
+cf_contains64(uint64_t *v, int vsz, uint64_t a)
+{
+    for (int i = 0; i < vsz; i++) {
+        if (v[i] == a)
+            return(1);
+    }
+
+    return(0);
+}
+
 /* cf_compare_ptr
  * Compare the first sz bytes from two regions referenced by pointers */
 static inline int
