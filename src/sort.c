@@ -45,7 +45,7 @@ cf_sort_firstk_partition(uint64_t *v, int left, int right, int index)
 
 
 /* Some macros for a simple stack */
-#define STACK_LIMIT 16
+#define STACK_LIMIT 128
 #define pop(s,offset) ((s)[--(offset)])
 #define push(s,offset,v) ((s)[(offset)++] = (v))
 
@@ -53,7 +53,7 @@ cf_sort_firstk_partition(uint64_t *v, int left, int right, int index)
 /* cf_sort_firstk
  * Sort the largest k values to the head of the supplied array using a
  * stack-based implementation of Hoare's modified quickselect algorithm */
-void
+int
 cf_sort_firstk(uint64_t *v, size_t sz, int k)
 {
 	int index = 0, left, right;
@@ -72,7 +72,7 @@ cf_sort_firstk(uint64_t *v, size_t sz, int k)
 
 			/* If we exceed the stack depth, return a partially sorted list */
 			if (sp >= STACK_LIMIT - 2)
-				return;
+				return(1);
 
 			if (index < k) {
 				push(stack, sp, index + 1);
@@ -84,5 +84,5 @@ cf_sort_firstk(uint64_t *v, size_t sz, int k)
 		}
 	}
 
-	return;
+	return(0);
 }
