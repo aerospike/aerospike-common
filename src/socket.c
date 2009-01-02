@@ -74,7 +74,9 @@ cf_socket_recv(int sock, void *buf, size_t buflen, int flags)
 
 	if (0 >= (i = recv(sock, buf, buflen, flags))) {
 		if (ECONNRESET == errno || 0 == i)
-			cf_fault_event(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_INFO, NULL, 0, "socket disconnected");
+// DEBUG really freaking noisy
+//			cf_fault_event(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_INFO, NULL, 0, "socket disconnected");
+            ;
 		else
 			cf_fault_event(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_INFO, NULL, 0, "recv() failed: %s", cf_strerror(errno));
 	}
