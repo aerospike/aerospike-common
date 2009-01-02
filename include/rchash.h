@@ -83,6 +83,9 @@ rchash_create(rchash **h, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint32
 int
 rchash_put(rchash *h, void *key, uint32 key_len, void *value);
 
+int
+rchash_put_unique(rchash *h, void *key, uint32 key_len, void *value);
+
 /* If you think you know how much space it will take, 
  * call with the buffer you want filled
  * If you're wrong about the space, you'll get a BUFSZ error, but the *value_len

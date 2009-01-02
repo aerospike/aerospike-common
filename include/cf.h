@@ -36,6 +36,7 @@ struct cf_bytearray_t {
 };
 typedef struct cf_bytearray_t cf_bytearray;
 
+#define INVALID_FD (-1)
 
 #include "atomic.h"
 #include "alloc.h"

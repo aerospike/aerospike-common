@@ -795,6 +795,36 @@ int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, bool copy)
 	return(0);
 }
 
+//
+// There are some cases, like reusing a message, where you have a set field and
+// you'd like to unset just that field
+//
+
+void msg_set_unset(msg *m, int field_id)
+{
+	if (! m->f[field_id].is_valid) {
+		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field set",field_id);
+		return(-1); // not sure the meaning of ERROR - will it throw or not?
+	}
+	msg_field *mf = &m->f[field_id];
+	
+	if (mf->is_set == false)	return;
+	
+	// for different field types, might have to free stuff that's already there?
+	// or maybe it's an always thing?
+	switch (mf->type) {
+		case M_FT_BUF:
+		case M_FT_STR:
+			if (mf->free)	free(mf->free);
+			if (mf->rc_free) cf_rc_releaseandfree(mf->rc_free);
+			break;
+		default:
+			break;
+	}
+	
+	mf->is_set = false;
+}
+
 int msg_set_bytearray(msg *m, int field_id, const cf_bytearray *v)
 {
 	if (! m->f[field_id].is_valid) {

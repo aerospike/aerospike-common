@@ -36,7 +36,8 @@ typedef enum msg_type_t {
 	M_TYPE_MIGRATE = 3,
 	M_TYPE_PROXY = 4,
 	M_TYPE_TEST = 5,
-	M_TYPE_MAX = 6  /* highest + 1 is correct */
+	M_TYPE_WRITE = 6,
+	M_TYPE_MAX = 7  /* highest + 1 is correct */
 } msg_type;
 
 
@@ -113,6 +114,10 @@ extern void msg_reset(msg *m);
 // call this function. Everyone calls destroy.
 extern void msg_incr_ref(msg *m);
 extern void msg_decr_ref(msg *m); // this isn't used much, but helps when unwinding errors
+
+// If you're reusing a message, and you want to unset a particular field,
+// this function comes in handy
+extern void msg_set_unset(msg *m, int field_id);
 
 // Getters and setters
 

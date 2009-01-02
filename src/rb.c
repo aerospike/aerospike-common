@@ -174,13 +174,16 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
     *vlock = NULL;
 
     /* Allocate memory for the new node and set the node parameters */
-    if (NULL == (n = (cf_rb_node *)calloc(1, sizeof(cf_rb_node))))
+    if (NULL == (n = (cf_rb_node *)calloc(1, sizeof(cf_rb_node)))) {
+		D(" malloc failed ");
         return(NULL);
+	}
 	n->key = key;
 	n->value = value;
     n->left = n->right = tree->sentinel;
     n->color = CF_RB_RED;
 	if (0 != pthread_mutex_init(&n->VALUE_LOCK, NULL)) {
+		D(" mutex init failed ");
         free(n);
         return(NULL);
     }

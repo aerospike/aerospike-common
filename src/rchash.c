@@ -119,6 +119,61 @@ Copy:
 
 }
 
+//
+// I hate cute and paste
+
+int
+rchash_put_unique(rchash *h, void *key, uint32 key_len, void *object)
+{
+	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
+
+	// Calculate hash
+	uint hash = h->h_fn(key, key_len);
+	hash %= h->table_len;
+
+	if (h->flags & RCHASH_CR_MT_BIGLOCK) {
+		pthread_mutex_lock(&h->biglock);
+	}
+		
+	rchash_elem *e = (rchash_elem *) ( ((uint8_t *)h->table) + (sizeof(rchash_elem) * hash));	
+
+	// most common case should be insert into empty bucket, special case
+	if ( ( e->next == 0 ) && (e->key_len == 0) ) {
+		goto Copy;
+	}
+
+	rchash_elem *e_head = e;
+
+	// check for uniqueness of key - if not unique, fail!
+	while (e) {
+		if ( ( key_len == e->key_len ) &&
+			 ( memcmp(e->key, key, key_len) == 0) ) {
+			pthread_mutex_unlock(&h->biglock);
+			return(BB_ERR_FOUND);
+		}
+		e = e->next;
+	}
+
+	e = (rchash_elem *) malloc(sizeof(rchash_elem));
+	e->next = e_head->next;
+	e_head->next = e;
+	
+Copy:
+	e->key = malloc(key_len);
+	memcpy(e->key, key, key_len);
+	e->key_len = key_len;
+
+	e->object = object;
+
+	h->elements++;
+	if (h->flags & BBHASH_CR_MT_BIGLOCK) 
+		pthread_mutex_unlock(&h->biglock);
+	return(BB_OK);	
+
+}
+
+
+
 int
 rchash_get(rchash *h, void *key, uint32 key_len, void **object)
 {

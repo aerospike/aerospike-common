@@ -23,6 +23,7 @@
 // typedef int32_t int32;
 // typedef uint8_t byte;
 
+#define BB_ERR_FOUND -4
 #define BB_ERR_NOTFOUND -3
 #define BB_ERR_BUFSZ -2
 #define BB_ERR -1
