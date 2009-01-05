@@ -30,6 +30,8 @@ typedef uint8_t byte;
 
 /* cf_bytearray
  * An array of bytes */
+ /* TO AVOID CONFUSION, always create a cf_bytearray as a reference counted
+    object! Always use them as reference counted objects! Always!!! */
 struct cf_bytearray_t {
 	uint64_t sz;
 	byte data[];

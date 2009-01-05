@@ -203,10 +203,11 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 						// TODO: add assert
 						memcpy(mf->u.buf, buf, flen);
 						mf->free = mf->u.buf;
+						mf->rc_free = 0;
 					}
 					else {
 						mf->u.buf = (byte *) buf; // compiler whinges here correctly, I bless this cast
-						mf->free = 0;						
+						mf->rc_free = mf->free = 0;						
 					}
 					break;
 				case M_FT_ARRAY:
@@ -399,7 +400,7 @@ msg_reset(msg *m)
 		if (m->f[i].is_valid) {
 			if (m->f[i].is_set == true) {
 //				D("msg_reset: freeing %p rcfree %p",m->f[i].free,m->f[i].rc_free);
-				if (m->f[i].free)	free(m->f[i].free);
+				if (m->f[i].free) free(m->f[i].free);
 				if (m->f[i].rc_free) cf_rc_releaseandfree(m->f[i].rc_free);
 				m->f[i].is_set = false;
 			}
@@ -587,6 +588,12 @@ msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, bool copy)
 	return(0);
 }
 
+// A bytearray is always a reference counted object. Now, the cool thing, when
+// someone wants to get one of these, is to already have the ref-counted object
+// and simply increment and hand out the pointer.
+// That would demand a different MSG_field_type that is a bytearray type,
+// which is eminently reasonable
+
 int 
 msg_get_bytearray(const msg *m, int field_id, cf_bytearray **r)
 {
@@ -609,8 +616,8 @@ msg_get_bytearray(const msg *m, int field_id, cf_bytearray **r)
 		return(-2);
 	}
 	uint64_t field_len = m->f[field_id].field_len;
-	*r = malloc( field_len + sizeof(cf_bytearray) );
-	cf_assert(*r, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "malloc");
+	*r = cf_rc_alloc( field_len + sizeof(cf_bytearray) );
+	cf_assert(*r, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "rcalloc");
 	(*r)->sz = field_len;
 	memcpy((*r)->data, m->f[field_id].u.buf, field_len );
 	
@@ -734,6 +741,7 @@ msg_set_str(msg *m, int field_id, const char *v, bool copy)
 			mf->u.str = strdup(v);
 			cf_assert(mf->u.str, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "malloc");
 			mf->free = mf->u.str;
+			mf->rc_free = 0;
 		}
 	} else {
 		mf->u.str = (char *)v; // compiler winges here, correctly, but I bless this -b
