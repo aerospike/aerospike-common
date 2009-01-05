@@ -97,9 +97,9 @@ cf_hash_oneatatime(void *buf, size_t bufsz)
 /* cf_swap64
  * Swap a 64-bit value
  * --- there's a fair amount of commentary on the web as to whether this kind
- * of swap optimization is useful for superscalar architectures. Leave it in for now,
- * with its gnarly warnings.... */
-#define cf_swap64(a, b) (((a) == (b)) || (((a) ^= (b)), ((b) ^= (a)), ((a) ^= (b))))
+ * of swap optimization is useful for superscalar architectures.  Leave it in
+ * for now */
+#define cf_swap64(a, b) (void)(((a) == (b)) || (((a) ^= (b)), ((b) ^= (a)), ((a) ^= (b))))
 // #define cf_swap64(a, b) { uint64_t __t; __t = a; a = b; b = __t; }
 
 /* cf_contains64
