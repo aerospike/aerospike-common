@@ -244,7 +244,7 @@ cf_socket_connect_nb(cf_sockaddr so, int *fd_r)
 	}
 
 	byte *b = (byte *) &sa.sin_addr;
-	D("creating connection: fd %d %02x.%02x.%02x.%02x : %d",fd, b[0],b[1],b[2],b[3] ,htons(sa.sin_port) );
+//	D("creating connection: fd %d %02x.%02x.%02x.%02x : %d",fd, b[0],b[1],b[2],b[3] ,htons(sa.sin_port) );
 
 	*fd_r = fd; 
 	return(0);
