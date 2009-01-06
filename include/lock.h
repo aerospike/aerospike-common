@@ -16,11 +16,21 @@
  * http://www.cs.rochester.edu/research/synchronization/pseudocode/ss.html
  * enqueues for each locking thread a structure in a global queue
  * only spins on its own data structure
- * cache efficiency over test-and-sets */
+ * cache efficiency over test-and-sets 
+ *
+ * Use pattern:
+ * cf_mcslock lock;
+ * cf_mcslock_init(&lock);
+ * ....
+ * cf_mcslock_qnode ql;
+ * cf_mcslock_lock(&lock, &ql);
+ * .. do my nasty
+ * cf_mcslock_unlock(&lock, &ql);
+ */
 
 
 /* cf_mcslock_qnode
- * A MCS lock queue node */
+ * This is the stack structure the mcs lock spins over */
 struct cf_mcslock_qnode_t {
 	int locked;
 	struct cf_mcslock_qnode_t *next;
@@ -29,12 +39,12 @@ typedef struct cf_mcslock_qnode_t cf_mcslock_qnode;
 
 
 /* cf_mcslock
- * A MCS lock */
+ * This is the global, shared part of the mcs lock */
 typedef struct { cf_mcslock_qnode *tail; } cf_mcslock;
 
 
 /* cf_mcslock_init
- * Initialize a MCS lock */
+ * Initializes the shared part of the mcs lock */
 static inline void
 cf_mcslock_init(cf_mcslock *lock)
 {
@@ -45,7 +55,7 @@ cf_mcslock_init(cf_mcslock *lock)
 
 
 /* cf_mcslock_lock
- * Lock a MCS lock */
+ */
 static inline void
 cf_mcslock_lock(cf_mcslock *lock, cf_mcslock_qnode *qn)
 {
@@ -68,7 +78,7 @@ cf_mcslock_lock(cf_mcslock *lock, cf_mcslock_qnode *qn)
 
 
 /* cf_mcslock_unlock
- * Release a MCS lock */
+ */
 static inline void
 cf_mcslock_unlock(cf_mcslock *lock, cf_mcslock_qnode *qn)
 {
