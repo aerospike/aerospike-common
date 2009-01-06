@@ -506,7 +506,7 @@ release:
 /* rb_create
  * Create a new red-black tree */
 cf_rb_tree *
-cf_rb_create() {
+cf_rb_create(cf_rb_value_destructor destructor) {
     cf_rb_tree *tree;
 
     /* Allocate memory for the tree and initialize the tree lock */
@@ -533,6 +533,8 @@ cf_rb_create() {
     tree->root->parent = tree->root->left = tree->root->right = tree->sentinel;
     tree->root->color = CF_RB_BLACK;
 
+    tree->destructor = destructor;
+
     /* Return a pointer to the new tree */
     return(tree);
 }
@@ -552,10 +554,12 @@ cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r)
     cf_rb_purge(tree, r->right);
 
     /* Release this node's memory */
-	// this is terribly wrong - the destructor for the value type
-	// is not well known - in our case an as_record, which is complex and
-	// refcounted
-    // free(r->value);
+    pthread_mutex_lock(&r->VALUE_LOCK);
+    /* FIXME We ought to handle this by passing in a destructor callback... */
+    if (tree->destructor)
+        tree->destructor(r->value);
+    pthread_mutex_unlock(&r->VALUE_LOCK);
+    pthread_mutex_destroy(&r->VALUE_LOCK);
     free(r);
 
     return;

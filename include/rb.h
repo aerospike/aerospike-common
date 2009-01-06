@@ -15,7 +15,12 @@
  * */
 
 
-                                                                          
+
+/* cf_rb_value_destructor()
+ * A destructor function prototype for a value */
+typedef void (*cf_rb_value_destructor) (void *v);
+
+
 /* cf_rb_node
  * A red-black tree node */
 struct cf_rb_node_t
@@ -43,6 +48,7 @@ struct cf_rb_tree_t
 	 * root node */
 	cf_rb_node *root;
 	cf_rb_node *sentinel;
+    cf_rb_value_destructor destructor;
 	uint32      elements; // no bother in making this atomic, it's not very exact
 };
 typedef struct cf_rb_tree_t cf_rb_tree;
@@ -54,7 +60,7 @@ extern cf_rb_node *cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *val
 extern cf_rb_node *cf_rb_search(cf_rb_tree *tree, cf_digest key);
 extern cf_rb_node *cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock);
 extern void cf_rb_delete(cf_rb_tree *tree, cf_digest key);
-extern cf_rb_tree *cf_rb_create();
+extern cf_rb_tree *cf_rb_create(cf_rb_value_destructor destructor);
 extern void cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r);
 extern void cf_rb_destroy(cf_rb_tree *tree);
 
