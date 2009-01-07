@@ -123,6 +123,22 @@ cf_compare_ptr(const void *a, const void *b, ssize_t sz)
 	return(memcmp(a, b, sz));
 }
 
+/* cf_compare_uint64ptr
+ * Compare two integers */
+static inline int
+cf_compare_uint64ptr(const void *pa, const void *pb)
+{
+    int r;
+    const uint64_t *a = pa, *b = pb;
+
+    if (*a == *b)
+        return(0);
+
+    r = (*a > *b) ? -1 : 1;
+
+    return(r);
+}
+
 // Sorry, too lazy to create a whole new file for just one function
 #define CF_NODE_UNSET (0xFFFFFFFFFFFFFFFF)
 typedef uint64_t cf_node;
