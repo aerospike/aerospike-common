@@ -139,6 +139,19 @@ cf_compare_uint64ptr(const void *pa, const void *pb)
     return(r);
 }
 
+
+/* cf_compare_byteptr
+ * Compare the regions pointed to by two sized byte pointers */
+static inline int
+cf_compare_byteptr(const void *pa, const size_t asz, const void *pb, const size_t bsz)
+{
+    if (asz != bsz)
+        return(asz - bsz);
+
+    return(memcmp(pa, pb, asz));
+}
+
+
 // Sorry, too lazy to create a whole new file for just one function
 #define CF_NODE_UNSET (0xFFFFFFFFFFFFFFFF)
 typedef uint64_t cf_node;
