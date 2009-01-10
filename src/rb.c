@@ -615,15 +615,14 @@ cf_rb_destroy(cf_rb_tree *tree)
 {
 	cf_mcslock_qnode ql;
 	cf_mcslock_lock(&tree->lock, &ql);
-	
     /* Purge the root and all its ilk */
     cf_rb_purge(tree, tree->root->left);
 
     /* Release the tree's memory */
     free(tree->root);
     free(tree->sentinel);
-	memset(tree, 0, sizeof(cf_rb_tree) );
 	cf_mcslock_unlock(&tree->lock, &ql);
+	memset(tree, 0, sizeof(cf_rb_tree)); // a little debug
     free(tree);
 
     return;
