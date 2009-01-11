@@ -812,7 +812,7 @@ void msg_set_unset(msg *m, int field_id)
 {
 	if (! m->f[field_id].is_valid) {
 		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field set",field_id);
-		return(-1); // not sure the meaning of ERROR - will it throw or not?
+		return; // not sure the meaning of ERROR - will it throw or not?
 	}
 	msg_field *mf = &m->f[field_id];
 	
