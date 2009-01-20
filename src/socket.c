@@ -73,12 +73,16 @@ cf_socket_recv(int sock, void *buf, size_t buflen, int flags)
 	int i;
 
 	if (0 >= (i = recv(sock, buf, buflen, flags))) {
-		if (ECONNRESET == errno || 0 == i)
+		if (EAGAIN == errno)
+			return(0);
+		else if (ECONNRESET == errno || 0 == i)
 // DEBUG really freaking noisy
 //			cf_fault_event(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_INFO, NULL, 0, "socket disconnected");
             ;
-		else
-			cf_fault_event(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_INFO, NULL, 0, "recv() failed: %s", cf_strerror(errno));
+		else {
+			cf_fault_event(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_INFO, NULL, 0, "recv() failed: %d %s", errno, cf_strerror(errno));
+		}
+			
 	}
 
 	return(i);
@@ -110,7 +114,7 @@ cf_socket_recvfrom(int sock, void *buf, size_t buflen, int flags, cf_sockaddr *f
 	socklen_t fl = sizeof(f);
 
 	if (0 >= (i = recvfrom(sock, buf, buflen, flags, (struct sockaddr *) &f, &fl))) {
-			cf_fault_event(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_INFO, NULL, 0, "recv() failed: %s", cf_strerror(errno));
+			cf_fault_event(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_INFO, NULL, 0, "recvfrom() failed: %s", cf_strerror(errno));
 	}
 	
 	cf_sockaddr_convertto( &f, from); 
@@ -157,7 +161,7 @@ cf_socket_init_svc(cf_socket_cfg *s)
 	s->saddr.sin_family = AF_INET;
 	inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr);
 	s->saddr.sin_port = htons(s->port);
-
+	
 	if (s->reuse_addr) {
 		int v = 1;
 		setsockopt(s->sock, SOL_SOCKET, SO_REUSEADDR, &v, sizeof(v) );
@@ -243,7 +247,7 @@ cf_socket_connect_nb(cf_sockaddr so, int *fd_r)
 		}
 	}
 
-	byte *b = (byte *) &sa.sin_addr;
+//	byte *b = (byte *) &sa.sin_addr;
 //	D("creating connection: fd %d %02x.%02x.%02x.%02x : %d",fd, b[0],b[1],b[2],b[3] ,htons(sa.sin_port) );
 
 	*fd_r = fd; 
@@ -266,6 +270,8 @@ cf_mcastsocket_init(cf_mcastsocket_cfg *ms)
 		return(errno);
 	}
 
+	D("mcast_socket init: socket %d",s->sock);
+	
 	// allows multiple readers on the same address
 	uint yes=1;
  	if (setsockopt(s->sock, SOL_SOCKET, SO_REUSEADDR,&yes,sizeof(yes))<0) {
