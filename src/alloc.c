@@ -101,7 +101,7 @@ cf_rc_free(void *addr)
 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 
 	if (0 == (cf_atomic_int)cf_atomic_int_get(*(cf_atomic_int *)rc))
-		free(rc);
+		free((void *)rc);
 
 	return;
 }
