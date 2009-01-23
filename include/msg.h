@@ -121,6 +121,9 @@ extern void msg_set_unset(msg *m, int field_id);
 
 // Getters and setters
 
+typedef enum { MSG_GET_DIRECT, MSG_GET_COPY_RC, MSG_GET_COPY_MALLOC } msg_get_type;
+typedef enum { MSG_SET_HANDOFF_MALLOC, MSG_SET_HANDOFF_RC, MSG_SET_COPY } msg_set_type;
+
 // Note! get_str and get_buf
 // should probably be more complicated. To wit: both a 'copy' and 'dup'
 // interface (where the 'copy' interface would return the length regardless,
@@ -137,16 +140,16 @@ extern int msg_get_uint32(const msg *m, int field_id, uint32_t *r);
 extern int msg_get_int32(const msg *m, int field_id, int32_t *r);
 extern int msg_get_uint64(const msg *m, int field_id, uint64_t *r);
 extern int msg_get_int64(const msg *m, int field_id, int64_t *r);
-extern int msg_get_str(const msg *m, int field_id, char **r, size_t *len, bool copy);  // this length is strlen+1, the allocated size
-extern int msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, bool copy);
+extern int msg_get_str(const msg *m, int field_id, char **r, size_t *len, msg_get_type type);  // this length is strlen+1, the allocated size
+extern int msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, msg_get_type type);
 extern int msg_get_bytearray(const msg *m, int field_id, cf_bytearray **r);
 
 extern int msg_set_uint32(msg *m, int field_id, const uint32_t v);
 extern int msg_set_int32(msg *m, int field_id, const int32_t v);
 extern int msg_set_uint64(msg *m, int field_id, const uint64_t v);
 extern int msg_set_int64(msg *m, int field_id, const int64_t v);
-extern int msg_set_str(msg *m, int field_id, const char *v, bool copy);
-extern int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, bool copy);
+extern int msg_set_str(msg *m, int field_id, const char *v, msg_set_type type);
+extern int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, msg_set_type type);
 extern int msg_set_bytearray(msg *m, int field_id, const cf_bytearray *ba);
 
 // A little routine that's good for testing
