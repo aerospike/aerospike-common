@@ -202,11 +202,18 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 				case M_FT_BUF:
 					mf->field_len = flen;
 					if (copy) {
-						mf->u.buf = malloc(flen);
-						// TODO: add assert
+						if (m->bytes_alloc - m->bytes_used >= flen) {
+							mf->u.buf = ((byte *)m) + m->bytes_used;
+							m->bytes_used += flen;
+							mf->free = mf->rc_free = 0;
+						}
+						else {
+							// TODO: add assert
+							mf->u.buf = malloc(flen);
+							mf->free = mf->u.buf;
+							mf->rc_free = 0;
+						}
 						memcpy(mf->u.buf, buf, flen);
-						mf->free = mf->u.buf;
-						mf->rc_free = 0;
 					}
 					else {
 						mf->u.buf = (byte *) buf; // compiler whinges here correctly, I bless this cast
