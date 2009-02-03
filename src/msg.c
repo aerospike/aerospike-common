@@ -362,7 +362,7 @@ int
 msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 {
 	// debug!
-	memset(buf, 0xff, *buflen);
+	// memset(buf, 0xff, *buflen);
 	
 	// Figure out the size
 	size_t	sz = 6;

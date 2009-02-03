@@ -85,7 +85,8 @@ cf_rc_alloc(size_t sz)
 
 	cf_atomic_int_set((cf_atomic_int *)addr, 1);
 	byte *base = addr + sizeof(asz);
-	memset(base, 0, sz);
+	
+	// memset(base, 0, sz);
 
 	return(base);
 }
