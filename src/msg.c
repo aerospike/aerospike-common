@@ -376,7 +376,7 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 	
 	// validate the size
 	if (sz > *buflen) {
-		D("msg_fillbuf: passed in size too small want %d have %d",sz,*buflen);
+//		D("msg_fillbuf: passed in size too small want %d have %d",sz,*buflen);
 		return(-2);
 	}
 	*buflen = sz;
