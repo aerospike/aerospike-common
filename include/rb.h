@@ -53,7 +53,6 @@ struct cf_rb_tree_t
 };
 typedef struct cf_rb_tree_t cf_rb_tree;
 
-
 /* External functions */
 extern cf_rb_node *cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value);
 extern cf_rb_node *cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t **vlock);
@@ -63,6 +62,7 @@ extern void cf_rb_delete(cf_rb_tree *tree, cf_digest key);
 extern cf_rb_tree *cf_rb_create(cf_rb_value_destructor destructor);
 extern void cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r);
 extern void cf_rb_destroy(cf_rb_tree *tree);
+extern uint32_t cf_rb_size(cf_rb_tree *tree);
 
 typedef void (*cf_rb_reduce_fn) (cf_digest digest, void *value, void *udata);
 extern void cf_rb_reduce(cf_rb_tree *tree, cf_rb_reduce_fn cb, void *udata);

@@ -563,8 +563,29 @@ cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r)
 	// debug thing
 	// memset(r, 0xff, sizeof(cf_rb_node));
     free(r);
+	
+	tree->elements--;
 
     return;
+}
+
+/*
+** get the size
+*/
+
+uint32_t
+cf_rb_size(cf_rb_tree *tree)
+{
+	cf_mcslock_qnode ql;
+	uint32_t	sz;
+	
+	cf_mcslock_lock(&tree->lock, &ql);
+	
+	sz = tree->elements;
+	
+	cf_mcslock_unlock(&tree->lock, &ql);
+	
+	return(sz);
 }
 
 /*
