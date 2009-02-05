@@ -313,14 +313,15 @@ bbhash_reduce(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 			if (list_he->key_len == 0)
 				break;
 			
-			reduce_fn(list_he->key, list_he->key_len, list_he->value, list_he->value_len, udata);
+			if (0 != reduce_fn(list_he->key, list_he->key_len, list_he->value, list_he->value_len, udata))
+				goto Out;
 			
 			list_he = list_he->next;
 		};
 		
 		he++;
 	}
-
+Out:
 	if (h->flags & BBHASH_CR_MT_BIGLOCK)
 		pthread_mutex_unlock(&h->biglock);
 

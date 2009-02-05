@@ -85,8 +85,6 @@ cf_rc_alloc(size_t sz)
 
 	cf_atomic_int_set((cf_atomic_int *)addr, 1);
 	byte *base = addr + sizeof(asz);
-	
-	// memset(base, 0, sz);
 
 	return(base);
 }
@@ -101,8 +99,10 @@ cf_rc_free(void *addr)
 
 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 
-	if (0 == (cf_atomic_int)cf_atomic_int_get(*(cf_atomic_int *)rc))
-		free((void *)rc);
+	cf_assert( cf_atomic_int_get(*(cf_atomic_int *)rc) == 0,
+		CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_CRITICAL, "rc free on held object");
+
+	free((void *)rc);
 
 	return;
 }

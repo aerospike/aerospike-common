@@ -9,7 +9,7 @@
 #pragma once
 #include "atomic.h"
 
-
+#include <pthread.h>
 
 /* SYNOPSIS
  * Mellor-Crummey & Scott locks
@@ -53,6 +53,9 @@ cf_mcslock_init(cf_mcslock *lock)
 	return;
 }
 
+// pthread_yield is actually not in pthread.h
+// even though it should be and appears supported
+extern int pthread_yield(void);
 
 /* cf_mcslock_lock
  */
@@ -68,8 +71,10 @@ cf_mcslock_lock(cf_mcslock *lock, cf_mcslock_qnode *qn)
 	qp = cf_atomic_p_fas_m(&lock->tail, qn);
 	if (NULL != qp) {
 		qp->next = qn;
-		while (qn->locked)
+		while (qn->locked) {
+			pthread_yield();
 			CF_MEMORY_BARRIER_READ();
+		}
 	}
 
 	CF_MEMORY_BARRIER();

@@ -210,6 +210,7 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 						else {
 							// TODO: add assert
 							mf->u.buf = malloc(flen);
+							cf_assert(mf->u.buf, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "malloc");
 							mf->free = mf->u.buf;
 							mf->rc_free = 0;
 						}
@@ -369,14 +370,14 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 	
 	for (int i=0;i<m->len;i++) {
 		const msg_field *mf = &m->f[i];
-		if (mf->is_valid && mf->is_set) {
+		if ((mf->is_valid==true) && (mf->is_set==true)) {
 			sz += 6 + msg_get_wire_field_size(mf);
 		}
 	}
 	
 	// validate the size
 	if (sz > *buflen) {
-		D("msg_fillbuf: passed in size too small");
+//		D("msg_fillbuf: passed in size too small want %d have %d",sz,*buflen);
 		return(-2);
 	}
 	*buflen = sz;
@@ -391,7 +392,7 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 	// copy the fields
 	for (int i=0;i<m->len;i++) {
 		const msg_field *mf = &m->f[i];
-		if (mf->is_valid && mf->is_set) {
+		if ((mf->is_valid==true) && (mf->is_set==true)) {
 			buf += msg_stamp_field(buf, mf);
 		}		
 	}
@@ -407,10 +408,10 @@ msg_reset(msg *m)
 {
 	m->bytes_used = (m->len * sizeof(msg_field)) + sizeof(msg);
 	for (int i=0 ; i < m->len ; i++) {
-		if (m->f[i].is_valid) {
+		if (m->f[i].is_valid == true) {
 			if (m->f[i].is_set == true) {
 //				D("msg_reset: freeing %p rcfree %p",m->f[i].free,m->f[i].rc_free);
-				if (m->f[i].free) free(m->f[i].free);
+				if (m->f[i].free) free(m->f[i].free); 
 				if (m->f[i].rc_free) cf_rc_releaseandfree(m->f[i].rc_free);
 				m->f[i].is_set = false;
 			}
@@ -945,10 +946,13 @@ msg_compare(const msg *m1, const msg *m2) {
 // And, finally, the destruction of a message
 void msg_destroy(msg *m) 
 {
-	if (cf_rc_release(m)) {
+	if (0 == cf_rc_release(m)) {
 		for (int i=0;i<m->len;i++) {
-			if (m->f[i].is_valid && m->f[i].is_set && m->f[i].free)
-				free(m->f[i].free);
+			if ((m->f[i].is_valid == true) && (m->f[i].is_set == true)) {
+				
+				if (m->f[i].free) free(m->f[i].free);
+				if (m->f[i].rc_free) cf_rc_releaseandfree(m->f[i].free);
+			}		
 		}
 			
 		cf_rc_free(m);
