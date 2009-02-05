@@ -408,10 +408,10 @@ msg_reset(msg *m)
 {
 	m->bytes_used = (m->len * sizeof(msg_field)) + sizeof(msg);
 	for (int i=0 ; i < m->len ; i++) {
-		if (m->f[i].is_valid) {
+		if (m->f[i].is_valid == true) {
 			if (m->f[i].is_set == true) {
 //				D("msg_reset: freeing %p rcfree %p",m->f[i].free,m->f[i].rc_free);
-				if (m->f[i].free) free(m->f[i].free);
+				if (m->f[i].free) free(m->f[i].free); 
 				if (m->f[i].rc_free) cf_rc_releaseandfree(m->f[i].rc_free);
 				m->f[i].is_set = false;
 			}
@@ -946,10 +946,13 @@ msg_compare(const msg *m1, const msg *m2) {
 // And, finally, the destruction of a message
 void msg_destroy(msg *m) 
 {
-	if (cf_rc_release(m)) {
+	if (0 == cf_rc_release(m)) {
 		for (int i=0;i<m->len;i++) {
-			if (m->f[i].is_valid && m->f[i].is_set && m->f[i].free)
-				free(m->f[i].free);
+			if ((m->f[i].is_valid == true) && (m->f[i].is_set == true)) {
+				
+				if (m->f[i].free) free(m->f[i].free);
+				if (m->f[i].rc_free) cf_rc_releaseandfree(m->f[i].free);
+			}		
 		}
 			
 		cf_rc_free(m);
