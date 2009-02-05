@@ -210,6 +210,7 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 						else {
 							// TODO: add assert
 							mf->u.buf = malloc(flen);
+							cf_assert(mf->u.buf, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "malloc");
 							mf->free = mf->u.buf;
 							mf->rc_free = 0;
 						}
@@ -369,7 +370,7 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 	
 	for (int i=0;i<m->len;i++) {
 		const msg_field *mf = &m->f[i];
-		if (mf->is_valid && mf->is_set) {
+		if ((mf->is_valid==true) && (mf->is_set==true)) {
 			sz += 6 + msg_get_wire_field_size(mf);
 		}
 	}
@@ -391,7 +392,7 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 	// copy the fields
 	for (int i=0;i<m->len;i++) {
 		const msg_field *mf = &m->f[i];
-		if (mf->is_valid && mf->is_set) {
+		if ((mf->is_valid==true) && (mf->is_set==true)) {
 			buf += msg_stamp_field(buf, mf);
 		}		
 	}
