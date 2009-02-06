@@ -202,7 +202,7 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 	if (ms_wait > 0) {
 		clock_gettime( CLOCK_REALTIME, &tp); 
 		tp.tv_sec += ms_wait / 1000;
-		tp.tv_nsec += ms_wait % 1000;
+		tp.tv_nsec += (ms_wait % 1000) * 1000000;
 		if (tp.tv_nsec > 1000000000) {
 			tp.tv_nsec -= 1000000000;
 			tp.tv_sec++;
