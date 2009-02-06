@@ -223,8 +223,10 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 		}
 		else {
 			pthread_cond_timedwait(&q->CV, &q->LOCK, &tp);
-			if (CF_Q_EMPTY(q))
+			if (CF_Q_EMPTY(q)) {
+				pthread_mutex_unlock(&q->LOCK);
 				return(CF_QUEUE_EMPTY);
+			}
 		}
 	}
 
