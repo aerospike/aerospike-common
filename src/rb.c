@@ -75,7 +75,6 @@ cf_rb_node *
 cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
 {
     cf_rb_node *n, *s, *t, *u;
-	cf_mcslock_qnode ql;
 
     /* Allocate memory for the new node and set the node parameters */
     if (NULL == (n = (cf_rb_node *)calloc(1, sizeof(cf_rb_node))))
@@ -91,7 +90,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     u = n;
 
     /* Lock the tree */
-	cf_mcslock_lock(&tree->lock, &ql);
+	pthread_mutex_lock(&tree->lock);
 
     /* Insert the node directly into the tree, via the typical method of
      * binary tree insertion */
@@ -107,7 +106,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     /* If the node already exists, stop a double-insertion */
     if ((s != tree->root) && (0 == memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ))) {
         free(n);
-		cf_mcslock_unlock(&tree->lock, &ql);
+		pthread_mutex_unlock(&tree->lock);
         return(NULL);
     }
 
@@ -156,7 +155,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     tree->root->left->color = CF_RB_BLACK;
 	tree->elements++;
 
-	cf_mcslock_unlock(&tree->lock, &ql);
+	pthread_mutex_unlock(&tree->lock);
     return(u);
 }
 
@@ -168,7 +167,6 @@ cf_rb_node *
 cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t **vlock)
 {
     cf_rb_node *n, *s, *t, *u;
-	cf_mcslock_qnode ql;
 
     /* We'll update this later if we succeed */
     *vlock = NULL;
@@ -190,7 +188,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
     u = n;
 	
     /* Lock the tree */
-	cf_mcslock_lock(&tree->lock, &ql);
+	pthread_mutex_lock(&tree->lock);
 
     /* Insert the node directly into the tree, via the typical method of
      * binary tree insertion */
@@ -207,7 +205,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
     if ((s != tree->root) && (0 == memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ))) {
 		pthread_mutex_destroy(&n->VALUE_LOCK);
         free(n);
-		cf_mcslock_unlock(&tree->lock, &ql);
+		pthread_mutex_unlock(&tree->lock);
         return(NULL);
     }
 
@@ -262,7 +260,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
 		D(" what? can't lock mutex? So BONED!");
 	}
 
-	cf_mcslock_unlock(&tree->lock, &ql);
+	pthread_mutex_unlock(&tree->lock);
 
     *vlock = &n->VALUE_LOCK;
 
@@ -397,15 +395,14 @@ cf_rb_node *
 cf_rb_search(cf_rb_tree *tree, cf_digest key)
 {
     cf_rb_node *r;
-	cf_mcslock_qnode ql;
 
     /* Lock the tree */
-	cf_mcslock_lock(&tree->lock, &ql);
+    pthread_mutex_lock(&tree->lock);
 
     r = cf_rb_search_lockless(tree, key);
 
     /* Unlock the tree */
-	cf_mcslock_unlock(&tree->lock, &ql);
+    pthread_mutex_unlock(&tree->lock);
 
     return(r);
 }
@@ -418,10 +415,9 @@ cf_rb_node *
 cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock)
 {
     cf_rb_node *r;
-	cf_mcslock_qnode ql;
 
     /* Lock the tree */
-	cf_mcslock_lock(&tree->lock, &ql);
+    pthread_mutex_lock(&tree->lock);
 
     r = cf_rb_search_lockless(tree, key);
 
@@ -433,7 +429,7 @@ cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock)
     }
 
     /* Unlock the tree */
-	cf_mcslock_unlock(&tree->lock, &ql);
+    pthread_mutex_unlock(&tree->lock);
 
     return(r);
 }
@@ -445,10 +441,9 @@ void
 cf_rb_delete(cf_rb_tree *tree, cf_digest key)
 {
     cf_rb_node *r, *s, *t;
-	cf_mcslock_qnode ql;
 
     /* Lock the tree */
-	cf_mcslock_lock(&tree->lock, &ql);
+    pthread_mutex_lock(&tree->lock);
 
     /* Find a node with the matching key; if none exists, eject immediately */
     if (NULL == (r = cf_rb_search_lockless(tree, key)))
@@ -497,7 +492,7 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
 	tree->elements--;
 	
 release:
-	cf_mcslock_unlock(&tree->lock, &ql);
+    pthread_mutex_unlock(&tree->lock);
 
     return;
 }
@@ -513,7 +508,7 @@ cf_rb_create(cf_rb_value_destructor destructor) {
     if (NULL == (tree = (cf_rb_tree *)calloc(1, sizeof(cf_rb_tree))))
         return(NULL);
     
-	cf_mcslock_init(&tree->lock);
+	pthread_mutex_init(&tree->lock, NULL);
 
     /* Allocate memory for the sentinel; note that it's pointers are all set
      * to itself */
@@ -563,31 +558,19 @@ cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r)
 	// debug thing
 	// memset(r, 0xff, sizeof(cf_rb_node));
     free(r);
-	
-	tree->elements--;
 
     return;
 }
 
-/*
-** get the size
-*/
-
 uint32_t
 cf_rb_size(cf_rb_tree *tree)
 {
-	cf_mcslock_qnode ql;
 	uint32_t	sz;
-	
-	cf_mcslock_lock(&tree->lock, &ql);
-	
+	pthread_mutex_lock(&tree->lock);
 	sz = tree->elements;
-	
-	cf_mcslock_unlock(&tree->lock, &ql);
-	
+	pthread_mutex_unlock(&tree->lock);
 	return(sz);
 }
-
 /*
 ** call a function on all the nodes in the tree
 */
@@ -612,17 +595,15 @@ cf_rb_reduce_traverse(  cf_rb_node *r, cf_rb_node *sentinel, cf_rb_reduce_fn cb,
 void
 cf_rb_reduce(cf_rb_tree *tree, cf_rb_reduce_fn cb, void *udata)
 {
-	cf_mcslock_qnode ql;
-
     /* Lock the tree */
-	cf_mcslock_lock(&tree->lock, &ql);
+    pthread_mutex_lock(&tree->lock);
 	
 	if ( (tree->root) && 
 		 (tree->root->left) && 
 		 (tree->root->left != tree->sentinel) )
 		cf_rb_reduce_traverse(tree->root->left, tree->sentinel, cb, udata);
 
-	cf_mcslock_unlock(&tree->lock, &ql);
+	pthread_mutex_unlock(&tree->lock);
     return;
 	
 }
@@ -634,15 +615,14 @@ cf_rb_reduce(cf_rb_tree *tree, cf_rb_reduce_fn cb, void *udata)
 void
 cf_rb_destroy(cf_rb_tree *tree)
 {
-	cf_mcslock_qnode ql;
-	cf_mcslock_lock(&tree->lock, &ql);
+	pthread_mutex_lock(&tree->lock);
     /* Purge the root and all its ilk */
     cf_rb_purge(tree, tree->root->left);
 
     /* Release the tree's memory */
     free(tree->root);
     free(tree->sentinel);
-	cf_mcslock_unlock(&tree->lock, &ql);
+	pthread_mutex_unlock(&tree->lock);
 	memset(tree, 0, sizeof(cf_rb_tree)); // a little debug
     free(tree);
 
