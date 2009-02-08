@@ -16,6 +16,9 @@
 
 #include "cf.h"
 
+// this debug tests for reference counts on the object an aweful lot
+// #define DEBUG
+
 int
 rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint32 key_len, uint32 sz, uint flags)
 {
@@ -90,6 +93,12 @@ rchash_put(rchash *h, void *key, uint32 key_len, void *object)
 	// This loop might be skippable if you know the key is not already in the hash
 	// (like, you just searched and it's single-threaded)	
 	while (e) {
+#ifdef DEBUG
+		if (cf_rc_count(e->object) < 1) {
+			D("rchash %p: internal bad reference count on %p",h, e->object);
+			return(BB_ERR);
+		}
+#endif		
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
 			rchash_free(h,e->object);
@@ -120,13 +129,20 @@ Copy:
 }
 
 //
-// I hate cute and paste
+// Put of any sort gobbles the reference count.
+// make sure the incoming reference count is > 0
+//
 
 int
 rchash_put_unique(rchash *h, void *key, uint32 key_len, void *object)
 {
 	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
 
+	if (cf_rc_count(object) < 1) {
+		D("put unique! bad reference count on %p");
+		return(BB_ERR);
+	}
+	
 	// Calculate hash
 	uint hash = h->h_fn(key, key_len);
 	hash %= h->table_len;
@@ -146,6 +162,12 @@ rchash_put_unique(rchash *h, void *key, uint32 key_len, void *object)
 
 	// check for uniqueness of key - if not unique, fail!
 	while (e) {
+#ifdef DEBUG
+		if (cf_rc_count(e->object) < 1) {
+			D("rchash %p: internal bad reference count on %p",h, e->object);
+			return(BB_ERR);
+		}
+#endif		
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
 			pthread_mutex_unlock(&h->biglock);
@@ -188,6 +210,13 @@ rchash_get(rchash *h, void *key, uint32 key_len, void **object)
 	rchash_elem *e = (rchash_elem *) ( ((byte *)h->table) + (sizeof(rchash_elem) * hash));	
 
 	do {
+#ifdef DEBUG
+		if (cf_rc_count(e->object) < 1) {
+			D("rchash %p: internal bad reference count on %p",h, e->object);
+			return(BB_ERR);
+		}
+#endif		
+
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(key, e->key, key_len) == 0) ) {
 			cf_rc_reserve( e->object );
@@ -233,6 +262,14 @@ rchash_delete(rchash *h, void *key, uint32 key_len)
 
 	// Look for teh element and destroy if found
 	while (e) {
+		
+#ifdef DEBUG
+		if (cf_rc_count(e->object) < 1) {
+			D("rchash %p: internal bad reference count on %p",h, e->object);
+			return(BB_ERR);
+		}
+#endif		
+
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
 			// Found it, kill it
@@ -295,6 +332,12 @@ rchash_reduce(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			if (list_he->key_len == 0)
 				break;
 			
+#ifdef DEBUG
+			if (cf_rc_count(list_he->object) < 1) {
+				D("rchash %p: internal bad reference count on %p",h, list_he->object);
+			}
+#endif		
+
 			reduce_fn(list_he->key, list_he->key_len, list_he->object, udata);
 			
 			list_he = list_he->next;
@@ -333,6 +376,13 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			// that's a signal to move along
 			if (list_he->key_len == 0)
 				break;
+			
+#ifdef DEBUG
+			if (cf_rc_count(list_he->object) < 1) {
+				D("rchash %p: internal bad reference count on %p",h, list_he->object);
+				return(BB_ERR);
+			}
+#endif		
 			
 			rv = reduce_fn(list_he->key, list_he->key_len, list_he->object, udata);
 			
