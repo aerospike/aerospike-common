@@ -967,7 +967,7 @@ void msg_destroy(msg *m)
 void
 msg_dump(const msg *m)
 {
-	printf("msg_dump: msg %p acount %d flen %d bytesused %d bytesallocd %d type %d  mt %p\n",
+	printf("msg_dump: msg %p acount %d flen %d bytesused %zu bytesallocd %zu type %d  mt %p\n",
 		m,(int)cf_rc_count((void *)m),m->len,m->bytes_used,m->bytes_alloc,m->type,m->mt);
 	for (int i=0;i<m->len;i++) {
 		printf("mf %02d: id %d isvalid %d iset %d\n",i,m->f[i].id,m->f[i].is_valid,m->f[i].is_set);

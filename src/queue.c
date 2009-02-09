@@ -455,8 +455,8 @@ cf_queue_test_1()
 		return(-1);
 	}
 	
-	if (0 != (int) th_return) {
-		fprintf(stderr, "queue test 1: returned error %d\n",(int)th_return);
+	if (0 != th_return) {
+		fprintf(stderr, "queue test 1: returned error %p\n",th_return);
 		return(-1);
 	}
 	
@@ -465,8 +465,8 @@ cf_queue_test_1()
 		return(-1);
 	}
 	
-	if (0 != (int) th_return) {
-		fprintf(stderr, "queue test 1: returned error 2 %d\n",(int)th_return);
+	if (0 != th_return) {
+		fprintf(stderr, "queue test 1: returned error 2 %p\n",th_return);
 		return(-1);
 	}
 	
