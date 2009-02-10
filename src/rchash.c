@@ -338,7 +338,8 @@ rchash_reduce(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			}
 #endif		
 
-			reduce_fn(list_he->key, list_he->key_len, list_he->object, udata);
+			if (0 != reduce_fn(list_he->key, list_he->key_len, list_he->object, udata))
+				goto Out;
 			
 			list_he = list_he->next;
 		};
@@ -346,6 +347,7 @@ rchash_reduce(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 		he++;
 	}
 
+Out:	
 	if (h->flags & RCHASH_CR_MT_BIGLOCK)
 		pthread_mutex_unlock(&h->biglock);
 
