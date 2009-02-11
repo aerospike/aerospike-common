@@ -294,10 +294,12 @@ Out:
 
 // Call the function over every node in the tree
 // Can be lock-expensive at the moment, until we improve the lockfree code
-
-void
+// the return value is the non-zero return value of any of the reduce calls,
+// if there was one that didn't return zero.
+int
 bbhash_reduce(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 {
+	int rv = 0;
 	
 	if (h->flags & BBHASH_CR_MT_BIGLOCK)
 		pthread_mutex_lock(&h->biglock);
@@ -313,7 +315,8 @@ bbhash_reduce(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 			if (list_he->key_len == 0)
 				break;
 			
-			if (0 != reduce_fn(list_he->key, list_he->key_len, list_he->value, list_he->value_len, udata))
+			rv = reduce_fn(list_he->key, list_he->key_len, list_he->value, list_he->value_len, udata);
+			if (0 != rv)
 				goto Out;
 			
 			list_he = list_he->next;
@@ -325,15 +328,18 @@ Out:
 	if (h->flags & BBHASH_CR_MT_BIGLOCK)
 		pthread_mutex_unlock(&h->biglock);
 
-	return;
+	return(rv);
 }
 
 // A special version of 'reduce' that supports deletion
-// In this case, if you return '-1' from the reduce fn, that node will be
-// deleted
-void
+// In this case, if you return '1' from the reduce fn, that node will be
+// deleted. All other return values will terminate the reduce and pass
+// that value back to the caller. We're using '1' because in this codebase,
+// negative numbers are errors
+int
 bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 {
+	int rv = 0;
 	
 	if (h->flags & BBHASH_CR_MT_BIGLOCK)
 		pthread_mutex_lock(&h->biglock);
@@ -344,8 +350,6 @@ bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 
 		bbhash_elem *list_he = he;
 		bbhash_elem *prev_he = 0;
-		int rv;
-
 		
 		while (list_he) {
 			// This kind of structure might have the head as an empty element,
@@ -357,7 +361,7 @@ bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 			
 			// Delete is requested
 			// Leave the pointers in a "next" state
-			if (rv == -1) {
+			if (rv == BBHASH_REDUCE_DELETE) {
 				free(list_he->key);
 				free(list_he->value);
 				// patchup pointers & free element if not head
@@ -385,22 +389,25 @@ bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 						free(_t);
 					}
 				}
-
+				rv = 0;
+			}
+			else if (0 != rv) {
+				goto Out;
 			}
 			else { // don't delete, just forward everything
 				prev_he = list_he;
 				list_he = list_he->next;
 			}	
-				
 		};
 		
 		he++;
 	}
 
+Out:
 	if (h->flags & BBHASH_CR_MT_BIGLOCK)
 		pthread_mutex_unlock(&h->biglock);
 
-	return;
+	return(rv);
 }
 
 

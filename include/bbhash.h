@@ -140,7 +140,7 @@ bbhash_return(bbhash *h, void *value);
 ** so make the reduce_fn lightweight! Consider queuing or soemthing if you
 ** want to do something fancy
 */
-void
+int
 bbhash_reduce(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata);
 
 /*
@@ -148,7 +148,9 @@ bbhash_reduce(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata);
 ** This instance allows deletion of hash elements during the reduce:
 ** return -1 to cause the deletion of the element visisted
 */
-void
+#define BBHASH_REDUCE_DELETE (1) // return this from the reduce when you want to delete
+
+int
 bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata);
 
 
