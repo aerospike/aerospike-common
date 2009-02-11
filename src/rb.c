@@ -609,18 +609,16 @@ cf_rb_reduce(cf_rb_tree *tree, cf_rb_reduce_fn cb, void *udata)
 }
 
 /* cf_rb_destroy
- * Destroy a red-black tree
- * In some sense, olding the lock is unnecessary, because anyone
- * holding the pointer is screwed anyway, but let's put the lock in anyway */
-void
+ * Destroy a red-black tree; return 0 if the tree was destroyed or 1
+ * otherwise */
+int
 cf_rb_destroy(cf_rb_tree *tree)
 {
 	if (0 != cf_rc_release(tree))
-		return;
+		return(1);
 
 	/* Purge the tree and all it's ilk */
 	pthread_mutex_lock(&tree->lock);
-    /* Purge the root and all its ilk */
     cf_rb_purge(tree, tree->root->left);
 
     /* Release the tree's memory */
@@ -630,5 +628,5 @@ cf_rb_destroy(cf_rb_tree *tree)
 	memset(tree, 0, sizeof(cf_rb_tree)); // a little debug
     cf_rc_free(tree);
 
-    return;
+    return(0);
 }
