@@ -505,9 +505,9 @@ cf_rb_create(cf_rb_value_destructor destructor) {
     cf_rb_tree *tree;
 
     /* Allocate memory for the tree and initialize the tree lock */
-    if (NULL == (tree = (cf_rb_tree *)calloc(1, sizeof(cf_rb_tree))))
+    if (NULL == (tree = cf_rc_alloc(sizeof(cf_rb_tree))))
         return(NULL);
-    
+
 	pthread_mutex_init(&tree->lock, NULL);
 
     /* Allocate memory for the sentinel; note that it's pointers are all set
@@ -615,6 +615,10 @@ cf_rb_reduce(cf_rb_tree *tree, cf_rb_reduce_fn cb, void *udata)
 void
 cf_rb_destroy(cf_rb_tree *tree)
 {
+	if (0 != cf_rc_release(tree))
+		return;
+
+	/* Purge the tree and all it's ilk */
 	pthread_mutex_lock(&tree->lock);
     /* Purge the root and all its ilk */
     cf_rb_purge(tree, tree->root->left);
@@ -624,7 +628,7 @@ cf_rb_destroy(cf_rb_tree *tree)
     free(tree->sentinel);
 	pthread_mutex_unlock(&tree->lock);
 	memset(tree, 0, sizeof(cf_rb_tree)); // a little debug
-    free(tree);
+    cf_rc_free(tree);
 
     return;
 }
