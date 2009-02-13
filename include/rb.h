@@ -19,7 +19,7 @@
 
 /* cf_rb_value_destructor()
  * A destructor function prototype for a value */
-typedef void (*cf_rb_value_destructor) (void *v);
+typedef uint64_t (*cf_rb_value_destructor) (void *v);
 
 
 /* cf_rb_node
@@ -60,7 +60,7 @@ extern cf_rb_node *cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value);
 extern cf_rb_node *cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t **vlock);
 extern cf_rb_node *cf_rb_search(cf_rb_tree *tree, cf_digest key);
 extern cf_rb_node *cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock);
-extern void cf_rb_delete(cf_rb_tree *tree, cf_digest key);
+extern uint64_t cf_rb_delete(cf_rb_tree *tree, cf_digest key);
 extern cf_rb_tree *cf_rb_create(cf_rb_value_destructor destructor);
 extern void cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r);
 extern int cf_rb_destroy(cf_rb_tree *tree);

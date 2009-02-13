@@ -81,6 +81,7 @@ cf_atomic64_add(cf_atomic64 *a, int64_t b)
 
 	return(b + i);
 }
+#define cf_atomic64_sub(a,b) (cf_atomic64_add((a), (0 - (b))))
 #define cf_atomic64_incr(a) (cf_atomic64_add((a), 1))
 #define cf_atomic64_decr(a) (cf_atomic64_add((a), -1))
 
@@ -163,6 +164,7 @@ cf_atomic32_add(cf_atomic32 *a, int32_t b)
 
 	return(b + i);
 }
+#define cf_atomic32_sub(a,b) (cf_atomic32_add((a), (0 - (b))))
 #define cf_atomic32_incr(a) (cf_atomic32_add((a), 1))
 #define cf_atomic32_decr(a) (cf_atomic32_add((a), -1))
 

@@ -436,11 +436,13 @@ cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock)
 
 
 /* cf_rb_delete
- * Remove a node from a red-black tree */
-void
+ * Remove a node from a red-black tree, returning 0 or any return value from
+ * the provided value destructor function */
+uint64_t
 cf_rb_delete(cf_rb_tree *tree, cf_digest key)
 {
     cf_rb_node *r, *s, *t;
+	uint64_t rv = 0;
 
     /* Lock the tree */
     pthread_mutex_lock(&tree->lock);
@@ -466,8 +468,11 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
             cf_rb_deleterebalance(tree, t);
 
         /* Free memory for the node contents */
-		/* this is an as_record, can't simply be freed */
-        // free(r->value);
+		if (tree->destructor) {
+	        rv = tree->destructor(r->value);
+			D("tree destructor returned %llu", rv);
+		} else
+			free(r->value);
 
         /* Reassign pointers and coloration */
         s->left = r->left;
@@ -482,9 +487,13 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
             r->parent->right = s;
         free(r);
     } else {
-		// free memory of node contents - this is an as_record,
-		// can't simply be freed
-        // free(s->value);
+		/* Destroy the node contents */
+		if (tree->destructor) {
+	        rv = tree->destructor(s->value);
+			D("tree destructor returned %llu", rv);
+		} else
+			free(s->value);
+
         if (CF_RB_BLACK == s->color)
             cf_rb_deleterebalance(tree, t);
         free(s);
@@ -494,7 +503,7 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
 release:
     pthread_mutex_unlock(&tree->lock);
 
-    return;
+    return(rv);
 }
 
 
@@ -552,7 +561,7 @@ cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r)
     pthread_mutex_lock(&r->VALUE_LOCK);
     /* FIXME We ought to handle this by passing in a destructor callback... */
     if (tree->destructor)
-        tree->destructor(r->value);
+        (void)tree->destructor(r->value);
     pthread_mutex_unlock(&r->VALUE_LOCK);
     pthread_mutex_destroy(&r->VALUE_LOCK);
 	// debug thing
