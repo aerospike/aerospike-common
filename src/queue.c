@@ -27,7 +27,7 @@
 /* cf_queue_create
  * Initialize a queue */
 cf_queue *
-cf_queue_create(size_t elementsz)
+cf_queue_create(size_t elementsz, bool threadsafe)
 {
 	cf_queue *q = NULL;
 
@@ -38,13 +38,17 @@ cf_queue_create(size_t elementsz)
 	q->allocsz = CF_QUEUE_ALLOCSZ;
 	q->write_offset = q->read_offset = 0;
 	q->elementsz = elementsz;
+	q->threadsafe = threadsafe;
 
 	q->queue = malloc(CF_QUEUE_ALLOCSZ * elementsz);
 	if (! q->queue) {
 		free(q);
 		return(NULL);
 	}
-	
+
+	if (!q->threadsafe)
+		return(q);
+
 	if (0 != pthread_mutex_init(&q->LOCK, NULL)) {
 		/* FIXME error msg */
 		free(q->queue);
@@ -69,8 +73,10 @@ cf_queue_create(size_t elementsz)
 void
 cf_queue_destroy(cf_queue *q)
 {
-	pthread_cond_destroy(&q->CV);
-	pthread_mutex_destroy(&q->LOCK);
+	if (q->threadsafe) {
+		pthread_cond_destroy(&q->CV);
+		pthread_mutex_destroy(&q->LOCK);
+	}
 	memset(q->queue, 0, sizeof(q->allocsz * q->elementsz));
 	free(q->queue);
 	memset(q, 0, sizeof(cf_queue) );
@@ -81,10 +87,12 @@ int
 cf_queue_sz(cf_queue *q)
 {
 	int rv;
-	
-	pthread_mutex_lock(&q->LOCK);
+
+	if (q->threadsafe)
+		pthread_mutex_lock(&q->LOCK);
 	rv = CF_Q_SZ(q);
-	pthread_mutex_unlock(&q->LOCK);
+	if (q->threadsafe)
+		pthread_mutex_unlock(&q->LOCK);
 	return(rv);
 	
 }
@@ -156,14 +164,15 @@ cf_queue_push(cf_queue *q, void *ptr)
 	/* FIXME arg check - and how do you do that, boyo? Magic numbers? */
 
 	/* FIXME error */
-	if (0 != pthread_mutex_lock(&q->LOCK))
-		return(-1);
+	if (q->threadsafe && (0 != pthread_mutex_lock(&q->LOCK)))
+			return(-1);
 
 	/* Check queue length */
 	if (CF_Q_SZ(q) == q->allocsz) {
 		/* resize is a pain for circular buffers */
 		if (0 != cf_queue_resize(q, q->allocsz + CF_QUEUE_ALLOCSZ)) {
-			pthread_mutex_unlock(&q->LOCK);
+			if (q->threadsafe)
+				pthread_mutex_unlock(&q->LOCK);
 			return(-1);
 		}
 	}
@@ -173,10 +182,11 @@ cf_queue_push(cf_queue *q, void *ptr)
 	q->write_offset++;
 	if (q->write_offset & 0x80000000) cf_queue_unwrap(q);
 	
-	pthread_cond_signal(&q->CV);
+	if (q->threadsafe)
+		pthread_cond_signal(&q->CV);
 
 	/* FIXME blow a gasket */
-	if (0 != pthread_mutex_unlock(&q->LOCK))
+	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK)))
 		return(-1);
 
 	return(0);
@@ -195,7 +205,7 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 		return(-1);
 
 	/* FIXME error checking */
-	if (0 != pthread_mutex_lock(&q->LOCK))
+	if (q->threadsafe && (0 != pthread_mutex_lock(&q->LOCK)))
 		return(-1);
 
 	struct timespec tp;
@@ -213,22 +223,25 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 	/* Note that we apparently have to use a while() loop.  Careful reading
 	 * of the pthread_cond_signal() documentation says that AT LEAST ONE
 	 * waiting thread will be awakened... */
-	while (CF_Q_EMPTY(q)) {
-		if (CF_QUEUE_FOREVER == ms_wait) {
-			pthread_cond_wait(&q->CV, &q->LOCK);
-		}
-		else if (CF_QUEUE_NOWAIT == ms_wait) {
-			pthread_mutex_unlock(&q->LOCK);
-			return(CF_QUEUE_EMPTY);
-		}
-		else {
-			pthread_cond_timedwait(&q->CV, &q->LOCK, &tp);
-			if (CF_Q_EMPTY(q)) {
+	if (q->threadsafe) {
+		while (CF_Q_EMPTY(q)) {
+			if (CF_QUEUE_FOREVER == ms_wait) {
+				pthread_cond_wait(&q->CV, &q->LOCK);
+			}
+			else if (CF_QUEUE_NOWAIT == ms_wait) {
 				pthread_mutex_unlock(&q->LOCK);
 				return(CF_QUEUE_EMPTY);
 			}
+			else {
+				pthread_cond_timedwait(&q->CV, &q->LOCK, &tp);
+				if (CF_Q_EMPTY(q)) {
+					pthread_mutex_unlock(&q->LOCK);
+					return(CF_QUEUE_EMPTY);
+				}
+			}
 		}
-	}
+	} else if (CF_Q_EMPTY(q))
+		return(CF_QUEUE_EMPTY);
 
 	memcpy(buf, CF_Q_ELEM_PTR(q,q->read_offset), q->elementsz);
 	q->read_offset++;
@@ -239,7 +252,7 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 	}
 
 	/* FIXME blow a gasket */
-	if (0 != pthread_mutex_unlock(&q->LOCK)) {
+	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK))) {
 		fprintf(stderr, "unlock failed\n");
 		return(-1);
 	}
@@ -296,7 +309,7 @@ cf_queue_reduce(cf_queue *q,  cf_queue_reduce_fn cb, void *udata)
 		return(-1);
 
 	/* FIXME error checking */
-	if (0 != pthread_mutex_lock(&q->LOCK))
+	if (q->threadsafe && (0 != pthread_mutex_lock(&q->LOCK)))
 		return(-1);
 
 	if (CF_Q_SZ(q)) {
@@ -323,7 +336,7 @@ cf_queue_reduce(cf_queue *q,  cf_queue_reduce_fn cb, void *udata)
 		};
 	}
 	
-	if (0 != pthread_mutex_unlock(&q->LOCK)) {
+	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK))) {
 		fprintf(stderr, "unlock failed\n");
 		return(-1);
 	}
@@ -343,7 +356,7 @@ cf_queue_delete(cf_queue *q, void *buf, bool only_one)
 		return(CF_QUEUE_ERR);
 
 	/* FIXME error checking */
-	if (0 != pthread_mutex_lock(&q->LOCK))
+	if (q->threadsafe && (0 != pthread_mutex_lock(&q->LOCK)))
 		return(CF_QUEUE_ERR);
 
 	bool found = false;
@@ -364,9 +377,9 @@ cf_queue_delete(cf_queue *q, void *buf, bool only_one)
 			}
 		};
 	}
-	
-Done:	
-	if (0 != pthread_mutex_unlock(&q->LOCK)) {
+
+Done:
+	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK))) {
 		fprintf(stderr, "unlock failed\n");
 		return(-1);
 	}
@@ -375,7 +388,6 @@ Done:
 		return(CF_QUEUE_EMPTY);
 	else
 		return(CF_QUEUE_OK);
-	
 }
 
 //
@@ -442,7 +454,7 @@ cf_queue_test_1()
 	pthread_t     read_th;
 	cf_queue    *q;
 	
-	q = cf_queue_create(sizeof(int));
+	q = cf_queue_create(sizeof(int), true);
 	
 	pthread_create( & write_th, 0, cf_queue_test_1_write, q);
 	

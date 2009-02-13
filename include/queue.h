@@ -18,6 +18,7 @@
  * A queue */
 #define CF_QUEUE_ALLOCSZ 64
 struct cf_queue_t {
+	bool threadsafe;  // sometimes it's good to live dangerously
 	unsigned int allocsz;      // number of queue elements currently allocated
 	unsigned int write_offset; // 0 offset is first queue element.
 						   // write is always greater than or equal to read
@@ -39,7 +40,7 @@ typedef struct cf_queue_t cf_queue;
 
 
 /* External functions */
-extern cf_queue *cf_queue_create(size_t elementsz);
+extern cf_queue *cf_queue_create(size_t elementsz, bool threadsafe);
 
 extern void cf_queue_destroy(cf_queue *q);
 

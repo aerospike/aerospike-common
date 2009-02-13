@@ -28,6 +28,9 @@ typedef uint64_t uint64;
 typedef int64_t int64;
 typedef uint8_t byte;
 
+typedef uint64_t cf_clock;
+
+
 /* cf_bytearray
  * An array of bytes */
  /* TO AVOID CONFUSION, always create a cf_bytearray as a reference counted
