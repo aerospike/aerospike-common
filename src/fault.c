@@ -158,13 +158,14 @@ cf_fault_init(const int argc, char **argv)
 		cf_assert(NULL, CF_FAULT_SCOPE_GLOBAL, CF_FAULT_SEVERITY_CRITICAL, "invalid arguments");
 
 	/* Copy the argument vector */
-	cf_fault_restart_argv = calloc(argc, sizeof(char *));
+	cf_fault_restart_argv = malloc((argc + 1) * sizeof(char *));
 	cf_assert(cf_fault_restart_argv, CF_FAULT_SCOPE_GLOBAL, CF_FAULT_SEVERITY_CRITICAL, "calloc: %s", cf_strerror(errno));
 	for (i = 0; i < argc; i++) {
-		cf_fault_restart_argv[i] = calloc(strlen(argv[i]), sizeof(char));
+		cf_fault_restart_argv[i] = malloc((strlen(argv[i]) + 1) * sizeof(char));
 		cf_assert(cf_fault_restart_argv[i], CF_FAULT_SCOPE_GLOBAL, CF_FAULT_SEVERITY_CRITICAL, "calloc: %s", cf_strerror(errno));
-		memcpy(cf_fault_restart_argv[i], argv[i], strlen(argv[i]));
+		memcpy(cf_fault_restart_argv[i], argv[i], strlen(argv[i]) + 1);
 	}
+	cf_fault_restart_argv[argc] = NULL;
 
 	return;
 }
