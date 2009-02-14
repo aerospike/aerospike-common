@@ -538,6 +538,7 @@ cf_rb_create(cf_rb_value_destructor destructor) {
     tree->root->color = CF_RB_BLACK;
 
     tree->destructor = destructor;
+	tree->elements = 0;
 
     /* Return a pointer to the new tree */
     return(tree);
