@@ -468,10 +468,9 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
             cf_rb_deleterebalance(tree, t);
 
         /* Free memory for the node contents */
-		if (tree->destructor) {
+		if (tree->destructor)
 	        rv = tree->destructor(r->value);
-			D("tree destructor returned %llu", rv);
-		} else
+		else
 			free(r->value);
 
         /* Reassign pointers and coloration */
@@ -488,10 +487,9 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
         free(r);
     } else {
 		/* Destroy the node contents */
-		if (tree->destructor) {
+		if (tree->destructor)
 	        rv = tree->destructor(s->value);
-			D("tree destructor returned %llu", rv);
-		} else
+		else
 			free(s->value);
 
         if (CF_RB_BLACK == s->color)
