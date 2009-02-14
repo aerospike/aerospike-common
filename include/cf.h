@@ -28,8 +28,6 @@ typedef uint64_t uint64;
 typedef int64_t int64;
 typedef uint8_t byte;
 
-typedef uint64_t cf_clock;
-
 
 /* cf_bytearray
  * An array of bytes */
@@ -40,6 +38,11 @@ struct cf_bytearray_t {
 	byte data[];
 };
 typedef struct cf_bytearray_t cf_bytearray;
+
+
+/* Timekeeping */
+typedef uint64_t cf_clock;
+
 
 #define INVALID_FD (-1)
 
@@ -165,4 +168,5 @@ extern unsigned short cf_nodeid_get_port(cf_node id);
 extern int cf_sort_firstk(uint64_t *v, size_t sz, int k);
 
 // This is even shorter!
-extern uint64_t cf_getms();
+extern cf_clock cf_getms();
+extern cf_clock cf_clock_getabsolute();
