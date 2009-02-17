@@ -558,7 +558,6 @@ cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r)
 
     /* Release this node's memory */
     pthread_mutex_lock(&r->VALUE_LOCK);
-    /* FIXME We ought to handle this by passing in a destructor callback... */
     if (tree->destructor)
         (void)tree->destructor(r->value);
     pthread_mutex_unlock(&r->VALUE_LOCK);
