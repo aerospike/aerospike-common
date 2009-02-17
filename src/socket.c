@@ -166,7 +166,10 @@ cf_socket_init_svc(cf_socket_cfg *s)
 		int v = 1;
 		setsockopt(s->sock, SOL_SOCKET, SO_REUSEADDR, &v, sizeof(v) );
 	}
-	
+
+	/* Set close-on-exec */
+	fcntl(s->sock, F_SETFD, 1);
+
 	/* Bind to the socket; if we can't, nanosleep() and retry */
 	while (0 > (bind(s->sock, (struct sockaddr *)&s->saddr, sizeof(struct sockaddr)))) {
 		if (EADDRINUSE != errno) {
@@ -200,7 +203,10 @@ cf_socket_init_client(cf_socket_cfg *s)
 		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "socket: %s", cf_strerror(errno));
 		return(errno);
 	}
-	
+
+	/* Set close-on-exec */
+	fcntl(s->sock, F_SETFD, 1);
+
 	memset(&s->saddr,0,sizeof(s->saddr));
 	s->saddr.sin_family = AF_INET;
 	if (0 >= inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr)) {
@@ -236,7 +242,10 @@ cf_socket_connect_nb(cf_sockaddr so, int *fd_r)
 		cf_fault_event(CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_WARNING, NULL, 0, "socket connect error: %d %s", errno, cf_strerror(errno));
 		return(errno);
 	}
-	
+
+	/* Set close-on-exec */
+	fcntl(fd, F_SETFD, 1);
+
 	cf_socket_set_nonblocking(fd);
 	
 	if (0 > (connect(fd, (struct sockaddr *)&sa, sizeof(sa)))) {
@@ -278,6 +287,9 @@ cf_mcastsocket_init(cf_mcastsocket_cfg *ms)
 		fprintf(stderr, "reuse of mcast socket failed errno %d\n",errno);
 		return(errno);
 	}
+
+	/* Set close-on-exec */
+	fcntl(s->sock, F_SETFD, 1);
 
 	// Bind to the incoming port on inaddr any
 	memset(&s->saddr, 0, sizeof(s->saddr));
