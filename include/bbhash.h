@@ -33,21 +33,21 @@
 /*
  * A generic call for hash functions the user can create
  */
-typedef uint32 (*bbhash_hash_fn) (void *value, uint32 value_len);
+typedef uint32_t (*bbhash_hash_fn) (void *value, uint32_t value_len);
 
 /*
 ** Typedef for a "reduce" fuction that is called on every node
 ** (Note about return value: some kinds of reduces can manipulate the hash table,
 **  allowing deletion. See the particulars of the reduce call.)
 */
-typedef int (*bbhash_reduce_fn) (void *key, uint32 keylen, void *data, uint32 datalen, void *udata);
+typedef int (*bbhash_reduce_fn) (void *key, uint32_t keylen, void *data, uint32_t datalen, void *udata);
 
 // Simple (and slow) element is when
 // everything is variable (although a very nicely packed structure for 32 or 64
 typedef struct bbhash_elem_s {
 	struct bbhash_elem_s *next;
-	uint32 key_len;
-	uint32 value_len;
+	uint32_t key_len;
+	uint32_t value_len;
 	void *key;
 	void *value;
 } bbhash_elem;
@@ -56,8 +56,8 @@ typedef struct bbhash_elem_s {
 
 typedef struct bbhash_s {
 	uint elements;
-	uint32 key_len;
-	uint32 value_len;
+	uint32_t key_len;
+	uint32_t value_len;
 	uint flags;
 	bbhash_hash_fn	h_fn;
 	
@@ -83,13 +83,15 @@ typedef struct bbhash_s {
  */
 
 int
-bbhash_create(bbhash **h, bbhash_hash_fn h_fn, uint32 key_len, uint32 value_len, uint32 sz, uint flags);
+bbhash_create(bbhash **h, bbhash_hash_fn h_fn, uint32_t key_len, uint32_t value_len, uint32_t sz, uint flags);
 
 /* Place a value into the hash
  * Value will be copied into the hash
  */
 int
-bbhash_put(bbhash *h, void *key, uint32 key_len, void *value, uint32 value_len);
+bbhash_put(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t value_len);
+int
+bbhash_put_unique(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t value_len);
 
 /* If you think you know how much space it will take, 
  * call with the buffer you want filled
@@ -97,25 +99,25 @@ bbhash_put(bbhash *h, void *key, uint32 key_len, void *value, uint32 value_len);
  * will be filled in with the value you should have passed
  */
 int
-bbhash_get(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len);
+bbhash_get(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t *value_len);
 
 /* Does a get and delete at the same time so you can make sure only one person
  * gets what was inserted
  */
 int
-bbhash_get_and_delete(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len);
+bbhash_get_and_delete(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t *value_len);
 
 
 /*
 ** Got a key you want removed - this is the function to call
 */
 int
-bbhash_delete(bbhash *h, void *key, uint32 key_len);
+bbhash_delete(bbhash *h, void *key, uint32_t key_len);
 
 /*
 ** Get the number of elements currently in the hash
 */
-uint32
+uint32_t
 bbhash_get_size(bbhash *h);
 
 /*
@@ -127,7 +129,7 @@ bbhash_get_size(bbhash *h);
  * return call
  */
 int
-bbhash_grab(bbhash *h, void *key, uint32 key_len, void **value, uint32 *value_len);
+bbhash_grab(bbhash *h, void *key, uint32_t key_len, void **value, uint32_t *value_len);
 
 /* Return a value that has been gotten
  */

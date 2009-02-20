@@ -14,7 +14,7 @@
 // #include "bbhash.h"
 
 int
-bbhash_create(bbhash **h_r, bbhash_hash_fn h_fn, uint32 key_len, uint32 value_len, uint32 sz, uint flags)
+bbhash_create(bbhash **h_r, bbhash_hash_fn h_fn, uint32_t key_len, uint32_t value_len, uint32_t sz, uint flags)
 {
 	bbhash *h;
 
@@ -46,14 +46,14 @@ bbhash_create(bbhash **h_r, bbhash_hash_fn h_fn, uint32 key_len, uint32 value_le
 	return(BB_OK);
 }
 
-uint32
+uint32_t
 bbhash_get_size(bbhash *h)
 {
 	return(h->elements);
 }
 
 int
-bbhash_put(bbhash *h, void *key, uint32 key_len, void *value, uint32 value_len)
+bbhash_put(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t value_len)
 {
 	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
 	if ((h->value_len) && (h->value_len != value_len) ) return(BB_ERR);
@@ -108,8 +108,65 @@ Copy:
 
 }
 
+// Fail if there's already a value there
+
 int
-bbhash_get(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len)
+bbhash_put_unique(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t value_len)
+{
+	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
+	if ((h->value_len) && (h->value_len != value_len) ) return(BB_ERR);
+
+	// Calculate hash
+	uint hash = h->h_fn(key, key_len);
+	hash %= h->table_len;
+
+	if (h->flags & BBHASH_CR_MT_BIGLOCK) {
+		pthread_mutex_lock(&h->biglock);
+	}
+		
+	bbhash_elem *e = (bbhash_elem *) ( ((uint8_t *)h->table) + (sizeof(bbhash_elem) * hash));	
+
+	// most common case should be insert into empty bucket, special case
+	if ( ( e->next == 0 ) && (e->key_len == 0) ) {
+		goto Copy;
+	}
+
+	bbhash_elem *e_head = e;
+
+	// This loop might be skippable if you know the key is not already in the hash
+	// (like, you just searched and it's single-threaded)	
+	while (e) {
+		if ( ( key_len == e->key_len ) &&
+			 ( memcmp(e->key, key, key_len) == 0) ) {
+			if (h->flags & BBHASH_CR_MT_BIGLOCK)
+				pthread_mutex_unlock(&h->biglock);
+			return(BB_ERR_FOUND);
+		}
+		e = e->next;
+	}
+
+	e = (bbhash_elem *) malloc(sizeof(bbhash_elem));
+	e->next = e_head->next;
+	e_head->next = e;
+	
+Copy:
+	e->key = malloc(key_len);
+	memcpy(e->key, key, key_len);
+	e->key_len = key_len;
+	e->value = malloc(value_len);
+	memcpy(e->value, value, value_len);
+	e->value_len = value_len;
+	h->elements++;
+	if (h->flags & BBHASH_CR_MT_BIGLOCK) 
+		pthread_mutex_unlock(&h->biglock);
+	return(BB_OK);	
+
+}
+
+
+
+int
+bbhash_get(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t *value_len)
 {
 	int rv = BB_ERR;
 	
@@ -147,7 +204,7 @@ Out:
 }
 
 int
-bbhash_delete(bbhash *h, void *key, uint32 key_len)
+bbhash_delete(bbhash *h, void *key, uint32_t key_len)
 {
 	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
 
@@ -214,7 +271,7 @@ Out:
 }
 
 int
-bbhash_get_and_delete(bbhash *h, void *key, uint32 key_len, void *value, uint32 *value_len)
+bbhash_get_and_delete(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t *value_len)
 {
 	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
 
