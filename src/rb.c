@@ -618,6 +618,7 @@ cf_rb_reduce(cf_rb_tree *tree, cf_rb_reduce_fn cb, void *udata)
 /* cf_rb_destroy
  * Destroy a red-black tree; return 0 if the tree was destroyed or 1
  * otherwise */
+/* FIXME this needs to be renamed really badly */
 int
 cf_rb_destroy(cf_rb_tree *tree)
 {
