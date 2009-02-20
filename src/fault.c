@@ -25,6 +25,7 @@
 
 /* cf_fault_restart_process, cf_fault_restart_argv
  * Global variables for process restart state */
+int cf_fault_restart_argc;
 char **cf_fault_restart_argv;
 
 
@@ -148,24 +149,38 @@ cf_fault_recovery(cf_fault_recovery_key *rkey)
 /* cf_fault_init
  * Copy the initial arguments so that we can restart in the event that we
  * sustain a fault in process scope.  This code MUST be the first thing
- * executed by main() and failure MUST result in a global fault */
+ * executed by main() and failure MUST result in a global fault.
+ * Arguments that we were passed that are in the excluded arguments list
+ * will not be used on a restart */
 void
-cf_fault_init(const int argc, char **argv)
+cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
 {
-	int i;
+	int i = 0;
 
 	if (0 == argc || NULL == argv)
 		cf_assert(NULL, CF_FAULT_SCOPE_GLOBAL, CF_FAULT_SEVERITY_CRITICAL, "invalid arguments");
 
-	/* Copy the argument vector */
-	cf_fault_restart_argv = malloc((argc + 1) * sizeof(char *));
+    cf_fault_restart_argv = malloc((argc + 1) * sizeof(char *));
 	cf_assert(cf_fault_restart_argv, CF_FAULT_SCOPE_GLOBAL, CF_FAULT_SEVERITY_CRITICAL, "calloc: %s", cf_strerror(errno));
-	for (i = 0; i < argc; i++) {
-		cf_fault_restart_argv[i] = malloc((strlen(argv[i]) + 1) * sizeof(char));
-		cf_assert(cf_fault_restart_argv[i], CF_FAULT_SCOPE_GLOBAL, CF_FAULT_SEVERITY_CRITICAL, "calloc: %s", cf_strerror(errno));
-		memcpy(cf_fault_restart_argv[i], argv[i], strlen(argv[i]) + 1);
-	}
-	cf_fault_restart_argv[argc] = NULL;
+
+    for (int j = 0; j < argc; j++) {
+        bool copy = true;
+        for (int k = 0; k < excludec; k++) {
+            if (0 == memcmp(argv[j], exclude[k], strlen(argv[j]))) {
+                copy = false;
+                break;
+            }
+        }
+
+        if (copy) {
+            cf_fault_restart_argv[i] = malloc((strlen(argv[j]) + 1) * sizeof(char));
+            cf_assert(cf_fault_restart_argv[i], CF_FAULT_SCOPE_GLOBAL, CF_FAULT_SEVERITY_CRITICAL, "calloc: %s", cf_strerror(errno));
+            memcpy(cf_fault_restart_argv[i], argv[j], strlen(argv[j]) + 1);
+            i++;
+        }
+    }
+	cf_fault_restart_argv[i] = NULL;
+    cf_fault_restart_argc = i;
 
 	return;
 }
