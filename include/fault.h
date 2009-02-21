@@ -73,5 +73,5 @@ extern int cf_fault_recovery_localinit(cf_fault_recovery_key *rkey, cf_fault_rec
 extern int cf_fault_recovery_push(cf_fault_recovery_key *rkey, void (*fn)(void *), void *arg);
 extern int cf_fault_recovery_pop(cf_fault_recovery_key *rkey, int exec);
 extern void cf_fault_recovery(cf_fault_recovery_key *rkey);
-extern void cf_fault_init(const int argc, char **argv);
+extern void cf_fault_init(const int argc, char **argv, const int excludec, char **exclude);
 
