@@ -22,11 +22,11 @@
 
 
 uint32
-cf_nodeid_hash_fn(void *value, uint32 value_len)
+cf_nodeid_hash_fn(void *value)
 {
 	byte *b = value;
 	uint32 acc = 0;
-	for (int i=0;i<value_len;i++) {
+	for (int i=0;i<sizeof(cf_node);i++) {
 		acc += *b;
 	}
 	return(acc);

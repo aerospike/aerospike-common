@@ -57,6 +57,7 @@ typedef uint64_t cf_clock;
 #include "msg.h"
 #include "bbhash.h"
 #include "rchash.h"
+#include "shash.h"
 
 /* cf_hash_fnv
  * The 64-bit Fowler-Noll-Voll hash function (FNV-1a) */
@@ -161,7 +162,7 @@ cf_compare_byteptr(const void *pa, const size_t asz, const void *pb, const size_
 // Sorry, too lazy to create a whole new file for just one function
 #define CF_NODE_UNSET (0xFFFFFFFFFFFFFFFF)
 typedef uint64_t cf_node;
-extern uint32 cf_nodeid_hash_fn(void *value, uint32 value_len);
+extern uint32 cf_nodeid_hash_fn(void *value);
 extern int cf_nodeid_get( unsigned short port, cf_node *id );
 extern unsigned short cf_nodeid_get_port(cf_node id);
 
