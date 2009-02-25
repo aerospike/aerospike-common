@@ -101,7 +101,7 @@ cf_queue_sz(cf_queue *q)
 // Internal function. Call with new size with lock held.
 // *** THIS ONLY WORKS ON FULL QUEUES ***
 //
-static int
+int
 cf_queue_resize(cf_queue *q, uint new_sz)
 {
 	// check - a lot of the code explodes badly if queue is not full
@@ -146,7 +146,7 @@ cf_queue_resize(cf_queue *q, uint new_sz)
 
 // we have to guard against wraparound, call this occasionally
 // I really expect this will never get called....
-static void
+void
 cf_queue_unwrap(cf_queue *q)
 {
 	q->read_offset %= q->allocsz;
@@ -261,7 +261,7 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 }
 
 
-static void
+void
 cf_queue_delete_offset(cf_queue *q, uint index)
 {
 	index %= q->allocsz;
