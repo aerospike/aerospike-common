@@ -269,6 +269,114 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
 }
 
 
+
+
+/* cf_rb_insert2
+ * Insert a node with a given key into a red-black tree and acquire the
+ * value lock */
+cf_rb_node *
+cf_rb_insert2(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t **vlock)
+{
+    cf_rb_node *n, *s, *t, *u;
+    *vlock = NULL;
+
+    /* Lock the tree */
+	pthread_mutex_lock(&tree->lock);
+
+    /* Insert the node directly into the tree, via the typical method of
+     * binary tree insertion */
+    s = tree->root;
+    t = tree->root->left;
+    while (t != tree->sentinel) {
+        s = t;
+        t = (0 <= memcmp(key.digest, t->key.digest, CF_DIGEST_KEY_SZ)) ? t->left : t->right;
+    }
+
+    /* If the node already exists, stop a double-insertion */
+    if ((s != tree->root) && (0 == memcmp(key.digest, s->key.digest, CF_DIGEST_KEY_SZ))) {
+        if (0 != pthread_mutex_lock(&s->VALUE_LOCK))
+            perror("rb_search_vlock: failed to acquire vlock");
+        *vlock = &s->VALUE_LOCK;
+		pthread_mutex_unlock(&tree->lock);
+        return(s);
+    }
+
+    /* Allocate memory for the new node and set the node parameters */
+    if (NULL == (n = (cf_rb_node *)malloc(sizeof(cf_rb_node)))) {
+		D(" malloc failed ");
+        return(NULL);
+	}
+	n->key = key;
+	n->value = value;
+    n->left = n->right = tree->sentinel;
+    n->color = CF_RB_RED;
+	if (0 != pthread_mutex_init(&n->VALUE_LOCK, NULL)) {
+		D(" mutex init failed ");
+        free(n);
+        return(NULL);
+    }
+    n->parent = s;
+    u = n;
+
+    /* Insert the node */
+    if ((s == tree->root) || (0 < memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ)))
+        s->left = n;
+    else
+        s->right = n;
+
+    /* Rebalance the tree */
+    while (CF_RB_RED == n->parent->color) {
+        if (n->parent == n->parent->parent->left) {
+            s = n->parent->parent->right;
+            if (CF_RB_RED == s->color) {
+                n->parent->color = CF_RB_BLACK;
+                s->color = CF_RB_BLACK;
+                n->parent->parent->color = CF_RB_RED;
+                n = n->parent->parent;
+            } else {
+                if (n == n->parent->right) {
+                    n = n->parent;
+                    cf_rb_rotate_left(tree, n);
+                }
+                n->parent->color = CF_RB_BLACK;
+                n->parent->parent->color = CF_RB_RED;
+                cf_rb_rotate_right(tree, n->parent->parent);
+            }
+        } else {
+            s = n->parent->parent->left;
+            if (CF_RB_RED == s->color) {
+                n->parent->color = CF_RB_BLACK;
+                s->color = CF_RB_BLACK;
+                n->parent->parent->color = CF_RB_BLACK;
+                n = n->parent->parent;
+            } else {
+                if (n == n->parent->left) {
+                    n = n->parent;
+                    cf_rb_rotate_right(tree, n);
+                }
+                n->parent->color = CF_RB_BLACK;
+                n->parent->parent->color = CF_RB_RED;
+                cf_rb_rotate_left(tree, n->parent->parent);
+            }
+        }
+    }
+    tree->root->left->color = CF_RB_BLACK;
+	tree->elements++;
+
+	// TODO: Bug. This error case can't really be handled without removing the element
+	// from the tree again, we're handing back an unlocked lock and shit.
+	if (0 != pthread_mutex_lock(&n->VALUE_LOCK)) {
+		D(" what? can't lock mutex? So BONED!");
+	}
+
+	pthread_mutex_unlock(&tree->lock);
+
+    *vlock = &n->VALUE_LOCK;
+
+    return(u);
+}
+
+
 /* cf_rb_successor
  * Find the successor to a given node */
 cf_rb_node *
