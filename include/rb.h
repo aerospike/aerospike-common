@@ -56,6 +56,7 @@ typedef struct cf_rb_tree_t cf_rb_tree;
 
 
 /* External functions */
+extern cf_rb_node *cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t **vlock);
 extern cf_rb_node *cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value);
 extern cf_rb_node *cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t **vlock);
 extern cf_rb_node *cf_rb_search(cf_rb_tree *tree, cf_digest key);

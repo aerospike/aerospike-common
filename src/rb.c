@@ -273,9 +273,9 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
 
 /* cf_rb_insert2
  * Insert a node with a given key into a red-black tree and acquire the
- * value lock */
+ * value lock. If the key already exists, return the node and don't set the value */
 cf_rb_node *
-cf_rb_insert2(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t **vlock)
+cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t **vlock)
 {
     cf_rb_node *n, *s, *t, *u;
     *vlock = NULL;
