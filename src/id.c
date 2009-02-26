@@ -17,6 +17,12 @@
 #include "cf.h"
 
 /*
+** need a spot for tihs
+*/
+
+cf_digest cf_digest_zero = { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } };
+
+/*
 ** nodeids are great things to use as keys in the hash table 
 */
 

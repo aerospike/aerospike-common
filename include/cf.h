@@ -158,6 +158,20 @@ cf_compare_byteptr(const void *pa, const size_t asz, const void *pb, const size_
     return(memcmp(pa, pb, asz));
 }
 
+extern cf_digest cf_digest_zero;
+
+static inline int 
+cf_digest_compare( cf_digest *d1, cf_digest *d2 )
+{
+	if (d1->digest[0] != d2->digest[0]) {
+		if (d1->digest[0] < d2->digest[0])
+			return(-1);
+		else
+			return(1);
+	}
+	return( memcmp( d1, d2, sizeof(cf_digest) ) );
+}
+
 
 // Sorry, too lazy to create a whole new file for just one function
 #define CF_NODE_UNSET (0xFFFFFFFFFFFFFFFF)
