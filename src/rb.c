@@ -100,19 +100,19 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     t = tree->root->left;
     while (t != tree->sentinel) {
         s = t;
-        t = (0 <= memcmp(n->key.digest, t->key.digest, CF_DIGEST_KEY_SZ)) ? t->left : t->right;
+        t = (0 <= cf_digest_compare(&n->key, &t->key)) ? t->left : t->right;
     }
     n->parent = s;
 
     /* If the node already exists, stop a double-insertion */
-    if ((s != tree->root) && (0 == memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ))) {
+    if ((s != tree->root) && (0 == cf_digest_compare(&n->key, &s->key))) {
         free(n);
 		pthread_mutex_unlock(&tree->lock);
         return(NULL);
     }
 
     /* Insert the node */
-    if ((s == tree->root) || (0 < memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ)))
+    if ((s == tree->root) || (0 < cf_digest_compare(&n->key, &s->key)))
         s->left = n;
     else
         s->right = n;
@@ -198,12 +198,12 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
     t = tree->root->left;
     while (t != tree->sentinel) {
         s = t;
-        t = (0 <= memcmp(n->key.digest, t->key.digest, CF_DIGEST_KEY_SZ)) ? t->left : t->right;
+        t = (0 <= cf_digest_compare(&n->key, &t->key)) ? t->left : t->right;
     }
     n->parent = s;
 
     /* If the node already exists, stop a double-insertion */
-    if ((s != tree->root) && (0 == memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ))) {
+    if ((s != tree->root) && (0 == cf_digest_compare(&n->key, &s->key))) {
 		pthread_mutex_destroy(&n->VALUE_LOCK);
         free(n);
 		pthread_mutex_unlock(&tree->lock);
@@ -211,7 +211,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
     }
 
     /* Insert the node */
-    if ((s == tree->root) || (0 < memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ)))
+    if ((s == tree->root) || (0 < cf_digest_compare(&n->key, &s->key)))
         s->left = n;
     else
         s->right = n;
@@ -289,11 +289,11 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mut
     t = tree->root->left;
     while (t != tree->sentinel) {
         s = t;
-        t = (0 <= memcmp(key.digest, t->key.digest, CF_DIGEST_KEY_SZ)) ? t->left : t->right;
+        t = (0 <= cf_digest_compare(&key, &t->key)) ? t->left : t->right;
     }
 
     /* If the node already exists, stop a double-insertion */
-    if ((s != tree->root) && (0 == memcmp(key.digest, s->key.digest, CF_DIGEST_KEY_SZ))) {
+    if ((s != tree->root) && (0 == cf_digest_compare(&key, &s->key))) {
         if (0 != pthread_mutex_lock(&s->VALUE_LOCK))
             perror("rb_search_vlock: failed to acquire vlock");
         *vlock = &s->VALUE_LOCK;
@@ -319,7 +319,7 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mut
     u = n;
 
     /* Insert the node */
-    if ((s == tree->root) || (0 < memcmp(n->key.digest, s->key.digest, CF_DIGEST_KEY_SZ)))
+    if ((s == tree->root) || (0 < cf_digest_compare(&n->key, &s->key)))
         s->left = n;
     else
         s->right = n;
@@ -485,7 +485,7 @@ cf_rb_search_lockless(cf_rb_tree *tree, cf_digest dkey)
 
     s = r;
     while (s != tree->sentinel) {
-        c = memcmp(dkey.digest, s->key.digest, CF_DIGEST_KEY_SZ);
+        c = cf_digest_compare(&dkey, &s->key);
         if (c)
             s = (c > 0) ? s->left : s->right;
         else
