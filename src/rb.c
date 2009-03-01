@@ -17,6 +17,7 @@
 #include <unistd.h>
 #include "cf.h"
 
+// #define DEBUG 1
 
 
 /* cf_rb_rotate_left
@@ -100,7 +101,11 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     t = tree->root->left;
     while (t != tree->sentinel) {
         s = t;
-        t = (0 <= cf_digest_compare(&n->key, &t->key)) ? t->left : t->right;
+		int c = cf_digest_compare(&key, &t->key);
+        if (c)
+            t = (c > 0) ? t->left : t->right;
+        else
+            break;
     }
     n->parent = s;
 
@@ -198,7 +203,11 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
     t = tree->root->left;
     while (t != tree->sentinel) {
         s = t;
-        t = (0 <= cf_digest_compare(&n->key, &t->key)) ? t->left : t->right;
+		int c = cf_digest_compare(&n->key, &t->key);
+        if (c)
+            t = (c > 0) ? t->left : t->right;
+        else
+            break;
     }
     n->parent = s;
 
@@ -287,9 +296,19 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mut
      * binary tree insertion */
     s = tree->root;
     t = tree->root->left;
+#ifdef DEBUG	
+	D("get-insert: key %"PRIx64" sentinal %p",*(uint64_t *)&key, tree->sentinel);
+#endif	
     while (t != tree->sentinel) {
         s = t;
-        t = (0 <= cf_digest_compare(&key, &t->key)) ? t->left : t->right;
+#ifdef DEBUG		
+		D("  at %p: key %"PRIx64": right %p left %p",t,*(uint64_t *)&t->key,t->right,t->left);
+#endif		
+		int c = cf_digest_compare(&key, &t->key);
+        if (c)
+            t = (c > 0) ? t->left : t->right;
+        else
+			break;
     }
 
     /* If the node already exists, stop a double-insertion */
@@ -300,7 +319,10 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mut
 		pthread_mutex_unlock(&tree->lock);
         return(s);
     }
-
+#ifdef DEBUG
+	D("get-insert: not found");
+#endif	
+	
     /* Allocate memory for the new node and set the node parameters */
     if (NULL == (n = (cf_rb_node *)malloc(sizeof(cf_rb_node)))) {
 		D(" malloc failed ");
@@ -479,12 +501,19 @@ cf_rb_search_lockless(cf_rb_tree *tree, cf_digest dkey)
     cf_rb_node *s = NULL;
     int c;
 
+#ifdef DEBUG	
+	D("search: key %"PRIx64" sentinal %p",*(uint64_t *)&dkey, tree->sentinel);
+#endif
+	
     /* If there are no entries in the tree, we're done */
     if (r == tree->sentinel)
         goto miss;
 
     s = r;
     while (s != tree->sentinel) {
+#ifdef DEBUG		
+		D("  at %p: key %"PRIx64": right %p left %p",s,*(uint64_t *)&s->key,s->right,s->left);
+#endif		
         c = cf_digest_compare(&dkey, &s->key);
         if (c)
             s = (c > 0) ? s->left : s->right;
