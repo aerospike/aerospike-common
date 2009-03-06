@@ -160,7 +160,7 @@ cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
 	if (0 == argc || NULL == argv)
 		cf_assert(NULL, CF_FAULT_SCOPE_GLOBAL, CF_FAULT_SEVERITY_CRITICAL, "invalid arguments");
 
-    cf_fault_restart_argv = malloc((argc + 1) * sizeof(char *));
+    cf_fault_restart_argv = malloc((argc + 2) * sizeof(char *));
 	cf_assert(cf_fault_restart_argv, CF_FAULT_SCOPE_GLOBAL, CF_FAULT_SEVERITY_CRITICAL, "calloc: %s", cf_strerror(errno));
 
     for (int j = 0; j < argc; j++) {
@@ -179,8 +179,9 @@ cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
             i++;
         }
     }
-	cf_fault_restart_argv[i] = NULL;
-    cf_fault_restart_argc = i;
+	cf_fault_restart_argv[i] = strdup("--process-fault");
+	cf_fault_restart_argv[i + 1] = NULL;
+    cf_fault_restart_argc = i + 1;
 
 	return;
 }
