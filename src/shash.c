@@ -261,7 +261,9 @@ shash_get_and_delete(shash *h, void *key, void *value)
 	int rv = BB_ERR;
 
 	if (h->flags & BBHASH_CR_MT_BIGLOCK) {
-		pthread_mutex_lock(&h->biglock);
+		if (0 != pthread_mutex_lock(&h->biglock)) {
+			D("FUCK YOOOOOOOOU!");
+		}
 	}
 		
 	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (BBHASH_ELEM_SZ(h) * hash));	
@@ -296,7 +298,7 @@ shash_get_and_delete(shash *h, void *key, void *value)
 				// at head with a next - more complicated
 				else {
 					shash_elem *_t = e->next;
-					memcpy(e, e->next, sizeof(shash_elem));
+					memcpy(e, e->next, BBHASH_ELEM_SZ(h) );
 					free(_t);
 				}
 			}
@@ -311,8 +313,12 @@ shash_get_and_delete(shash *h, void *key, void *value)
 	rv = BB_ERR_NOTFOUND;
 
 Out:
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) 
-		pthread_mutex_unlock(&h->biglock);
+	if (h->flags & BBHASH_CR_MT_BIGLOCK) { 
+		if (0 != pthread_mutex_unlock(&h->biglock)) {
+			D("fuck YOOOOOU!");
+		}
+	}
+		
 	return(rv);	
 	
 
