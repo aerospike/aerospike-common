@@ -51,7 +51,8 @@ typedef enum {
 	AS_DEMARSHAL,
 	AS_WRITE,
 	AS_TSVC,
-	AS_NSUP
+	AS_NSUP,
+	AS_PROXY
 } cf_fault_context;
 
 /* cf_fault_scope
