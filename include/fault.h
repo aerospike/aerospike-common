@@ -50,7 +50,8 @@ typedef enum {
 	AS_PARTICLE,
 	AS_DEMARSHAL,
 	AS_WRITE,
-	AS_TSVC
+	AS_TSVC,
+	AS_NSUP
 } cf_fault_context;
 
 /* cf_fault_scope
