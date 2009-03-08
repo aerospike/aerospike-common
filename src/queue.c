@@ -106,7 +106,7 @@ cf_queue_resize(cf_queue *q, uint new_sz)
 {
 	// check - a lot of the code explodes badly if queue is not full
 	if (CF_Q_SZ(q) != q->allocsz) {
-		D("cf_queue: internal error: resize on non-full queue");
+		cf_debug(CF_QUEUE,"cf_queue: internal error: resize on non-full queue");
 		return(-1);
 	}
 	
@@ -115,7 +115,7 @@ cf_queue_resize(cf_queue *q, uint new_sz)
 	if (0 == q->read_offset % q->allocsz) {
 		q->queue = realloc(q->queue, new_sz * q->elementsz);
 		if (!q->queue) {
-			D(" pfft! out of memory! crash!");
+			cf_debug(CF_QUEUE," pfft! out of memory! crash!");
 			return(-1);
 		}
 		q->read_offset = 0;
@@ -125,7 +125,7 @@ cf_queue_resize(cf_queue *q, uint new_sz)
 		
 		byte *newq = malloc(new_sz * q->elementsz);
 		if (!newq) {
-			D(" pffth! out of memory! crash!");
+			cf_debug(CF_QUEUE," pffth! out of memory! crash!");
 			return(-1);
 		}
 		// endsz is used bytes in the old queue from the insert point to the end
@@ -294,7 +294,7 @@ cf_queue_delete_offset(cf_queue *q, uint index)
 		return;
 	}
 	
-	D("QUEUE_DELETE_OFFSET: FAIL FAIL FAIL FAIL");
+	cf_debug(CF_QUEUE,"QUEUE_DELETE_OFFSET: FAIL FAIL FAIL FAIL");
 
 }
 	

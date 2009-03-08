@@ -17,8 +17,6 @@
 #include <unistd.h>
 #include "cf.h"
 
-// #define DEBUG 1
-
 
 /* cf_rb_rotate_left
  * Rotate a tree left */
@@ -179,7 +177,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
 
     /* Allocate memory for the new node and set the node parameters */
     if (NULL == (n = (cf_rb_node *)malloc(sizeof(cf_rb_node)))) {
-		D(" malloc failed ");
+		cf_debug(CF_RB," malloc failed ");
         return(NULL);
 	}
 	n->key = key;
@@ -187,7 +185,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
 //    n->left = n->right = tree->sentinel;
     n->color = CF_RB_RED;
 	if (0 != pthread_mutex_init(&n->VALUE_LOCK, NULL)) {
-		D(" mutex init failed ");
+		cf_debug(CF_RB," mutex init failed ");
         free(n);
         return(NULL);
     }
@@ -267,7 +265,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
 	// TODO: Bug. This error case can't really be handled without removing the element
 	// from the tree again, we're handing back an unlocked lock and shit.
 	if (0 != pthread_mutex_lock(&n->VALUE_LOCK)) {
-		D(" what? can't lock mutex? So BONED!");
+		cf_debug(CF_RB," what? can't lock mutex? So BONED!");
 	}
 
 	pthread_mutex_unlock(&tree->lock);
@@ -296,14 +294,12 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mut
      * binary tree insertion */
     s = tree->root;
     t = tree->root->left;
-#ifdef DEBUG	
-	D("get-insert: key %"PRIx64" sentinal %p",*(uint64_t *)&key, tree->sentinel);
-#endif	
+	cf_debug(CF_RB,"get-insert: key %"PRIx64" sentinal %p",*(uint64_t *)&key, tree->sentinel);
+
     while (t != tree->sentinel) {
         s = t;
-#ifdef DEBUG		
-		D("  at %p: key %"PRIx64": right %p left %p",t,*(uint64_t *)&t->key,t->right,t->left);
-#endif		
+		cf_debug(CF_RB,"  at %p: key %"PRIx64": right %p left %p",t,*(uint64_t *)&t->key,t->right,t->left);
+
 		int c = cf_digest_compare(&key, &t->key);
         if (c)
             t = (c > 0) ? t->left : t->right;
@@ -319,13 +315,12 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mut
 		pthread_mutex_unlock(&tree->lock);
         return(s);
     }
-#ifdef DEBUG
-	D("get-insert: not found");
-#endif	
+
+	cf_debug(CF_RB,"get-insert: not found");
 	
     /* Allocate memory for the new node and set the node parameters */
     if (NULL == (n = (cf_rb_node *)malloc(sizeof(cf_rb_node)))) {
-		D(" malloc failed ");
+		cf_debug(CF_RB," malloc failed ");
         return(NULL);
 	}
 	n->key = key;
@@ -333,7 +328,7 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mut
     n->left = n->right = tree->sentinel;
     n->color = CF_RB_RED;
 	if (0 != pthread_mutex_init(&n->VALUE_LOCK, NULL)) {
-		D(" mutex init failed ");
+		cf_debug(CF_RB," mutex init failed ");
         free(n);
         return(NULL);
     }
@@ -388,7 +383,7 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mut
 	// TODO: Bug. This error case can't really be handled without removing the element
 	// from the tree again, we're handing back an unlocked lock and shit.
 	if (0 != pthread_mutex_lock(&n->VALUE_LOCK)) {
-		D(" what? can't lock mutex? So BONED!");
+		cf_debug(CF_RB," what? can't lock mutex? So BONED!");
 	}
 
 	pthread_mutex_unlock(&tree->lock);
@@ -501,9 +496,7 @@ cf_rb_search_lockless(cf_rb_tree *tree, cf_digest dkey)
     cf_rb_node *s = NULL;
     int c;
 
-#ifdef DEBUG	
-	D("search: key %"PRIx64" sentinal %p",*(uint64_t *)&dkey, tree->sentinel);
-#endif
+	cf_debug(CF_RB,"search: key %"PRIx64" sentinal %p",*(uint64_t *)&dkey, tree->sentinel);
 	
     /* If there are no entries in the tree, we're done */
     if (r == tree->sentinel)
@@ -511,9 +504,9 @@ cf_rb_search_lockless(cf_rb_tree *tree, cf_digest dkey)
 
     s = r;
     while (s != tree->sentinel) {
-#ifdef DEBUG		
-		D("  at %p: key %"PRIx64": right %p left %p",s,*(uint64_t *)&s->key,s->right,s->left);
-#endif		
+		
+		cf_debug(CF_RB,"  at %p: key %"PRIx64": right %p left %p",s,*(uint64_t *)&s->key,s->right,s->left);
+
         c = cf_digest_compare(&dkey, &s->key);
         if (c)
             s = (c > 0) ? s->left : s->right;

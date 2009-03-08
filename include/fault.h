@@ -39,8 +39,10 @@ typedef enum {
 	CF_SHASH,
 	CF_QUEUE,
 	CF_MSG,
-	CF_REDBLACK,
-	AS_CFG
+	CF_RB,
+	CF_SOCKET,
+	AS_CFG,
+	AS_NAMESPACE
 } cf_fault_context;
 
 /* cf_fault_scope
