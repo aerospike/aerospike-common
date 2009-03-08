@@ -24,7 +24,7 @@ cf_atomic_int_t
 cf_rc_count(void *addr)
 {
 	cf_rc_counter *rc;
-	cf_assert(addr, CF_RCALLOC, PROCESS, CRITICAL, "null address");
+	cf_assert(addr, CF_RCALLOC, CF_PROCESS, CF_CRITICAL, "null address");
 
 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 
@@ -38,7 +38,7 @@ int
 cf_rc_reserve(void *addr)
 {
 	cf_rc_counter *rc;
-	cf_assert(addr, CF_RCALLOC, PROCESS, CRITICAL, "null address");
+	cf_assert(addr, CF_RCALLOC, CF_PROCESS, CF_CRITICAL, "null address");
 
 	/* Extract the address of the reference counter, then increment it */
 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
@@ -55,7 +55,7 @@ _cf_rc_release(void *addr, bool autofree)
 {
 	cf_rc_counter *rc;
 	uint64_t c;
-	cf_assert(addr, CF_RCALLOC, PROCESS, CRITICAL, "null address");
+	cf_assert(addr, CF_RCALLOC, CF_PROCESS, CF_CRITICAL, "null address");
 
 	/* Release the reservation; if this reduced the reference count to zero,
 	 * then free the block if autofree is set, and return 1.  Otherwise,
@@ -95,12 +95,12 @@ void
 cf_rc_free(void *addr)
 {
 	cf_rc_counter *rc;
-	cf_assert(addr, CF_RCALLOC, PROCESS, CRITICAL, "null address");
+	cf_assert(addr, CF_RCALLOC, CF_PROCESS, CF_CRITICAL, "null address");
 
 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 
 	cf_assert(cf_atomic_int_get(*(cf_atomic_int *)rc) == 0,
-		CF_RCALLOC, PROCESS, CRITICAL, "attempt to free reserved object");
+		CF_RCALLOC, CF_PROCESS, CF_CRITICAL, "attempt to free reserved object");
 
 	free((void *)rc);
 

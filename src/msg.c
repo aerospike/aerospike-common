@@ -28,7 +28,7 @@ msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 	// Figure out how many bytes you need
 	int mt_rows = mt_sz / sizeof(msg_template);
 	if (mt_rows <= 0)
-		cf_crash( CF_MSG, THREAD,  "msg create: invalid parameter");
+		cf_crash( CF_MSG, CF_THREAD,  "msg create: invalid parameter");
 	unsigned int max_id = 0;
 	for (int i=0;i<mt_rows;i++) {
 		if (mt[i].id >= max_id) {
@@ -51,7 +51,7 @@ msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 	size_t a_sz = sizeof(msg) + m_sz;
 	a_sz = (a_sz / 512) + 512;
 	m = cf_rc_alloc(a_sz);
-	cf_assert(m, CF_MSG, PROCESS, CRITICAL, "malloc");
+	cf_assert(m, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
 	m->len = max_id;
 	m->bytes_used = sizeof(msg) + m_sz; 
 	m->bytes_alloc = a_sz;
@@ -210,7 +210,7 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 						else {
 							// TODO: add assert
 							mf->u.buf = malloc(flen);
-							cf_assert(mf->u.buf, CF_MSG, THREAD, WARNING, "malloc");
+							cf_assert(mf->u.buf, CF_MSG, CF_THREAD, CF_WARNING, "malloc");
 							mf->free = mf->u.buf;
 							mf->rc_free = 0;
 						}
@@ -564,7 +564,7 @@ msg_get_str(const msg *m, int field_id, char **r, size_t *len, msg_get_type type
 	}
 	else if (MSG_GET_COPY_MALLOC == type) {
 		*r = strdup( m->f[field_id].u.str );
-		cf_assert(*r, CF_MSG, THREAD, CRITICAL, "malloc");
+		cf_assert(*r, CF_MSG, CF_THREAD, CF_CRITICAL, "malloc");
 	} else if (MSG_GET_COPY_RC == type) {
 		size_t sz = m->f[field_id].field_len + 1;
 		*r = cf_rc_alloc(sz);
@@ -586,13 +586,13 @@ msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, msg_get_type type
 {
 #ifdef CHECK	
 	if (! m->f[field_id].is_valid) {
-		cf_crash(CF_MSG, THREAD, DEBUG, "msg: invalid id %d in field get",m,field_id);
+		cf_crash(CF_MSG, CF_THREAD, DEBUG, "msg: invalid id %d in field get",m,field_id);
 		*r = 0; *len = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
 	if ( m->f[field_id].type != M_FT_BUF ) {
-		cf_crash(CF_MSG, THREAD, DEBUG, "msg %p: mismatch getter field type wants %d has %d",m,m->f[field_id].type, M_FT_BUF);
+		cf_crash(CF_MSG, CF_THREAD, DEBUG, "msg %p: mismatch getter field type wants %d has %d",m,m->f[field_id].type, M_FT_BUF);
 		*r = 0; *len = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
@@ -610,12 +610,12 @@ msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, msg_get_type type
 	}
 	else if (MSG_GET_COPY_MALLOC == type) {
 		*r = malloc( m->f[field_id].field_len );
-		cf_assert(*r, CF_MSG, THREAD, CRITICAL, "malloc");
+		cf_assert(*r, CF_MSG, CF_THREAD, CF_CRITICAL, "malloc");
 		memcpy(*r, m->f[field_id].u.buf, m->f[field_id].field_len );
 	}
 	else if (MSG_GET_COPY_RC == type) {
 		*r = cf_rc_alloc( m->f[field_id].field_len );
-		cf_assert(*r, CF_MSG, THREAD, CRITICAL, "malloc");
+		cf_assert(*r, CF_MSG, CF_THREAD, CF_CRITICAL, "malloc");
 		memcpy(*r, m->f[field_id].u.buf, m->f[field_id].field_len );
 	} else {
 		cf_warning(CF_MSG, "msg_get_str: illegal type");
@@ -659,7 +659,7 @@ msg_get_bytearray(const msg *m, int field_id, cf_bytearray **r)
 	}
 	uint64_t field_len = m->f[field_id].field_len;
 	*r = cf_rc_alloc( field_len + sizeof(cf_bytearray) );
-	cf_assert(*r, CF_MSG, THREAD, CRITICAL, "rcalloc");
+	cf_assert(*r, CF_MSG, CF_THREAD, CF_CRITICAL, "rcalloc");
 	(*r)->sz = field_len;
 	memcpy((*r)->data, m->f[field_id].u.buf, field_len );
 	
@@ -790,7 +790,7 @@ msg_set_str(msg *m, int field_id, const char *v, msg_set_type type)
 		}
 		else {
 			mf->u.str = strdup(v);
-			cf_assert(mf->u.str, CF_MSG, THREAD, CRITICAL, "malloc");
+			cf_assert(mf->u.str, CF_MSG, CF_THREAD, CF_CRITICAL, "malloc");
 			mf->free = mf->u.str;
 			mf->rc_free = 0;
 		}
@@ -844,7 +844,7 @@ int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, msg_set_type ty
 		// Or just malloc if we have to. Sad face.
 		else {
 			mf->u.buf = malloc(len);
-			cf_assert(mf->u.buf, CF_MSG, THREAD, CRITICAL, "malloc");
+			cf_assert(mf->u.buf, CF_MSG, CF_THREAD, CF_CRITICAL, "malloc");
 			mf->free = mf->u.buf; // free on exit/reset
 			mf->rc_free = 0;
 		}

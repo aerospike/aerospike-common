@@ -59,7 +59,7 @@ cf_strerror(const int err)
 int
 cf_fault_recovery_globalinit(cf_fault_recovery_key *rkey)
 {
-	cf_assert(rkey, CF_MISC, PROCESS, CRITICAL, "null rkey");
+	cf_assert(rkey, CF_MISC, CF_PROCESS, CF_CRITICAL, "null rkey");
 
 	return(pthread_key_create(rkey, NULL));
 }
@@ -70,7 +70,7 @@ cf_fault_recovery_globalinit(cf_fault_recovery_key *rkey)
 int
 cf_fault_recovery_localinit(cf_fault_recovery_key *rkey, cf_fault_recovery_stack *stack)
 {
-	cf_assert((NULL == rkey || NULL == stack), CF_MISC, THREAD, CRITICAL, "invalid argument");
+	cf_assert((NULL == rkey || NULL == stack), CF_MISC, CF_THREAD, CF_CRITICAL, "invalid argument");
 
 	/* Set the stack attributes */
 	stack->sz = -1;
@@ -90,7 +90,7 @@ cf_fault_recovery_push(cf_fault_recovery_key *rkey, void (*fn)(void *), void *ar
 {
 	cf_fault_recovery_stack *stack;
 
-	cf_assert((NULL == rkey || NULL == fn), CF_MISC, PROCESS, CRITICAL, "invalid argument");
+	cf_assert((NULL == rkey || NULL == fn), CF_MISC, CF_PROCESS, CF_CRITICAL, "invalid argument");
 	if (NULL == (stack = (cf_fault_recovery_stack *)pthread_getspecific(*rkey)))
 		return(-1);
 
@@ -113,7 +113,7 @@ int
 cf_fault_recovery_pop(cf_fault_recovery_key *rkey, int exec)
 {
 	cf_fault_recovery_stack *stack;
-	cf_assert(rkey, CF_MISC, PROCESS, CRITICAL, "invalid argument");
+	cf_assert(rkey, CF_MISC, CF_PROCESS, CF_CRITICAL, "invalid argument");
 
 	if (NULL == (stack = (cf_fault_recovery_stack *)pthread_getspecific(*rkey)))
 		return(-1);
@@ -134,7 +134,7 @@ void
 cf_fault_recovery(cf_fault_recovery_key *rkey)
 {
 	cf_fault_recovery_stack *stack;
-	cf_assert(rkey, CF_MISC, PROCESS, CRITICAL, "invalid argument");
+	cf_assert(rkey, CF_MISC, CF_PROCESS, CF_CRITICAL, "invalid argument");
 
 	if (NULL == (stack = (cf_fault_recovery_stack *)pthread_getspecific(*rkey)))
 		return;
@@ -157,10 +157,10 @@ void
 cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
 {
 	int i = 0;
-	cf_assert((0 == argc || NULL == argv), CF_MISC, GLOBAL, CRITICAL, "invalid argument");
+	cf_assert((0 == argc || NULL == argv), CF_MISC, CF_GLOBAL, CF_CRITICAL, "invalid argument");
 
     cf_fault_restart_argv = malloc((argc + 2) * sizeof(char *));
-	cf_assert(cf_fault_restart_argv, CF_MISC, GLOBAL, CRITICAL, "alloc: %s", cf_strerror(errno));
+	cf_assert(cf_fault_restart_argv, CF_MISC, CF_GLOBAL, CF_CRITICAL, "alloc: %s", cf_strerror(errno));
 
     for (int j = 0; j < argc; j++) {
         bool copy = true;
@@ -173,7 +173,7 @@ cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
 
         if (copy) {
             cf_fault_restart_argv[i] = malloc((strlen(argv[j]) + 1) * sizeof(char));
-            cf_assert(cf_fault_restart_argv[i], CF_MISC, GLOBAL, CRITICAL, "alloc: %s", cf_strerror(errno));
+            cf_assert(cf_fault_restart_argv[i], CF_MISC, CF_GLOBAL, CF_CRITICAL, "alloc: %s", cf_strerror(errno));
             memcpy(cf_fault_restart_argv[i], argv[j], strlen(argv[j]) + 1);
             i++;
         }
@@ -205,7 +205,7 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	strftime(mbuf, sizeof(mbuf), "%b %d %Y %T: ", &nowtm);
 
 	/* Set the context/scope/severity tag */
-	if (CRITICAL == severity)
+	if (CF_CRITICAL == severity)
 		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "[%s %s] %s ", cf_fault_severity_strings[severity], cf_fault_scope_strings[scope], cf_fault_context_strings[context]);
 	else
 		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "[%s] %s ", cf_fault_severity_strings[severity], cf_fault_context_strings[context]);
@@ -224,22 +224,22 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	fprintf(stderr, "%s\n", mbuf);
 
 	/* Critical errors */
-	if (CRITICAL == severity) {
+	if (CF_CRITICAL == severity) {
 		btn = backtrace(bt, CF_FAULT_BACKTRACE_DEPTH);
 		btstr = backtrace_symbols(bt, btn);
-		cf_assert(btstr, CF_MISC, PROCESS, CRITICAL, "backtrace_symbols() returned NULL");
+		cf_assert(btstr, CF_MISC, CF_PROCESS, CF_CRITICAL, "backtrace_symbols() returned NULL");
 		for (int i = 0; i < btn; i++)
 			fprintf(stderr, "  %s\n", btstr[i]);
 
 		switch(scope) {
-			case GLOBAL:
+			case CF_GLOBAL:
 				abort();
 				break;
-			case PROCESS:
+			case CF_PROCESS:
 				if (-1 == execvp(cf_fault_restart_argv[0], cf_fault_restart_argv))
-					cf_assert(NULL, CF_MISC, GLOBAL, CRITICAL, "execvp failed: %s", cf_strerror(errno));
+					cf_assert(NULL, CF_MISC, CF_GLOBAL, CF_CRITICAL, "execvp failed: %s", cf_strerror(errno));
 				break;
-			case THREAD:
+			case CF_THREAD:
 			    /* Since we may have asynchronous cancellation disabled,
 				 * we always force a check for cancellation */
 				pthread_cancel(pthread_self());

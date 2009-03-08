@@ -39,7 +39,8 @@ typedef enum {
 	CF_SHASH,
 	CF_QUEUE,
 	CF_MSG,
-	CF_REDBLACK
+	CF_REDBLACK,
+	AS_CFG
 } cf_fault_context;
 
 /* cf_fault_scope
@@ -47,7 +48,7 @@ typedef enum {
  *     PROCESS             fatal errors terminate the process
  *     THREAD              fatal errors terminate the enclosing thread
  */
-typedef enum { GLOBAL, PROCESS, THREAD } cf_fault_scope;
+typedef enum { CF_GLOBAL, CF_PROCESS, CF_THREAD } cf_fault_scope;
 
 /* cf_fault_severity
  *     CRITICAL            fatal runtime panics
@@ -56,7 +57,7 @@ typedef enum { GLOBAL, PROCESS, THREAD } cf_fault_scope;
  *     DEBUG               debugging messages
  *     DETAIL              detailed debugging messages
  */
-typedef enum { CRITICAL, WARNING, INFO, DEBUG, DETAIL } cf_fault_severity;
+typedef enum { CF_CRITICAL, CF_WARNING, CF_INFO, CF_DEBUG, CF_DETAIL } cf_fault_severity;
 
 
 /* CF_FAULT_BACKTRACE_DEPTH
@@ -81,11 +82,11 @@ typedef struct cf_fault_recovery_stack_t cf_fault_recovery_stack;
 /* Function declarations */
 extern void cf_fault_event(const cf_fault_context, const cf_fault_scope, const cf_fault_severity, const char *fn, const int line, char *msg, ...);
 #define cf_assert(a, context, scope, severity, __msg, ...) ((void)((a) ? (void)0 : cf_fault_event((context), (scope), (severity), __func__, __LINE__, (__msg), ##__VA_ARGS__)))
-#define cf_crash(context, scope, __msg, ...) (cf_fault_event((context), (scope), CRITICAL, __func__, __LINE__, (__msg), ##__VA_ARGS__))
-#define cf_warning(context, __msg, ...) (cf_fault_event((context), THREAD, WARNING, NULL, 0, (__msg), ##__VA_ARGS__))
-#define cf_info(context, __msg, ...) (cf_fault_event((context), THREAD, INFO, NULL, 0, (__msg), ##__VA_ARGS__))
-#define cf_debug(context, __msg, ...) (cf_fault_event((context), THREAD, DEBUG, NULL, 0, (__msg), ##__VA_ARGS__))
-#define cf_detail(context, __msg, ...) (cf_fault_event((context), THREAD, DETAIL, __func__, __LINE__, (__msg), ##__VA_ARGS__))
+#define cf_crash(context, scope, __msg, ...) (cf_fault_event((context), (scope), CF_CRITICAL, __func__, __LINE__, (__msg), ##__VA_ARGS__))
+#define cf_warning(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_WARNING, NULL, 0, (__msg), ##__VA_ARGS__))
+#define cf_info(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_INFO, NULL, 0, (__msg), ##__VA_ARGS__))
+#define cf_debug(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_DEBUG, NULL, 0, (__msg), ##__VA_ARGS__))
+#define cf_detail(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_DETAIL, __func__, __LINE__, (__msg), ##__VA_ARGS__))
 extern char *cf_strerror(const int err);
 extern int cf_fault_recovery_globalinit(cf_fault_recovery_key *rkey);
 extern int cf_fault_recovery_localinit(cf_fault_recovery_key *rkey, cf_fault_recovery_stack *stack);
