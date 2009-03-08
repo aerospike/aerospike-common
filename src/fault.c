@@ -18,9 +18,9 @@
 #include "cf.h"
 
 
-
 /* SYNOPSIS
  * */
+
 
 
 /* cf_fault_restart_process, cf_fault_restart_argv
@@ -29,9 +29,12 @@ int cf_fault_restart_argc;
 char **cf_fault_restart_argv;
 
 
-/* cf_fault_severity_strings, cf_fault_scope_strings
- * Strings describing the severity and scope states */
-static const char *cf_fault_severity_strings[] = { "ERROR", "CRITICAL", "WARNING", "NOTICE", "INFO", "DEBUG" };
+/* cf_fault_context_strings, cf_fault_severity_strings, cf_fault_scope_strings
+ * Strings describing fault states */
+static const char *cf_fault_context_strings[] = {
+	"cf_misc", "cf_rcalloc", "cf_hash", "cf_rchash", "cf_shash", "cf_queue", "cf_redblack"
+};
+static const char *cf_fault_severity_strings[] = { "CRITICAL", "WARNING", "NOTICE", "INFO", "DEBUG", "DETAIL" };
 static const char *cf_fault_scope_strings[] = { "GLOBAL", "PROCESS", "THREAD" };
 
 
@@ -56,7 +59,7 @@ cf_strerror(const int err)
 int
 cf_fault_recovery_globalinit(cf_fault_recovery_key *rkey)
 {
-	cf_assert(rkey, CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_CRITICAL, "invalid arguments");
+	cf_assert(rkey, CF_MISC, PROCESS, CRITICAL, "null rkey");
 
 	return(pthread_key_create(rkey, NULL));
 }
@@ -67,8 +70,7 @@ cf_fault_recovery_globalinit(cf_fault_recovery_key *rkey)
 int
 cf_fault_recovery_localinit(cf_fault_recovery_key *rkey, cf_fault_recovery_stack *stack)
 {
-	if (NULL == rkey || NULL == stack)
-		cf_assert(NULL, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "invalid arguments");
+	cf_assert((NULL == rkey || NULL == stack), CF_MISC, THREAD, CRITICAL, "invalid argument");
 
 	/* Set the stack attributes */
 	stack->sz = -1;
@@ -88,8 +90,7 @@ cf_fault_recovery_push(cf_fault_recovery_key *rkey, void (*fn)(void *), void *ar
 {
 	cf_fault_recovery_stack *stack;
 
-	if (NULL == rkey || NULL == fn)
-		cf_assert(NULL, CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_CRITICAL, "invalid arguments");
+	cf_assert((NULL == rkey || NULL == fn), CF_MISC, PROCESS, CRITICAL, "invalid argument");
 	if (NULL == (stack = (cf_fault_recovery_stack *)pthread_getspecific(*rkey)))
 		return(-1);
 
@@ -112,8 +113,8 @@ int
 cf_fault_recovery_pop(cf_fault_recovery_key *rkey, int exec)
 {
 	cf_fault_recovery_stack *stack;
+	cf_assert(rkey, CF_MISC, PROCESS, CRITICAL, "invalid argument");
 
-	cf_assert(rkey, CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_CRITICAL, "invalid argument");
 	if (NULL == (stack = (cf_fault_recovery_stack *)pthread_getspecific(*rkey)))
 		return(-1);
 
@@ -133,8 +134,8 @@ void
 cf_fault_recovery(cf_fault_recovery_key *rkey)
 {
 	cf_fault_recovery_stack *stack;
+	cf_assert(rkey, CF_MISC, PROCESS, CRITICAL, "invalid argument");
 
-	cf_assert(rkey, CF_FAULT_SCOPE_PROCESS, CF_FAULT_SEVERITY_CRITICAL, "invalid argument");
 	if (NULL == (stack = (cf_fault_recovery_stack *)pthread_getspecific(*rkey)))
 		return;
 
@@ -156,12 +157,10 @@ void
 cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
 {
 	int i = 0;
-
-	if (0 == argc || NULL == argv)
-		cf_assert(NULL, CF_FAULT_SCOPE_GLOBAL, CF_FAULT_SEVERITY_CRITICAL, "invalid arguments");
+	cf_assert((0 == argc || NULL == argv), CF_MISC, GLOBAL, CRITICAL, "invalid argument");
 
     cf_fault_restart_argv = malloc((argc + 2) * sizeof(char *));
-	cf_assert(cf_fault_restart_argv, CF_FAULT_SCOPE_GLOBAL, CF_FAULT_SEVERITY_CRITICAL, "calloc: %s", cf_strerror(errno));
+	cf_assert(cf_fault_restart_argv, CF_MISC, GLOBAL, CRITICAL, "alloc: %s", cf_strerror(errno));
 
     for (int j = 0; j < argc; j++) {
         bool copy = true;
@@ -174,7 +173,7 @@ cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
 
         if (copy) {
             cf_fault_restart_argv[i] = malloc((strlen(argv[j]) + 1) * sizeof(char));
-            cf_assert(cf_fault_restart_argv[i], CF_FAULT_SCOPE_GLOBAL, CF_FAULT_SEVERITY_CRITICAL, "calloc: %s", cf_strerror(errno));
+            cf_assert(cf_fault_restart_argv[i], CF_MISC, GLOBAL, CRITICAL, "alloc: %s", cf_strerror(errno));
             memcpy(cf_fault_restart_argv[i], argv[j], strlen(argv[j]) + 1);
             i++;
         }
@@ -190,37 +189,28 @@ cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
 /* cf_fault_event
  * Respond to a fault */
 void
-cf_fault_event(const cf_fault_scope scope, const cf_fault_severity severity, const char *fn, const int line, char *msg, ...)
+cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const cf_fault_severity severity, const char *fn, const int line, char *msg, ...)
 {
 	va_list argp;
-	char mbuf[2048];
+	char mbuf[256];
 	time_t now;
 	struct tm nowtm;
-/*
 	void *bt[CF_FAULT_BACKTRACE_DEPTH];
-	char **btstr = NULL;
-	size_t btsz;
-	int i;
-*/
+	char **btstr;
+	int btn;
 
-	/* Generate a timestamp */
+	/* Set the timestamp */
 	now = time(NULL);
 	gmtime_r(&now, &nowtm);
 	strftime(mbuf, sizeof(mbuf), "%b %d %Y %T: ", &nowtm);
 
-	/* Get the backtrace information */
-/*
-	btsz = backtrace(bt, CF_FAULT_BACKTRACE_DEPTH);
-	btstr = backtrace_symbols(bt, btsz);
-*/
-
-	/* Construct the scope/severity tag */
-	if (CF_FAULT_SEVERITY_CRITICAL >= severity)
-		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "[%s:%s] ", cf_fault_severity_strings[scope], cf_fault_scope_strings[severity]);
+	/* Set the context/scope/severity tag */
+	if (CRITICAL == severity)
+		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "[%s %s] %s ", cf_fault_severity_strings[severity], cf_fault_scope_strings[scope], cf_fault_context_strings[context]);
 	else
-		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "[%s] ", cf_fault_severity_strings[severity]);
+		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "[%s] %s ", cf_fault_severity_strings[severity], cf_fault_context_strings[context]);
 
-	/* Construct the location tag, if a location was provided */
+	/* Set the location */
 	if (fn)
 		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "(%s:%d) ", fn, line);
 
@@ -229,27 +219,28 @@ cf_fault_event(const cf_fault_scope scope, const cf_fault_severity severity, con
 	vsnprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), msg, argp);
 	va_end(argp);
 
-	/* Send the mbuf to stderr and take the appropriate action */
+	/* Route the message to the correct destinations */
+	/* FIXME yeah, actually do that! */
 	fprintf(stderr, "%s\n", mbuf);
 
-	/* Take the appropriate action */
-	if (CF_FAULT_SEVERITY_CRITICAL >= severity) {
-		/* Dump a backtrace if the error is fatal */
-/*		if (NULL != btstr)
-			for (i = 0; i < btsz; i++)
-				fprintf(stderr, "  %s\n", btstr[i]);
-*/
+	/* Critical errors */
+	if (CRITICAL == severity) {
+		btn = backtrace(bt, CF_FAULT_BACKTRACE_DEPTH);
+		btstr = backtrace_symbols(bt, btn);
+		cf_assert(btstr, CF_MISC, PROCESS, CRITICAL, "backtrace_symbols() returned NULL");
+		for (int i = 0; i < btn; i++)
+			fprintf(stderr, "  %s\n", btstr[i]);
 
 		switch(scope) {
-			case CF_FAULT_SCOPE_GLOBAL:
+			case GLOBAL:
 				abort();
 				break;
-			case CF_FAULT_SCOPE_PROCESS:
+			case PROCESS:
 				if (-1 == execvp(cf_fault_restart_argv[0], cf_fault_restart_argv))
-					cf_fault_event(CF_FAULT_SCOPE_GLOBAL, CF_FAULT_SEVERITY_ERROR, NULL, 0, "execvp failed: %s", cf_strerror(errno));
+					cf_assert(NULL, CF_MISC, GLOBAL, CRITICAL, "execvp failed: %s", cf_strerror(errno));
 				break;
-			case CF_FAULT_SCOPE_THREAD:
-				/* Since we may have asynchronous cancellation disabled,
+			case THREAD:
+			    /* Since we may have asynchronous cancellation disabled,
 				 * we always force a check for cancellation */
 				pthread_cancel(pthread_self());
 				pthread_testcancel();
