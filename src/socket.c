@@ -58,7 +58,7 @@ cf_socket_set_nonblocking(int s)
 	if (-1 == (flags = fcntl(s, F_GETFL, 0)))
 		flags = 0;
 	if (-1 == fcntl(s, F_SETFL, flags | O_NONBLOCK)) {
-		cf_crash(CF_SOCKET, CF_PROCESS, CF_CRITICAL,  "fcntl(): %s", cf_strerror(errno));
+		cf_crash(CF_SOCKET, CF_PROCESS,  "fcntl(): %s", cf_strerror(errno));
 		return(0);
 	}
 
@@ -76,11 +76,9 @@ cf_socket_recv(int sock, void *buf, size_t buflen, int flags)
 		if (EAGAIN == errno)
 			return(0);
 		else if (ECONNRESET == errno || 0 == i)
-
-			cf_detail(CF_SOCKET,  "socket disconnected");
-		
+			cf_detail(CF_SOCKET, "socket disconnected");
 		else {
-			cf_crash(CF_SOCKET, CF_PROCESS, CF_CRITICAL, "recv() failed: %d %s", errno, cf_strerror(errno));
+			cf_crash(CF_SOCKET, CF_PROCESS, "recv() failed: %d %s", errno, cf_strerror(errno));
 		}
 			
 	}
@@ -97,7 +95,7 @@ cf_socket_send(int sock, void *buf, size_t buflen, int flags)
 	int i;
 
 	if (0 >= (i = send(sock, buf, buflen, flags)))
-		cf_crash(CF_SOCKET, CF_THREAD, CF_WARNING, "send() failed: %s", cf_strerror(errno));
+		cf_warning(CF_SOCKET, "send() failed: %s", cf_strerror(errno));
 
 	return(i);
 }
@@ -114,9 +112,9 @@ cf_socket_recvfrom(int sock, void *buf, size_t buflen, int flags, cf_sockaddr *f
 	socklen_t fl = sizeof(f);
 
 	if (0 >= (i = recvfrom(sock, buf, buflen, flags, (struct sockaddr *) &f, &fl))) {
-		cf_crash(CF_SOCKET, CF_THREAD, CF_WARNING, "recvfrom() failed: %s", cf_strerror(errno));
+		cf_warning(CF_SOCKET, "recvfrom() failed: %s", cf_strerror(errno));
 	}
-	
+
 	cf_sockaddr_convertto( &f, from); 
 
 	return(i);
@@ -147,7 +145,6 @@ int
 cf_socket_init_svc(cf_socket_cfg *s)
 {
 	struct timespec delay;
-
 	cf_assert(s, CF_SOCKET, CF_PROCESS, CF_CRITICAL, "invalid argument");
 
 	delay.tv_sec = 5;
@@ -155,7 +152,7 @@ cf_socket_init_svc(cf_socket_cfg *s)
 
 	/* Create the socket */
 	if (0 > (s->sock = socket(AF_INET, SOCK_STREAM, 0))) {
-		cf_crash(CF_SOCKET, CF_PROCESS, CF_WARNING, "socket: %s", cf_strerror(errno));
+		cf_crash(CF_SOCKET, CF_PROCESS, "socket: %s", cf_strerror(errno));
 		return(errno);
 	}
 	s->saddr.sin_family = AF_INET;
@@ -173,7 +170,7 @@ cf_socket_init_svc(cf_socket_cfg *s)
 	/* Bind to the socket; if we can't, nanosleep() and retry */
 	while (0 > (bind(s->sock, (struct sockaddr *)&s->saddr, sizeof(struct sockaddr)))) {
 		if (EADDRINUSE != errno) {
-			cf_crash(CF_SOCKET, CF_PROCESS, CF_WARNING, "bind: %s", cf_strerror(errno));
+			cf_warning(CF_SOCKET, "bind: %s", cf_strerror(errno));
 			return(errno);
 		}
 
@@ -184,7 +181,7 @@ cf_socket_init_svc(cf_socket_cfg *s)
 
 	/* Listen for connections */
 	if (0 > listen(s->sock, 512)) {
-		cf_crash(CF_SOCKET, CF_PROCESS, CF_WARNING, "listen: %s", cf_strerror(errno));
+		cf_warning(CF_SOCKET, "listen: %s", cf_strerror(errno));
 		return(errno);
 	}
 
@@ -200,7 +197,7 @@ cf_socket_init_client(cf_socket_cfg *s)
 	cf_assert(s, CF_SOCKET, CF_PROCESS, CF_CRITICAL, "invalid argument");
 
 	if (0 > (s->sock = socket(AF_INET, SOCK_STREAM, 0))) {
-		cf_crash(CF_SOCKET, CF_PROCESS, CF_WARNING,  "socket: %s", cf_strerror(errno));
+		cf_warning(CF_SOCKET, "socket: %s", cf_strerror(errno));
 		return(errno);
 	}
 
@@ -210,14 +207,14 @@ cf_socket_init_client(cf_socket_cfg *s)
 	memset(&s->saddr,0,sizeof(s->saddr));
 	s->saddr.sin_family = AF_INET;
 	if (0 >= inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr)) {
-		cf_crash(CF_SOCKET, CF_PROCESS, CF_WARNING, "inet_pton: %s", cf_strerror(errno));
+		cf_warning(CF_SOCKET, "inet_pton: %s", cf_strerror(errno));
 		close(s->sock);
 		return(errno);
 	}
 	s->saddr.sin_port = htons(s->port);
 
 	if (0 > (connect(s->sock, (struct sockaddr *)&s->saddr, sizeof(s->saddr)))) {
-		cf_crash(CF_SOCKET, CF_PROCESS, CF_WARNING,  "connect: %s", cf_strerror(errno));
+		cf_warning(CF_SOCKET, "connect: %s", cf_strerror(errno));
 		close(s->sock);
 		return(errno);
 	}
@@ -250,7 +247,7 @@ cf_socket_connect_nb(cf_sockaddr so, int *fd_r)
 	
 	if (0 > (connect(fd, (struct sockaddr *)&sa, sizeof(sa)))) {
 		if (errno != EINPROGRESS) {
-			cf_crash(CF_SOCKET, CF_PROCESS, CF_WARNING, "socket connect error: %d %s", errno, cf_strerror(errno));
+			cf_warning(CF_SOCKET, "socket connect error: %d %s", errno, cf_strerror(errno));
 			close(fd);
 			return(errno);
 		}
@@ -275,16 +272,16 @@ cf_mcastsocket_init(cf_mcastsocket_cfg *ms)
 	cf_socket_cfg *s = &(ms->s);
 
 	if (0 > (s->sock = socket(AF_INET, SOCK_DGRAM, 0))) {
-		fprintf(stderr, "mcast socket open errno %d",errno);
+		cf_warning(CF_SOCKET, "multicast socket open error: %d %s", errno, cf_strerror(errno));
 		return(errno);
 	}
 
-	cf_debug(CF_SOCKET,"mcast_socket init: socket %d",s->sock);
-	
+	cf_debug(CF_SOCKET, "mcast_socket init: socket %d",s->sock);
+
 	// allows multiple readers on the same address
 	uint yes=1;
  	if (setsockopt(s->sock, SOL_SOCKET, SO_REUSEADDR,&yes,sizeof(yes))<0) {
-		fprintf(stderr, "reuse of mcast socket failed errno %d\n",errno);
+		cf_warning(CF_SOCKET, "multicast socket reuse failed: %d %s", errno, cf_strerror(errno));
 		return(errno);
 	}
 
@@ -297,7 +294,7 @@ cf_mcastsocket_init(cf_mcastsocket_cfg *ms)
 	s->saddr.sin_addr.s_addr = INADDR_ANY;
 	s->saddr.sin_port = htons(s->port);
 	while (0 > (bind(s->sock, (struct sockaddr *)&s->saddr, sizeof(struct sockaddr))))
-		cf_info(CF_SOCKET, "mcast bind fail: %s", cf_strerror(errno));
+		cf_info(CF_SOCKET, "multicast socket bind failed: %d %s", errno, cf_strerror(errno));
 
 	// Register for the multicast group
 	inet_pton(AF_INET, s->addr, &ms->ireq.imr_multiaddr.s_addr);

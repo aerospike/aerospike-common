@@ -57,7 +57,7 @@ cf_nodeid_get( unsigned short port, cf_node *id )
 	struct ifreq req;
 
 	if (0 >= (fdesc = socket(AF_INET, SOCK_STREAM, 0))) {
-		D("cf_id_get: can't open socket error %d %s",errno, cf_strerror(errno));
+		cf_warning(CF_MISC, "can't open socket: %d %s", errno, cf_strerror(errno));
 		return(-1);
 	}
 	int i;
@@ -65,11 +65,11 @@ cf_nodeid_get( unsigned short port, cf_node *id )
 		sprintf(req.ifr_name, "eth%d",i);
 		if (0 == ioctl(fdesc, SIOCGIFHWADDR, &req)) 
 			break;
-		D("cf_id_get: can't get mac id eth%d %d %s",i,errno, cf_strerror(errno));
+		cf_warning(CF_MISC, "can't get physical address of interface %d: %d %s", i, errno, cf_strerror(errno));
 	}
 	close(fdesc);
 	if (i == 10) {
-		D("cf_id_get: can't get mac id %d %s",errno, strerror(errno));
+		cf_warning(CF_MISC, "can't get physical address: %d %s", errno, cf_strerror(errno));
 		return(-1);
 	}
 
@@ -78,8 +78,8 @@ cf_nodeid_get( unsigned short port, cf_node *id )
 	
 	memcpy( ((byte *)id) + 6, &port, 2);
 
-	D("cf_nodeid_get: port %d result %"PRIx64,port,*id);
-	
+	cf_debug(CF_MISC, "port %d id %"PRIx64, port, *id);
+
 	return(0);
 }
 
@@ -95,4 +95,3 @@ cf_nodeid_get_port(cf_node id)
 	return(port);
 	
 }
-
