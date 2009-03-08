@@ -42,7 +42,9 @@ typedef enum {
 	CF_RB,
 	CF_SOCKET,
 	AS_CFG,
-	AS_NAMESPACE
+	AS_NAMESPACE,
+	AS_AS,
+	AS_BIN
 } cf_fault_context;
 
 /* cf_fault_scope
