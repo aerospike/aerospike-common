@@ -19,6 +19,15 @@
  * and the severity describes the required action.
  */
 
+/*
+** examples:
+cf_assert( my_test, CF_RCHASH, THREAD, INFO, " serious problem %d",i);
+
+cf_info(CF_RCHASH, " important message %d",i);
+
+cf_crash(CF_RCHASH, THREAD, " unserious problem");
+*/
+ 
 /* cf_fault_context
  * NB: if you add or remove entries from this enum, you must also change
  * the corresponding strings structure in fault.c */
@@ -29,6 +38,7 @@ typedef enum {
 	CF_RCHASH,
 	CF_SHASH,
 	CF_QUEUE,
+	CF_MSG,
 	CF_REDBLACK
 } cf_fault_context;
 
@@ -70,12 +80,12 @@ typedef struct cf_fault_recovery_stack_t cf_fault_recovery_stack;
 
 /* Function declarations */
 extern void cf_fault_event(const cf_fault_context, const cf_fault_scope, const cf_fault_severity, const char *fn, const int line, char *msg, ...);
-#define cf_assert(a, context, scope, severity, msg, ...) ((void)((a) ? (void)0 : cf_fault_event((context), (scope), (severity), __func__, __LINE__, (msg), ##__VA_ARGS__)))
-#define cf_crash(context, scope, msg, ...) (cf_fault_event((context), (scope), CRITICAL, __func__, __LINE__, (msg), ##__VA_ARGS__))
-#define cf_warning(context, msg, ...) (cf_fault_event((context), THREAD, WARNING, NULL, 0, (msg), ##__VA_ARGS__))
-#define cf_info(context, msg, ...) (cf_fault_event((context), THREAD, INFO, NULL, 0, (msg), ##__VA_ARGS__))
-#define cf_debug(context, msg, ...) (cf_fault_event((context), THREAD, DEBUG, NULL, 0, (msg), ##__VA_ARGS__))
-#define cf_detail(context, msg, ...) (cf_fault_event((context), THREAD, DETAIL, __func__, __LINE__, (msg), ##__VA_ARGS__))
+#define cf_assert(a, context, scope, severity, __msg, ...) ((void)((a) ? (void)0 : cf_fault_event((context), (scope), (severity), __func__, __LINE__, (__msg), ##__VA_ARGS__)))
+#define cf_crash(context, scope, __msg, ...) (cf_fault_event((context), (scope), CRITICAL, __func__, __LINE__, (__msg), ##__VA_ARGS__))
+#define cf_warning(context, __msg, ...) (cf_fault_event((context), THREAD, WARNING, NULL, 0, (__msg), ##__VA_ARGS__))
+#define cf_info(context, __msg, ...) (cf_fault_event((context), THREAD, INFO, NULL, 0, (__msg), ##__VA_ARGS__))
+#define cf_debug(context, __msg, ...) (cf_fault_event((context), THREAD, DEBUG, NULL, 0, (__msg), ##__VA_ARGS__))
+#define cf_detail(context, __msg, ...) (cf_fault_event((context), THREAD, DETAIL, __func__, __LINE__, (__msg), ##__VA_ARGS__))
 extern char *cf_strerror(const int err);
 extern int cf_fault_recovery_globalinit(cf_fault_recovery_key *rkey);
 extern int cf_fault_recovery_localinit(cf_fault_recovery_key *rkey, cf_fault_recovery_stack *stack);

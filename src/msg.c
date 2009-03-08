@@ -28,7 +28,7 @@ msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 	// Figure out how many bytes you need
 	int mt_rows = mt_sz / sizeof(msg_template);
 	if (mt_rows <= 0)
-		cf_assert(0, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "msg create: invalid parameter");
+		cf_crash( CF_MSG, THREAD,  "msg create: invalid parameter");
 	unsigned int max_id = 0;
 	for (int i=0;i<mt_rows;i++) {
 		if (mt[i].id >= max_id) {
@@ -41,7 +41,7 @@ msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 	if (max_id > mt_rows * 2) {
 		// It would be nice if there was a human readable string for debugging
 		// in the message descriptor
-		D("msg_create: found sparse message, %d ids, only %d rows consider recoding",max_id,mt_rows);
+		cf_debug(CF_MSG, "msg_create: found sparse message, %d ids, only %d rows consider recoding",max_id,mt_rows);
 	}
 	
 	
@@ -51,7 +51,7 @@ msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 	size_t a_sz = sizeof(msg) + m_sz;
 	a_sz = (a_sz / 512) + 512;
 	m = cf_rc_alloc(a_sz);
-	cf_assert(m, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "malloc");
+	cf_assert(m, CF_MSG, PROCESS, CRITICAL, "malloc");
 	m->len = max_id;
 	m->bytes_used = sizeof(msg) + m_sz; 
 	m->bytes_alloc = a_sz;
@@ -131,13 +131,13 @@ int
 msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 {
 	if (buflen < 6) {
-		D("msg_parse: but not enough data! will get called again len %d need 6.",buflen);
+		cf_debug(CF_MSG,"msg_parse: but not enough data! will get called again len %d need 6.",buflen);
 		return(-2);
 	}
 	uint32_t len = *(uint32_t *) buf;
 	len = ntohl(len) ;
 	if (buflen < len + 6) {
-		D("msg_parse: but not enough data! will get called again. len %d need %d",buflen, (len + 6));
+		cf_debug(CF_MSG,"msg_parse: but not enough data! will get called again. len %d need %d",buflen, (len + 6));
 		return(-2);
 	}
 	buf += 4;
@@ -145,7 +145,7 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 	uint16_t type = *(uint16_t *) buf;
 	type = ntohs(type);
 	if (m->type != type) {
-		D("msg_parse: trying to parse incoming type %d into msg type %d, bad bad",type, m->type);
+		cf_debug(CF_MSG,"msg_parse: trying to parse incoming type %d into msg type %d, bad bad",type, m->type);
 		return(-1);
 	}
 	buf += 2;
@@ -161,13 +161,13 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 		// find the field in the message
 		msg_field *mf;
 		if (id >= m->len) {
-			D(" received message with id greater than current definition, kind of OK, ignoring field");
+			cf_debug(CF_MSG," received message with id greater than current definition, kind of OK, ignoring field");
 			mf = 0;
 		}
 		else {
 			mf = &(m->f[id]);
 			if (! mf->is_valid ) {
-				D(" received message with id no longer valid, kind of OK, ignoring field");
+				cf_debug(CF_MSG," received message with id no longer valid, kind of OK, ignoring field");
 				mf = 0;
 			}
 		}
@@ -177,7 +177,7 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 		buf += 4;
 		
 		if (mf && (ft != mf->type)) {
-			D(" received message with incorrect field type from definition, kind of OK, ignoring field");
+			cf_debug(CF_MSG," received message with incorrect field type from definition, kind of OK, ignoring field");
 			mf = 0;
 		}
 		
@@ -210,7 +210,7 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 						else {
 							// TODO: add assert
 							mf->u.buf = malloc(flen);
-							cf_assert(mf->u.buf, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "malloc");
+							cf_assert(mf->u.buf, CF_MSG, THREAD, WARNING, "malloc");
 							mf->free = mf->u.buf;
 							mf->rc_free = 0;
 						}
@@ -224,7 +224,7 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 				case M_FT_ARRAY:
 				case M_FT_MESSAGE:
 				default:
-					D("msg_parse: field type not supported, but skipping over anyway: %d",mf->type);
+					cf_debug(CF_MSG,"msg_parse: field type not supported, but skipping over anyway: %d",mf->type);
 			}
 			mf->is_set = true;
 		}
@@ -274,12 +274,12 @@ msg_get_wire_field_size(const msg_field *mf) {
 		case M_FT_STR:
 		case M_FT_BUF:
 			if (mf->field_len >= ( 1 << 24 ))
-				D("field length %d too long, not yet supported", mf->field_len);
+				cf_debug(CF_MSG,"field length %d too long, not yet supported", mf->field_len);
 			return(mf->field_len);
 		case M_FT_ARRAY:
 		case M_FT_MESSAGE:
 		default:
-			D("field type not supported, internal error: %d",mf->type);
+			cf_debug(CF_MSG,"field type not supported, internal error: %d",mf->type);
 	}
 	return(0);
 }
@@ -291,7 +291,7 @@ msg_stamp_field(byte *buf, const msg_field *mf)
 {
 	// Stamp the ID
 	if (mf->id >= 1 << 16) {
-		D("msg_stamp_field: ID too large!");
+		cf_debug(CF_MSG,"msg_stamp_field: ID too large!");
 		return(0);
 	}
 	buf[0] = (mf->id >> 8) & 0xff;
@@ -340,7 +340,7 @@ msg_stamp_field(byte *buf, const msg_field *mf)
 		case M_FT_ARRAY:
 		case M_FT_MESSAGE:
 		default:
-			D("field type not supported, internal error: %d",mf->type);
+			cf_debug(CF_MSG,"field type not supported, internal error: %d",mf->type);
 			return(0);
 	}
 	
@@ -377,7 +377,7 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 	
 	// validate the size
 	if (sz > *buflen) {
-//		D("msg_fillbuf: passed in size too small want %d have %d",sz,*buflen);
+//		cf_debug(CF_MSG,"msg_fillbuf: passed in size too small want %d have %d",sz,*buflen);
 		return(-2);
 	}
 	*buflen = sz;
@@ -410,7 +410,7 @@ msg_reset(msg *m)
 	for (int i=0 ; i < m->len ; i++) {
 		if (m->f[i].is_valid == true) {
 			if (m->f[i].is_set == true) {
-//				D("msg_reset: freeing %p rcfree %p",m->f[i].free,m->f[i].rc_free);
+//				cf_debug(CF_MSG,"msg_reset: freeing %p rcfree %p",m->f[i].free,m->f[i].rc_free);
 				if (m->f[i].free) free(m->f[i].free); 
 				if (m->f[i].rc_free) cf_rc_releaseandfree(m->f[i].rc_free);
 				m->f[i].is_set = false;
@@ -564,14 +564,14 @@ msg_get_str(const msg *m, int field_id, char **r, size_t *len, msg_get_type type
 	}
 	else if (MSG_GET_COPY_MALLOC == type) {
 		*r = strdup( m->f[field_id].u.str );
-		cf_assert(*r, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "malloc");
+		cf_assert(*r, CF_MSG, THREAD, CRITICAL, "malloc");
 	} else if (MSG_GET_COPY_RC == type) {
 		size_t sz = m->f[field_id].field_len + 1;
 		*r = cf_rc_alloc(sz);
 		memcpy(*r, m->f[field_id].u.str, sz);
 	}
 	else {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg_get_str: illegal type");
+		cf_warning(CF_MSG, "msg_get_str: illegal type");
 		return(-2);
 	}
 
@@ -586,13 +586,13 @@ msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, msg_get_type type
 {
 #ifdef CHECK	
 	if (! m->f[field_id].is_valid) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg: invalid id %d in field get",m,field_id);
+		cf_crash(CF_MSG, THREAD, DEBUG, "msg: invalid id %d in field get",m,field_id);
 		*r = 0; *len = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
 	
 	if ( m->f[field_id].type != M_FT_BUF ) {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "msg %p: mismatch getter field type wants %d has %d",m,m->f[field_id].type, M_FT_BUF);
+		cf_crash(CF_MSG, THREAD, DEBUG, "msg %p: mismatch getter field type wants %d has %d",m,m->f[field_id].type, M_FT_BUF);
 		*r = 0; *len = 0;
 		return(-1); // not sure the meaning of ERROR - will it throw or not?
 	}
@@ -610,15 +610,15 @@ msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, msg_get_type type
 	}
 	else if (MSG_GET_COPY_MALLOC == type) {
 		*r = malloc( m->f[field_id].field_len );
-		cf_assert(*r, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "malloc");
+		cf_assert(*r, CF_MSG, THREAD, CRITICAL, "malloc");
 		memcpy(*r, m->f[field_id].u.buf, m->f[field_id].field_len );
 	}
 	else if (MSG_GET_COPY_RC == type) {
 		*r = cf_rc_alloc( m->f[field_id].field_len );
-		cf_assert(*r, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "malloc");
+		cf_assert(*r, CF_MSG, THREAD, CRITICAL, "malloc");
 		memcpy(*r, m->f[field_id].u.buf, m->f[field_id].field_len );
 	} else {
-		cf_fault(CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_NOTICE, "msg_get_str: illegal type");
+		cf_warning(CF_MSG, "msg_get_str: illegal type");
 		return(-2);
 	}
 
@@ -659,7 +659,7 @@ msg_get_bytearray(const msg *m, int field_id, cf_bytearray **r)
 	}
 	uint64_t field_len = m->f[field_id].field_len;
 	*r = cf_rc_alloc( field_len + sizeof(cf_bytearray) );
-	cf_assert(*r, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_ERROR, "rcalloc");
+	cf_assert(*r, CF_MSG, THREAD, CRITICAL, "rcalloc");
 	(*r)->sz = field_len;
 	memcpy((*r)->data, m->f[field_id].u.buf, field_len );
 	
@@ -790,7 +790,7 @@ msg_set_str(msg *m, int field_id, const char *v, msg_set_type type)
 		}
 		else {
 			mf->u.str = strdup(v);
-			cf_assert(mf->u.str, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "malloc");
+			cf_assert(mf->u.str, CF_MSG, THREAD, CRITICAL, "malloc");
 			mf->free = mf->u.str;
 			mf->rc_free = 0;
 		}
@@ -844,7 +844,7 @@ int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, msg_set_type ty
 		// Or just malloc if we have to. Sad face.
 		else {
 			mf->u.buf = malloc(len);
-			cf_assert(mf->u.buf, CF_FAULT_SCOPE_THREAD, CF_FAULT_SEVERITY_CRITICAL, "malloc");
+			cf_assert(mf->u.buf, CF_MSG, THREAD, CRITICAL, "malloc");
 			mf->free = mf->u.buf; // free on exit/reset
 			mf->rc_free = 0;
 		}
@@ -939,7 +939,7 @@ int msg_set_bytearray(msg *m, int field_id, const cf_bytearray *v)
 
 int 
 msg_compare(const msg *m1, const msg *m2) {
-	D("msg_compare: stub");
+	cf_debug(CF_MSG,"msg_compare: stub");
 	return(-2);
 }
 

@@ -95,7 +95,7 @@ rchash_put(rchash *h, void *key, uint32 key_len, void *object)
 	while (e) {
 #ifdef DEBUG
 		if (cf_rc_count(e->object) < 1) {
-			D("rchash %p: internal bad reference count on %p",h, e->object);
+			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
 			return(BB_ERR);
 		}
 #endif		
@@ -139,7 +139,7 @@ rchash_put_unique(rchash *h, void *key, uint32 key_len, void *object)
 	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
 
 	if (cf_rc_count(object) < 1) {
-		D("put unique! bad reference count on %p");
+		cf_debug(CF_RCHASH,"put unique! bad reference count on %p");
 		return(BB_ERR);
 	}
 	
@@ -164,7 +164,7 @@ rchash_put_unique(rchash *h, void *key, uint32 key_len, void *object)
 	while (e) {
 #ifdef DEBUG
 		if (cf_rc_count(e->object) < 1) {
-			D("rchash %p: internal bad reference count on %p",h, e->object);
+			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
 			return(BB_ERR);
 		}
 #endif		
@@ -212,7 +212,7 @@ rchash_get(rchash *h, void *key, uint32 key_len, void **object)
 	do {
 #ifdef DEBUG
 		if (cf_rc_count(e->object) < 1) {
-			D("rchash %p: internal bad reference count on %p",h, e->object);
+			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
 			return(BB_ERR);
 		}
 #endif		
@@ -265,7 +265,7 @@ rchash_delete(rchash *h, void *key, uint32 key_len)
 		
 #ifdef DEBUG
 		if (cf_rc_count(e->object) < 1) {
-			D("rchash %p: internal bad reference count on %p",h, e->object);
+			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
 			return(BB_ERR);
 		}
 #endif		
@@ -334,7 +334,7 @@ rchash_reduce(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			
 #ifdef DEBUG
 			if (cf_rc_count(list_he->object) < 1) {
-				D("rchash %p: internal bad reference count on %p",h, list_he->object);
+				cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, list_he->object);
 			}
 #endif		
 
@@ -381,7 +381,7 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			
 #ifdef DEBUG
 			if (cf_rc_count(list_he->object) < 1) {
-				D("rchash %p: internal bad reference count on %p",h, list_he->object);
+				cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, list_he->object);
 				return(BB_ERR);
 			}
 #endif		

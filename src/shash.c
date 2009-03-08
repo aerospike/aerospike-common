@@ -262,7 +262,7 @@ shash_get_and_delete(shash *h, void *key, void *value)
 
 	if (h->flags & BBHASH_CR_MT_BIGLOCK) {
 		if (0 != pthread_mutex_lock(&h->biglock)) {
-			D("FUCK YOOOOOOOOU!");
+			cf_debug(CF_SHASH,"FUCK YOOOOOOOOU!");
 		}
 	}
 		
@@ -315,7 +315,7 @@ shash_get_and_delete(shash *h, void *key, void *value)
 Out:
 	if (h->flags & BBHASH_CR_MT_BIGLOCK) { 
 		if (0 != pthread_mutex_unlock(&h->biglock)) {
-			D("fuck YOOOOOU!");
+			cf_debug(CF_SHASH,"fuck YOOOOOU!");
 		}
 	}
 		
