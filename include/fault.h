@@ -53,7 +53,12 @@ typedef enum {
 	AS_TSVC,
 	AS_TEST,
 	AS_NSUP,
-	AS_PROXY
+	AS_PROXY,
+	AS_HB,
+	AS_FABRIC,
+	AS_PARTITION,
+	AS_PAXOS,
+	AS_MIGRATE
 } cf_fault_context;
 
 /* cf_fault_scope
