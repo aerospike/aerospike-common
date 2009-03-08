@@ -46,7 +46,11 @@ typedef enum {
 	AS_AS,
 	AS_BIN,
 	AS_RECORD,
-	AS_PROTO
+	AS_PROTO,
+	AS_PARTICLE,
+	AS_DEMARSHAL,
+	AS_WRITE,
+	AS_TSVC
 } cf_fault_context;
 
 /* cf_fault_scope
