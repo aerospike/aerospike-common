@@ -44,7 +44,9 @@ typedef enum {
 	AS_CFG,
 	AS_NAMESPACE,
 	AS_AS,
-	AS_BIN
+	AS_BIN,
+	AS_RECORD,
+	AS_PROTO
 } cf_fault_context;
 
 /* cf_fault_scope
