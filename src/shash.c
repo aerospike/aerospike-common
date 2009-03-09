@@ -189,6 +189,45 @@ Out:
 					
 }
 
+
+int
+shash_get_vlock(shash *h, void *key, void **value, pthread_mutex_t **vlock)
+{
+	int rv = BB_ERR;
+	
+	uint hash = h->h_fn(key);
+	hash %= h->table_len;
+
+	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+		pthread_mutex_lock(&h->biglock);
+	
+	shash_elem *e = (shash_elem *) ( ((byte *)h->table) + (BBHASH_ELEM_SZ(h) * hash));	
+
+	if (e->in_use == false) {
+		rv = BB_ERR_NOTFOUND;
+		goto Out;
+	}
+	
+	do {
+		if ( memcmp(BBHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+			*value = BBHASH_ELEM_VALUE_PTR(h, e);
+			rv = BB_OK; 
+			goto Out;
+		}
+		e = e->next;
+	} while (e);
+	
+	rv = BB_ERR_NOTFOUND;
+	
+Out:
+	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+		*vlock = &h->biglock;
+
+	return(rv);
+					
+}
+
+
 int
 shash_delete(shash *h, void *key)
 {

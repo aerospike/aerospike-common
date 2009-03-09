@@ -96,13 +96,17 @@ shash_put(shash *h, void *key, void *value);
 int
 shash_put_unique(shash *h, void *key, void *value);
 
-/* If you think you know how much space it will take, 
- * call with the buffer you want filled
- * If you're wrong about the space, you'll get a BUFSZ error, but the *value_len
- * will be filled in with the value you should have passed
+/* call with the buffer you want filled
  */
 int
 shash_get(shash *h, void *key, void *value);
+
+/* Returns the pointer to the internal item, and a locked-lock
+ * which allows the touching of internal state. If non-lock hash table,
+ * vlock param will be ignored
+ */
+int
+shash_get_vlock(shash *h, void *key, void **value,pthread_mutex_t **vlock);
 
 /* Does a get and delete at the same time so you can make sure only one person
  * gets what was inserted
