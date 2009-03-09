@@ -122,6 +122,14 @@ int
 shash_delete(shash *h, void *key);
 
 /*
+** Special function you can call when you already have the lock - such as
+** a vlock get
+*/
+int
+shash_delete_lockfree(shash *h, void *key);
+
+
+/*
 ** Get the number of elements currently in the hash
 */
 uint32_t

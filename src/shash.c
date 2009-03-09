@@ -222,6 +222,7 @@ shash_get_vlock(shash *h, void *key, void **value, pthread_mutex_t **vlock)
 Out:
 	if (h->flags & BBHASH_CR_MT_BIGLOCK)
 		*vlock = &h->biglock;
+	else if (vlock) *vlock = 0; 		// clear out to be safe
 
 	return(rv);
 					
@@ -289,6 +290,61 @@ Out:
 	return(rv);	
 	
 
+}
+
+//
+// I kind of feel bad about this cut n paste, but
+// it's nice in the lock state to slim down the area under which the lock is taken
+// doing multiple helper functions may be better...
+
+int
+shash_delete_lockfree(shash *h, void *key)
+{
+	// Calculate hash
+	uint hash = h->h_fn(key);
+	hash %= h->table_len;
+	int rv = BB_ERR;
+
+	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (BBHASH_ELEM_SZ(h) * hash));	
+
+	// If bucket empty, def can't delete
+	if ( e->in_use == false )
+		return( BB_ERR_NOTFOUND );
+
+	shash_elem *e_prev = 0;
+
+	// Look for teh element and destroy if found
+	while (e) {
+		if ( memcmp(BBHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+			// Found it
+			// patchup pointers & free element if not head
+			if (e_prev) {
+				e_prev->next = e->next;
+				free (e);
+			}
+			// am at head - more complicated
+			else {
+				// at head with no next - easy peasy!
+				if (0 == e->next) {
+					e->in_use = false;
+				}
+				// at head with a next - more complicated
+				else {
+					shash_elem *_t = e->next;
+					memcpy(e, e->next, BBHASH_ELEM_SZ(h) );
+					free(_t);
+				}
+			}
+			h->elements--;
+			return( BB_OK );
+		}
+		e_prev = e;
+		e = e->next;
+	}
+	
+	return ( BB_ERR_NOTFOUND );
+
+	
 }
 
 int
