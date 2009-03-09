@@ -157,7 +157,7 @@ void
 cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
 {
 	int i = 0;
-	cf_assert((0 == argc || NULL == argv), CF_MISC, CF_GLOBAL, CF_CRITICAL, "invalid argument");
+	cf_assert((0 != argc || NULL != argv), CF_MISC, CF_GLOBAL, CF_CRITICAL, "invalid argument");
 
     cf_fault_restart_argv = malloc((argc + 2) * sizeof(char *));
 	cf_assert(cf_fault_restart_argv, CF_MISC, CF_GLOBAL, CF_CRITICAL, "alloc: %s", cf_strerror(errno));
