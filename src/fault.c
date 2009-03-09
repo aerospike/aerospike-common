@@ -201,6 +201,13 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	char **btstr;
 	int btn;
 
+	if (context == AS_MIGRATE) {
+		if (CF_DEBUG == severity || CF_DETAIL == severity) return;
+	}
+	else {
+		if (CF_DEBUG == severity || CF_DETAIL == severity) return;
+	}
+	
 	/* Set the timestamp */
 	now = time(NULL);
 	gmtime_r(&now, &nowtm);
