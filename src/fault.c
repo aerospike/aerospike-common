@@ -32,9 +32,11 @@ char **cf_fault_restart_argv;
 /* cf_fault_context_strings, cf_fault_severity_strings, cf_fault_scope_strings
  * Strings describing fault states */
 static const char *cf_fault_context_strings[] = {
-	"cf_misc", "cf_rcalloc", "cf_hash", "cf_rchash", "cf_shash", "cf_queue", "cf_redblack"
+	"cf:misc", "cf:rcalloc", "cf:hash", "cf:rchash", "cf:shash", "cf:queue", "cf:msg", "cf:redblack", "cf:socket",
+	"config", "namespace", "as", "bin", "record", "proto", "particle", "demarshal", "write", "tsvc", "test", "nsup", "proxy", "hb", "fabric", "partition", "paxos", "migrate"
 };
-static const char *cf_fault_severity_strings[] = { "CRITICAL", "WARNING", "NOTICE", "INFO", "DEBUG", "DETAIL" };
+
+static const char *cf_fault_severity_strings[] = { "CRITICAL", "WARNING", "INFO", "DEBUG", "DETAIL" };
 static const char *cf_fault_scope_strings[] = { "GLOBAL", "PROCESS", "THREAD" };
 
 
@@ -70,7 +72,7 @@ cf_fault_recovery_globalinit(cf_fault_recovery_key *rkey)
 int
 cf_fault_recovery_localinit(cf_fault_recovery_key *rkey, cf_fault_recovery_stack *stack)
 {
-	cf_assert((NULL == rkey || NULL == stack), CF_MISC, CF_THREAD, CF_CRITICAL, "invalid argument");
+	cf_assert((NULL != rkey || NULL != stack), CF_MISC, CF_THREAD, CF_CRITICAL, "invalid argument");
 
 	/* Set the stack attributes */
 	stack->sz = -1;
@@ -90,7 +92,7 @@ cf_fault_recovery_push(cf_fault_recovery_key *rkey, void (*fn)(void *), void *ar
 {
 	cf_fault_recovery_stack *stack;
 
-	cf_assert((NULL == rkey || NULL == fn), CF_MISC, CF_PROCESS, CF_CRITICAL, "invalid argument");
+	cf_assert((NULL != rkey || NULL != fn), CF_MISC, CF_PROCESS, CF_CRITICAL, "invalid argument");
 	if (NULL == (stack = (cf_fault_recovery_stack *)pthread_getspecific(*rkey)))
 		return(-1);
 
@@ -206,9 +208,9 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 
 	/* Set the context/scope/severity tag */
 	if (CF_CRITICAL == severity)
-		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "[%s %s] %s ", cf_fault_severity_strings[severity], cf_fault_scope_strings[scope], cf_fault_context_strings[context]);
+		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "%s %s (%s): ", cf_fault_severity_strings[severity], cf_fault_scope_strings[scope], cf_fault_context_strings[context]);
 	else
-		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "[%s] %s ", cf_fault_severity_strings[severity], cf_fault_context_strings[context]);
+		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "%s (%s): ", cf_fault_severity_strings[severity], cf_fault_context_strings[context]);
 
 	/* Set the location */
 	if (fn)
