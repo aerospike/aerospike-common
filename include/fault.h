@@ -17,48 +17,46 @@
  * Faults are identified by a context, scope, and severity.  The context
  * describes where the fault occured; the scope, how limited the fault is;
  * and the severity describes the required action.
+ *
+ * Examples:
+ *    cf_info(CF_MISC, "important message: %s", my_msg);
+ *    cf_crash(CF_MISC, THREAD, "doom!");
+ *    cf_assert(my_test, CF_MISC, PROCESS, CRITICAL, "gloom!");
  */
 
-/*
-** examples:
-cf_assert( my_test, CF_RCHASH, THREAD, INFO, " serious problem %d",i);
 
-cf_info(CF_RCHASH, " important message %d",i);
-
-cf_crash(CF_RCHASH, THREAD, " unserious problem");
-*/
- 
 /* cf_fault_context
  * NB: if you add or remove entries from this enum, you must also change
  * the corresponding strings structure in fault.c */
 typedef enum {
-	CF_MISC,
-	CF_RCALLOC,
-	CF_HASH,
-	CF_RCHASH,
-	CF_SHASH,
-	CF_QUEUE,
-	CF_MSG,
-	CF_RB,
-	CF_SOCKET,
-	AS_CFG,
-	AS_NAMESPACE,
-	AS_AS,
-	AS_BIN,
-	AS_RECORD,
-	AS_PROTO,
-	AS_PARTICLE,
-	AS_DEMARSHAL,
-	AS_WRITE,
-	AS_TSVC,
-	AS_TEST,
-	AS_NSUP,
-	AS_PROXY,
-	AS_HB,
-	AS_FABRIC,
-	AS_PARTITION,
-	AS_PAXOS,
-	AS_MIGRATE
+	CF_MISC = 0,
+	CF_RCALLOC = 1,
+	CF_HASH = 2,
+	CF_RCHASH = 3,
+	CF_SHASH = 4,
+	CF_QUEUE = 5,
+	CF_MSG = 6,
+	CF_RB = 7,
+	CF_SOCKET = 8,
+	AS_CFG = 9,
+	AS_NAMESPACE = 10,
+	AS_AS = 11,
+	AS_BIN = 12,
+	AS_RECORD = 13,
+	AS_PROTO = 14,
+	AS_PARTICLE = 15,
+	AS_DEMARSHAL = 16,
+	AS_WRITE = 17,
+	AS_TSVC = 18,
+	AS_TEST = 19,
+	AS_NSUP = 20,
+	AS_PROXY = 21,
+	AS_HB = 22,
+	AS_FABRIC = 23,
+	AS_PARTITION = 24,
+	AS_PAXOS = 25,
+	AS_MIGRATE = 26,
+	CF_FAULT_CONTEXT_UNDEF = 27
 } cf_fault_context;
 
 /* cf_fault_scope
@@ -66,7 +64,7 @@ typedef enum {
  *     PROCESS             fatal errors terminate the process
  *     THREAD              fatal errors terminate the enclosing thread
  */
-typedef enum { CF_GLOBAL, CF_PROCESS, CF_THREAD } cf_fault_scope;
+typedef enum { CF_GLOBAL = 0, CF_PROCESS = 1, CF_THREAD = 2 } cf_fault_scope;
 
 /* cf_fault_severity
  *     CRITICAL            fatal runtime panics
@@ -75,7 +73,15 @@ typedef enum { CF_GLOBAL, CF_PROCESS, CF_THREAD } cf_fault_scope;
  *     DEBUG               debugging messages
  *     DETAIL              detailed debugging messages
  */
-typedef enum { CF_CRITICAL, CF_WARNING, CF_INFO, CF_DEBUG, CF_DETAIL } cf_fault_severity;
+typedef enum { CF_CRITICAL = 0, CF_WARNING = 1, CF_INFO = 2, CF_DEBUG = 3, CF_DETAIL = 4, CF_FAULT_SEVERITY_UNDEF = 5 } cf_fault_severity;
+
+
+/* cf_fault_sink
+ * An endpoint (sink) for a flow of fault messages */
+typedef struct cf_fault_sink {
+	int fd;
+	int limit[CF_FAULT_CONTEXT_UNDEF];
+} cf_fault_sink;
 
 
 /* CF_FAULT_BACKTRACE_DEPTH
@@ -98,7 +104,9 @@ typedef struct cf_fault_recovery_stack_t cf_fault_recovery_stack;
 
 
 /* Function declarations */
-extern void cf_fault_event(const cf_fault_context, const cf_fault_scope, const cf_fault_severity, const char *fn, const int line, char *msg, ...);
+extern int cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity);
+extern cf_fault_sink *cf_fault_sink_add(char *path);
+extern void cf_fault_event(const cf_fault_context, const cf_fault_scope, const cf_fault_severity severity, const char *fn, const int line, char *msg, ...);
 #define cf_assert(a, context, scope, severity, __msg, ...) ((void)((a) ? (void)0 : cf_fault_event((context), (scope), (severity), __func__, __LINE__, (__msg), ##__VA_ARGS__)))
 #define cf_crash(context, scope, __msg, ...) (cf_fault_event((context), (scope), CF_CRITICAL, __func__, __LINE__, (__msg), ##__VA_ARGS__))
 #define cf_warning(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_WARNING, NULL, 0, (__msg), ##__VA_ARGS__))

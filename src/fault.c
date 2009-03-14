@@ -13,6 +13,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <time.h>
 #include <unistd.h>
 #include "cf.h"
@@ -33,11 +36,16 @@ char **cf_fault_restart_argv;
  * Strings describing fault states */
 static const char *cf_fault_context_strings[] = {
 	"cf:misc", "cf:rcalloc", "cf:hash", "cf:rchash", "cf:shash", "cf:queue", "cf:msg", "cf:redblack", "cf:socket",
-	"config", "namespace", "as", "bin", "record", "proto", "particle", "demarshal", "write", "tsvc", "test", "nsup", "proxy", "hb", "fabric", "partition", "paxos", "migrate"
+	"config", "namespace", "as", "bin", "record", "proto", "particle", "demarshal", "write", "tsvc", "test", "nsup", "proxy", "hb", "fabric", "partition", "paxos", "migrate",
+	NULL
 };
 
-static const char *cf_fault_severity_strings[] = { "CRITICAL", "WARNING", "INFO", "DEBUG", "DETAIL" };
+static const char *cf_fault_severity_strings[] = { "CRITICAL", "WARNING", "INFO", "DEBUG", "DETAIL", NULL };
 static const char *cf_fault_scope_strings[] = { "GLOBAL", "PROCESS", "THREAD" };
+
+#define CF_FAULT_SINKS_MAX 8
+cf_fault_sink cf_fault_sinks[CF_FAULT_SINKS_MAX];
+int cf_fault_sinks_inuse = 0;
 
 
 /* cf_strerror
@@ -188,6 +196,64 @@ cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
 }
 
 
+/* cf_fault_sink_add
+ * Register an sink for faults */
+cf_fault_sink *
+cf_fault_sink_add(char *path)
+{
+	cf_fault_sink *s;
+
+	if ((CF_FAULT_SINKS_MAX - 1) == cf_fault_sinks_inuse)
+		return(NULL);
+
+	s = &cf_fault_sinks[cf_fault_sinks_inuse++];
+	if (0 == strncmp(path, "stderr", 6))
+		s->fd = 2;
+	else {
+		if (-1 == (s->fd = open(path, O_WRONLY|O_CREAT|O_APPEND|O_NONBLOCK, S_IRUSR|S_IWUSR))) {
+			cf_fault_sinks_inuse--;
+			return(NULL);
+		}
+	}
+
+	for (int i = 0; i < CF_FAULT_CONTEXT_UNDEF; i++)
+		s->limit[i] = CF_INFO;
+
+	return(s);
+}
+
+
+int
+cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity)
+{
+	cf_fault_context ctx;
+	cf_fault_severity sev = CF_FAULT_SEVERITY_UNDEF;
+
+	for (int i = 0; i < CF_FAULT_SEVERITY_UNDEF; i++) {
+		if (0 == strncasecmp(cf_fault_severity_strings[i], severity, strlen(severity)))
+			sev = (cf_fault_severity)i;
+	}
+	if (CF_FAULT_SEVERITY_UNDEF == sev)
+		return(-1);
+
+	if (0 == strncasecmp(context, "any", 3)) {
+		for (int i = 0; i < CF_FAULT_CONTEXT_UNDEF; i++)
+			s->limit[i] = sev;
+	} else {
+		for (int i = 0; i < CF_FAULT_CONTEXT_UNDEF; i++) {
+			if (0 == strncasecmp(cf_fault_context_strings[i], context, strlen(context)))
+				ctx = (cf_fault_context)i;
+		}
+		if (CF_FAULT_CONTEXT_UNDEF == ctx)
+			return(-1);
+
+		s->limit[ctx] = sev;
+	}
+
+	return(0);
+}
+
+
 /* cf_fault_event
  * Respond to a fault */
 void
@@ -201,13 +267,6 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	char **btstr;
 	int btn;
 
-	if (context == AS_MIGRATE) {
-		if (CF_DEBUG == severity || CF_DETAIL == severity) return;
-	}
-	else {
-		if (CF_DEBUG == severity || CF_DETAIL == severity) return;
-	}
-	
 	/* Set the timestamp */
 	now = time(NULL);
 	gmtime_r(&now, &nowtm);
@@ -227,13 +286,22 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	va_start(argp, msg);
 	vsnprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), msg, argp);
 	va_end(argp);
+	snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "\n");
+
 
 	/* Route the message to the correct destinations */
-	/* FIXME yeah, actually do that! */
-	fprintf(stderr, "%s\n", mbuf);
+	for (int i = 0; i < cf_fault_sinks_inuse; i++) {
+		if ((severity <= cf_fault_sinks[i].limit[context]) || (CF_CRITICAL == severity)) {
+			if (0 >= write(cf_fault_sinks[i].fd, mbuf, strlen(mbuf))) {
+				fprintf(stderr, "internal failure in fault message write: %s\n", cf_strerror(errno));
+			}
+		}
+	}
 
 	/* Critical errors */
 	if (CF_CRITICAL == severity) {
+		fflush(NULL);
+
 		btn = backtrace(bt, CF_FAULT_BACKTRACE_DEPTH);
 		btstr = backtrace_symbols(bt, btn);
 		cf_assert(btstr, CF_MISC, CF_PROCESS, CF_CRITICAL, "backtrace_symbols() returned NULL");
