@@ -45,6 +45,7 @@ static const char *cf_fault_scope_strings[] = { "GLOBAL", "PROCESS", "THREAD" };
 
 #define CF_FAULT_SINKS_MAX 8
 cf_fault_sink cf_fault_sinks[CF_FAULT_SINKS_MAX];
+cf_fault_severity cf_fault_filter[CF_FAULT_CONTEXT_UNDEF];
 int cf_fault_sinks_inuse = 0;
 
 
@@ -192,6 +193,11 @@ cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
 	cf_fault_restart_argv[i + 1] = NULL;
     cf_fault_restart_argc = i + 1;
 
+	/* Initialize the fault filter while we're here */
+	for (int j = 0; j < CF_FAULT_CONTEXT_UNDEF; j++) {
+		cf_fault_filter[j] = CF_FAULT_SEVERITY_UNDEF;
+	}
+
 	return;
 }
 
@@ -237,8 +243,11 @@ cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity)
 		return(-1);
 
 	if (0 == strncasecmp(context, "any", 3)) {
-		for (int i = 0; i < CF_FAULT_CONTEXT_UNDEF; i++)
+		for (int i = 0; i < CF_FAULT_CONTEXT_UNDEF; i++) {
 			s->limit[i] = sev;
+			if (s->limit[i] < cf_fault_filter[i])
+				cf_fault_filter[i] = s->limit[i];
+		}
 	} else {
 		for (int i = 0; i < CF_FAULT_CONTEXT_UNDEF; i++) {
 			if (0 == strncasecmp(cf_fault_context_strings[i], context, strlen(context)))
@@ -248,6 +257,8 @@ cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity)
 			return(-1);
 
 		s->limit[ctx] = sev;
+		if (s->limit[ctx] < cf_fault_filter[ctx])
+			cf_fault_filter[ctx] = s->limit[ctx];
 	}
 
 	return(0);
@@ -266,6 +277,10 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	void *bt[CF_FAULT_BACKTRACE_DEPTH];
 	char **btstr;
 	int btn;
+
+	/* Prefilter: don't construct messages we won't end up writing */
+	if (severity > cf_fault_filter[context])
+		return;
 
 	/* Set the timestamp */
 	now = time(NULL);
