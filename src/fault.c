@@ -195,7 +195,7 @@ cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
 
 	/* Initialize the fault filter while we're here */
 	for (int j = 0; j < CF_FAULT_CONTEXT_UNDEF; j++) {
-		cf_fault_filter[j] = CF_FAULT_SEVERITY_UNDEF;
+		cf_fault_filter[j] = CF_CRITICAL;
 	}
 
 	return;
