@@ -303,7 +303,6 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	va_end(argp);
 	snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "\n");
 
-
 	/* Route the message to the correct destinations */
 	for (int i = 0; i < cf_fault_sinks_inuse; i++) {
 		if ((severity <= cf_fault_sinks[i].limit[context]) || (CF_CRITICAL == severity)) {
