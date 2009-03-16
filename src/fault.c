@@ -245,7 +245,7 @@ cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity)
 	if (0 == strncasecmp(context, "any", 3)) {
 		for (int i = 0; i < CF_FAULT_CONTEXT_UNDEF; i++) {
 			s->limit[i] = sev;
-			if (s->limit[i] < cf_fault_filter[i])
+			if (s->limit[i] > cf_fault_filter[i])
 				cf_fault_filter[i] = s->limit[i];
 		}
 	} else {
@@ -257,7 +257,7 @@ cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity)
 			return(-1);
 
 		s->limit[ctx] = sev;
-		if (s->limit[ctx] < cf_fault_filter[ctx])
+		if (s->limit[ctx] > cf_fault_filter[ctx])
 			cf_fault_filter[ctx] = s->limit[ctx];
 	}
 
