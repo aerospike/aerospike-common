@@ -104,6 +104,10 @@ shash_get(shash *h, void *key, void *value);
 /* Returns the pointer to the internal item, and a locked-lock
  * which allows the touching of internal state. If non-lock hash table,
  * vlock param will be ignored
+ *
+ * Note that the vlock is passed back only when the return code is BB_OK.
+ * In the case where nothing is found, no lock is held.
+ * It might be better to do it the other way, but you can change it later if you want
  */
 int
 shash_get_vlock(shash *h, void *key, void **value,pthread_mutex_t **vlock);

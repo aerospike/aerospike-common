@@ -189,6 +189,10 @@ Out:
 					
 }
 
+//
+// Note that the vlock is passed back only when the return code is BB_OK.
+// In the case where nothing is found, no lock is held.
+// It might be better to do it the other way, but you can change it later if you want
 
 int
 shash_get_vlock(shash *h, void *key, void **value, pthread_mutex_t **vlock)
@@ -220,9 +224,19 @@ shash_get_vlock(shash *h, void *key, void **value, pthread_mutex_t **vlock)
 	rv = BB_ERR_NOTFOUND;
 	
 Out:
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
-		*vlock = &h->biglock;
-	else if (vlock) *vlock = 0; 		// clear out to be safe
+	if (h->flags & BBHASH_CR_MT_BIGLOCK) {
+		if (rv == BB_OK) {
+			*vlock = &h->biglock;
+		}
+		else {
+			pthread_mutex_unlock(&h->biglock);
+			*vlock = 0;
+		}
+	}
+	else {
+		// for safety sake
+		if (vlock) *vlock = 0;
+	}
 
 	return(rv);
 					
