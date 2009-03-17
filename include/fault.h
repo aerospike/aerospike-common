@@ -108,11 +108,11 @@ extern int cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *sever
 extern cf_fault_sink *cf_fault_sink_add(char *path);
 extern void cf_fault_event(const cf_fault_context, const cf_fault_scope, const cf_fault_severity severity, const char *fn, const int line, char *msg, ...);
 #define cf_assert(a, context, scope, severity, __msg, ...) ((void)((a) ? (void)0 : cf_fault_event((context), (scope), (severity), __func__, __LINE__, (__msg), ##__VA_ARGS__)))
-#define cf_crash(context, scope, __msg, ...) (cf_fault_event((context), (scope), CF_CRITICAL, __func__, __LINE__, (__msg), ##__VA_ARGS__))
-#define cf_warning(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_WARNING, NULL, 0, (__msg), ##__VA_ARGS__))
-#define cf_info(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_INFO, NULL, 0, (__msg), ##__VA_ARGS__))
-#define cf_debug(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_DEBUG, NULL, 0, (__msg), ##__VA_ARGS__))
-#define cf_detail(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_DETAIL, __func__, __LINE__, (__msg), ##__VA_ARGS__))
+#define cf_crash(context, scope, __msg, ...) (cf_fault_event((context), (scope), CF_CRITICAL, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
+#define cf_warning(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_WARNING, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
+#define cf_info(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_INFO, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
+#define cf_debug(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_DEBUG, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
+#define cf_detail(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_DETAIL, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
 extern char *cf_strerror(const int err);
 extern int cf_fault_recovery_globalinit(cf_fault_recovery_key *rkey);
 extern int cf_fault_recovery_localinit(cf_fault_recovery_key *rkey, cf_fault_recovery_stack *stack);
