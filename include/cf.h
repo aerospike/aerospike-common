@@ -58,6 +58,7 @@ typedef uint64_t cf_clock;
 #include "bbhash.h"
 #include "rchash.h"
 #include "shash.h"
+#include "dynbuf.h"
 
 /* cf_hash_fnv
  * The 64-bit Fowler-Noll-Voll hash function (FNV-1a) */
@@ -197,3 +198,7 @@ extern int cf_sort_firstk(uint64_t *v, size_t sz, int k);
 // This is even shorter!
 extern cf_clock cf_getms();
 extern cf_clock cf_clock_getabsolute();
+
+// And my little string helpers even shorter than that
+extern void cf_itoa(int value, char *s, int radix);
+extern void cf_itoa_u64(uint64_t value, char *s, int radix);
