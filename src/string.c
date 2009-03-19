@@ -17,6 +17,14 @@ static char itoa_table[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '
 void
 cf_itoa(int _value, char *_s, int _radix)
 {
+	// special case is the easy way
+	if (_value == 0) {
+		_s[0] = itoa_table[0];
+		_s[1] = 0;
+		return;
+	}
+	
+	// Account for negatives
 	if (_value < 0) {
 		*_s++ = '-';
 		_value = - _value;
@@ -40,6 +48,13 @@ cf_itoa(int _value, char *_s, int _radix)
 void
 cf_itoa_u64(uint64_t _value, char *_s, int _radix)
 {
+	// special case is the easy way
+	if (_value == 0) {
+		_s[0] = itoa_table[0];
+		_s[1] = 0;
+		return;
+	}
+
 	uint64_t _v = _value;
 	int _nd = 0;
 	while (_v) {
