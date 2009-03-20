@@ -34,5 +34,7 @@ typedef struct cf_dyn_buf_s {
 extern int cf_dyn_buf_append_string(cf_dyn_buf *db, char *s);
 extern int cf_dyn_buf_append_char(cf_dyn_buf *db, char c);
 extern int cf_dyn_buf_append_buf(cf_dyn_buf *db, uint8_t *buf, size_t sz);
-
+extern int cf_dyn_buf_append_int(cf_dyn_buf *db, int i);
+extern int cf_dyn_buf_append_uint64_x(cf_dyn_buf *db, uint64_t i);
+extern int cf_dyn_buf_chomp(cf_dyn_buf *db);
 extern void cf_dyn_buf_free(cf_dyn_buf *db);

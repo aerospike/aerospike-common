@@ -317,7 +317,6 @@ shash_delete_lockfree(shash *h, void *key)
 	// Calculate hash
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
-	int rv = BB_ERR;
 
 	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (BBHASH_ELEM_SZ(h) * hash));	
 

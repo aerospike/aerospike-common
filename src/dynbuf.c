@@ -12,8 +12,11 @@
 #include <unistd.h>
 #include "cf.h"
 
+//
+// Make sure the buf has enough bytes for whatever you're up to
+
 int
-cf_dyn_buf_append_buf(cf_dyn_buf *db, uint8_t *buf, size_t sz)
+cf_dyn_buf_reserve(cf_dyn_buf *db, size_t	sz)
 {
 	// see if we need more space
 	if ( db->alloc_sz - db->used_sz < sz ) {
@@ -34,6 +37,16 @@ cf_dyn_buf_append_buf(cf_dyn_buf *db, uint8_t *buf, size_t sz)
 		}
 		db->alloc_sz = new_sz;
 	}
+	return(0);
+}
+
+
+
+int
+cf_dyn_buf_append_buf(cf_dyn_buf *db, uint8_t *buf, size_t sz)
+{
+	if (0 != cf_dyn_buf_reserve(db, sz))
+		return(-1);
 	memcpy(&db->buf[db->used_sz], buf, sz);
 	db->used_sz += sz;
 	return(0);
@@ -43,13 +56,53 @@ int
 cf_dyn_buf_append_string(cf_dyn_buf *db, char *s)
 {
 	size_t	len = strlen(s);
-	return ( cf_dyn_buf_append_buf(db, (uint8_t *) s, len) );
+	if (0 != cf_dyn_buf_reserve(db, len))
+		return(-1);
+	memcpy(&db->buf[db->used_sz], s, len);
+	db->used_sz += len;
+	return ( 0 );
 }
 
 int
 cf_dyn_buf_append_char (cf_dyn_buf *db, char c)
 {
-	return( cf_dyn_buf_append_buf(db, (uint8_t *) &c, sizeof(char) ) );
+	if (0 != cf_dyn_buf_reserve(db, 1))
+		return(-1);
+	db->buf[db->used_sz] = (uint8_t) c;
+	db->used_sz++;
+	return( 0 );
+}
+
+// this can be done even faster!
+
+int
+cf_dyn_buf_append_int (cf_dyn_buf *db, int i)
+{
+	// overreserving isn't a crime
+	if (0 != cf_dyn_buf_reserve(db, 12))
+		return(-1);
+	
+	db->used_sz += cf_itoa(i, (char *) &db->buf[db->used_sz], 10);
+	return( 0 );
+}
+
+int
+cf_dyn_buf_append_uint64_x (cf_dyn_buf *db, uint64_t i)
+{
+	// overreserving isn't a crime
+	if (0 != cf_dyn_buf_reserve(db, 18))
+		return(-1);
+	
+	db->used_sz += cf_itoa_u64(i, (char *) &db->buf[db->used_sz], 16);
+	return( 0 );
+}
+
+int
+cf_dyn_buf_chomp(cf_dyn_buf *db)
+{
+	if (db->used_sz > 0)
+		db->used_sz--;
+	return(0);
 }
 
 

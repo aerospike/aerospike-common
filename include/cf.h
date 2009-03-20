@@ -200,5 +200,6 @@ extern cf_clock cf_getms();
 extern cf_clock cf_clock_getabsolute();
 
 // And my little string helpers even shorter than that
-extern void cf_itoa(int value, char *s, int radix);
-extern void cf_itoa_u64(uint64_t value, char *s, int radix);
+// return value is number of bytes in the new string
+extern unsigned int cf_itoa(int value, char *s, int radix);
+extern unsigned int cf_itoa_u64(uint64_t value, char *s, int radix);

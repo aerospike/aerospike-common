@@ -14,14 +14,14 @@
 
 static char itoa_table[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N' }; 
 
-void
+unsigned int
 cf_itoa(int _value, char *_s, int _radix)
 {
 	// special case is the easy way
 	if (_value == 0) {
 		_s[0] = itoa_table[0];
 		_s[1] = 0;
-		return;
+		return(1);
 	}
 	
 	// Account for negatives
@@ -30,45 +30,47 @@ cf_itoa(int _value, char *_s, int _radix)
 		_value = - _value;
 	}
 	int _v = _value;
-	int _nd = 0;
+	unsigned int _nd = 0;
 	while (_v) {
 		_nd++;
 		_v /= _radix;
 	}
-	
+
+	unsigned int rv = _nd; 	
 	_s[_nd] = 0;
 	while (_nd) {
 		_nd --;
 		_s[_nd ] = itoa_table [ _value % _radix ];
 		_value = _value / _radix;
 	}
-	
+	return(rv);
 }
 
-void
+unsigned int
 cf_itoa_u64(uint64_t _value, char *_s, int _radix)
 {
 	// special case is the easy way
 	if (_value == 0) {
 		_s[0] = itoa_table[0];
 		_s[1] = 0;
-		return;
+		return(1);
 	}
 
 	uint64_t _v = _value;
-	int _nd = 0;
+	unsigned int _nd = 0;
 	while (_v) {
 		_nd++;
 		_v /= _radix;
 	}
 	
+	unsigned int rv = _nd;
 	_s[_nd] = 0;
 	while (_nd) {
 		_nd --;
 		_s[_nd ] = itoa_table [ _value % _radix ];
 		_value = _value / _radix;
 	}
-	
+	return(rv);
 }
 
 
