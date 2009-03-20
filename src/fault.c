@@ -271,7 +271,7 @@ void
 cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const cf_fault_severity severity, const char *fn, const int line, char *msg, ...)
 {
 	va_list argp;
-	char mbuf[256];
+	char mbuf[1024];
 	time_t now;
 	struct tm nowtm;
 	void *bt[CF_FAULT_BACKTRACE_DEPTH];
