@@ -20,9 +20,21 @@ cf_dyn_buf_reserve(cf_dyn_buf *db, size_t	sz)
 {
 	// see if we need more space
 	if ( db->alloc_sz - db->used_sz < sz ) {
-		uint8_t	*_t;
+
 		size_t new_sz = db->alloc_sz + sz;
+		int backoff;
+		if (new_sz < (1024 * 8))
+			backoff = 1024;
+		else if (new_sz < (1024 * 32))
+			backoff = (1024 * 4);
+		else if (new_sz < (1024 * 128))
+			backoff = (1024 * 32);
+		else
+			backoff = (1024 * 256);
 		
+		new_sz = new_sz + (backoff - (new_sz % backoff));
+
+		uint8_t	*_t;
 		if (db->is_stack) {
 			_t = malloc(new_sz);
 			if (!_t)	return(-1);
