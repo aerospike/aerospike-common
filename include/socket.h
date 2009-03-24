@@ -59,3 +59,24 @@ extern void cf_sockaddr_convertto(const struct sockaddr_in *src, cf_sockaddr *ds
 extern void cf_sockaddr_convertfrom(const cf_sockaddr src, struct sockaddr_in *dst);
 extern void cf_sockaddr_setport(cf_sockaddr *so, unsigned short port);
 
+/*
+** get information about all interfaces
+** currently returns ipv4 only - but does return loopback
+**
+** example:
+**
+** uint8_t buf[512];
+** cf_ifaddr *ifaddr;
+** int        ifaddr_sz;
+** cf_ifaddr_get(&ifaddr, &ifaddr_sz, buf, sizeof(buf));
+** 
+*/
+
+typedef struct cf_ifaddr_s {
+	uint32_t		flags;
+	unsigned short	family;
+	struct sockaddr sa;
+} cf_ifaddr;	
+
+extern int cf_ifaddr_get(cf_ifaddr **ifaddr, int *ifaddr_sz, uint8_t *buf, size_t buf_sz);
+

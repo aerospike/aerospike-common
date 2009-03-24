@@ -56,7 +56,8 @@ typedef enum {
 	AS_PARTITION = 24,
 	AS_PAXOS = 25,
 	AS_MIGRATE = 26,
-	CF_FAULT_CONTEXT_UNDEF = 27
+	AS_INFO = 27,
+	CF_FAULT_CONTEXT_UNDEF = 28
 } cf_fault_context;
 
 /* cf_fault_scope

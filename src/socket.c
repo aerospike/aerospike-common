@@ -14,6 +14,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <strings.h>
+#include <arpa/inet.h>
+#include <ifaddrs.h>
 #include <time.h>
 #include <unistd.h>
 #include "cf.h"
@@ -320,3 +322,59 @@ cf_mcastsocket_close(cf_mcastsocket_cfg *ms)
 
 	close(s->sock);
 }
+
+//
+// get information about the interfaces and what their addresses are
+//
+
+// Pass in a buffer that you think is big enough, and it'll get filled out
+// error will return if you haven't passed in enough data
+// ordering not guarenteed
+
+int
+cf_ifaddr_get( cf_ifaddr **ifaddr, int *ifaddr_sz, uint8_t *buf, size_t bufsz)
+{
+	struct ifaddrs *ifa;
+	int rv = getifaddrs(&ifa);
+	if (rv != 0) {
+		cf_info(CF_SOCKET, " could not get interfact information: return value %d errno %d",rv,errno);
+		return(-1);
+	}
+	struct ifaddrs *ifa_orig = ifa;
+	
+	// currently, return ipv4 only (?)
+	int n_ifs = 0;
+	while (ifa) {
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			n_ifs++;
+		ifa = ifa->ifa_next;
+	}
+	
+	if (bufsz < sizeof(cf_ifaddr) * n_ifs) {
+		freeifaddrs(ifa_orig);
+		return(-2);
+	}
+	
+	*ifaddr_sz = n_ifs;
+	*ifaddr = (cf_ifaddr *) buf;
+	ifa = ifa_orig;
+	int i = 0;
+	while (ifa) {
+		
+		if (ifa->ifa_addr->sa_family == AF_INET)
+		{
+		
+			(*ifaddr)[i].flags = ifa->ifa_flags;
+			(*ifaddr)[i].family = ifa->ifa_addr->sa_family;
+			memcpy( &((*ifaddr)[i].sa), ifa->ifa_addr, sizeof(struct sockaddr) ); 
+			
+			i++;
+		}
+		ifa = ifa->ifa_next;
+	}
+
+	freeifaddrs(ifa_orig);
+	return(0);
+}
+
+

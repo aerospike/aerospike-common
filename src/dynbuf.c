@@ -117,6 +117,16 @@ cf_dyn_buf_chomp(cf_dyn_buf *db)
 	return(0);
 }
 
+char *
+cf_dyn_buf_strdup(cf_dyn_buf *db)
+{
+	if (db->used_sz == 0)	return(0);
+	char *r = malloc(db->used_sz+1);
+	if (!r)	return(0);
+	memcpy(r, db->buf, db->used_sz);
+	r[db->used_sz] = 0;
+	return(r);
+}
 
 void
 cf_dyn_buf_free(cf_dyn_buf *db)
