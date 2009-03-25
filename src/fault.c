@@ -36,7 +36,8 @@ char **cf_fault_restart_argv;
  * Strings describing fault states */
 static const char *cf_fault_context_strings[] = {
 	"cf:misc", "cf:rcalloc", "cf:hash", "cf:rchash", "cf:shash", "cf:queue", "cf:msg", "cf:redblack", "cf:socket",
-	"config", "namespace", "as", "bin", "record", "proto", "particle", "demarshal", "write", "tsvc", "test", "nsup", "proxy", "hb", "fabric", "partition", "paxos", "migrate",
+	"config", "namespace", "as", "bin", "record", "proto", "particle", "demarshal", "write", "tsvc", "test", 
+	"nsup", "proxy", "hb", "fabric", "partition", "paxos", "migrate", "info",
 	NULL
 };
 
