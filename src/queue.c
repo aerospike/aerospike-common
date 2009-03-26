@@ -252,10 +252,8 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 	}
 
 	/* FIXME blow a gasket */
-	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK))) {
-		fprintf(stderr, "unlock failed\n");
+	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK)))
 		return(-1);
-	}
 
 	return(0);
 }
@@ -389,6 +387,158 @@ Done:
 	else
 		return(CF_QUEUE_OK);
 }
+
+
+//
+// Priority queue implementation
+//
+
+cf_queue_priority *
+cf_queue_priority_create(size_t elementsz, bool threadsafe)
+{
+	cf_queue_priority *q = malloc(sizeof(cf_queue_priority));
+	if (!q)	return(0);
+	
+	q->threadsafe = threadsafe;
+	q->low_q = cf_queue_create(elementsz, false);
+	if (!q->low_q) 		goto Fail1;
+	q->medium_q = cf_queue_create(elementsz, false);
+	if (!q->medium_q)	goto Fail2;
+	q->high_q = cf_queue_create(elementsz, false);
+	if (!q->high_q)		goto Fail3;
+	
+	if (threadsafe == false)
+		return(q);
+	
+	if (0 != pthread_mutex_init(&q->LOCK, NULL))
+		goto Fail4;
+
+	if (0 != pthread_cond_init(&q->CV, NULL))
+		goto Fail5;
+	
+	return(q);
+	
+Fail5:	
+	pthread_mutex_destroy(&q->LOCK);
+Fail4:	
+	cf_queue_destroy(q->high_q);
+Fail3:	
+	cf_queue_destroy(q->medium_q);
+Fail2:	
+	cf_queue_destroy(q->low_q);
+Fail1:	
+	free(q);
+	return(0);
+}
+
+void 
+cf_queue_priority_destroy(cf_queue_priority *q)
+{
+	cf_queue_destroy(q->high_q);
+	cf_queue_destroy(q->medium_q);
+	cf_queue_destroy(q->low_q);
+	if (q->threadsafe) {
+		pthread_mutex_destroy(&q->LOCK);
+		pthread_cond_destroy(&q->CV);
+	}
+	free(q);
+}
+
+int 
+cf_queue_priority_push(cf_queue_priority *q, void *ptr, int pri)
+{
+	
+	if (q->threadsafe && (0 != pthread_mutex_lock(&q->LOCK)))
+			return(-1);
+	
+	int rv;
+	if (pri == CF_QUEUE_PRIORITY_HIGH)
+		rv = cf_queue_push(q->high_q, ptr);
+	else if (pri == CF_QUEUE_PRIORITY_MEDIUM)
+		rv = cf_queue_push(q->medium_q, ptr);
+	else if (pri == CF_QUEUE_PRIORITY_LOW)
+		rv = cf_queue_push(q->low_q, ptr);
+	else
+		rv = -1;
+
+	if (rv == 0 && q->threadsafe)
+		pthread_cond_signal(&q->CV);
+
+	/* FIXME blow a gasket */
+	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK)))
+		return(-1);
+
+		
+	return(rv);	
+}
+
+int 
+cf_queue_priority_pop(cf_queue_priority *q, void *buf, int ms_wait)
+{
+	if (q->threadsafe && (0 != pthread_mutex_lock(&q->LOCK)))
+			return(-1);
+
+	struct timespec tp;
+	if (ms_wait > 0) {
+		clock_gettime( CLOCK_REALTIME, &tp); 
+		tp.tv_sec += ms_wait / 1000;
+		tp.tv_nsec += (ms_wait % 1000) * 1000000;
+		if (tp.tv_nsec > 1000000000) {
+			tp.tv_nsec -= 1000000000;
+			tp.tv_sec++;
+		}
+	}
+
+	if (q->threadsafe) {
+		while (CF_Q_PRI_EMPTY(q)) {
+			if (CF_QUEUE_FOREVER == ms_wait) {
+				pthread_cond_wait(&q->CV, &q->LOCK);
+			}
+			else if (CF_QUEUE_NOWAIT == ms_wait) {
+				pthread_mutex_unlock(&q->LOCK);
+				return(CF_QUEUE_EMPTY);
+			}
+			else {
+				pthread_cond_timedwait(&q->CV, &q->LOCK, &tp);
+				if (CF_Q_PRI_EMPTY(q)) {
+					pthread_mutex_unlock(&q->LOCK);
+					return(CF_QUEUE_EMPTY);
+				}
+			}
+		}
+	}
+	
+	int rv;
+	if (CF_Q_SZ(q->high_q))
+		rv = cf_queue_pop(q->high_q, buf, 0);
+	else if (CF_Q_SZ(q->medium_q))
+		rv = cf_queue_pop(q->medium_q, buf, 0);
+	else if (CF_Q_SZ(q->low_q))
+		rv = cf_queue_pop(q->low_q, buf, 0);
+	else rv = CF_QUEUE_EMPTY;
+		
+	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK)))
+		return(-1);
+
+		
+	return(rv);
+}
+
+int
+cf_queue_priority_sz(cf_queue_priority *q)
+{
+	int rv = 0;
+	if (q->threadsafe)
+		pthread_mutex_lock(&q->LOCK);
+	rv += cf_queue_sz(q->high_q);
+	rv += cf_queue_sz(q->medium_q);
+	rv += cf_queue_sz(q->low_q);
+	if (q->threadsafe)
+		pthread_mutex_unlock(&q->LOCK);
+	return(rv);
+}
+
+
 
 //
 // Test code

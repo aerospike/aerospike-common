@@ -17,7 +17,7 @@
 /* cf_queue
  * A queue */
 #define CF_QUEUE_ALLOCSZ 64
-struct cf_queue_t {
+typedef struct cf_queue_s {
 	bool threadsafe;  // sometimes it's good to live dangerously
 	unsigned int allocsz;      // number of queue elements currently allocated
 	unsigned int write_offset; // 0 offset is first queue element.
@@ -27,8 +27,7 @@ struct cf_queue_t {
 	pthread_mutex_t LOCK;  // the mutex lock
 	pthread_cond_t CV;    // hte condvar
 	byte *queue;         // the actual bytes that make up the queue
-};
-typedef struct cf_queue_t cf_queue;
+} cf_queue;
 
 #define CF_Q_SZ(__q) (__q->write_offset - __q->read_offset)
 
@@ -49,6 +48,8 @@ extern int cf_queue_push(cf_queue *q, void *ptr);
 
 // Get the number of elements currently in the queue
 extern int cf_queue_sz(cf_queue *q);
+
+
 
 
 // POP pops from the end of the queue, which is the most efficient
@@ -82,6 +83,36 @@ extern int cf_queue_reduce(cf_queue *q, cf_queue_reduce_fn cb, void *udata);
 // The most common reason to want to 'reduce' is delete - so provide
 // a simple delete function
 extern int cf_queue_delete(cf_queue *q, void *buf, bool only_one);
+
+
+//
+// A simple priority queue implementation, which is simply a set of queues
+// underneath
+// This currently doesn't support 'delete' and 'reduce' functionality
+//
+
+typedef struct cf_queue_priority_s {
+	bool threadsafe;
+	cf_queue	*low_q;
+	cf_queue	*medium_q;
+	cf_queue	*high_q;
+	
+	pthread_mutex_t		LOCK;
+	pthread_cond_t	 	CV;
+} cf_queue_priority;
+
+#define CF_QUEUE_PRIORITY_HIGH 1
+#define CF_QUEUE_PRIORITY_MEDIUM 2
+#define CF_QUEUE_PRIORITY_LOW 3
+
+#define CF_Q_PRI_EMPTY(__q) (CF_Q_EMPTY(__q->low_q) && CF_Q_EMPTY(__q->medium_q) && CF_Q_EMPTY(__q->high_q))
+
+extern cf_queue_priority *cf_queue_priority_create(size_t elementsz, bool threadsafe);
+extern void cf_queue_priority_destroy(cf_queue_priority *q);
+extern int cf_queue_priority_push(cf_queue_priority *q, void *ptr, int pri);
+extern int cf_queue_priority_pop(cf_queue_priority *q, void *buf, int mswait);
+extern int cf_queue_priority_sz(cf_queue_priority *q);
+
 
 
 //
