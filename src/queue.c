@@ -458,8 +458,10 @@ cf_queue_priority_push(cf_queue_priority *q, void *ptr, int pri)
 		rv = cf_queue_push(q->medium_q, ptr);
 	else if (pri == CF_QUEUE_PRIORITY_LOW)
 		rv = cf_queue_push(q->low_q, ptr);
-	else
+	else {
+		cf_warning(CF_QUEUE, "SERIOUS! bad priority %d passed into queue priority push",pri);
 		rv = -1;
+	}
 
 	if (rv == 0 && q->threadsafe)
 		pthread_cond_signal(&q->CV);
