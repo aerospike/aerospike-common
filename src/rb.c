@@ -746,12 +746,12 @@ cf_rb_reduce(cf_rb_tree *tree, cf_rb_reduce_fn cb, void *udata)
 	
 }
 
-/* cf_rb_destroy
+
+/* cf_rb_release
  * Destroy a red-black tree; return 0 if the tree was destroyed or 1
  * otherwise */
-/* FIXME this needs to be renamed really badly */
 int
-cf_rb_destroy(cf_rb_tree *tree)
+cf_rb_release(cf_rb_tree *tree)
 {
 	if (0 != cf_rc_release(tree))
 		return(1);

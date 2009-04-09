@@ -64,7 +64,8 @@ extern cf_rb_node *cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_m
 extern uint64_t cf_rb_delete(cf_rb_tree *tree, cf_digest key);
 extern cf_rb_tree *cf_rb_create(cf_rb_value_destructor destructor);
 extern void cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r);
-extern int cf_rb_destroy(cf_rb_tree *tree);
+#define cf_rb_reserve(_t) cf_rc_reserve((_t))
+extern int cf_rb_release(cf_rb_tree *tree);
 
 extern uint32_t cf_rb_size(cf_rb_tree *tree);
 typedef void (*cf_rb_reduce_fn) (cf_digest digest, void *value, void *udata);
