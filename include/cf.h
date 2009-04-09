@@ -59,6 +59,7 @@ typedef uint64_t cf_clock;
 #include "rchash.h"
 #include "shash.h"
 #include "dynbuf.h"
+#include "timer.h"
 
 /* cf_hash_fnv
  * The 64-bit Fowler-Noll-Voll hash function (FNV-1a) */
