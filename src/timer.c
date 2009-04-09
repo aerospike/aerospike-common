@@ -37,8 +37,7 @@
  * An internal element queue */
 
 typedef struct cf_timer_element_s {
-	struct cf_timer_element_s *next;
-	struct cf_timer_element_s *prev;
+	cf_ll_element	    ll_e;
 	cf_timer_fn			cb;
 	void 				*udata;
 	uint64_t			expire_ms;
@@ -49,8 +48,13 @@ static pthread_cond_t	CV;
 static pthread_t  		cf_timer_worker;
 static uint64_t			cf_timer_expire_ms;
 
-static cf_timer_element *head = 0;
-static cf_timer_element *tail = 0;
+static cf_ll cf_timer_list;
+
+void
+cf_timer_destructor_fn(cf_ll_element *e)
+{
+	free(e);
+}
 
 //
 // remember how condvars work.
@@ -58,7 +62,20 @@ static cf_timer_element *tail = 0;
 // it unlocks mutex, waits until timeout or condvar signal or forever, 
 //    reaquires mutex, and returns
 //
+int
+cf_timer_worker_reduce_fn(cf_ll_element *ll, void *udata)
+{
+	cf_timer_element *e = (cf_timer_element *)ll;
+	uint64_t	*now = (uint64_t *)udata;
 
+	if (e->expire_ms <= *now) {
+		(*e->cb) (e->udata);
+		return(CF_LL_REDUCE_DELETE);
+	}
+	
+	cf_timer_expire_ms = e->expire_ms;
+	return(-1);
+}
 
 void *
 cf_timer_worker_fn(void *gcc_is_ass)
@@ -67,39 +84,23 @@ cf_timer_worker_fn(void *gcc_is_ass)
 	pthread_mutex_lock(&LOCK);
 	while (1)
 	{
-		uint64_t now;
-		// nothin in queue, wait forever
-		if (head == 0) {
+		uint64_t now = cf_getms();
+		cf_timer_expire_ms = 0;
+		cf_ll_reduce(&cf_timer_list, true /*forward*/, cf_timer_worker_reduce_fn, &now); 
+		
+		if (cf_timer_expire_ms == 0) {
 			cf_timer_expire_ms = 0;
 			pthread_cond_wait(&CV, &LOCK);
 		}
-		// somethin in queue, wait until then
+		// there's a new destination time, use it
 		else {
-			now = cf_getms();
-			if (now < head->expire_ms) {
-				uint64_t ms = head->expire_ms - now;
-				cf_timer_expire_ms = head->expire_ms;
-				struct timespec tm;
-				tm.tv_sec = ms / 1000; 
-				tm.tv_nsec = (ms % 1000) * 1000;
-				pthread_cond_timedwait(&CV, &LOCK, &tm);
-			}
+			uint64_t ms = cf_timer_expire_ms - now;
+			struct timespec tm;
+			tm.tv_sec = ms / 1000; 
+			tm.tv_nsec = (ms % 1000) * 1000;
+			pthread_cond_timedwait(&CV, &LOCK, &tm);
 		}
 			
-		// are there expired elements? fire them!
-		now = cf_getms();
-		cf_timer_element *cur = head;
-		while (cur && (cur->expire_ms < now)) {
-			(*cur->cb) (cur->udata);
-			// delete this one - happen to know it's a head delete though
-			head = cur->next;
-			cur->next->prev = 0;
-			// free this element
-			cf_timer_element *_t = cur;
-			cur = cur->next;
-			free(_t);
-		}
-		
 		// loop back around and wait!
 	}
 }
@@ -118,12 +119,26 @@ cf_timer_init()
 		return(-1);
 	}
 	cf_timer_expire_ms = 0;
-	head = 0;
-	tail = 0;
+	cf_ll_init(&cf_timer_list, cf_timer_destructor_fn, false);
 	
 	pthread_create(&cf_timer_worker, 0, cf_timer_worker_fn, 0);
 	return(0);
 }
+
+int
+cf_timer_add_reduce_fn(cf_ll_element *ll, void *udata)
+{
+	if (ll == 0)	return(CF_LL_REDUCE_INSERT);
+	
+	cf_timer_element *cur = (cf_timer_element *) ll;
+	cf_timer_element *e = (cf_timer_element *)udata;
+	
+	if (cur->expire_ms < e->expire_ms)
+		return(CF_LL_REDUCE_INSERT);
+	else
+		return(0);
+}
+
 
 cf_timer_handle *
 cf_timer_add(uint32_t ms, cf_timer_fn cb, void *udata)
@@ -137,45 +152,8 @@ cf_timer_add(uint32_t ms, cf_timer_fn cb, void *udata)
 	
 	pthread_mutex_lock(&LOCK);
 	
-	// Thread the element on the list
-	
-	// First element
-	if (head == 0)
-	{
-		head = e;
-		tail = e;
-		e->next = 0;
-		e->prev = 0;
-	}
-	else
-	{
-		cf_timer_element *cur = tail;
-		while (cur && (e->expire_ms < cur->expire_ms))
-		{
-			cur = cur->prev;
-		}
-
-		// head insert
-		if (cur == 0) {
-			e->next = head;
-			head = e;
-			e->next->prev = e;
-			e->prev = 0;
-		}
-		else if (cur == tail) {
-			// tail insert
-			tail->next = e;
-			e->prev = tail;
-			tail = e;
-			e->next = 0;
-		}
-		else { // we're in the middle somewhere - we want to be behind cur
-			e->prev = cur;
-			e->next = cur->next;
-			cur->next->prev = e;
-			cur->next = e;
-		}
-	}
+	cf_ll_insert_reduce(&cf_timer_list, (cf_ll_element *) e, 
+		false /*fromend*/, cf_timer_add_reduce_fn, (void *) e); 
 	
 	// If the new element is shorter than the held interval,
 	// signal the condvar so the worker can recompute
@@ -190,31 +168,12 @@ cf_timer_add(uint32_t ms, cf_timer_fn cb, void *udata)
 void
 cf_timer_cancel(cf_timer_handle *hand)
 {
-	cf_timer_element *e = hand;
+	cf_ll_element *e = (cf_ll_element *)hand;
 	
 	pthread_mutex_lock(&LOCK);
-	
-	// unlink
-	if (e == head) {
-		if (e == tail) {
-			head = 0;
-			tail = 0;
-		}
-		else {
-			head = e->next;
-			e->next->prev = 0;
-		}
-	}
-	else if (e == tail) {
-		tail = e->prev;
-		e->prev->next = 0;
-	}
-	else {
-		e->prev->next = e->next;
-		e->next->prev = e->prev;
-	}
-	free(e);
-	
+
+	cf_ll_delete(&cf_timer_list, e);
+		
 	pthread_mutex_unlock(&LOCK);
 	
 	return;
