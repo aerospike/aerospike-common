@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include "cf.h"
 
-#define DEBUG 1
+// #define DEBUG 1
 
 /* SYNOPSIS
  * Timer
@@ -57,17 +57,39 @@ cf_timer_destructor_fn(cf_ll_element *e)
 }
 
 //
+// Debug stuff
+//'
+
+int
+cf_timer_dump_fn(cf_ll_element *le, void *udata)
+{
+	cf_timer_element *e = (cf_timer_element *)le;
+	cf_info(CF_TIMER, "dump: expire %"PRIu64" cb %p udata %p",e->expire_ms,e->cb,e->udata);
+	return(0);
+}
+
+void
+cf_timer_dump_all( )
+{
+	cf_info(CF_TIMER, "dumping timer list");
+	cf_ll_reduce(&cf_timer_list, true, cf_timer_dump_fn, 0);
+}
+
+
+//
 // remember how condvars work.
 // When you call condvar_wait, it releases the held mutex (must be called with mutex held)
 // it unlocks mutex, waits until timeout or condvar signal or forever, 
 //    reaquires mutex, and returns
 //
 int
-cf_timer_worker_reduce_fn(cf_ll_element *ll, void *udata)
+cf_timer_worker_reduce_fn(cf_ll_element *le, void *udata)
 {
-	cf_timer_element *e = (cf_timer_element *)ll;
+	cf_timer_element *e = (cf_timer_element *)le;
 	uint64_t	*now = (uint64_t *)udata;
 
+	cf_detail(CF_TIMER, "worker reduce: expire %"PRIu64" now %"PRIu64, e->expire_ms, *now);
+	
 	if (e->expire_ms <= *now) {
 		(*e->cb) (e->udata);
 		return(CF_LL_REDUCE_DELETE);
@@ -81,15 +103,23 @@ void *
 cf_timer_worker_fn(void *gcc_is_ass)
 {
 	// forever
+	cf_info(CF_TIMER, "worker start!");
 	pthread_mutex_lock(&LOCK);
 	while (1)
 	{
+		// DEBUG!
+#ifdef DEBUG		
+		cf_timer_dump_all();
+#endif		
+
 		uint64_t now = cf_getms();
 		cf_timer_expire_ms = 0;
+		cf_detail(CF_TIMER, "worker fn reducing: now %"PRIu64,now);
 		cf_ll_reduce(&cf_timer_list, true /*forward*/, cf_timer_worker_reduce_fn, &now); 
+
 		
 		if (cf_timer_expire_ms == 0) {
-			cf_timer_expire_ms = 0;
+			
 			pthread_cond_wait(&CV, &LOCK);
 		}
 		// there's a new destination time, use it
@@ -97,7 +127,7 @@ cf_timer_worker_fn(void *gcc_is_ass)
 			uint64_t ms = cf_timer_expire_ms - now;
 			struct timespec tm;
 			tm.tv_sec = ms / 1000; 
-			tm.tv_nsec = (ms % 1000) * 1000;
+			tm.tv_nsec = (ms % 1000) * 1000000;
 			pthread_cond_timedwait(&CV, &LOCK, &tm);
 		}
 			
@@ -157,10 +187,10 @@ cf_timer_add(uint32_t ms, cf_timer_fn cb, void *udata)
 	
 	// If the new element is shorter than the held interval,
 	// signal the condvar so the worker can recompute
-	if (e->expire_ms < cf_timer_expire_ms)
+	if ((cf_timer_expire_ms == 0) || (e->expire_ms < cf_timer_expire_ms))
 		pthread_cond_signal(&CV);
 	
-	pthread_mutex_lock(&LOCK);
+	pthread_mutex_unlock(&LOCK);
 	
 	return(e);
 }
@@ -179,15 +209,72 @@ cf_timer_cancel(cf_timer_handle *hand)
 	return;
 }
 
+//
+// UNIT TESTS, at least some basic stuff
+//
+
+#define TEST_TIMER_MAX 50
+
+int g_timer_test_info[TEST_TIMER_MAX];
+
+
+int
+cf_timer_test_fn(void *udata)
+{
+	int 	i = (int) udata;
+	cf_debug(CF_TIMER, "timer %d fired at %"PRIu64,i,cf_getms() );
+	g_timer_test_info[i]++;
+	return(0);
+}
 
 int
 cf_timer_test()
 {
+	cf_info(CF_TIMER, "running timer test - start time %"PRIu64,cf_getms() );
+	
+	// FIRE TEST
 	// insert N timer elements, watch them fire
+	for (uint i=0;i<TEST_TIMER_MAX;i++) {
+		g_timer_test_info[i] = 0;
+		cf_timer_add(10, cf_timer_test_fn, (void *)i);
+		usleep(1000);
+	}
+	cf_info(CF_TIMER, "last timer added: now %"PRIu64,cf_getms());
 	
+	usleep(1000 * 1000);
+	
+	cf_info(CF_TIMER, "check: timers fired? now %"PRIu64,cf_getms());
+	for (uint i=0;i<TEST_TIMER_MAX;i++) {
+		if (g_timer_test_info[i] != 1) {
+			cf_debug(CF_TIMER, "timer %d did not fire in a timely fashion!",i);
+			return(-1);
+		}
+	}
+	cf_info(CF_TIMER, "yes, all have fired!");
+	
+
+	// CANCEL TEST
 	// insert N timer elements, cancel them all, none fire
+	cf_info(CF_TIMER, " **** setting up for cancel test ***** ");
+	cf_timer_handle *timer_handles[TEST_TIMER_MAX];
+	for (uint i=0;i<TEST_TIMER_MAX;i++) {
+		timer_handles[i] = cf_timer_add(1000, cf_timer_test_fn, (void *) i);
+		usleep(1000);
+	}
+	for (uint i=0;i<TEST_TIMER_MAX;i++) {
+		cf_timer_cancel(timer_handles[i]);
+		usleep(1000);
+	}
+	usleep( 1000 * 1000 );
+	for (uint i=0;i<TEST_TIMER_MAX;i++) {
+		if (g_timer_test_info[i] != 1) {
+			cf_debug(CF_TIMER, "timer %d must have fired, shouldn't have! (%d)",i,g_timer_test_info[i]);
+			return(-1);
+		}
+	}
+	cf_info(CF_TIMER, "*** cancel test passed");
 	
-	
+	return(0);
 	
 }
 

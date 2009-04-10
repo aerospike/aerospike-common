@@ -34,10 +34,41 @@ char **cf_fault_restart_argv;
 
 /* cf_fault_context_strings, cf_fault_severity_strings, cf_fault_scope_strings
  * Strings describing fault states */
+ 
+/* MUST BE KEPT IN SYNC WITH FAULT.H */
+ 
 static const char *cf_fault_context_strings[] = {
-	"cf:misc", "cf:rcalloc", "cf:hash", "cf:rchash", "cf:shash", "cf:queue", "cf:msg", "cf:redblack", "cf:socket",
-	"config", "namespace", "as", "bin", "record", "proto", "particle", "demarshal", "write", "tsvc", "test", "nsup", "proxy", "hb", "fabric", "partition", "paxos", "migrate", "info",
-	NULL
+	"cf:misc",     // 00 
+	"cf:rcalloc",  // 01 
+	"cf:hash",     // 02
+	"cf:rchash",   // 03
+	"cf:shash",    // 04
+	"cf:queue",    // 05
+	"cf:msg",      // 06
+	"cf:redblack", // 07
+	"cf:socket",   // 08
+	"cf:timer",    // 09
+	"cf:ll",       // 10
+	"config",      // 11
+	"namespace",   // 12
+	"as", 		   // 13
+	"bin",         // 14
+	"record",      // 15
+	"proto",       // 16
+	"particle",    // 17
+	"demarshal",   // 18
+	"write",       // 19
+	"tsvc",        // 20 
+	"test",        // 21
+	"nsup",        // 22
+	"proxy",       // 23
+	"hb",          // 24
+	"fabric",      // 25
+	"partition",   // 26
+	"paxos",       // 27
+	"migrate",     // 28
+	"info",        // 29
+	NULL           // 30
 };
 
 static const char *cf_fault_severity_strings[] = { "CRITICAL", "WARNING", "INFO", "DEBUG", "DETAIL", NULL };
