@@ -21,11 +21,7 @@
 #define TRUE 1
 
 
-/* Basic definitions */
-typedef uint32_t uint32;
-typedef int32_t int32;
-typedef uint64_t uint64;
-typedef int64_t int64;
+/* This one just looks better to me */
 typedef uint8_t byte;
 
 
@@ -40,8 +36,6 @@ struct cf_bytearray_t {
 typedef struct cf_bytearray_t cf_bytearray;
 
 
-/* Timekeeping */
-typedef uint64_t cf_clock;
 
 
 #define INVALID_FD (-1)
@@ -191,13 +185,14 @@ cf_digest_compare( cf_digest *d1, cf_digest *d2 )
 // Sorry, too lazy to create a whole new file for just one function
 #define CF_NODE_UNSET (0xFFFFFFFFFFFFFFFF)
 typedef uint64_t cf_node;
-extern uint32 cf_nodeid_hash_fn(void *value);
+extern uint32_t cf_nodeid_hash_fn(void *value);
 extern int cf_nodeid_get( unsigned short port, cf_node *id );
 extern unsigned short cf_nodeid_get_port(cf_node id);
 
 extern int cf_sort_firstk(uint64_t *v, size_t sz, int k);
 
-// This is even shorter!
+/* Timekeeping */
+typedef uint64_t cf_clock;
 extern cf_clock cf_getms();
 extern cf_clock cf_clock_getabsolute();
 

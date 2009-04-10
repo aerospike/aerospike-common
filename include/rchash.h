@@ -21,14 +21,14 @@
 /*
  * A generic call for hash functions the user can create
  */
-typedef uint32 (*rchash_hash_fn) (void *value, uint32 value_len);
+typedef uint32_t (*rchash_hash_fn) (void *value, uint32_t value_len);
 
 /*
 ** Typedef for a "reduce" fuction that is called on every node
 ** (Note about return value: some kinds of reduces can manipulate the hash table,
 **  allowing deletion. See the particulars of the reduce call.)
 */
-typedef int (*rchash_reduce_fn) (void *key, uint32 keylen, void *object, void *udata);
+typedef int (*rchash_reduce_fn) (void *key, uint32_t keylen, void *object, void *udata);
 
 /*
 ** need a destructor for the object. It's a little complicated.
@@ -41,7 +41,7 @@ typedef void (*rchash_destructor_fn) (void *object);
 typedef struct rchash_elem_s {
 	struct rchash_elem_s *next;
 	void *object; // this is a reference counted object
-	uint32 key_len;
+	uint32_t key_len;
 	void *key; 
 } rchash_elem;
 
@@ -49,7 +49,7 @@ typedef struct rchash_elem_s {
 
 typedef struct rchash_s {
 	uint elements;
-	uint32 key_len;
+	uint32_t key_len;
 	uint flags;
 	rchash_hash_fn	h_fn;
 	rchash_destructor_fn d_fn;
@@ -75,16 +75,16 @@ typedef struct rchash_s {
  */
 
 int
-rchash_create(rchash **h, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint32 key_len, uint32 sz, uint flags);
+rchash_create(rchash **h, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint32_t key_len, uint32_t sz, uint flags);
 
 /* Place a value into the hash
  * Value will be copied into the hash
  */
 int
-rchash_put(rchash *h, void *key, uint32 key_len, void *value);
+rchash_put(rchash *h, void *key, uint32_t key_len, void *value);
 
 int
-rchash_put_unique(rchash *h, void *key, uint32 key_len, void *value);
+rchash_put_unique(rchash *h, void *key, uint32_t key_len, void *value);
 
 /* If you think you know how much space it will take, 
  * call with the buffer you want filled
@@ -92,18 +92,18 @@ rchash_put_unique(rchash *h, void *key, uint32 key_len, void *value);
  * will be filled in with the value you should have passed
  */
 int
-rchash_get(rchash *h, void *key, uint32 key_len, void **object);
+rchash_get(rchash *h, void *key, uint32_t key_len, void **object);
 
 /*
 ** Got a key you want removed - this is the function to call
 */
 int
-rchash_delete(rchash *h, void *key, uint32 key_len);
+rchash_delete(rchash *h, void *key, uint32_t key_len);
 
 /*
 ** Get the number of elements currently in the hash
 */
-uint32
+uint32_t
 rchash_get_size(rchash *h);
 
 

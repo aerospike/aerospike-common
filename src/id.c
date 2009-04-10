@@ -27,11 +27,11 @@ cf_digest cf_digest_zero = { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } };
 */
 
 
-uint32
+uint32_t
 cf_nodeid_hash_fn(void *value)
 {
 	byte *b = value;
-	uint32 acc = 0;
+	uint32_t acc = 0;
 	for (int i=0;i<sizeof(cf_node);i++) {
 		acc += *b;
 	}

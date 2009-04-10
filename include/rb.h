@@ -7,8 +7,9 @@
  *  ABOVE DOES NOT EVIDENCE ANY ACTUAL OR INTENDED PUBLICATION.
  */
 #pragma once
+
+#include <pthread.h>
 #include "digest.h"
-#include "pthread.h"
 
 
 /* SYNOPSIS
@@ -50,7 +51,7 @@ struct cf_rb_tree_t
 	cf_rb_node *root;
 	cf_rb_node *sentinel;
     cf_rb_value_destructor destructor;
-	uint32      elements; // no bother in making this atomic, it's not very exact
+	uint32_t      elements; // no bother in making this atomic, it's not very exact
 };
 typedef struct cf_rb_tree_t cf_rb_tree;
 

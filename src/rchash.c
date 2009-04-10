@@ -20,7 +20,7 @@
 // #define DEBUG
 
 int
-rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint32 key_len, uint32 sz, uint flags)
+rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint32_t key_len, uint32_t sz, uint flags)
 {
 	rchash *h;
 
@@ -52,7 +52,7 @@ rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint
 	return(BB_OK);
 }
 
-uint32
+uint32_t
 rchash_get_size(rchash *h)
 {
 	return(h->elements);
@@ -69,7 +69,7 @@ rchash_free(rchash *h, void *object)
 }
 
 int
-rchash_put(rchash *h, void *key, uint32 key_len, void *object)
+rchash_put(rchash *h, void *key, uint32_t key_len, void *object)
 {
 	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
 
@@ -134,7 +134,7 @@ Copy:
 //
 
 int
-rchash_put_unique(rchash *h, void *key, uint32 key_len, void *object)
+rchash_put_unique(rchash *h, void *key, uint32_t key_len, void *object)
 {
 	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
 
@@ -197,7 +197,7 @@ Copy:
 
 
 int
-rchash_get(rchash *h, void *key, uint32 key_len, void **object)
+rchash_get(rchash *h, void *key, uint32_t key_len, void **object)
 {
 	int rv = BB_ERR;
 	
@@ -237,7 +237,7 @@ Out:
 }
 
 int
-rchash_delete(rchash *h, void *key, uint32 key_len)
+rchash_delete(rchash *h, void *key, uint32_t key_len)
 {
 	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
 
