@@ -179,3 +179,15 @@ cf_timer_cancel(cf_timer_handle *hand)
 	return;
 }
 
+
+int
+cf_timer_test()
+{
+	// insert N timer elements, watch them fire
+	
+	// insert N timer elements, cancel them all, none fire
+	
+	
+	
+}
+

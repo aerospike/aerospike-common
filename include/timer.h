@@ -41,4 +41,10 @@ extern void cf_timer_cancel(cf_timer_handle *hand);
 */
 extern int cf_timer_init();
 
+/* a lightweight unit test, does a few things. Make sure you're inited first.
+** returns 0 on success.
+*/
+
+extern int cf_timer_test();
+
 
