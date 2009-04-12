@@ -13,21 +13,25 @@
 #include <stdint.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <stdio.h>
 
-#include "cf.h"
+#define CITRUSLEAF 1
 
-
-// I hate those freeky little 't' things. Looks ugly.
-// Add this if not a part of the CF framework
-// typedef uint32_t uint32;
-// typedef int32_t int32;
-// typedef uint8_t byte;
 
 #define BB_ERR_FOUND -4
 #define BB_ERR_NOTFOUND -3
 #define BB_ERR_BUFSZ -2
 #define BB_ERR -1
 #define BB_OK 0
+
+#ifdef CITRUSLEAF
+#include "cf.h"
+#else
+typedef uint8_t byte;
+#define cf_detail( __UNIT, __fmt, __args...) fprintf(stderr, "DETAIL"__fmt, ## __args)
+#define cf_debug( __UNIT, __fmt, __args...) fprintf(stderr, "DEBUG"__fmt, ## __args)
+#define cf_info( __UNIT, __fmt, __args...) fprintf(stderr, "INFO"__fmt, ## __args)
+#endif
 
 
 /*

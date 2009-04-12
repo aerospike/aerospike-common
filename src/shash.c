@@ -9,9 +9,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "cf.h"
-// standalone version is different
-// #include "shash.h"
+
+#include "shash.h"
+
+
 
 int
 shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_len, uint32_t sz, uint flags)
