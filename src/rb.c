@@ -143,7 +143,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
             if (CF_RB_RED == s->color) {
                 n->parent->color = CF_RB_BLACK;
                 s->color = CF_RB_BLACK;
-                n->parent->parent->color = CF_RB_BLACK;
+                n->parent->parent->color = CF_RB_RED;
                 n = n->parent->parent;
             } else {
                 if (n == n->parent->left) {
@@ -246,7 +246,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
             if (CF_RB_RED == s->color) {
                 n->parent->color = CF_RB_BLACK;
                 s->color = CF_RB_BLACK;
-                n->parent->parent->color = CF_RB_BLACK;
+                n->parent->parent->color = CF_RB_RED;
                 n = n->parent->parent;
             } else {
                 if (n == n->parent->left) {
