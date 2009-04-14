@@ -576,11 +576,16 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
 	uint64_t rv = 0;
 
     /* Lock the tree */
-    pthread_mutex_lock(&tree->lock);
+    if (0 != pthread_mutex_lock(&tree->lock))
+		cf_warning(CF_RB, "unable to acquire tree lock: %s", cf_strerror(errno));
 
     /* Find a node with the matching key; if none exists, eject immediately */
     if (NULL == (r = cf_rb_search_lockless(tree, key)))
         goto release;
+
+	/* Hold the value lock */
+	if (0 != pthread_mutex_lock(&r->VALUE_LOCK))
+		cf_warning(CF_RB, "unable to acquire value lock: %s", cf_strerror(errno));
 
     s = ((tree->sentinel == r->left) || (tree->sentinel == r->right)) ? r : cf_rb_successor(tree, r);
     t = (tree->sentinel == s->left) ? s->right : s->left;
@@ -598,12 +603,6 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
         if (CF_RB_BLACK == s->color)
             cf_rb_deleterebalance(tree, t);
 
-        /* Free memory for the node contents */
-		if (tree->destructor)
-	        rv = tree->destructor(r->value);
-		else
-			free(r->value);
-
         /* Reassign pointers and coloration */
         s->left = r->left;
         s->right = r->right;
@@ -615,6 +614,18 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
             r->parent->left = s;
         else
             r->parent->right = s;
+
+		/* Consume the node */
+		if (tree->destructor)
+	        rv = tree->destructor(r->value);
+		else
+			free(r->value);
+
+		if (0 != pthread_mutex_unlock(&r->VALUE_LOCK))
+			cf_warning(CF_RB, "unable to acquire value lock: %s", cf_strerror(errno));
+		if (0 != pthread_mutex_destroy(&r->VALUE_LOCK))
+			cf_warning(CF_RB, "unable to destroy value lock: %s", cf_strerror(errno));
+
         free(r);
     } else {
 		/* Destroy the node contents */
@@ -622,13 +633,17 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
 	        rv = tree->destructor(s->value);
 		else
 			free(s->value);
+		if (0 != pthread_mutex_unlock(&s->VALUE_LOCK))
+			cf_warning(CF_RB, "unable to acquire value lock: %s", cf_strerror(errno));
+		if (0 != pthread_mutex_destroy(&s->VALUE_LOCK))
+			cf_warning(CF_RB, "unable to destroy value lock: %s", cf_strerror(errno));
 
         if (CF_RB_BLACK == s->color)
             cf_rb_deleterebalance(tree, t);
         free(s);
     }
 	tree->elements--;
-	
+
 release:
     pthread_mutex_unlock(&tree->lock);
 
