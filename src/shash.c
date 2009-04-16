@@ -20,7 +20,7 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 	shash *h;
 
 	h = malloc(sizeof(shash));
-	if (!h)	return(BB_ERR);
+	if (!h)	return(SHASH_ERR);
 
 	h->elements = 0;
 	h->table_len = sz;
@@ -29,10 +29,10 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 	h->flags = flags;
 	h->h_fn = h_fn;
 
-	h->table = malloc(sz * BBHASH_ELEM_SZ(h));
+	h->table = malloc(sz * SHASH_ELEM_SZ(h));
 	if (!h->table) {
 		free(h);
-		return(BB_ERR);
+		return(SHASH_ERR);
 	}
 	
 	shash_elem *table = h->table;
@@ -40,19 +40,19 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 		table->in_use = false;
 		table->next = 0;
 		// next element in head table
-		table = (shash_elem *) (((uint8_t *)table) + BBHASH_ELEM_SZ(h));
+		table = (shash_elem *) (((uint8_t *)table) + SHASH_ELEM_SZ(h));
 	}
 
-	if (flags & BBHASH_CR_MT_BIGLOCK || flags & BBHASH_CR_MT_LOCKPOOL) {
+	if (flags & SHASH_CR_MT_BIGLOCK || flags & SHASH_CR_MT_LOCKPOOL) {
 		if (0 != pthread_mutex_init ( &h->biglock, 0) ) {
 			free(h->table); free(h);
-			return(BB_ERR);
+			return(SHASH_ERR);
 		}
 	}
 
 	*h_r = h;
 
-	return(BB_OK);
+	return(SHASH_OK);
 }
 
 uint32_t
@@ -68,11 +68,11 @@ shash_put(shash *h, void *key, void *value)
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
 
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) {
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_lock(&h->biglock);
 	}
 		
-	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (BBHASH_ELEM_SZ(h) * hash));	
+	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
 
 	// most common case should be insert into empty bucket, special case
 	if ( e->in_use == false )
@@ -83,27 +83,27 @@ shash_put(shash *h, void *key, void *value)
 	// This loop might be skippable if you know the key is not already in the hash
 	// (like, you just searched and it's single-threaded)	
 	while (e) {
-		if ( memcmp( BBHASH_ELEM_KEY_PTR(h, e) , key, h->key_len) == 0) {
-			memcpy( BBHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
-			if (h->flags & BBHASH_CR_MT_BIGLOCK)
+		if ( memcmp( SHASH_ELEM_KEY_PTR(h, e) , key, h->key_len) == 0) {
+			memcpy( SHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
+			if (h->flags & SHASH_CR_MT_BIGLOCK)
 				pthread_mutex_unlock(&h->biglock);
-			return(BB_OK);
+			return(SHASH_OK);
 		}
 		e = e->next;
 	}
 
-	e = (shash_elem *) malloc( BBHASH_ELEM_SZ(h) );
+	e = (shash_elem *) malloc( SHASH_ELEM_SZ(h) );
 	e->next = e_head->next;
 	e_head->next = e;
 	
 Copy:
-	memcpy(BBHASH_ELEM_KEY_PTR(h, e), key, h->key_len);
-	memcpy(BBHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
+	memcpy(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len);
+	memcpy(SHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
 	e->in_use = true;
 	h->elements++;
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) 
+	if (h->flags & SHASH_CR_MT_BIGLOCK) 
 		pthread_mutex_unlock(&h->biglock);
-	return(BB_OK);	
+	return(SHASH_OK);	
 }
 
 // Fail if there's already a value there
@@ -115,11 +115,11 @@ shash_put_unique(shash *h, void *key, void *value)
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
 
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) {
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_lock(&h->biglock);
 	}
 		
-	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (BBHASH_ELEM_SZ(h) * hash));	
+	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
 
 	// most common case should be insert into empty bucket, special case
 	if ( e->in_use == false ) {
@@ -129,26 +129,26 @@ shash_put_unique(shash *h, void *key, void *value)
 	shash_elem *e_head = e;
 
 	while (e) {
-		if ( memcmp(BBHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
-			if (h->flags & BBHASH_CR_MT_BIGLOCK)
+		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+			if (h->flags & SHASH_CR_MT_BIGLOCK)
 				pthread_mutex_unlock(&h->biglock);
-			return(BB_ERR_FOUND);
+			return(SHASH_ERR_FOUND);
 		}
 		e = e->next;
 	}
 
-	e = (shash_elem *) malloc( BBHASH_ELEM_SZ(h) );
+	e = (shash_elem *) malloc( SHASH_ELEM_SZ(h) );
 	e->next = e_head->next;
 	e_head->next = e;
 	
 Copy:
-	memcpy(BBHASH_ELEM_KEY_PTR(h, e), key, h->key_len);
-	memcpy(BBHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
+	memcpy(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len);
+	memcpy(SHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
 	e->in_use = true;
 	h->elements++;
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) 
+	if (h->flags & SHASH_CR_MT_BIGLOCK) 
 		pthread_mutex_unlock(&h->biglock);
-	return(BB_OK);	
+	return(SHASH_OK);	
 
 }
 
@@ -157,33 +157,33 @@ Copy:
 int
 shash_get(shash *h, void *key, void *value)
 {
-	int rv = BB_ERR;
+	int rv = SHASH_ERR;
 	
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
 
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & SHASH_CR_MT_BIGLOCK)
 		pthread_mutex_lock(&h->biglock);
 	
-	shash_elem *e = (shash_elem *) ( ((byte *)h->table) + (BBHASH_ELEM_SZ(h) * hash));	
+	shash_elem *e = (shash_elem *) ( ((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
 
 	if (e->in_use == false) {
-		rv = BB_ERR_NOTFOUND;
+		rv = SHASH_ERR_NOTFOUND;
 		goto Out;
 	}
 	
 	do {
-		if ( memcmp(BBHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
-			memcpy(value, BBHASH_ELEM_VALUE_PTR(h, e), h->value_len);
-			rv = BB_OK; 
+		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+			memcpy(value, SHASH_ELEM_VALUE_PTR(h, e), h->value_len);
+			rv = SHASH_OK; 
 			goto Out;
 		}
 		e = e->next;
 	} while (e);
-	rv = BB_ERR_NOTFOUND;
+	rv = SHASH_ERR_NOTFOUND;
 	
 Out:
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & SHASH_CR_MT_BIGLOCK)
 		pthread_mutex_unlock(&h->biglock);
 
 	return(rv);
@@ -191,42 +191,42 @@ Out:
 }
 
 //
-// Note that the vlock is passed back only when the return code is BB_OK.
+// Note that the vlock is passed back only when the return code is SHASH_OK.
 // In the case where nothing is found, no lock is held.
 // It might be better to do it the other way, but you can change it later if you want
 
 int
 shash_get_vlock(shash *h, void *key, void **value, pthread_mutex_t **vlock)
 {
-	int rv = BB_ERR;
+	int rv = SHASH_ERR;
 	
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
 
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & SHASH_CR_MT_BIGLOCK)
 		pthread_mutex_lock(&h->biglock);
 	
-	shash_elem *e = (shash_elem *) ( ((byte *)h->table) + (BBHASH_ELEM_SZ(h) * hash));	
+	shash_elem *e = (shash_elem *) ( ((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
 
 	if (e->in_use == false) {
-		rv = BB_ERR_NOTFOUND;
+		rv = SHASH_ERR_NOTFOUND;
 		goto Out;
 	}
 	
 	do {
-		if ( memcmp(BBHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
-			*value = BBHASH_ELEM_VALUE_PTR(h, e);
-			rv = BB_OK; 
+		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+			*value = SHASH_ELEM_VALUE_PTR(h, e);
+			rv = SHASH_OK; 
 			goto Out;
 		}
 		e = e->next;
 	} while (e);
 	
-	rv = BB_ERR_NOTFOUND;
+	rv = SHASH_ERR_NOTFOUND;
 	
 Out:
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) {
-		if (rv == BB_OK) {
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
+		if (rv == SHASH_OK) {
 			*vlock = &h->biglock;
 		}
 		else {
@@ -251,17 +251,17 @@ shash_delete(shash *h, void *key)
 	// Calculate hash
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
-	int rv = BB_ERR;
+	int rv = SHASH_ERR;
 
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) {
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_lock(&h->biglock);
 	}
 		
-	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (BBHASH_ELEM_SZ(h) * hash));	
+	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
 
 	// If bucket empty, def can't delete
 	if ( e->in_use == false ) {
-		rv = BB_ERR_NOTFOUND;
+		rv = SHASH_ERR_NOTFOUND;
 		goto Out;
 	}
 
@@ -269,7 +269,7 @@ shash_delete(shash *h, void *key)
 
 	// Look for teh element and destroy if found
 	while (e) {
-		if ( memcmp(BBHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
 			// Found it
 			// patchup pointers & free element if not head
 			if (e_prev) {
@@ -285,22 +285,22 @@ shash_delete(shash *h, void *key)
 				// at head with a next - more complicated
 				else {
 					shash_elem *_t = e->next;
-					memcpy(e, e->next, BBHASH_ELEM_SZ(h) );
+					memcpy(e, e->next, SHASH_ELEM_SZ(h) );
 					free(_t);
 				}
 			}
 			h->elements--;
-			rv = BB_OK;
+			rv = SHASH_OK;
 			goto Out;
 
 		}
 		e_prev = e;
 		e = e->next;
 	}
-	rv = BB_ERR_NOTFOUND;
+	rv = SHASH_ERR_NOTFOUND;
 
 Out:
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) 
+	if (h->flags & SHASH_CR_MT_BIGLOCK) 
 		pthread_mutex_unlock(&h->biglock);
 	return(rv);	
 	
@@ -319,17 +319,17 @@ shash_delete_lockfree(shash *h, void *key)
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
 
-	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (BBHASH_ELEM_SZ(h) * hash));	
+	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
 
 	// If bucket empty, def can't delete
 	if ( e->in_use == false )
-		return( BB_ERR_NOTFOUND );
+		return( SHASH_ERR_NOTFOUND );
 
 	shash_elem *e_prev = 0;
 
 	// Look for teh element and destroy if found
 	while (e) {
-		if ( memcmp(BBHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
 			// Found it
 			// patchup pointers & free element if not head
 			if (e_prev) {
@@ -345,18 +345,18 @@ shash_delete_lockfree(shash *h, void *key)
 				// at head with a next - more complicated
 				else {
 					shash_elem *_t = e->next;
-					memcpy(e, e->next, BBHASH_ELEM_SZ(h) );
+					memcpy(e, e->next, SHASH_ELEM_SZ(h) );
 					free(_t);
 				}
 			}
 			h->elements--;
-			return( BB_OK );
+			return( SHASH_OK );
 		}
 		e_prev = e;
 		e = e->next;
 	}
 	
-	return ( BB_ERR_NOTFOUND );
+	return ( SHASH_ERR_NOTFOUND );
 
 	
 }
@@ -367,19 +367,19 @@ shash_get_and_delete(shash *h, void *key, void *value)
 	// Calculate hash
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
-	int rv = BB_ERR;
+	int rv = SHASH_ERR;
 
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) {
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
 		if (0 != pthread_mutex_lock(&h->biglock)) {
 			cf_debug(CF_SHASH,"FUCK YOOOOOOOOU!");
 		}
 	}
 		
-	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (BBHASH_ELEM_SZ(h) * hash));	
+	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
 
 	// If bucket empty, def can't delete
 	if ( e->in_use == false ) {
-		rv = BB_ERR_NOTFOUND;
+		rv = SHASH_ERR_NOTFOUND;
 		goto Out;
 	}
 
@@ -387,10 +387,10 @@ shash_get_and_delete(shash *h, void *key, void *value)
 
 	// Look for teh element and destroy if found
 	while (e) {
-		if ( memcmp(BBHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
 		
 			// Found it - check length of buffer and copy to destination
-			memcpy(value, BBHASH_ELEM_VALUE_PTR(h, e), h->value_len);
+			memcpy(value, SHASH_ELEM_VALUE_PTR(h, e), h->value_len);
 
 			
 			// patchup pointers & free element if not head
@@ -407,22 +407,22 @@ shash_get_and_delete(shash *h, void *key, void *value)
 				// at head with a next - more complicated
 				else {
 					shash_elem *_t = e->next;
-					memcpy(e, e->next, BBHASH_ELEM_SZ(h) );
+					memcpy(e, e->next, SHASH_ELEM_SZ(h) );
 					free(_t);
 				}
 			}
 			h->elements--;
-			rv = BB_OK;
+			rv = SHASH_OK;
 			goto Out;
 
 		}
 		e_prev = e;
 		e = e->next;
 	}
-	rv = BB_ERR_NOTFOUND;
+	rv = SHASH_ERR_NOTFOUND;
 
 Out:
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) { 
+	if (h->flags & SHASH_CR_MT_BIGLOCK) { 
 		if (0 != pthread_mutex_unlock(&h->biglock)) {
 			cf_debug(CF_SHASH,"fuck YOOOOOU!");
 		}
@@ -444,7 +444,7 @@ shash_reduce(shash *h, shash_reduce_fn reduce_fn, void *udata)
 {
 	int rv = 0;
 	
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & SHASH_CR_MT_BIGLOCK)
 		pthread_mutex_lock(&h->biglock);
 
 	shash_elem *he = h->table;
@@ -458,7 +458,7 @@ shash_reduce(shash *h, shash_reduce_fn reduce_fn, void *udata)
 			if (list_he->in_use == false)
 				break;
 			
-			rv = reduce_fn(	BBHASH_ELEM_KEY_PTR(h, list_he), BBHASH_ELEM_VALUE_PTR(h, list_he), udata);
+			rv = reduce_fn(	SHASH_ELEM_KEY_PTR(h, list_he), SHASH_ELEM_VALUE_PTR(h, list_he), udata);
 			if (0 != rv)
 				goto Out;
 			
@@ -466,11 +466,11 @@ shash_reduce(shash *h, shash_reduce_fn reduce_fn, void *udata)
 		};
 
 		// next element in head table
-		he = (shash_elem *) (((uint8_t *)he) + BBHASH_ELEM_SZ(h));
+		he = (shash_elem *) (((uint8_t *)he) + SHASH_ELEM_SZ(h));
 
 	}
 Out:
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & SHASH_CR_MT_BIGLOCK)
 		pthread_mutex_unlock(&h->biglock);
 
 	return(rv);
@@ -486,7 +486,7 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 {
 	int rv = 0;
 	
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & SHASH_CR_MT_BIGLOCK)
 		pthread_mutex_lock(&h->biglock);
 
 	shash_elem *he = h->table;
@@ -502,11 +502,11 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 			if (list_he->in_use == false)
 				break;
 			
-			rv = reduce_fn( BBHASH_ELEM_KEY_PTR(h, list_he), BBHASH_ELEM_VALUE_PTR(h, list_he), udata);
+			rv = reduce_fn( SHASH_ELEM_KEY_PTR(h, list_he), SHASH_ELEM_VALUE_PTR(h, list_he), udata);
 			
 			// Delete is requested
 			// Leave the pointers in a "next" state
-			if (rv == BBHASH_REDUCE_DELETE) {
+			if (rv == SHASH_REDUCE_DELETE) {
 
 				// patchup pointers & free element if not head
 				if (prev_he) {
@@ -529,7 +529,7 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 					// and list_he stays where it is
 					else {
 						shash_elem *_t = list_he->next;
-						memcpy(list_he, list_he->next, BBHASH_ELEM_SZ(h) );
+						memcpy(list_he, list_he->next, SHASH_ELEM_SZ(h) );
 						free(_t);
 					}
 				}
@@ -545,11 +545,11 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 		};
 		
 		// next element in head table
-		he = (shash_elem *) (((uint8_t *)he) + BBHASH_ELEM_SZ(h));
+		he = (shash_elem *) (((uint8_t *)he) + SHASH_ELEM_SZ(h));
 	}
 
 Out:
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & SHASH_CR_MT_BIGLOCK)
 		pthread_mutex_unlock(&h->biglock);
 
 	return(rv);
@@ -570,10 +570,10 @@ shash_destroy(shash *h)
 				e = t;
 			}
 		}
-		e_table = (shash_elem *) (((uint8_t *)e_table) + BBHASH_ELEM_SZ(h));
+		e_table = (shash_elem *) (((uint8_t *)e_table) + SHASH_ELEM_SZ(h));
 	}
 
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & SHASH_CR_MT_BIGLOCK)
 		pthread_mutex_destroy(&h->biglock);
 
 

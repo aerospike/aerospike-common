@@ -25,7 +25,7 @@ rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint
 	rchash *h;
 
 	h = malloc(sizeof(rchash));
-	if (!h)	return(BB_ERR);
+	if (!h)	return(RCHASH_ERR);
 
 	h->elements = 0;
 	h->table_len = sz;
@@ -37,19 +37,19 @@ rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint
 	h->table = calloc(sz, sizeof(rchash_elem));
 	if (!h->table) {
 		free(h);
-		return(BB_ERR);
+		return(RCHASH_ERR);
 	}
 
-	if (flags & BBHASH_CR_MT_BIGLOCK || flags & BBHASH_CR_MT_LOCKPOOL) {
+	if (flags & RCHASH_CR_MT_BIGLOCK || flags & RCHASH_CR_MT_LOCKPOOL) {
 		if (0 != pthread_mutex_init ( &h->biglock, 0) ) {
 			free(h->table); free(h);
-			return(BB_ERR);
+			return(RCHASH_ERR);
 		}
 	}
 
 	*h_r = h;
 
-	return(BB_OK);
+	return(RCHASH_OK);
 }
 
 uint32_t
@@ -71,7 +71,7 @@ rchash_free(rchash *h, void *object)
 int
 rchash_put(rchash *h, void *key, uint32_t key_len, void *object)
 {
-	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
+	if ((h->key_len) &&  (h->key_len != key_len) ) return(RCHASH_ERR);
 
 	// Calculate hash
 	uint hash = h->h_fn(key, key_len);
@@ -96,16 +96,16 @@ rchash_put(rchash *h, void *key, uint32_t key_len, void *object)
 #ifdef DEBUG
 		if (cf_rc_count(e->object) < 1) {
 			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
-			return(BB_ERR);
+			return(RCHASH_ERR);
 		}
 #endif		
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
 			rchash_free(h,e->object);
 			e->object = object;
-			if (h->flags & BBHASH_CR_MT_BIGLOCK)
+			if (h->flags & RCHASH_CR_MT_BIGLOCK)
 				pthread_mutex_unlock(&h->biglock);
-			return(BB_OK);
+			return(RCHASH_OK);
 		}
 		e = e->next;
 	}
@@ -122,9 +122,9 @@ Copy:
 	e->object = object;
 
 	h->elements++;
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) 
+	if (h->flags & RCHASH_CR_MT_BIGLOCK) 
 		pthread_mutex_unlock(&h->biglock);
-	return(BB_OK);	
+	return(RCHASH_OK);	
 
 }
 
@@ -136,11 +136,11 @@ Copy:
 int
 rchash_put_unique(rchash *h, void *key, uint32_t key_len, void *object)
 {
-	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
+	if ((h->key_len) &&  (h->key_len != key_len) ) return(RCHASH_ERR);
 
 	if (cf_rc_count(object) < 1) {
 		cf_debug(CF_RCHASH,"put unique! bad reference count on %p");
-		return(BB_ERR);
+		return(RCHASH_ERR);
 	}
 	
 	// Calculate hash
@@ -165,13 +165,13 @@ rchash_put_unique(rchash *h, void *key, uint32_t key_len, void *object)
 #ifdef DEBUG
 		if (cf_rc_count(e->object) < 1) {
 			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
-			return(BB_ERR);
+			return(RCHASH_ERR);
 		}
 #endif		
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
 			pthread_mutex_unlock(&h->biglock);
-			return(BB_ERR_FOUND);
+			return(RCHASH_ERR_FOUND);
 		}
 		e = e->next;
 	}
@@ -188,9 +188,9 @@ Copy:
 	e->object = object;
 
 	h->elements++;
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) 
+	if (h->flags & RCHASH_CR_MT_BIGLOCK) 
 		pthread_mutex_unlock(&h->biglock);
-	return(BB_OK);	
+	return(RCHASH_OK);	
 
 }
 
@@ -199,12 +199,12 @@ Copy:
 int
 rchash_get(rchash *h, void *key, uint32_t key_len, void **object)
 {
-	int rv = BB_ERR;
+	int rv = RCHASH_ERR;
 	
 	uint hash = h->h_fn(key, key_len);
 	hash %= h->table_len;
 
-	if (h->flags & BBHASH_CR_MT_BIGLOCK)
+	if (h->flags & RCHASH_CR_MT_BIGLOCK)
 		pthread_mutex_lock(&h->biglock);
 	
 	rchash_elem *e = (rchash_elem *) ( ((byte *)h->table) + (sizeof(rchash_elem) * hash));	
@@ -213,7 +213,7 @@ rchash_get(rchash *h, void *key, uint32_t key_len, void **object)
 #ifdef DEBUG
 		if (cf_rc_count(e->object) < 1) {
 			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
-			return(BB_ERR);
+			return(RCHASH_ERR);
 		}
 #endif		
 
@@ -221,12 +221,12 @@ rchash_get(rchash *h, void *key, uint32_t key_len, void **object)
 			 ( memcmp(key, e->key, key_len) == 0) ) {
 			cf_rc_reserve( e->object );
 			*object = e->object;
-			rv = BB_OK; 
+			rv = RCHASH_OK; 
 			goto Out;
 		}
 		e = e->next;
 	} while (e);
-	rv = BB_ERR_NOTFOUND;
+	rv = RCHASH_ERR_NOTFOUND;
 	
 Out:
 	if (h->flags & RCHASH_CR_MT_BIGLOCK)
@@ -239,14 +239,14 @@ Out:
 int
 rchash_delete(rchash *h, void *key, uint32_t key_len)
 {
-	if ((h->key_len) &&  (h->key_len != key_len) ) return(BB_ERR);
+	if ((h->key_len) &&  (h->key_len != key_len) ) return(RCHASH_ERR);
 
 	// Calculate hash
 	uint hash = h->h_fn(key, key_len);
 	hash %= h->table_len;
-	int rv = BB_ERR;
+	int rv = RCHASH_ERR;
 
-	if (h->flags & BBHASH_CR_MT_BIGLOCK) {
+	if (h->flags & RCHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_lock(&h->biglock);
 	}
 		
@@ -254,7 +254,7 @@ rchash_delete(rchash *h, void *key, uint32_t key_len)
 
 	// If bucket empty, def can't delete
 	if ( ( e->next == 0 ) && (e->key_len == 0) ) {
-		rv = BB_ERR_NOTFOUND;
+		rv = RCHASH_ERR_NOTFOUND;
 		goto Out;
 	}
 
@@ -266,7 +266,7 @@ rchash_delete(rchash *h, void *key, uint32_t key_len)
 #ifdef DEBUG
 		if (cf_rc_count(e->object) < 1) {
 			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
-			return(BB_ERR);
+			return(RCHASH_ERR);
 		}
 #endif		
 
@@ -294,14 +294,14 @@ rchash_delete(rchash *h, void *key, uint32_t key_len)
 				}
 			}
 			h->elements--;
-			rv = BB_OK;
+			rv = RCHASH_OK;
 			goto Out;
 
 		}
 		e_prev = e;
 		e = e->next;
 	}
-	rv = BB_ERR_NOTFOUND;
+	rv = RCHASH_ERR_NOTFOUND;
 
 Out:
 	if (h->flags & RCHASH_CR_MT_BIGLOCK) 
@@ -382,7 +382,7 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 #ifdef DEBUG
 			if (cf_rc_count(list_he->object) < 1) {
 				cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, list_he->object);
-				return(BB_ERR);
+				return(RCHASH_ERR);
 			}
 #endif		
 			
@@ -390,7 +390,7 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			
 			// Delete is requested
 			// Leave the pointers in a "next" state
-			if (rv == -1) {
+			if (rv == RCHASH_REDUCE_DELETE) {
 				free(list_he->key);
 				rchash_free(h, list_he->object);
 				// patchup pointers & free element if not head

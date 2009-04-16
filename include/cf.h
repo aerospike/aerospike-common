@@ -49,7 +49,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "rb.h"
 #include "socket.h"
 #include "msg.h"
-#include "bbhash.h"
+// #include "bbhash.h"   // subsumed by rchash and shash
 #include "rchash.h"
 #include "shash.h"
 #include "dynbuf.h"

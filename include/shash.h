@@ -18,11 +18,11 @@
 #define CITRUSLEAF 1
 
 
-#define BB_ERR_FOUND -4
-#define BB_ERR_NOTFOUND -3
-#define BB_ERR_BUFSZ -2
-#define BB_ERR -1
-#define BB_OK 0
+#define SHASH_ERR_FOUND -4
+#define SHASH_ERR_NOTFOUND -3
+#define SHASH_ERR_BUFSZ -2
+#define SHASH_ERR -1
+#define SHASH_OK 0
 
 #ifdef CITRUSLEAF
 #include "cf.h"
@@ -55,9 +55,9 @@ typedef struct shash_elem_s {
 } shash_elem;
 
 
-#define BBHASH_ELEM_KEY_PTR(_h, _e) 	( (void *) _e->data )
+#define SHASH_ELEM_KEY_PTR(_h, _e) 	( (void *) _e->data )
 
-#define BBHASH_ELEM_VALUE_PTR(_h, _e) ( (void *) (_e->data + _h->key_len) )
+#define SHASH_ELEM_VALUE_PTR(_h, _e) ( (void *) (_e->data + _h->key_len) )
 
 typedef struct shash_s {
 	uint elements;
@@ -71,14 +71,14 @@ typedef struct shash_s {
 	pthread_mutex_t		biglock;
 } shash;
 
-#define BBHASH_ELEM_SZ(_h) ( sizeof(shash_elem) + (_h->key_len) + (_h->value_len) )
+#define SHASH_ELEM_SZ(_h) ( sizeof(shash_elem) + (_h->key_len) + (_h->value_len) )
 
-#define BBHASH_CR_RESIZE 0x01   // support resizes (will sometimes hang for long periods)
-#define BBHASH_CR_GRAB   0x02   // support 'grab' call (requires more memory)
-#define BBHASH_CR_MT_BIGLOCK 0x04 // support multithreaded access with a single big lock
-#define BBHASH_CR_MT_LOCKPOOL 0x08 // support multithreaded access with a pool of object loccks
+#define SHASH_CR_RESIZE 0x01   // support resizes (will sometimes hang for long periods)
+#define SHASH_CR_GRAB   0x02   // support 'grab' call (requires more memory)
+#define SHASH_CR_MT_BIGLOCK 0x04 // support multithreaded access with a single big lock
+#define SHASH_CR_MT_LOCKPOOL 0x08 // support multithreaded access with a pool of object loccks
 
-
+#define SHASH_REDUCE_DELETE (1) // indicate that a delete should be done during the reduction
 
 /*
  * Create a hash table
@@ -173,7 +173,6 @@ shash_reduce(shash *h, shash_reduce_fn reduce_fn, void *udata);
 ** This instance allows deletion of hash elements during the reduce:
 ** return -1 to cause the deletion of the element visisted
 */
-#define BBHASH_REDUCE_DELETE (1) // return this from the reduce when you want to delete
 
 int
 shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata);
