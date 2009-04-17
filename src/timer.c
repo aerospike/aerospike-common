@@ -133,6 +133,7 @@ cf_timer_worker_fn(void *gcc_is_ass)
 			
 		// loop back around and wait!
 	}
+	return(0);
 }
 
 
@@ -221,7 +222,7 @@ int g_timer_test_info[TEST_TIMER_MAX];
 int
 cf_timer_test_fn(void *udata)
 {
-	int 	i = (int) udata;
+	int 	i = (int) (size_t) udata;
 	cf_debug(CF_TIMER, "timer %d fired at %"PRIu64,i,cf_getms() );
 	g_timer_test_info[i]++;
 	return(0);
@@ -235,7 +236,7 @@ cf_timer_test()
 	// FIRE TEST
 	// insert N timer elements, watch them fire
 	for (uint i=0;i<TEST_TIMER_MAX;i++) {
-		g_timer_test_info[i] = 0;
+		g_timer_test_info[i] = (size_t) 0;
 		cf_timer_add(10, cf_timer_test_fn, (void *)i);
 		usleep(1000);
 	}

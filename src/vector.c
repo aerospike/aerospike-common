@@ -20,7 +20,7 @@ vector_create( uint32_t value_len, uint32_t init_sz, uint flags)
 	vector *v;
 
 	v = malloc(sizeof(vector));
-	if (!v)	return(-1);
+	if (!v)	return(0);
 
 	v->value_len = value_len;
 	v->flags = flags;
