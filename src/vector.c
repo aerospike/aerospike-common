@@ -29,7 +29,7 @@ vector_create( uint32_t value_len, uint32_t init_sz, uint flags)
 	v->stack = false;
 	if (init_sz) {
 		v->vector = malloc(init_sz * value_len);
-		if (!v->vector)	{ *v_r = 0; return(0); }
+		if (!v->vector)	return(0);
 	}
 	else
 		v->vector = 0;
