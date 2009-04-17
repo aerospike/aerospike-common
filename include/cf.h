@@ -49,12 +49,14 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "rb.h"
 #include "socket.h"
 #include "msg.h"
-// #include "bbhash.h"   // subsumed by rchash and shash
 #include "rchash.h"
 #include "shash.h"
 #include "dynbuf.h"
 #include "timer.h"
 #include "ll.h"
+#include "vector.h"
+#include "cf_str.h"
+
 
 /* cf_hash_fnv
  * The 64-bit Fowler-Noll-Voll hash function (FNV-1a) */
@@ -196,7 +198,4 @@ typedef uint64_t cf_clock;
 extern cf_clock cf_getms();
 extern cf_clock cf_clock_getabsolute();
 
-// And my little string helpers even shorter than that
-// return value is number of bytes in the new string
-extern unsigned int cf_itoa(int value, char *s, int radix);
-extern unsigned int cf_itoa_u64(uint64_t value, char *s, int radix);
+
