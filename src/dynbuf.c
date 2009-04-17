@@ -94,7 +94,7 @@ cf_dyn_buf_append_int (cf_dyn_buf *db, int i)
 	if (0 != cf_dyn_buf_reserve(db, 12))
 		return(-1);
 	
-	db->used_sz += cf_itoa(i, (char *) &db->buf[db->used_sz], 10);
+	db->used_sz += cf_str_itoa(i, (char *) &db->buf[db->used_sz], 10);
 	return( 0 );
 }
 
@@ -105,7 +105,7 @@ cf_dyn_buf_append_uint64_x (cf_dyn_buf *db, uint64_t i)
 	if (0 != cf_dyn_buf_reserve(db, 18))
 		return(-1);
 	
-	db->used_sz += cf_itoa_u64(i, (char *) &db->buf[db->used_sz], 16);
+	db->used_sz += cf_str_itoa_u64(i, (char *) &db->buf[db->used_sz], 16);
 	return( 0 );
 }
 

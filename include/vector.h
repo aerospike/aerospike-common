@@ -39,6 +39,7 @@ typedef struct vector_s {
 	uint alloc_len; // number of elements currently allocated
 	uint len;       // number of elements in table, largest element set
 	uint8_t *vector;
+	bool	stack;
 	pthread_mutex_t		LOCK;
 } vector;
 
@@ -52,11 +53,18 @@ typedef struct vector_s {
 
 
 /*
- * Create a vector
+ * Create a vector with malloc for handing around
  */
 
+vector *
+vector_create(uint32_t value_len, uint32_t init_sz, uint flags);
+
+/*
+** create a stack vector, good for quick parses and such
+*/
+
 int
-vector_create(vector **v, uint32_t value_len, uint32_t init_sz, uint flags);
+vector_init(vector *v, uint32_t value_len, uint32_t init_sz, uint flags);
 
 /*
 ** todo: static allocate a vector, with passed-in memory?
@@ -68,22 +76,55 @@ vector_create(vector **v, uint32_t value_len, uint32_t init_sz, uint flags);
  */
 extern int vector_set(vector *v, uint32_t index, void *value);
 extern int vector_get(vector *v, uint32_t index, void *value);
-extern int vector_get_vlock(vector *v, pthread_mutex_t **vlock);
+// this is very dangerous if it's a multithreaded vector. Use _vlock if multithrad.
+extern void * vector_getp(vector *v, uint32_t index);
+extern void * vector_getp_vlock(vector *v, uint32_t index, pthread_mutex_t **vlock);
 extern int vector_append(vector *v, void *value);
 
 
 /*
 ** Get the number of elements currently in the vector
 */
-uint32_t vector_get_size(vector *v);
-/*
-** or set it. This might shrink the vector and throw away data, so beware!
-*/
-uint32_t vector_set_size(vector *v, uint32_t sz);
-
+static inline uint32_t vector_get_size(vector *v)
+{
+	return(v->len);	
+}
 
 
 /*
  * Destroy the entire hash - all memory will be freed
  */
 extern void vector_destroy(vector *v);
+
+/*
+** nice wrapper functions
+** very common vector types are pointers, and integers
+*/
+
+static inline vector *vector_pointer_create(uint32_t init_sz, uint32_t flags)
+{
+	return(vector_create(sizeof(void *), init_sz, flags));
+}
+
+static inline int vector_pointer_init(vector *v, uint32_t init_sz, uint32_t flags)
+{
+	return(vector_init(v, sizeof(void *), init_sz, flags));
+}
+
+static inline int vector_pointer_set(vector *v, uint32_t index, void *p)
+{
+	return(vector_set(v, index, &p));
+}
+
+static inline void * vector_pointer_get(vector *v, uint32_t index) {
+	void *p;
+	vector_get(v, index, &p);
+	return(p);
+}
+
+static inline int vector_pointer_append(vector *v, void *p)
+{
+	return(vector_append(v, &p));
+}
+
+
