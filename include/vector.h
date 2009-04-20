@@ -81,6 +81,24 @@ extern void * vector_getp(vector *v, uint32_t index);
 extern void * vector_getp_vlock(vector *v, uint32_t index, pthread_mutex_t **vlock);
 extern int vector_append(vector *v, void *value);
 
+// Adds a an element to the end, only if it doesn't exist already
+// uses a bit-by-bit compare, thus is O(N) against the current length
+// of the vector
+extern int vector_append_unique(vector *v, void *value);
+
+// Deletes an element by moving all the remaining elements down by one
+extern int vector_delete(vector *v, uint32_t index);
+// Delete a range in the vector. Inclusive. Thus:
+//   a vector with len 5, you could delete start=0, end=3, leaving one element at the beginning (slot 0)
+//   don't set start and end the same, that's a single element delete, use vector_delete instead
+//   (or change the code to support that!)
+//   returns -1 on bad ranges
+extern int vector_delete_range(vector *v, uint32_t start_index, uint32_t end_index);
+
+// There may be more allocated than you need. Fix that.
+//
+extern void vector_compact(vector *v);
+
 
 /*
 ** Get the number of elements currently in the vector
@@ -127,4 +145,33 @@ static inline int vector_pointer_append(vector *v, void *p)
 	return(vector_append(v, &p));
 }
 
+/*
+** integer vectors!
+*/
+
+static inline vector *vector_integer_create(uint32_t init_sz, uint32_t flags)
+{
+	return(vector_create(sizeof(int), init_sz, flags));
+}
+
+static inline int vector_integer_init(vector *v, uint32_t init_sz, uint32_t flags)
+{
+	return(vector_init(v, sizeof(int), init_sz, flags));
+}
+
+static inline int vector_integer_set(vector *v, uint32_t index, int i)
+{
+	return(vector_set(v, index, &i));
+}
+
+static inline int vector_integer_get(vector *v, uint32_t index) {
+	int i;
+	vector_get(v, index, &i);
+	return(i);
+}
+
+static inline int vector_integer_append(vector *v, int i)
+{
+	return(vector_append(v, &i));
+}
 

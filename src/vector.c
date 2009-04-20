@@ -107,18 +107,49 @@ vector_set(vector *v, uint32_t index, void *value)
 }
 
 int
-vector_append(vector *v, void *value)
+vector_append_lockfree(vector *v, void *value)
 {
-	if (v->flags & VECTOR_FLAG_BIGLOCK)
-		pthread_mutex_lock(&v->LOCK);
 	if (v->len + 1 >= v->alloc_len)
 		if (0 != vector_resize(v, v->len + 2))	return(-1);
 	memcpy(v->vector + (v->len * v->value_len), value, v->value_len);
 	v->len ++;
-	if (v->flags & VECTOR_FLAG_BIGLOCK)
-		pthread_mutex_unlock(&v->LOCK);
 	return(0);
 	
+}
+
+
+
+int
+vector_append(vector *v, void *value)
+{
+	int rv;
+	if (v->flags & VECTOR_FLAG_BIGLOCK)
+		pthread_mutex_lock(&v->LOCK);
+	rv = vector_append_lockfree(v, value);
+	if (v->flags & VECTOR_FLAG_BIGLOCK)
+		pthread_mutex_unlock(&v->LOCK);
+	return(rv);
+}
+
+int
+vector_append_unique(vector *v, void *value)
+{
+	int rv=0;
+	if (v->flags & VECTOR_FLAG_BIGLOCK)
+		pthread_mutex_lock(&v->LOCK);
+	uint8_t	*_b = v->vector;
+	uint32_t	_l = v->value_len;
+	for (uint i=0;i<v->len;i++) {
+		if (0 == memcmp(value, _b, _l)) {
+			goto Found;
+		}
+		_b += _l;
+	}
+	rv = vector_append_lockfree(v, value);
+Found:	
+	if (v->flags & VECTOR_FLAG_BIGLOCK)
+		pthread_mutex_unlock(&v->LOCK);
+	return(rv);
 }
 
 // Copy the vector element into the pointer I give
@@ -161,4 +192,65 @@ vector_getp_vlock(vector *v, uint32_t index, pthread_mutex_t **vlock)
 	return(v->vector + (index * v->value_len));
 }
 
+int
+vector_delete(vector *v, uint32_t index)
+{
+	if (v->flags & VECTOR_FLAG_BIGLOCK)
+		pthread_mutex_lock(&v->LOCK);
+	// check bounds
+	if (index >= v->len)
+		return (-1);
+	// check for last - no copy
+	if (index != v->len - 1) {
+		memcpy(v->vector + (index * v->value_len), 
+				v->vector + ((index+1) * v->value_len),
+				(v->len - (index+1)) * v->value_len );
+	}
+	v->len --;
+	
+	if (v->flags & VECTOR_FLAG_BIGLOCK)
+		pthread_mutex_unlock(&v->LOCK);
+	return(0);
+}
+
+int
+vector_delete_range(vector *v, uint32_t idx_start, uint32_t idx_end)
+{
+	if (v->flags & VECTOR_FLAG_BIGLOCK)
+		pthread_mutex_lock(&v->LOCK);
+	// check bounds
+	if (idx_start >= idx_end)
+		return (-1);
+	if (idx_start >= v->len)
+		return(-1);
+	if (idx_end >= v->len)
+		return(-1);
+	
+	// Copy down if not at end
+	if (idx_end != v->len - 1) {
+		memcpy( v->vector + (idx_start * v->value_len),
+				v->vector + ((idx_end+1) * v->value_len),
+			    (v->len - (idx_end+1)) * v->value_len );
+	
+	}
+	v->len -= (idx_end - idx_start) + 1;
+	
+	if (v->flags & VECTOR_FLAG_BIGLOCK)
+		pthread_mutex_unlock(&v->LOCK);
+	return(0);
+}
+
+void
+vector_compact(vector *v)
+{
+	if (v->flags & VECTOR_FLAG_BIGLOCK)
+		pthread_mutex_lock(&v->LOCK);
+	if (v->alloc_len && (v->len != v->alloc_len)) {
+		v->vector = realloc(v->vector, v->len * v->alloc_len);
+		v->alloc_len = v->len;
+	}
+	if (v->flags & VECTOR_FLAG_BIGLOCK)
+		pthread_mutex_unlock(&v->LOCK);
+	return;
+}
 

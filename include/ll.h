@@ -70,6 +70,26 @@ extern void cf_ll_insert_after(cf_ll *ll, cf_ll_element *cur, cf_ll_element *ins
 // Insert before element !! warning! consider threadsafey before using this call!
 extern void cf_ll_insert_before(cf_ll *ll, cf_ll_element *cur, cf_ll_element *ins);
 
+static inline cf_ll_element *cf_ll_get_head(cf_ll *ll)
+{
+	return(ll->head);
+}
+
+static inline cf_ll_element *cf_ll_get_tail(cf_ll *ll)
+{
+	return(ll->tail);
+}
+
+static inline cf_ll_element *cf_ll_get_next(cf_ll_element *e)
+{
+	return(e->next);
+}
+
+static inline cf_ll_element *cf_ll_get_prev(cf_ll_element *e)
+{
+	return(e->prev);
+}
+
 // delete element - the real joy of a doubly linked list
 // If a destructor function has been set, call it as well
 extern void cf_ll_delete(cf_ll *ll, cf_ll_element *e );
