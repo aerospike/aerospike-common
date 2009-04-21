@@ -65,7 +65,8 @@ vector_init(vector *v, uint32_t value_len, uint32_t init_sz, uint flags)
 void
 vector_destroy(vector *v)
 {
-	pthread_mutex_destroy(&v->LOCK);
+	if (v->flags & VECTOR_FLAG_BIGLOCK)
+		pthread_mutex_destroy(&v->LOCK);
 	if (v->vector)	free(v->vector);
 	if (v->stack == false) free(v);
 }

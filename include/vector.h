@@ -103,7 +103,7 @@ extern void vector_compact(vector *v);
 /*
 ** Get the number of elements currently in the vector
 */
-static inline uint32_t vector_get_size(vector *v)
+static inline uint32_t vector_size(vector *v)
 {
 	return(v->len);	
 }
