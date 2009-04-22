@@ -26,7 +26,8 @@ vector_create( uint32_t value_len, uint32_t init_sz, uint flags)
 	v->flags = flags;
 	v->alloc_len = init_sz;
 	v->len = 0;
-	v->stack = false;
+	v->stack_struct = false;
+	v->stack_vector = false;
 	if (init_sz) {
 		v->vector = malloc(init_sz * value_len);
 		if (!v->vector)	return(0);
@@ -47,7 +48,8 @@ vector_init(vector *v, uint32_t value_len, uint32_t init_sz, uint flags)
 	v->flags = flags;
 	v->alloc_len = init_sz;
 	v->len = 0;
-	v->stack = true;
+	v->stack_struct = true;
+	v->stack_vector = false;
 	if (init_sz) {
 		v->vector = malloc(init_sz * value_len);
 		if (!v->vector)	return(-1);
@@ -61,14 +63,30 @@ vector_init(vector *v, uint32_t value_len, uint32_t init_sz, uint flags)
 	return(0);
 }
 
+void
+vector_init_smalloc(vector *v, uint32_t value_len, uint8_t *sbuf, int sbuf_sz, uint flags)
+{
+	v->value_len = value_len;
+	v->flags = flags;
+	v->alloc_len = sbuf_sz / value_len;
+	v->len = 0;
+	v->stack_struct = true;
+	v->stack_vector = true;
+	v->vector = sbuf;
+	if (flags & VECTOR_FLAG_INITZERO)
+		memset(v->vector, 0, sbuf_sz);
+	if (flags & VECTOR_FLAG_BIGLOCK)
+		pthread_mutex_init(&v->LOCK, 0);
+}
+
 
 void
 vector_destroy(vector *v)
 {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		pthread_mutex_destroy(&v->LOCK);
-	if (v->vector)	free(v->vector);
-	if (v->stack == false) free(v);
+	if (v->vector && (v->stack_vector == false))	free(v->vector);
+	if (v->stack_struct == false) free(v);
 }
 
 static int
@@ -80,8 +98,10 @@ vector_resize(vector *v, uint32_t new_sz)
 			new_sz = v->alloc_len * 2;
 	}
 	uint8_t *_t;
-	if (v->value_len == 0)
+	if (v->vector == 0 || v->stack_vector) {
 		_t = malloc(new_sz * v->value_len);
+		v->stack_vector = false;
+	}
 	else
 		_t = realloc(v->vector, (new_sz) * v->value_len);
 	if (!_t)	return(-1);

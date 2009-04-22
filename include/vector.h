@@ -39,7 +39,8 @@ typedef struct vector_s {
 	uint alloc_len; // number of elements currently allocated
 	uint len;       // number of elements in table, largest element set
 	uint8_t *vector;
-	bool	stack;
+	bool	stack_struct;
+	bool	stack_vector;
 	pthread_mutex_t		LOCK;
 } vector;
 
@@ -60,11 +61,17 @@ vector *
 vector_create(uint32_t value_len, uint32_t init_sz, uint flags);
 
 /*
-** create a stack vector, good for quick parses and such
+** create a stack vector, but with an allocated internal-vector-bit
 */
 
 int
 vector_init(vector *v, uint32_t value_len, uint32_t init_sz, uint flags);
+
+void
+vector_init_smalloc(vector *v, uint32_t value_len, uint8_t *sbuf, int sbuf_sz, uint flags);
+
+#define vector_define(__x, __value_len, __flags) \
+	uint8_t vector##__x[1024]; vector __x; vector_init_smalloc(&__x, __value_len, vector##__x, sizeof(vector##__x), __flags);
 
 /*
 ** todo: static allocate a vector, with passed-in memory?
@@ -80,6 +87,8 @@ extern int vector_get(vector *v, uint32_t index, void *value);
 extern void * vector_getp(vector *v, uint32_t index);
 extern void * vector_getp_vlock(vector *v, uint32_t index, pthread_mutex_t **vlock);
 extern int vector_append(vector *v, void *value);
+
+#define vector_reset( __v ) (__v)->len = 0; if ( (__v)->flags & VECTOR_FLAG_INITZERO) memset( (__v)->vector, 0, (__v)->alloc_len * (__v)->value_len);
 
 // Adds a an element to the end, only if it doesn't exist already
 // uses a bit-by-bit compare, thus is O(N) against the current length
