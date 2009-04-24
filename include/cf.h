@@ -193,6 +193,9 @@ extern unsigned short cf_nodeid_get_port(cf_node id);
 
 extern int cf_sort_firstk(uint64_t *v, size_t sz, int k);
 
+extern void cf_process_daemonize();
+
+
 /* Timekeeping */
 typedef uint64_t cf_clock;
 extern cf_clock cf_getms();
