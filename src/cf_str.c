@@ -73,6 +73,34 @@ cf_str_itoa_u64(uint64_t _value, char *_s, int _radix)
 	return(rv);
 }
 
+unsigned int
+cf_str_itoa_u32(uint32_t _value, char *_s, int _radix)
+{
+	// special case is the easy way
+	if (_value == 0) {
+		_s[0] = itoa_table[0];
+		_s[1] = 0;
+		return(1);
+	}
+
+	uint32_t _v = _value;
+	unsigned int _nd = 0;
+	while (_v) {
+		_nd++;
+		_v /= _radix;
+	}
+	
+	unsigned int rv = _nd;
+	_s[_nd] = 0;
+	while (_nd) {
+		_nd --;
+		_s[_nd ] = itoa_table [ _value % _radix ];
+		_value = _value / _radix;
+	}
+	return(rv);
+}
+
+
 void
 cf_str_split(char *fmt, char *str, vector *v)
 {

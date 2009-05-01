@@ -110,6 +110,29 @@ cf_dyn_buf_append_uint64_x (cf_dyn_buf *db, uint64_t i)
 }
 
 int
+cf_dyn_buf_append_uint64 (cf_dyn_buf *db, uint64_t i)
+{
+	// overreserving isn't a crime
+	if (0 != cf_dyn_buf_reserve(db, 12))
+		return(-1);
+	
+	db->used_sz += cf_str_itoa_u64(i, (char *) &db->buf[db->used_sz], 10);
+	return( 0 );
+}
+
+int
+cf_dyn_buf_append_uint32 (cf_dyn_buf *db, uint32_t i)
+{
+	// overreserving isn't a crime
+	if (0 != cf_dyn_buf_reserve(db, 12))
+		return(-1);
+	
+	db->used_sz += cf_str_itoa_u32(i, (char *) &db->buf[db->used_sz], 10);
+	return( 0 );
+}
+
+
+int
 cf_dyn_buf_chomp(cf_dyn_buf *db)
 {
 	if (db->used_sz > 0)

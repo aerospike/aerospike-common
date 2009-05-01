@@ -12,6 +12,7 @@
 
 extern unsigned int cf_str_itoa(int value, char *s, int radix);
 extern unsigned int cf_str_itoa_u64(uint64_t value, char *s, int radix);
+extern unsigned int cf_str_itoa_u32(uint32_t value, char *s, int radix);
 
 // Split the string 'str' based on input breaks in fmt
 // The splitting is destructive
