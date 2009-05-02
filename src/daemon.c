@@ -44,7 +44,7 @@ cf_process_daemonize()
 
     /* Open a temporary file for console message redirection */
     snprintf(cfile, 128, "/tmp/aerospike-console.%d", getpid());
-    if (-1 == (FD = open(cfile, O_WRONLY|O_CREAT|O_APPEND)))
+    if (-1 == (FD = open(cfile, O_WRONLY|O_CREAT|O_APPEND,S_IRUSR|S_IWUSR)))
         cf_crash(CF_MISC, CF_GLOBAL, CF_CRITICAL, "couldn't open console redirection file: %s", cf_strerror(errno));
     if (-1 == chmod(cfile, (S_IRUSR|S_IWUSR|S_IRGRP|S_IROTH)))
         cf_crash(CF_MISC, CF_GLOBAL, CF_CRITICAL, "couldn't set mode on console redirection file: %s", cf_strerror(errno));
