@@ -244,6 +244,7 @@ cf_fault_sink_add(char *path)
 		return(NULL);
 
 	s = &cf_fault_sinks[cf_fault_sinks_inuse++];
+    s->path = strdup(path);
 	if (0 == strncmp(path, "stderr", 6))
 		s->fd = 2;
 	else {
@@ -257,6 +258,25 @@ cf_fault_sink_add(char *path)
 		s->limit[i] = CF_INFO;
 
 	return(s);
+}
+
+
+/* cf_fault_sink_get
+ * Get a fault sink pointer from a path */
+cf_fault_sink *
+cf_fault_sink_get(char *path)
+{
+    cf_fault_sink *s = NULL;
+
+    for (int i = 0; i < CF_FAULT_SINKS_MAX; i++) {
+        cf_fault_sink *t = &cf_fault_sinks[i];
+        if (0 == strncmp(path, t->path, strlen(t->path))) {
+            s = t;
+            break;
+        }
+    }
+
+    return(s);
 }
 
 

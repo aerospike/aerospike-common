@@ -83,6 +83,7 @@ typedef enum { CF_CRITICAL = 0, CF_WARNING = 1, CF_INFO = 2, CF_DEBUG = 3, CF_DE
  * An endpoint (sink) for a flow of fault messages */
 typedef struct cf_fault_sink {
 	int fd;
+	char *path;
 	int limit[CF_FAULT_CONTEXT_UNDEF];
 } cf_fault_sink;
 
