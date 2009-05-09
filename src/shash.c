@@ -29,9 +29,15 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 	h->flags = flags;
 	h->h_fn = h_fn;
 
+	if ((flags & SHASH_CR_MT_BIGLOCK) && (flags & SHASH_CR_MT_MANYLOCK)) {
+		*h_r = 0;
+		return(SHASH_ERR);
+	}
+	
 	h->table = malloc(sz * SHASH_ELEM_SZ(h));
 	if (!h->table) {
 		free(h);
+		*h_r = 0;
 		return(SHASH_ERR);
 	}
 	
@@ -42,13 +48,30 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 		// next element in head table
 		table = (shash_elem *) (((uint8_t *)table) + SHASH_ELEM_SZ(h));
 	}
-
-	if (flags & SHASH_CR_MT_BIGLOCK || flags & SHASH_CR_MT_LOCKPOOL) {
+	
+	if (flags & SHASH_CR_MT_BIGLOCK) {
 		if (0 != pthread_mutex_init ( &h->biglock, 0) ) {
 			free(h->table); free(h);
 			return(SHASH_ERR);
 		}
 	}
+	else
+		memset( &h->biglock, 0, sizeof( h->biglock ) );
+	
+	if (flags & SHASH_CR_MT_MANYLOCK) {
+		h->lock_table = malloc( sizeof(pthread_mutex_t) * sz);
+		if (! h->lock_table) {
+			free(h);
+			*h_r = 0;
+			return(SHASH_ERR);
+		}
+		for (uint i=0;i<sz;i++) {
+			pthread_mutex_init( &(h->lock_table[i]), 0 );
+		}
+	}
+	else
+		h->lock_table = 0;
+	
 
 	*h_r = h;
 
@@ -68,9 +91,14 @@ shash_put(shash *h, void *key, void *value)
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
 
+	pthread_mutex_t		*l = 0;
 	if (h->flags & SHASH_CR_MT_BIGLOCK) {
-		pthread_mutex_lock(&h->biglock);
+		l = &h->biglock;
 	}
+	else if (h->flags & SHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
 		
 	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
 
@@ -101,8 +129,7 @@ Copy:
 	memcpy(SHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
 	e->in_use = true;
 	h->elements++;
-	if (h->flags & SHASH_CR_MT_BIGLOCK) 
-		pthread_mutex_unlock(&h->biglock);
+	if (l)	pthread_mutex_unlock( l );
 	return(SHASH_OK);	
 }
 
@@ -115,9 +142,14 @@ shash_put_unique(shash *h, void *key, void *value)
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
 
+	pthread_mutex_t		*l = 0;
 	if (h->flags & SHASH_CR_MT_BIGLOCK) {
-		pthread_mutex_lock(&h->biglock);
+		l = &h->biglock;
 	}
+	else if (h->flags & SHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
 		
 	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
 
@@ -146,8 +178,7 @@ Copy:
 	memcpy(SHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
 	e->in_use = true;
 	h->elements++;
-	if (h->flags & SHASH_CR_MT_BIGLOCK) 
-		pthread_mutex_unlock(&h->biglock);
+	if (l)	pthread_mutex_unlock( l );
 	return(SHASH_OK);	
 
 }
@@ -162,8 +193,14 @@ shash_get(shash *h, void *key, void *value)
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
 
-	if (h->flags & SHASH_CR_MT_BIGLOCK)
-		pthread_mutex_lock(&h->biglock);
+	pthread_mutex_t		*l = 0;
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
+		l = &h->biglock;
+	}
+	else if (h->flags & SHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
 	
 	shash_elem *e = (shash_elem *) ( ((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
 
@@ -183,8 +220,7 @@ shash_get(shash *h, void *key, void *value)
 	rv = SHASH_ERR_NOTFOUND;
 	
 Out:
-	if (h->flags & SHASH_CR_MT_BIGLOCK)
-		pthread_mutex_unlock(&h->biglock);
+	if (l) pthread_mutex_unlock(l);
 
 	return(rv);
 					
@@ -203,8 +239,14 @@ shash_get_vlock(shash *h, void *key, void **value, pthread_mutex_t **vlock)
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
 
-	if (h->flags & SHASH_CR_MT_BIGLOCK)
-		pthread_mutex_lock(&h->biglock);
+	pthread_mutex_t		*l = 0;
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
+		l = &h->biglock;
+	}
+	else if (h->flags & SHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
 	
 	shash_elem *e = (shash_elem *) ( ((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
 
@@ -225,12 +267,12 @@ shash_get_vlock(shash *h, void *key, void **value, pthread_mutex_t **vlock)
 	rv = SHASH_ERR_NOTFOUND;
 	
 Out:
-	if (h->flags & SHASH_CR_MT_BIGLOCK) {
+	if (l) {
 		if (rv == SHASH_OK) {
-			*vlock = &h->biglock;
+			*vlock = l;
 		}
 		else {
-			pthread_mutex_unlock(&h->biglock);
+			pthread_mutex_unlock( l );
 			*vlock = 0;
 		}
 	}
@@ -253,9 +295,14 @@ shash_delete(shash *h, void *key)
 	hash %= h->table_len;
 	int rv = SHASH_ERR;
 
+	pthread_mutex_t		*l = 0;
 	if (h->flags & SHASH_CR_MT_BIGLOCK) {
-		pthread_mutex_lock(&h->biglock);
+		l = &h->biglock;
 	}
+	else if (h->flags & SHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
 		
 	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
 
@@ -300,8 +347,8 @@ shash_delete(shash *h, void *key)
 	rv = SHASH_ERR_NOTFOUND;
 
 Out:
-	if (h->flags & SHASH_CR_MT_BIGLOCK) 
-		pthread_mutex_unlock(&h->biglock);
+	if (l) 
+		pthread_mutex_unlock(l);
 	return(rv);	
 	
 
@@ -369,11 +416,14 @@ shash_get_and_delete(shash *h, void *key, void *value)
 	hash %= h->table_len;
 	int rv = SHASH_ERR;
 
+	pthread_mutex_t		*l = 0;
 	if (h->flags & SHASH_CR_MT_BIGLOCK) {
-		if (0 != pthread_mutex_lock(&h->biglock)) {
-			cf_debug(CF_SHASH,"FUCK YOOOOOOOOU!");
-		}
+		l = &h->biglock;
 	}
+	else if (h->flags & SHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
 		
 	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
 
@@ -422,11 +472,8 @@ shash_get_and_delete(shash *h, void *key, void *value)
 	rv = SHASH_ERR_NOTFOUND;
 
 Out:
-	if (h->flags & SHASH_CR_MT_BIGLOCK) { 
-		if (0 != pthread_mutex_unlock(&h->biglock)) {
-			cf_debug(CF_SHASH,"fuck YOOOOOU!");
-		}
-	}
+	if (l)
+		pthread_mutex_unlock( l );
 		
 	return(rv);	
 	
@@ -444,29 +491,37 @@ shash_reduce(shash *h, shash_reduce_fn reduce_fn, void *udata)
 {
 	int rv = 0;
 	
-	if (h->flags & SHASH_CR_MT_BIGLOCK)
-		pthread_mutex_lock(&h->biglock);
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
+		pthread_mutex_lock( &h->biglock);
+	}
 
-	shash_elem *he = h->table;
-	
 	for (uint i=0; i<h->table_len ; i++) {
-
-		shash_elem *list_he = he;
+		
+		pthread_mutex_t *l = 0;
+		if (h->flags & SHASH_CR_MT_MANYLOCK) {
+			l = &(h->lock_table[i]);
+			pthread_mutex_lock( l );
+		}
+		
+		shash_elem *list_he = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * i));
 		while (list_he) {
 			
 			// not in use is common at head pointer - unused bucket
-			if (list_he->in_use == false)
+			if (list_he->in_use == false) {
+				if (l) 	pthread_mutex_unlock(l);
 				break;
+			}
 			
 			rv = reduce_fn(	SHASH_ELEM_KEY_PTR(h, list_he), SHASH_ELEM_VALUE_PTR(h, list_he), udata);
-			if (0 != rv)
+			if (0 != rv) {
+				if (l)  pthread_mutex_unlock(l);
 				goto Out;
+			}
 			
 			list_he = list_he->next;
 		};
 
-		// next element in head table
-		he = (shash_elem *) (((uint8_t *)he) + SHASH_ELEM_SZ(h));
+		if (l)	pthread_mutex_unlock(l);
 
 	}
 Out:
@@ -486,14 +541,19 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 {
 	int rv = 0;
 	
-	if (h->flags & SHASH_CR_MT_BIGLOCK)
-		pthread_mutex_lock(&h->biglock);
-
-	shash_elem *he = h->table;
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
+		pthread_mutex_lock( &h->biglock);
+	}
 	
 	for (uint i=0; i<h->table_len ; i++) {
 
-		shash_elem *list_he = he;
+		pthread_mutex_t *l = 0;
+		if (h->flags & SHASH_CR_MT_MANYLOCK) {
+			l = &(h->lock_table[i]);
+			pthread_mutex_lock( l );
+		}
+		
+		shash_elem *list_he = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * i));
 		shash_elem *prev_he = 0;
 		
 		while (list_he) {
@@ -536,6 +596,7 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 				rv = 0;
 			}
 			else if (0 != rv) {
+				if (l)	pthread_mutex_unlock(l);
 				goto Out;
 			}
 			else { // don't delete, just forward everything
@@ -544,13 +605,10 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 			}	
 		};
 		
-		// next element in head table
-		he = (shash_elem *) (((uint8_t *)he) + SHASH_ELEM_SZ(h));
+		if (l) pthread_mutex_unlock(l);
 	}
 
 Out:
-	if (h->flags & SHASH_CR_MT_BIGLOCK)
-		pthread_mutex_unlock(&h->biglock);
 
 	return(rv);
 }
@@ -573,9 +631,15 @@ shash_destroy(shash *h)
 		e_table = (shash_elem *) (((uint8_t *)e_table) + SHASH_ELEM_SZ(h));
 	}
 
-	if (h->flags & SHASH_CR_MT_BIGLOCK)
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_destroy(&h->biglock);
-
+	}
+	if (h->flags & SHASH_CR_MT_MANYLOCK) {
+		for (uint i=0;i<h->table_len;i++) {
+			pthread_mutex_destroy(&(h->lock_table[i]));
+		}
+		free(h->lock_table);
+	}
 
 	free(h->table);
 	free(h);	

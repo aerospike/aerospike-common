@@ -34,18 +34,40 @@ rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint
 	h->h_fn = h_fn;
 	h->d_fn = d_fn;
 
+	if ((flags & RCHASH_CR_MT_BIGLOCK) && (flags & RCHASH_CR_MT_MANYLOCK)) {
+		*h_r = 0;
+		return(RCHASH_ERR);
+	}
+
+	
 	h->table = calloc(sz, sizeof(rchash_elem));
 	if (!h->table) {
 		free(h);
 		return(RCHASH_ERR);
 	}
 
-	if (flags & RCHASH_CR_MT_BIGLOCK || flags & RCHASH_CR_MT_LOCKPOOL) {
+	if (flags & RCHASH_CR_MT_BIGLOCK) {
 		if (0 != pthread_mutex_init ( &h->biglock, 0) ) {
 			free(h->table); free(h);
-			return(RCHASH_ERR);
+			return(SHASH_ERR);
 		}
 	}
+	else
+		memset( &h->biglock, 0, sizeof( h->biglock ) );
+	
+	if (flags & RCHASH_CR_MT_MANYLOCK) {
+		h->lock_table = malloc( sizeof(pthread_mutex_t) * sz);
+		if (! h->lock_table) {
+			free(h);
+			*h_r = 0;
+			return(SHASH_ERR);
+		}
+		for (uint i=0;i<sz;i++) {
+			pthread_mutex_init( &(h->lock_table[i]), 0 );
+		}
+	}
+	else
+		h->lock_table = 0;
 
 	*h_r = h;
 
@@ -77,9 +99,14 @@ rchash_put(rchash *h, void *key, uint32_t key_len, void *object)
 	uint hash = h->h_fn(key, key_len);
 	hash %= h->table_len;
 
+	pthread_mutex_t		*l = 0;
 	if (h->flags & RCHASH_CR_MT_BIGLOCK) {
-		pthread_mutex_lock(&h->biglock);
+		l = &h->biglock;
 	}
+	else if (h->flags & RCHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
 		
 	rchash_elem *e = (rchash_elem *) ( ((uint8_t *)h->table) + (sizeof(rchash_elem) * hash));	
 
@@ -96,6 +123,7 @@ rchash_put(rchash *h, void *key, uint32_t key_len, void *object)
 #ifdef DEBUG
 		if (cf_rc_count(e->object) < 1) {
 			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
+			if (l)		pthread_mutex_unlock(l);
 			return(RCHASH_ERR);
 		}
 #endif		
@@ -103,8 +131,7 @@ rchash_put(rchash *h, void *key, uint32_t key_len, void *object)
 			 ( memcmp(e->key, key, key_len) == 0) ) {
 			rchash_free(h,e->object);
 			e->object = object;
-			if (h->flags & RCHASH_CR_MT_BIGLOCK)
-				pthread_mutex_unlock(&h->biglock);
+			if (l)	pthread_mutex_unlock(l);
 			return(RCHASH_OK);
 		}
 		e = e->next;
@@ -122,8 +149,7 @@ Copy:
 	e->object = object;
 
 	h->elements++;
-	if (h->flags & RCHASH_CR_MT_BIGLOCK) 
-		pthread_mutex_unlock(&h->biglock);
+	if (l)		pthread_mutex_unlock(l);
 	return(RCHASH_OK);	
 
 }
@@ -147,9 +173,14 @@ rchash_put_unique(rchash *h, void *key, uint32_t key_len, void *object)
 	uint hash = h->h_fn(key, key_len);
 	hash %= h->table_len;
 
+	pthread_mutex_t		*l = 0;
 	if (h->flags & RCHASH_CR_MT_BIGLOCK) {
-		pthread_mutex_lock(&h->biglock);
+		l = &h->biglock;
 	}
+	else if (h->flags & RCHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
 		
 	rchash_elem *e = (rchash_elem *) ( ((uint8_t *)h->table) + (sizeof(rchash_elem) * hash));	
 
@@ -165,12 +196,13 @@ rchash_put_unique(rchash *h, void *key, uint32_t key_len, void *object)
 #ifdef DEBUG
 		if (cf_rc_count(e->object) < 1) {
 			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
+			if (l)	pthread_mutex_unlock(l);
 			return(RCHASH_ERR);
 		}
 #endif		
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
-			pthread_mutex_unlock(&h->biglock);
+			if (l) pthread_mutex_unlock(l);
 			return(RCHASH_ERR_FOUND);
 		}
 		e = e->next;
@@ -188,8 +220,7 @@ Copy:
 	e->object = object;
 
 	h->elements++;
-	if (h->flags & RCHASH_CR_MT_BIGLOCK) 
-		pthread_mutex_unlock(&h->biglock);
+	if (l)		pthread_mutex_unlock(l);
 	return(RCHASH_OK);	
 
 }
@@ -204,8 +235,14 @@ rchash_get(rchash *h, void *key, uint32_t key_len, void **object)
 	uint hash = h->h_fn(key, key_len);
 	hash %= h->table_len;
 
-	if (h->flags & RCHASH_CR_MT_BIGLOCK)
-		pthread_mutex_lock(&h->biglock);
+	pthread_mutex_t		*l = 0;
+	if (h->flags & RCHASH_CR_MT_BIGLOCK) {
+		l = &h->biglock;
+	}
+	else if (h->flags & RCHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
 	
 	rchash_elem *e = (rchash_elem *) ( ((byte *)h->table) + (sizeof(rchash_elem) * hash));	
 
@@ -213,6 +250,7 @@ rchash_get(rchash *h, void *key, uint32_t key_len, void **object)
 #ifdef DEBUG
 		if (cf_rc_count(e->object) < 1) {
 			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
+			if (l)	pthread_mutex_unlock(l);
 			return(RCHASH_ERR);
 		}
 #endif		
@@ -229,8 +267,8 @@ rchash_get(rchash *h, void *key, uint32_t key_len, void **object)
 	rv = RCHASH_ERR_NOTFOUND;
 	
 Out:
-	if (h->flags & RCHASH_CR_MT_BIGLOCK)
-		pthread_mutex_unlock(&h->biglock);
+	if (l)
+		pthread_mutex_unlock(l);
 
 	return(rv);
 					
@@ -246,9 +284,14 @@ rchash_delete(rchash *h, void *key, uint32_t key_len)
 	hash %= h->table_len;
 	int rv = RCHASH_ERR;
 
+	pthread_mutex_t		*l = 0;
 	if (h->flags & RCHASH_CR_MT_BIGLOCK) {
-		pthread_mutex_lock(&h->biglock);
+		l = &h->biglock;
 	}
+	else if (h->flags & RCHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
 		
 	rchash_elem *e = (rchash_elem *) ( ((uint8_t *)h->table) + (sizeof(rchash_elem) * hash));	
 
@@ -266,6 +309,7 @@ rchash_delete(rchash *h, void *key, uint32_t key_len)
 #ifdef DEBUG
 		if (cf_rc_count(e->object) < 1) {
 			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
+			if (l)	pthread_mutex_unlock(l);
 			return(RCHASH_ERR);
 		}
 #endif		
@@ -304,8 +348,7 @@ rchash_delete(rchash *h, void *key, uint32_t key_len)
 	rv = RCHASH_ERR_NOTFOUND;
 
 Out:
-	if (h->flags & RCHASH_CR_MT_BIGLOCK) 
-		pthread_mutex_unlock(&h->biglock);
+	if (l)	pthread_mutex_unlock(l);
 	return(rv);	
 	
 
@@ -320,12 +363,17 @@ rchash_reduce(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 	
 	if (h->flags & RCHASH_CR_MT_BIGLOCK)
 		pthread_mutex_lock(&h->biglock);
-
-	rchash_elem *he = h->table;
 	
 	for (uint i=0; i<h->table_len ; i++) {
 
-		rchash_elem *list_he = he;
+		pthread_mutex_t *l = 0;
+		if (h->flags & RCHASH_CR_MT_MANYLOCK) {
+			l = &(h->lock_table[i]);
+			pthread_mutex_lock( l );
+		}
+
+		rchash_elem *list_he = (rchash_elem *) ( ((uint8_t *)h->table) + (sizeof(rchash_elem) * i));	
+
 		while (list_he) {
 			
 			// 0 length means an unused head pointer - break
@@ -338,13 +386,16 @@ rchash_reduce(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			}
 #endif		
 
-			if (0 != reduce_fn(list_he->key, list_he->key_len, list_he->object, udata))
+			if (0 != reduce_fn(list_he->key, list_he->key_len, list_he->object, udata)) {
+				if (l)		pthread_mutex_unlock(l);
 				goto Out;
+			}
 			
 			list_he = list_he->next;
 		};
 		
-		he++;
+		if (l)	pthread_mutex_unlock(l);
+		
 	}
 
 Out:	
@@ -364,15 +415,18 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 	if (h->flags & RCHASH_CR_MT_BIGLOCK)
 		pthread_mutex_lock(&h->biglock);
 
-	rchash_elem *he = h->table;
-	
 	for (uint i=0; i<h->table_len ; i++) {
 
-		rchash_elem *list_he = he;
+		pthread_mutex_t *l = 0;
+		if (h->flags & RCHASH_CR_MT_MANYLOCK) {
+			l = &(h->lock_table[i]);
+			pthread_mutex_lock( l );
+		}
+		
+		rchash_elem *list_he = (rchash_elem *) ( ((uint8_t *)h->table) + (sizeof(rchash_elem) * i));
 		rchash_elem *prev_he = 0;
 		int rv;
 
-		
 		while (list_he) {
 			// This kind of structure might have the head as an empty element,
 			// that's a signal to move along
@@ -382,6 +436,7 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 #ifdef DEBUG
 			if (cf_rc_count(list_he->object) < 1) {
 				cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, list_he->object);
+				if (l)	pthread_mutex_unlock(l);
 				return(RCHASH_ERR);
 			}
 #endif		
@@ -427,7 +482,8 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 				
 		};
 		
-		he++;
+		if (l) pthread_mutex_unlock(l);
+		
 	}
 
 	if (h->flags & RCHASH_CR_MT_BIGLOCK)
@@ -454,9 +510,15 @@ rchash_destroy(rchash *h)
 		e_table = (rchash_elem *) ( ((byte *) e_table) + sizeof(rchash_elem) );
 	}
 
-	if (h->flags & RCHASH_CR_MT_BIGLOCK)
+	if (h->flags & RCHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_destroy(&h->biglock);
-
+	}
+	if (h->flags & RCHASH_CR_MT_MANYLOCK) {
+		for (uint i=0;i<h->table_len;i++) {
+			pthread_mutex_destroy(&(h->lock_table[i]));
+		}
+		free(h->lock_table);
+	}
 
 	free(h->table);
 	free(h);	

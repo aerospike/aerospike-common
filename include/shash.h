@@ -69,6 +69,7 @@ typedef struct shash_s {
 	uint table_len; // number of elements currently in the table
 	void *table;
 	pthread_mutex_t		biglock;
+	pthread_mutex_t		*lock_table;
 } shash;
 
 #define SHASH_ELEM_SZ(_h) ( sizeof(shash_elem) + (_h->key_len) + (_h->value_len) )
@@ -76,7 +77,7 @@ typedef struct shash_s {
 #define SHASH_CR_RESIZE 0x01   // support resizes (will sometimes hang for long periods)
 #define SHASH_CR_GRAB   0x02   // support 'grab' call (requires more memory)
 #define SHASH_CR_MT_BIGLOCK 0x04 // support multithreaded access with a single big lock
-#define SHASH_CR_MT_LOCKPOOL 0x08 // support multithreaded access with a pool of object loccks
+#define SHASH_CR_MT_MANYLOCK 0x08 // support multithreaded access with a pool of object loccks
 
 #define SHASH_REDUCE_DELETE (1) // indicate that a delete should be done during the reduction
 

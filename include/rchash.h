@@ -25,7 +25,7 @@
 #define RCHASH_CR_RESIZE 0x01   // support resizes (will sometimes hang for long periods)
 #define RCHASH_CR_GRAB   0x02   // support 'grab' call (requires more memory)
 #define RCHASH_CR_MT_BIGLOCK 0x04 // support multithreaded access with a single big lock
-#define RCHASH_CR_MT_LOCKPOOL 0x08 // support multithreaded access with a pool of object loccks
+#define RCHASH_CR_MT_MANYLOCK 0x08 // support multithreaded access with a pool of object loccks
 
 
 /*
@@ -56,7 +56,6 @@ typedef struct rchash_elem_s {
 } rchash_elem;
 
 
-
 typedef struct rchash_s {
 	uint elements;
 	uint32_t key_len;
@@ -67,6 +66,7 @@ typedef struct rchash_s {
 	uint table_len; // number of elements currently in the table
 	void *table;
 	pthread_mutex_t		biglock;
+	pthread_mutex_t		*lock_table;
 } rchash;
 
 #define RCHASH_CR_RESIZE 0x01   // support resizes (will sometimes hang for long periods)
