@@ -610,6 +610,9 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 
 Out:
 
+	if (h->flags & SHASH_CR_MT_BIGLOCK)
+		pthread_mutex_unlock( &h->biglock);
+	
 	return(rv);
 }
 
