@@ -567,25 +567,39 @@ cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock)
 
 
 /* cf_rb_delete
- * Remove a node from a red-black tree, returning 0 or any return value from
- * the provided value destructor function */
-uint64_t
-cf_rb_delete(cf_rb_tree *tree, cf_digest key)
+ * Remove a node from a red-black tree, 
+ * returning 0 or any return value from  the provided value destructor function
+ * return value:
+ *   0 means success
+ *   -1 means internal failure
+ *   -2 means value not found
+ */
+int
+cf_rb_delete(cf_rb_tree *tree, cf_digest key, uint64_t *destructor_value)
 {
     cf_rb_node *r, *s, *t;
-	uint64_t rv = 0;
+	int rv = 0;
+
+	*destructor_value = 0;
 
     /* Lock the tree */
-    if (0 != pthread_mutex_lock(&tree->lock))
+    if (0 != pthread_mutex_lock(&tree->lock)) {
 		cf_warning(CF_RB, "unable to acquire tree lock: %s", cf_strerror(errno));
+		return(-1);
+	}
 
     /* Find a node with the matching key; if none exists, eject immediately */
-    if (NULL == (r = cf_rb_search_lockless(tree, key)))
+    if (NULL == (r = cf_rb_search_lockless(tree, key))) {
+		rv = -2;
         goto release;
+	}
 
 	/* Hold the value lock */
-	if (0 != pthread_mutex_lock(&r->VALUE_LOCK))
+	if (0 != pthread_mutex_lock(&r->VALUE_LOCK)) {
 		cf_warning(CF_RB, "unable to acquire value lock: %s", cf_strerror(errno));
+		rv = -1;
+		goto release;
+	}
 
     s = ((tree->sentinel == r->left) || (tree->sentinel == r->right)) ? r : cf_rb_successor(tree, r);
     t = (tree->sentinel == s->left) ? s->right : s->left;
@@ -617,7 +631,7 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
 
 		/* Consume the node */
 		if (tree->destructor)
-	        rv = tree->destructor(r->value);
+	        *destructor_value = tree->destructor(r->value);
 		else
 			free(r->value);
 
@@ -630,7 +644,7 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
     } else {
 		/* Destroy the node contents */
 		if (tree->destructor)
-	        rv = tree->destructor(s->value);
+	        *destructor_value = tree->destructor(s->value);
 		else
 			free(s->value);
 		if (0 != pthread_mutex_unlock(&s->VALUE_LOCK))
