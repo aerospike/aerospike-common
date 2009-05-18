@@ -5,8 +5,8 @@ DEPTH = ../..
 include $(DEPTH)/make_in/Makefile.in
 
 DIR_INCLUDE = ../include
-DIR_OBJECT = ../obj
-DIR_TARGET = ../lib
+DIR_OBJECT = ../obj/x64
+DIR_TARGET = ../lib64
 
 HEADERS = alloc.h atomic.h cf.h digest.h fault.h lock.h queue.h rb.h socket.h msg.h rchash.h shash.h dynbuf.h timer.h ll.h vector.h cf_str.h
 SOURCES = alloc.c fault.c queue.c rb.c socket.c id.c msg.c clock.c rchash.c sort.c shash.c cf_str.c dynbuf.c timer.c ll.c vector.c daemon.c
@@ -35,4 +35,4 @@ libcf: $(OBJECTS)
 -include $(DEPENDENCIES)
 
 $(DIR_OBJECT)/%.o: %.c
-	$(CC) $(CFLAGS) -MMD -o $@ -c $(INCLUDES) $<
+	$(CC) $(CFLAGS_64) -MMD -o $@ -c $(INCLUDES) $<
