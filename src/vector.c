@@ -14,12 +14,12 @@
 
 
 
-vector *
-vector_create( uint32_t value_len, uint32_t init_sz, uint flags)
+cf_vector *
+cf_vector_create( uint32_t value_len, uint32_t init_sz, uint flags)
 {
-	vector *v;
+	cf_vector *v;
 
-	v = malloc(sizeof(vector));
+	v = malloc(sizeof(cf_vector));
 	if (!v)	return(0);
 
 	v->value_len = value_len;
@@ -42,7 +42,7 @@ vector_create( uint32_t value_len, uint32_t init_sz, uint flags)
 }
 
 int
-vector_init(vector *v, uint32_t value_len, uint32_t init_sz, uint flags)
+cf_vector_init(cf_vector *v, uint32_t value_len, uint32_t init_sz, uint flags)
 {
 	v->value_len = value_len;
 	v->flags = flags;
@@ -64,7 +64,7 @@ vector_init(vector *v, uint32_t value_len, uint32_t init_sz, uint flags)
 }
 
 void
-vector_init_smalloc(vector *v, uint32_t value_len, uint8_t *sbuf, int sbuf_sz, uint flags)
+cf_vector_init_smalloc(cf_vector *v, uint32_t value_len, uint8_t *sbuf, int sbuf_sz, uint flags)
 {
 	v->value_len = value_len;
 	v->flags = flags;
@@ -81,7 +81,7 @@ vector_init_smalloc(vector *v, uint32_t value_len, uint8_t *sbuf, int sbuf_sz, u
 
 
 void
-vector_destroy(vector *v)
+cf_vector_destroy(cf_vector *v)
 {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		pthread_mutex_destroy(&v->LOCK);
@@ -90,7 +90,7 @@ vector_destroy(vector *v)
 }
 
 static int
-vector_resize(vector *v, uint32_t new_sz)
+cf_vector_resize(cf_vector *v, uint32_t new_sz)
 {
 	if (v->flags & VECTOR_FLAG_BIGRESIZE) {
 		if (new_sz < 50)	new_sz = 50;
@@ -114,12 +114,12 @@ vector_resize(vector *v, uint32_t new_sz)
 
 
 int
-vector_set(vector *v, uint32_t index, void *value)
+cf_vector_set(cf_vector *v, uint32_t index, void *value)
 {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		pthread_mutex_lock(&v->LOCK);
 	if (index >= v->alloc_len)
-		if (0 != vector_resize(v, index+1))	return(-1);
+		if (0 != cf_vector_resize(v, index+1))	return(-1);
 	memcpy(v->vector + (index * v->value_len), value, v->value_len);
 	if (index > v->len)	v->len = index;
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
@@ -128,10 +128,10 @@ vector_set(vector *v, uint32_t index, void *value)
 }
 
 int
-vector_append_lockfree(vector *v, void *value)
+cf_vector_append_lockfree(cf_vector *v, void *value)
 {
 	if (v->len + 1 >= v->alloc_len)
-		if (0 != vector_resize(v, v->len + 2))	return(-1);
+		if (0 != cf_vector_resize(v, v->len + 2))	return(-1);
 	memcpy(v->vector + (v->len * v->value_len), value, v->value_len);
 	v->len ++;
 	return(0);
@@ -141,19 +141,19 @@ vector_append_lockfree(vector *v, void *value)
 
 
 int
-vector_append(vector *v, void *value)
+cf_vector_append(cf_vector *v, void *value)
 {
 	int rv;
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		pthread_mutex_lock(&v->LOCK);
-	rv = vector_append_lockfree(v, value);
+	rv = cf_vector_append_lockfree(v, value);
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		pthread_mutex_unlock(&v->LOCK);
 	return(rv);
 }
 
 int
-vector_append_unique(vector *v, void *value)
+cf_vector_append_unique(cf_vector *v, void *value)
 {
 	int rv=0;
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
@@ -166,7 +166,7 @@ vector_append_unique(vector *v, void *value)
 		}
 		_b += _l;
 	}
-	rv = vector_append_lockfree(v, value);
+	rv = cf_vector_append_lockfree(v, value);
 Found:	
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		pthread_mutex_unlock(&v->LOCK);
@@ -176,7 +176,7 @@ Found:
 // Copy the vector element into the pointer I give
 
 int
-vector_get(vector *v, uint32_t index, void *value_p)
+cf_vector_get(cf_vector *v, uint32_t index, void *value_p)
 {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		pthread_mutex_lock(&v->LOCK);
@@ -189,7 +189,7 @@ vector_get(vector *v, uint32_t index, void *value_p)
 }
 
 void *
-vector_getp(vector *v, uint32_t index)
+cf_vector_getp(cf_vector *v, uint32_t index)
 {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		pthread_mutex_lock(&v->LOCK);
@@ -202,7 +202,7 @@ vector_getp(vector *v, uint32_t index)
 }
 
 void *
-vector_getp_vlock(vector *v, uint32_t index, pthread_mutex_t **vlock)
+cf_vector_getp_vlock(cf_vector *v, uint32_t index, pthread_mutex_t **vlock)
 {
 	if (!v->flags & VECTOR_FLAG_BIGLOCK)
 		return(0);
@@ -214,7 +214,7 @@ vector_getp_vlock(vector *v, uint32_t index, pthread_mutex_t **vlock)
 }
 
 int
-vector_delete(vector *v, uint32_t index)
+cf_vector_delete(cf_vector *v, uint32_t index)
 {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		pthread_mutex_lock(&v->LOCK);
@@ -235,7 +235,7 @@ vector_delete(vector *v, uint32_t index)
 }
 
 int
-vector_delete_range(vector *v, uint32_t idx_start, uint32_t idx_end)
+cf_vector_delete_range(cf_vector *v, uint32_t idx_start, uint32_t idx_end)
 {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		pthread_mutex_lock(&v->LOCK);
@@ -262,7 +262,7 @@ vector_delete_range(vector *v, uint32_t idx_start, uint32_t idx_end)
 }
 
 void
-vector_compact(vector *v)
+cf_vector_compact(cf_vector *v)
 {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		pthread_mutex_lock(&v->LOCK);

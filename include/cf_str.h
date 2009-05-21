@@ -18,5 +18,5 @@ extern unsigned int cf_str_itoa_u32(uint32_t value, char *s, int radix);
 // The splitting is destructive
 // The pointers will be added to the end of vector *v
 // the vector better be created with object size 'void *'
-struct vector_s;
-extern void cf_str_split(char *fmt, char *str, struct vector_s *v);
+struct cf_vector_s;
+extern void cf_str_split(char *fmt, char *str, struct cf_vector_s *v);

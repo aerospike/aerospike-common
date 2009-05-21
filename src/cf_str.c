@@ -102,7 +102,7 @@ cf_str_itoa_u32(uint32_t _value, char *_s, int _radix)
 
 
 void
-cf_str_split(char *fmt, char *str, vector *v)
+cf_str_split(char *fmt, char *str, cf_vector *v)
 {
 	char c;
 	char *prev = str;
@@ -110,7 +110,7 @@ cf_str_split(char *fmt, char *str, vector *v)
 		for (uint j=0;fmt[j];j++) {
 			if (fmt[j] == c) {
 				*str = 0;
-				vector_append(v, &prev);
+				cf_vector_append(v, &prev);
 				prev = str+1;
 				break;
 			}
@@ -118,7 +118,7 @@ cf_str_split(char *fmt, char *str, vector *v)
 		str++;
 	}
 	if (prev != str)
-		vector_append(v, &prev);
+		cf_vector_append(v, &prev);
 }
 
 
