@@ -21,8 +21,30 @@
 #include "cf.h"
 
 
+
 void
-cf_process_daemonize()
+cf_process_privsep(uid_t uid, gid_t gid)
+{
+    if ((0 != getuid() || ((uid == getuid()) && (gid == getgid()))))
+        return;
+
+    /* Drop all auxiliary groups */
+    if (0 > setgroups(0, (const gid_t *)0))
+        cf_crash(CF_MISC, CF_GLOBAL, CF_CRITICAL, "setgroups: %s", cf_strerror(errno));
+
+    /* Change privileges */
+    if (0 > setgid(gid))
+        cf_crash(CF_MISC, CF_GLOBAL, CF_CRITICAL, "setgid: %s", cf_strerror(errno));
+    if (0 > setuid(uid))
+        cf_crash(CF_MISC, CF_GLOBAL, CF_CRITICAL, "setuid: %s", cf_strerror(errno));
+
+    return;
+}
+
+
+
+void
+cf_process_daemonize(uid_t uid, gid_t gid)
 {
     int FD;
     char cfile[128];
