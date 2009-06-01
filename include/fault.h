@@ -62,7 +62,8 @@ typedef enum {
 	AS_STORAGE = 30,
 	AS_DRV_MEM = 31,
 	AS_DRV_FS = 32,
-	CF_FAULT_CONTEXT_UNDEF = 33
+	AS_DRV_FILES = 33,
+	CF_FAULT_CONTEXT_UNDEF = 34
 } cf_fault_context;
 
 /* cf_fault_scope
