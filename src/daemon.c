@@ -18,6 +18,8 @@
 #include <sys/stat.h>
 #include <time.h>
 #include <unistd.h>
+#include <grp.h>
+
 #include "cf.h"
 
 
