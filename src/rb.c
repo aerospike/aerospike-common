@@ -575,12 +575,10 @@ cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock)
  *   -2 means value not found
  */
 int
-cf_rb_delete(cf_rb_tree *tree, cf_digest key, uint64_t *destructor_value)
+cf_rb_delete(cf_rb_tree *tree, cf_digest key)
 {
     cf_rb_node *r, *s, *t;
 	int rv = 0;
-
-	*destructor_value = 0;
 
     /* Lock the tree */
     if (0 != pthread_mutex_lock(&tree->lock)) {
@@ -631,7 +629,7 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key, uint64_t *destructor_value)
 
 		/* Consume the node */
 		if (tree->destructor)
-	        *destructor_value = tree->destructor(r->value);
+	        tree->destructor(r->value);
 		else
 			free(r->value);
 
@@ -644,7 +642,7 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key, uint64_t *destructor_value)
     } else {
 		/* Destroy the node contents */
 		if (tree->destructor)
-	        *destructor_value = tree->destructor(s->value);
+	        tree->destructor(s->value);
 		else
 			free(s->value);
 		if (0 != pthread_mutex_unlock(&s->VALUE_LOCK))
