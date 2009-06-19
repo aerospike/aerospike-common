@@ -170,12 +170,12 @@ cf_socket_init_svc(cf_socket_cfg *s)
 
 	/* Create the socket */
 	if (0 > (s->sock = socket(AF_INET, s->proto, 0))) {
-		cf_warning(CF_SOCKET, CF_PROCESS, "socket: %s", cf_strerror(errno));
+		cf_warning(CF_SOCKET, "socket: %s", cf_strerror(errno));
 		return(errno);
 	}
 	s->saddr.sin_family = AF_INET;
 	if (1 != inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr)) {
-        cf_warning(CF_SOCKET, CF_PROCESS, "inet_pton: %s", cf_strerror(errno));
+        cf_warning(CF_SOCKET, "inet_pton: %s", cf_strerror(errno));
         return(errno);
 	}
     s->saddr.sin_port = htons(s->port);
