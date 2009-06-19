@@ -28,6 +28,7 @@ struct cf_socket_cfg_t {
 	int port;
 	bool reuse_addr; // set if you want 'reuseaddr' for server socket setup
 					 // not recommended for production use, rather nice for debugging
+	int proto;
 
 	int sock;
 	struct sockaddr_in saddr;

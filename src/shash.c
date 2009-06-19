@@ -211,7 +211,8 @@ shash_get(shash *h, void *key, void *value)
 	
 	do {
 		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
-			memcpy(value, SHASH_ELEM_VALUE_PTR(h, e), h->value_len);
+            if (NULL != value)
+			    memcpy(value, SHASH_ELEM_VALUE_PTR(h, e), h->value_len);
 			rv = SHASH_OK; 
 			goto Out;
 		}

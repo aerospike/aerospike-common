@@ -33,9 +33,9 @@ cf_sockaddr_convertto(const struct sockaddr_in *src, cf_sockaddr *dst)
 void
 cf_sockaddr_convertfrom(const cf_sockaddr src, struct sockaddr_in *dst)
 {
-	dst->sin_family = AF_INET;
 	byte *b = (byte *) &src;
-	
+
+	dst->sin_family = AF_INET;
 	memcpy(&dst->sin_addr.s_addr,b,4);
 	memcpy(&dst->sin_port, b+4, 2);
 }
@@ -110,14 +110,19 @@ int
 cf_socket_recvfrom(int sock, void *buf, size_t buflen, int flags, cf_sockaddr *from)
 {
 	int i;
-	struct sockaddr_in f;
+	struct sockaddr_in f, *fp = NULL;
 	socklen_t fl = sizeof(f);
 
-	if (0 >= (i = recvfrom(sock, buf, buflen, flags, (struct sockaddr *) &f, &fl))) {
-		cf_warning(CF_SOCKET, "recvfrom() failed: %s", cf_strerror(errno));
-	}
+    if (from) {
+        fp = &f;
+        f.sin_family = AF_INET;
+    }
 
-	cf_sockaddr_convertto( &f, from); 
+	if (0 >= (i = recvfrom(sock, buf, buflen, flags, (struct sockaddr *)fp, &fl)))
+		cf_warning(CF_SOCKET, "recvfrom() failed: %s", cf_strerror(errno));
+
+    if (from)
+	    cf_sockaddr_convertto(fp, from); 
 
 	return(i);
 }
@@ -129,11 +134,14 @@ int
 cf_socket_sendto(int sock, void *buf, size_t buflen, int flags, cf_sockaddr to)
 {
 	int i;
-	struct sockaddr_in s;
+	struct sockaddr_in s, *sp = NULL;
+
+    if (to) {
+        sp = &s;
+	    cf_sockaddr_convertfrom(to, sp);
+	}
 	
-	cf_sockaddr_convertfrom(to, &s);
-	
-	if (0 >= (i = sendto(sock, buf, buflen, flags, (struct sockaddr *) &s, sizeof(const struct sockaddr))))
+	if (0 >= (i = sendto(sock, buf, buflen, flags, (struct sockaddr *)sp, sizeof(const struct sockaddr))))
 		cf_info(CF_SOCKET, "send() failed: %s", cf_strerror(errno));
 
 	return(i);
@@ -161,14 +169,17 @@ cf_socket_init_svc(cf_socket_cfg *s)
 	delay.tv_nsec = 0;
 
 	/* Create the socket */
-	if (0 > (s->sock = socket(AF_INET, SOCK_STREAM, 0))) {
-		cf_crash(CF_SOCKET, CF_PROCESS, "socket: %s", cf_strerror(errno));
+	if (0 > (s->sock = socket(AF_INET, s->proto, 0))) {
+		cf_warning(CF_SOCKET, CF_PROCESS, "socket: %s", cf_strerror(errno));
 		return(errno);
 	}
 	s->saddr.sin_family = AF_INET;
-	inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr);
-	s->saddr.sin_port = htons(s->port);
-	
+	if (1 != inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr)) {
+        cf_warning(CF_SOCKET, CF_PROCESS, "inet_pton: %s", cf_strerror(errno));
+        return(errno);
+	}
+    s->saddr.sin_port = htons(s->port);
+
 	if (s->reuse_addr) {
 		int v = 1;
 		setsockopt(s->sock, SOL_SOCKET, SO_REUSEADDR, &v, sizeof(v) );
@@ -190,7 +201,7 @@ cf_socket_init_svc(cf_socket_cfg *s)
 	}
 
 	/* Listen for connections */
-	if (0 > listen(s->sock, 512)) {
+	if ((SOCK_STREAM == s->proto) && (0 > listen(s->sock, 512))) {
 		cf_warning(CF_SOCKET, "listen: %s", cf_strerror(errno));
 		return(errno);
 	}
@@ -206,7 +217,7 @@ cf_socket_init_client(cf_socket_cfg *s)
 {
 	cf_assert(s, CF_SOCKET, CF_PROCESS, CF_CRITICAL, "invalid argument");
 
-	if (0 > (s->sock = socket(AF_INET, SOCK_STREAM, 0))) {
+	if (0 > (s->sock = socket(AF_INET, s->proto, 0))) {
 		cf_warning(CF_SOCKET, "socket: %s", cf_strerror(errno));
 		return(errno);
 	}
@@ -216,7 +227,7 @@ cf_socket_init_client(cf_socket_cfg *s)
 
 	memset(&s->saddr,0,sizeof(s->saddr));
 	s->saddr.sin_family = AF_INET;
-	if (0 >= inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr)) {
+    if (0 >= inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr)) {
 		cf_warning(CF_SOCKET, "inet_pton: %s", cf_strerror(errno));
 		close(s->sock);
 		return(errno);
@@ -240,7 +251,6 @@ cf_socket_init_client(cf_socket_cfg *s)
 int
 cf_socket_connect_nb(cf_sockaddr so, int *fd_r)
 {
-
 	struct sockaddr_in sa;
 	cf_sockaddr_convertfrom(so, &sa);
 	
@@ -254,7 +264,7 @@ cf_socket_connect_nb(cf_sockaddr so, int *fd_r)
 	fcntl(fd, F_SETFD, 1);
 
 	cf_socket_set_nonblocking(fd);
-	
+
 	if (0 > (connect(fd, (struct sockaddr *)&sa, sizeof(sa)))) {
 		if (errno != EINPROGRESS) {
 			cf_warning(CF_SOCKET, "socket connect error: %d %s", errno, cf_strerror(errno));

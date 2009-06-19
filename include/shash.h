@@ -101,7 +101,8 @@ shash_put(shash *h, void *key, void *value);
 int
 shash_put_unique(shash *h, void *key, void *value);
 
-/* call with the buffer you want filled
+/* call with the buffer you want filled; if you just want to check for
+ * existence, call with value set to NULL
  */
 int
 shash_get(shash *h, void *key, void *value);
