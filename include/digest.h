@@ -28,4 +28,25 @@ typedef struct { uint8_t digest[CF_DIGEST_KEY_SZ]; } cf_digest;
 
 /* cf_digest_compute
  * Compute the digest of an input */
-#define cf_digest_compute(_u, _v, _w) RIPEMD160((_u), (_v), (unsigned char *)(_w.digest))
+static inline void
+cf_digest_compute(void *data, size_t len, cf_digest *d)
+{
+	RIPEMD160(data, len, (unsigned char *) d->digest);
+}
+
+
+// Compute a digest of two parts
+// (often the set and the key)
+
+static inline void
+cf_digest_compute2(void *data1, size_t len1, void *data2, size_t len2, cf_digest *d)
+{
+	RIPEMD160_CTX c;
+	RIPEMD160_Init(&c);
+	RIPEMD160_Update(&c, data1, len1);
+	RIPEMD160_Update(&c, data2, len2);
+	RIPEMD160_Final( (unsigned char *)(d->digest), &c);
+	
+}
+
+
