@@ -359,10 +359,16 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "\n");
 
 	/* Route the message to the correct destinations */
-	for (int i = 0; i < cf_fault_sinks_inuse; i++) {
-		if ((severity <= cf_fault_sinks[i].limit[context]) || (CF_CRITICAL == severity)) {
-			if (0 >= write(cf_fault_sinks[i].fd, mbuf, strlen(mbuf))) {
-				fprintf(stderr, "internal failure in fault message write: %s\n", cf_strerror(errno));
+	if (0 == cf_fault_sinks_inuse) {
+	    /* If no fault sinks are defined, use stderr for critical messages */
+		if (CF_CRITICAL == severity)
+			fprintf(stderr, "%s", mbuf);
+	} else {
+		for (int i = 0; i < cf_fault_sinks_inuse; i++) {
+			if ((severity <= cf_fault_sinks[i].limit[context]) || (CF_CRITICAL == severity)) {
+				if (0 >= write(cf_fault_sinks[i].fd, mbuf, strlen(mbuf))) {
+					fprintf(stderr, "internal failure in fault message write: %s\n", cf_strerror(errno));
+				}
 			}
 		}
 	}
