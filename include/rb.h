@@ -20,7 +20,7 @@
 
 /* cf_rb_value_destructor()
  * A destructor function prototype for a value */
-typedef void (*cf_rb_value_destructor) (void *v);
+typedef void (*cf_rb_value_destructor) (void *v, void *udata);
 
 
 /* cf_rb_node
@@ -63,11 +63,11 @@ extern cf_rb_node *cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *val
 extern cf_rb_node *cf_rb_search(cf_rb_tree *tree, cf_digest key);
 extern cf_rb_node *cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock);
 // delete- 0 is ok, -1 is fail, -2 is key not found
-extern int cf_rb_delete(cf_rb_tree *tree, cf_digest key);
+extern int cf_rb_delete(cf_rb_tree *tree, cf_digest key, void *destructor_udata);
 extern cf_rb_tree *cf_rb_create(cf_rb_value_destructor destructor);
-extern void cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r);
+extern void cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r, void *destructor_udata);
 #define cf_rb_reserve(_t) cf_rc_reserve((_t))
-extern int cf_rb_release(cf_rb_tree *tree);
+extern int cf_rb_release(cf_rb_tree *tree, void *destructor_udata);
 
 extern uint32_t cf_rb_size(cf_rb_tree *tree); // number of elements
 typedef void (*cf_rb_reduce_fn) (cf_digest digest, void *value, void *udata);

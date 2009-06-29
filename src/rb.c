@@ -575,7 +575,7 @@ cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock)
  *   -2 means value not found
  */
 int
-cf_rb_delete(cf_rb_tree *tree, cf_digest key)
+cf_rb_delete(cf_rb_tree *tree, cf_digest key, void *destructor_udata)
 {
     cf_rb_node *r, *s, *t;
 	int rv = 0;
@@ -629,7 +629,7 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
 
 		/* Consume the node */
 		if (tree->destructor)
-	        tree->destructor(r->value);
+	        tree->destructor(r->value, destructor_udata);
 		else
 			free(r->value);
 
@@ -642,7 +642,7 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key)
     } else {
 		/* Destroy the node contents */
 		if (tree->destructor)
-	        tree->destructor(s->value);
+	        tree->destructor(s->value, destructor_udata);
 		else
 			free(s->value);
 		if (0 != pthread_mutex_unlock(&s->VALUE_LOCK))
@@ -704,20 +704,20 @@ cf_rb_create(cf_rb_value_destructor destructor) {
 /* cf_rb_purge
  * Purge a node and, recursively, its children, from a red-black tree */
 void
-cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r)
+cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r, void *destructor_udata)
 {
     /* Don't purge the sentinel */
     if (r == tree->sentinel)
         return;
 
     /* Purge the children */
-    cf_rb_purge(tree, r->left);
-    cf_rb_purge(tree, r->right);
+    cf_rb_purge(tree, r->left, destructor_udata);
+    cf_rb_purge(tree, r->right, destructor_udata);
 
     /* Release this node's memory */
     pthread_mutex_lock(&r->VALUE_LOCK);
     if (tree->destructor)
-        (void)tree->destructor(r->value);
+        (void)tree->destructor(r->value, destructor_udata);
     pthread_mutex_unlock(&r->VALUE_LOCK);
     pthread_mutex_destroy(&r->VALUE_LOCK);
 	// debug thing
@@ -778,14 +778,14 @@ cf_rb_reduce(cf_rb_tree *tree, cf_rb_reduce_fn cb, void *udata)
  * Destroy a red-black tree; return 0 if the tree was destroyed or 1
  * otherwise */
 int
-cf_rb_release(cf_rb_tree *tree)
+cf_rb_release(cf_rb_tree *tree, void *destructor_udata)
 {
 	if (0 != cf_rc_release(tree))
 		return(1);
 
 	/* Purge the tree and all it's ilk */
 	pthread_mutex_lock(&tree->lock);
-    cf_rb_purge(tree, tree->root->left);
+    cf_rb_purge(tree, tree->root->left, destructor_udata);
 
     /* Release the tree's memory */
     free(tree->root);
