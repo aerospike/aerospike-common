@@ -287,7 +287,7 @@ cf_fault_sink_get(char *path)
 int
 cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity)
 {
-	cf_fault_context ctx;
+	cf_fault_context ctx = CF_FAULT_CONTEXT_UNDEF;
 	cf_fault_severity sev = CF_FAULT_SEVERITY_UNDEF;
 
 	for (int i = 0; i < CF_FAULT_SEVERITY_UNDEF; i++) {
