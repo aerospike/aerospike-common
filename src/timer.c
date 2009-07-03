@@ -237,7 +237,8 @@ cf_timer_test()
 	// insert N timer elements, watch them fire
 	for (uint i=0;i<TEST_TIMER_MAX;i++) {
 		g_timer_test_info[i] = (size_t) 0;
-		cf_timer_add(10, cf_timer_test_fn, (void *)i);
+		// Heinous cast required to keep the compiler quiet
+		cf_timer_add(10, cf_timer_test_fn, (void *)((size_t)i));
 		usleep(1000);
 	}
 	cf_info(CF_TIMER, "last timer added: now %"PRIu64,cf_getms());
@@ -259,7 +260,8 @@ cf_timer_test()
 	cf_info(CF_TIMER, " **** setting up for cancel test ***** ");
 	cf_timer_handle *timer_handles[TEST_TIMER_MAX];
 	for (uint i=0;i<TEST_TIMER_MAX;i++) {
-		timer_handles[i] = cf_timer_add(1000, cf_timer_test_fn, (void *) i);
+		// Heinous cast required to keep the compiler quiet
+		timer_handles[i] = cf_timer_add(1000, cf_timer_test_fn, (void *)((size_t)i));
 		usleep(1000);
 	}
 	for (uint i=0;i<TEST_TIMER_MAX;i++) {
