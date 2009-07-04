@@ -100,7 +100,11 @@ cf_vector_resize(cf_vector *v, uint32_t new_sz)
 	uint8_t *_t;
 	if (v->vector == 0 || v->stack_vector) {
 		_t = malloc(new_sz * v->value_len);
-		v->stack_vector = false;
+		if (v->stack_vector) {
+			memcpy(_t, v->vector, v->alloc_len * v->value_len); 
+			v->stack_vector = false;
+		}
+
 	}
 	else
 		_t = realloc(v->vector, (new_sz) * v->value_len);
