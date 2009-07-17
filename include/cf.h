@@ -42,6 +42,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 
 #include "atomic.h"
 #include "alloc.h"
+#include "bits.h"
 #include "digest.h"
 #include "fault.h"
 #include "lock.h"
@@ -56,6 +57,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "ll.h"
 #include "vector.h"
 #include "cf_str.h"
+#include "hist.h"
 
 
 /* cf_hash_fnv
