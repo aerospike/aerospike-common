@@ -72,7 +72,8 @@ static const char *cf_fault_context_strings[] = {
 	"drv_mem",     // 31
 	"drv_fs",      // 32
 	"drv_files",      // 33
-	NULL           // 34
+	"drv_ssd",      // 34
+	NULL           // 35
 };
 
 static const char *cf_fault_severity_strings[] = { "CRITICAL", "WARNING", "INFO", "DEBUG", "DETAIL", NULL };
