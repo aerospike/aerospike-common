@@ -49,4 +49,13 @@ cf_digest_compute2(void *data1, size_t len1, void *data2, size_t len2, cf_digest
 	
 }
 
+static inline uint32_t cf_digest_gethash(cf_digest *d, uint32_t MASK) 
+{
+	return((*(uint32_t *)d->digest) & MASK);
+}
+
+static inline uint32_t cf_digest_gethash_mod(cf_digest *d, uint32_t MOD) 
+{
+	return((*(uint32_t *)d->digest) % MOD);
+}
 
