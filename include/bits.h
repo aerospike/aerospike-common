@@ -31,3 +31,35 @@ static const char LogTable256[] =
 	LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7)
 };
 
+// round a value up to the nearest MODULUS
+
+static inline uint32_t cf_roundup( uint32_t i, uint32_t modulus) {
+	uint32_t t = i % modulus;
+	if (t == 0)	return(i);
+	return(  i + (modulus - t ) );
+}
+
+static inline uint64_t cf_roundup_64( uint64_t i, uint32_t modulus) {
+	uint64_t t = i % modulus;
+	if (t == 0)	return(i);
+	return(  i + (modulus - t ) );
+}
+
+#ifdef MARCH_i686
+
+static inline uint8_t * cf_roundup_p(uint8_t * p, uint32_t modulus) {
+	uint32_t i = (uint32_t ) p;
+	i = cf_roundup(i, modulus);
+	return( (void *) i );
+}
+#elif MARCH_x86_64
+static inline uint8_t * cf_roundup_p(uint8_t * p, uint32_t modulus) {
+	uint64_t i = (uint64_t ) p;
+	i = cf_roundup_64(i, modulus);
+	return( (void *) i );
+}
+#else
+    MISSING ARCHITECTURE
+#endif
+
+
