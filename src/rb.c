@@ -76,6 +76,8 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     cf_rb_node *n, *s, *t, *u;
 
     /* Allocate memory for the new node and set the node parameters */
+	// this could be done later, but doing the malloc ahead of the tree lock
+	// increases parallelism and decreases lock hold times
     if (NULL == (n = (cf_rb_node *)malloc(sizeof(cf_rb_node))))
         return(NULL);
     n->color = CF_RB_RED;
@@ -92,7 +94,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     /* Lock the tree */
 	pthread_mutex_lock(&tree->lock);
 
-    /* Insert the node directly into the tree, via the typical method of
+    /* find the place to insert, via the typical method of
      * binary tree insertion */
     n->left = n->right = tree->sentinel;
     s = tree->root;
