@@ -10,13 +10,14 @@
 
 #include <pthread.h>
 #include "digest.h"
+#include "olock.h"
 
 
 /* SYNOPSIS
  * Normal old red-black trees, guarded by a single mutex
  * */
 
-
+// #define OLOCK
 
 /* cf_rb_value_destructor()
  * A destructor function prototype for a value */
@@ -27,12 +28,15 @@ typedef void (*cf_rb_value_destructor) (void *v, void *udata);
  * A red-black tree node */
 struct cf_rb_node_t
 {
+	// these fields get hit constantly during the iteration
 	enum { CF_RB_BLACK, CF_RB_RED } color;
 	cf_digest key;
-    pthread_mutex_t VALUE_LOCK;
-	void *value;
-
 	struct cf_rb_node_t *left, *right, *parent;
+	// these only when you decend into the node
+#ifndef OLOCK	
+    pthread_mutex_t VALUE_LOCK;
+#endif	
+	void *value;
 };
 typedef struct cf_rb_node_t cf_rb_node;
 
@@ -52,6 +56,9 @@ struct cf_rb_tree_t
 	cf_rb_node *sentinel;
     cf_rb_value_destructor destructor;
 	uint32_t      elements; // no bother in making this atomic, it's not very exact
+#ifdef OLOCK	
+	olock *value_locks;
+#endif	
 };
 typedef struct cf_rb_tree_t cf_rb_tree;
 
