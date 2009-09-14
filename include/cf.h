@@ -58,6 +58,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "vector.h"
 #include "cf_str.h"
 #include "hist.h"
+#include "olock.h"
 
 
 /* cf_hash_fnv
