@@ -718,7 +718,7 @@ cf_rb_create(cf_rb_value_destructor destructor) {
         return(NULL);
 
 #ifdef OLOCK
-	tree->value_locks = olock_create( 128, true );
+	tree->value_locks = olock_create( 16, true );
 #endif
 
 	pthread_mutex_init(&tree->lock, NULL);
