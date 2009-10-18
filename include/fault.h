@@ -64,7 +64,8 @@ typedef enum {
 	AS_DRV_FS = 32,
 	AS_DRV_FILES = 33,
 	AS_DRV_SSD = 34,
-	CF_FAULT_CONTEXT_UNDEF = 35
+	AS_SCAN = 35,
+	CF_FAULT_CONTEXT_UNDEF = 36
 } cf_fault_context;
 
 /* cf_fault_scope

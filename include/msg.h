@@ -22,8 +22,8 @@ typedef enum msg_field_type_t {
 	M_FT_UINT64 = 4,
 	M_FT_STR = 5,
 	M_FT_BUF = 6,
-	M_FT_ARRAY = 7,
-	M_FT_MESSAGE = 8,
+	M_FT_ARRAY_UINT32 = 7,
+	M_FT_ARRAY_UINT64 = 8
 } msg_field_type;
 
 // this is somewhat of a helper, because 
@@ -38,7 +38,8 @@ typedef enum msg_type_t {
 	M_TYPE_TEST = 5,
 	M_TYPE_WRITE = 6,
 	M_TYPE_INFO = 7,
-	M_TYPE_MAX = 8  /* highest + 1 is correct */
+	M_TYPE_SCAN = 8,
+	M_TYPE_MAX = 9  /* highest + 1 is correct */
 } msg_type;
 
 
@@ -61,7 +62,7 @@ typedef msg_field_template msg_template;
 typedef struct msg_field_t {
 	unsigned int 		id; // really probabaly don't need this in the represenation we have
 	msg_field_type 	type; 		// don't actually need this - but leave for faster access
-	int 		field_len;  // used only for str and buf
+	int 		field_len;  // used only for str and buf and int arrays - always bytes
 	bool		is_valid;   // DEBUG - helps return errors on invalid types
 	bool		is_set;     // keep track of whether the field was ever set
 	union {
@@ -71,7 +72,8 @@ typedef struct msg_field_t {
 		int64_t     i64;
 		char 		*str;
 		byte		*buf;
-		struct msg *m; // expansion - allows recursion - but how to describe?
+		uint32_t    *ui32_a;
+		uint64_t    *ui64_a;
 	} u;
 	void 		*free;  // this is a pointer that must be freed on destruction,
 						// where exactly it points is a slight mystery
@@ -152,6 +154,18 @@ extern int msg_set_int64(msg *m, int field_id, const int64_t v);
 extern int msg_set_str(msg *m, int field_id, const char *v, msg_set_type type);
 extern int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, msg_set_type type);
 extern int msg_set_bytearray(msg *m, int field_id, const cf_bytearray *ba);
+
+// Array functions. I'm not sure yet the best metaphore for these, trying a few things out.
+extern int msg_get_uint32_array_size(msg *m, int field_id, int *size);
+extern int msg_get_uint32_array(msg *m, int field_id, const int index, uint32_t *r);
+extern int msg_get_uint64_array_size(msg *m, int field_id, int *size);
+extern int msg_get_uint64_array(msg *m, int field_id, const int index, uint64_t *r);
+
+extern int msg_set_uint32_array_size(msg *m, int field_id, const int size);
+extern int msg_set_uint32_array(msg *m, int field_id, const int index, const uint32_t v);
+extern int msg_set_uint64_array_size(msg *m, int field_id, const int size);
+extern int msg_set_uint64_array(msg *m, int field_id, const int index, const uint64_t v);
+
 
 // A little routine that's good for testing
 extern int msg_compare(const msg *m1, const msg *m2);
