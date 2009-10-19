@@ -41,3 +41,26 @@ extern int cf_dyn_buf_append_uint32(cf_dyn_buf *db, uint32_t i);
 extern int cf_dyn_buf_chomp(cf_dyn_buf *db);
 extern char *cf_dyn_buf_strdup(cf_dyn_buf *db);
 extern void cf_dyn_buf_free(cf_dyn_buf *db);
+
+typedef struct cf_buf_builder_s {
+	size_t	alloc_sz;
+	size_t	used_sz;
+	uint8_t buf[];
+} cf_buf_builder;
+
+extern cf_buf_builder *cf_buf_builder_create();
+extern void cf_buf_builder_free(cf_buf_builder *bb);
+extern int cf_buf_builder_chomp(cf_buf_builder *bb_r);
+// if you use any binary components, this strdup thing is a bad idea
+extern char *cf_buf_builder_strdup(cf_buf_builder *bb_r);
+
+extern int cf_buf_builder_append_string(cf_buf_builder **bb_r, char *s);
+extern int cf_buf_builder_append_char(cf_buf_builder **bb_r, char c);
+extern int cf_buf_builder_append_buf(cf_buf_builder **bb_r, uint8_t *buf, size_t sz);
+extern int cf_buf_builder_append_int(cf_buf_builder **bb_r, int i);
+// these append ASCII versions
+extern int cf_buf_builder_append_uint64_x(cf_buf_builder **bb_r, uint64_t i);  // HEX FORMAT!
+extern int cf_buf_builder_append_uint64(cf_buf_builder **bb_r, uint64_t i);
+extern int cf_buf_builder_append_uint32(cf_buf_builder **bb_r, uint32_t i);
+
+
