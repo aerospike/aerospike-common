@@ -734,7 +734,7 @@ msg_set_str(msg *m, int field_id, const char *v, msg_set_type type)
 
 int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, msg_set_type type)
 {
-	VALIDATE(m, field_id, M_FT_STR);
+	VALIDATE(m, field_id, M_FT_BUF);
 
 	msg_field *mf = &(m->f[field_id]);
 	
