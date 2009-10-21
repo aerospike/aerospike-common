@@ -57,10 +57,16 @@ extern char *cf_buf_builder_strdup(cf_buf_builder *bb_r);
 extern int cf_buf_builder_append_string(cf_buf_builder **bb_r, char *s);
 extern int cf_buf_builder_append_char(cf_buf_builder **bb_r, char c);
 extern int cf_buf_builder_append_buf(cf_buf_builder **bb_r, uint8_t *buf, size_t sz);
-extern int cf_buf_builder_append_int(cf_buf_builder **bb_r, int i);
 // these append ASCII versions
-extern int cf_buf_builder_append_uint64_x(cf_buf_builder **bb_r, uint64_t i);  // HEX FORMAT!
+extern int cf_buf_builder_append_ascii_uint64_x(cf_buf_builder **bb_r, uint64_t i);  // HEX FORMAT!
+extern int cf_buf_builder_append_ascii_uint64(cf_buf_builder **bb_r, uint64_t i);
+extern int cf_buf_builder_append_ascii_uint32(cf_buf_builder **bb_r, uint32_t i);
+extern int cf_buf_builder_append_ascii_int(cf_buf_builder **bb_r, int i);
+// these append network-order bytes
 extern int cf_buf_builder_append_uint64(cf_buf_builder **bb_r, uint64_t i);
 extern int cf_buf_builder_append_uint32(cf_buf_builder **bb_r, uint32_t i);
-
+extern int cf_buf_builder_append_uint16(cf_buf_builder **bb_r, uint16_t i);
+extern int cf_buf_builder_append_uint8(cf_buf_builder **bb_r, uint8_t i);
+// reserve the bytes and give me the handle to the spot reserved
+extern int cf_buf_builder_reserve(cf_buf_builder **bb_r, int sz, uint8_t **buf);
 
