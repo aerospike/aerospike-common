@@ -128,13 +128,13 @@ int
 msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 {
 	if (buflen < 6) {
-		cf_debug(CF_MSG,"msg_parse: but not enough data! will get called again len %d need 6.",buflen);
+		cf_info(CF_MSG,"msg_parse: but not enough data! will get called again len %d need 6.",buflen);
 		return(-2);
 	}
 	uint32_t len = *(uint32_t *) buf;
 	len = ntohl(len) ;
 	if (buflen < len + 6) {
-		cf_debug(CF_MSG,"msg_parse: but not enough data! will get called again. len %d need %d",buflen, (len + 6));
+		cf_info(CF_MSG,"msg_parse: but not enough data! will get called again. buf %p len %d need %d",buf, buflen, (len + 6));
 		return(-2);
 	}
 	buf += 4;
@@ -142,7 +142,7 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 	uint16_t type = *(uint16_t *) buf;
 	type = ntohs(type);
 	if (m->type != type) {
-		cf_debug(CF_MSG,"msg_parse: trying to parse incoming type %d into msg type %d, bad bad",type, m->type);
+		cf_info(CF_MSG,"msg_parse: trying to parse incoming type %d into msg type %d, bad bad",type, m->type);
 		return(-1);
 	}
 	buf += 2;
@@ -158,13 +158,13 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 		// find the field in the message
 		msg_field *mf;
 		if (id >= m->len) {
-			cf_debug(CF_MSG," received message with id greater than current definition, kind of OK, ignoring field");
+			cf_info(CF_MSG," received message with id greater than current definition, kind of OK, ignoring field");
 			mf = 0;
 		}
 		else {
 			mf = &(m->f[id]);
 			if (! mf->is_valid ) {
-				cf_debug(CF_MSG," received message with id no longer valid, kind of OK, ignoring field");
+				cf_info(CF_MSG," received message with id no longer valid, kind of OK, ignoring field");
 				mf = 0;
 			}
 		}
@@ -174,7 +174,7 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 		buf += 4;
 		
 		if (mf && (ft != mf->type)) {
-			cf_debug(CF_MSG," received message with incorrect field type from definition, kind of OK, ignoring field");
+			cf_info(CF_MSG," received message with incorrect field type from definition, kind of OK, ignoring field");
 			mf = 0;
 		}
 		
@@ -312,11 +312,11 @@ msg_get_wire_field_size(const msg_field *mf) {
 			return(8);
 		case M_FT_STR:
 		case M_FT_BUF:
+		case M_FT_ARRAY_UINT32:
+		case M_FT_ARRAY_UINT64:
 			if (mf->field_len >= ( 1 << 24 ))
 				cf_debug(CF_MSG,"field length %d too long, not yet supported", mf->field_len);
 			return(mf->field_len);
-		case M_FT_ARRAY_UINT32:
-		case M_FT_ARRAY_UINT64:
 		default:
 			cf_debug(CF_MSG,"field type not supported, internal error: %d",mf->type);
 	}
@@ -371,13 +371,23 @@ msg_stamp_field(byte *buf, const msg_field *mf)
 			break;
 			
 		case M_FT_STR:
+			flen = mf->field_len;
+			memcpy(buf, mf->u.str, flen); 
+			break;
 		case M_FT_BUF:
 			flen = mf->field_len;
 			memcpy(buf, mf->u.buf, flen); 
 			break;
-			
 		case M_FT_ARRAY_UINT32:
+			flen = mf->field_len;
+			memcpy(buf, mf->u.ui32_a, flen); 
+			break;
+
 		case M_FT_ARRAY_UINT64:
+			flen = mf->field_len;
+			memcpy(buf, mf->u.ui64_a, flen); 
+			break;
+			
 		default:
 			cf_debug(CF_MSG,"field type not supported, internal error: %d",mf->type);
 			return(0);
@@ -387,6 +397,9 @@ msg_stamp_field(byte *buf, const msg_field *mf)
 	buf[-3] = (flen >> 16) & 0xff;
 	buf[-2] = (flen >> 8) & 0xff;
 	buf[-1] = flen & 0xff;
+	
+	if (flen > 1024 * 1024)
+		fprintf(stderr, "large field: size %zd\n",flen);
 
 	return(6 + flen);
 }
@@ -416,7 +429,8 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 	
 	// validate the size
 	if (sz > *buflen) {
-//		cf_debug(CF_MSG,"msg_fillbuf: passed in size too small want %d have %d",sz,*buflen);
+		cf_debug(CF_MSG,"msg_fillbuf: passed in size too small want %d have %d",sz,*buflen);
+		*buflen = sz; // tell the caller how much size you're really going to need
 		return(-2);
 	}
 	*buflen = sz;
@@ -779,6 +793,30 @@ int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, msg_set_type ty
 	return(0);
 }
 
+int msg_set_bufbuilder(msg *m, int field_id, cf_buf_builder *bb)
+{
+	VALIDATE(m, field_id, M_FT_BUF);
+
+	msg_field *mf = &(m->f[field_id]);
+	
+	// free auld value if necessary
+	if (mf->is_set) {
+		if (mf->free) {	free(mf->free); mf->free = 0; }
+		if (mf->rc_free) { cf_rc_releaseandfree(mf->rc_free); mf->rc_free = 0; }
+	}
+	
+	mf->field_len = bb->used_sz;
+	
+	mf->u.buf = bb->buf; // compiler winges here, correctly, but I bless this -b
+	mf->free = bb;
+	mf->rc_free = 0;
+		
+	mf->is_set = true;
+	
+	return(0);
+}
+
+
 int 
 msg_get_uint32_array_size(msg *m, int field_id, int *size) 
 {
@@ -952,7 +990,6 @@ int msg_set_bytearray(msg *m, int field_id, const cf_bytearray *v)
 
 
 
-
 // very useful for test code! one can encode and decode messages and see if
 // they're the same!
 
@@ -1009,6 +1046,7 @@ msg_dump(const msg *m)
 					break;
 				case M_FT_BUF:
 					printf("   type BUF len %d free %p\n",m->f[i].field_len,m->f[i].free);
+					{
 					int j = 0;
 					for ( ;j<m->f[i].field_len ; j++) {
 						printf("%02x ",m->f[i].u.buf[j]);
@@ -1016,6 +1054,23 @@ msg_dump(const msg *m)
 						if (j % 16 == 15) printf("\n");
 					}
 					if (j % 16 != 15) printf("\n");
+					}
+					break;
+				case M_FT_ARRAY_UINT32:
+					printf("   type ARRAY_UINT32: len %d nuint32 %d free %p\n",m->f[i].field_len,(m->f[i].field_len) >> 2,m->f[i].free);
+					{
+					int j=0,n_ints = (m->f[i].field_len) >> 2;
+					for ( ;j<n_ints;j++)
+						printf("idx %d value %u\n",j,ntohl(m->f[i].u.ui32_a[j]));
+					}
+					break;
+				case M_FT_ARRAY_UINT64:
+					printf("   type ARRAY_UINT64: len %d nuint32 %d free %p\n",m->f[i].field_len,(m->f[i].field_len) >> 3,m->f[i].free);
+					{
+					int j=0,n_ints = (m->f[i].field_len) >> 3;
+					for ( ;j<n_ints;j++)
+						printf("idx %d value %"PRIu64"\n",j,__bswap_64(m->f[i].u.ui64_a[j]));
+					}
 					break;
 				default:
 					printf("   type %d unknown\n",m->f[i].type);
@@ -1024,4 +1079,3 @@ msg_dump(const msg *m)
 		}
 	}
 }
-

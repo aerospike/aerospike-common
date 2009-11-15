@@ -154,6 +154,7 @@ extern int msg_set_int64(msg *m, int field_id, const int64_t v);
 extern int msg_set_str(msg *m, int field_id, const char *v, msg_set_type type);
 extern int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, msg_set_type type);
 extern int msg_set_bytearray(msg *m, int field_id, const cf_bytearray *ba);
+extern int msg_set_bufbuilder(msg *m, int field_id, cf_buf_builder *bb);
 
 // Array functions. I'm not sure yet the best metaphore for these, trying a few things out.
 extern int msg_get_uint32_array_size(msg *m, int field_id, int *size);
