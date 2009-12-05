@@ -17,7 +17,7 @@
  * Normal old red-black trees, guarded by a single mutex
  * */
 
-// #define OLOCK
+#define OLOCK
 
 /* cf_rb_value_destructor()
  * A destructor function prototype for a value */
