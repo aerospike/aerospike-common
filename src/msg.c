@@ -114,9 +114,9 @@ msg_decr_ref(msg *m)
 // uint16_t type (still included in the header)
 //      2 byte - field id
 // 		1 byte - field type
-//      3 bytes - field size
+//      4 bytes - field size
 //      [x] - field
-//      (6 + field sz)
+//      (7 + field sz)
 
 // htonll - an 8 byte swap - found a good linux-only macro
 
@@ -131,16 +131,14 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 		cf_info(CF_MSG,"msg_parse: but not enough data! will get called again len %d need 6.",buflen);
 		return(-2);
 	}
-	uint32_t len = *(uint32_t *) buf;
-	len = ntohl(len) ;
+	uint32_t len = ntohl( *(uint32_t *) buf );
 	if (buflen < len + 6) {
 		cf_info(CF_MSG,"msg_parse: but not enough data! will get called again. buf %p len %d need %d",buf, buflen, (len + 6));
 		return(-2);
 	}
 	buf += 4;
 	
-	uint16_t type = *(uint16_t *) buf;
-	type = ntohs(type);
+	uint16_t type = ntohs( *(uint16_t *) buf );
 	if (m->type != type) {
 		cf_info(CF_MSG,"msg_parse: trying to parse incoming type %d into msg type %d, bad bad",type, m->type);
 		return(-1);
@@ -169,8 +167,8 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 			}
 		}
 		
-		msg_field_type ft = (msg_field_type) *buf;
-		uint32_t flen = (buf[1] << 16) | (buf[2] << 8) | (buf[3]);
+		msg_field_type ft = (msg_field_type) *buf++;
+		uint32_t flen = ntohl(*(uint32_t *)buf);
 		buf += 4;
 		
 		if (mf && (ft != mf->type)) {
@@ -275,7 +273,7 @@ msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy)
 
 //
 int
-msg_get_initial(size_t *size_r, msg_type *type_r, const byte *buf, const size_t buflen)
+msg_get_initial(uint32_t *size_r, msg_type *type_r, const byte *buf, const uint32_t buflen)
 {
 	// enuf bytes to tell yet?
 	if (buflen < 6)
@@ -306,33 +304,35 @@ msg_get_wire_field_size(const msg_field *mf) {
 	switch (mf->type) {
 		case M_FT_INT32:
 		case M_FT_UINT32:
-			return(4);
+			return(4 + 7);
 		case M_FT_INT64:
 		case M_FT_UINT64:
-			return(8);
+			return(8 + 7);
 		case M_FT_STR:
 		case M_FT_BUF:
 		case M_FT_ARRAY_UINT32:
 		case M_FT_ARRAY_UINT64:
 			if (mf->field_len >= ( 1 << 24 ))
 				cf_debug(CF_MSG,"field length %d too long, not yet supported", mf->field_len);
-			return(mf->field_len);
+			return(mf->field_len + 7);
 		default:
 			cf_debug(CF_MSG,"field type not supported, internal error: %d",mf->type);
 	}
 	return(0);
 }
 
+// Write a field into the buffer at this point, returning the 
+// number of bytes written
 // returns the number of bytes written
 
-static inline size_t
+static inline uint32_t
 msg_stamp_field(byte *buf, const msg_field *mf)
 {
+//	if (mf->id >= 1 << 16) {
+//		cf_debug(CF_MSG,"msg_stamp_field: ID too large!");
+//		return(0);
+//	}
 	// Stamp the ID
-	if (mf->id >= 1 << 16) {
-		cf_debug(CF_MSG,"msg_stamp_field: ID too large!");
-		return(0);
-	}
 	buf[0] = (mf->id >> 8) & 0xff;
 	buf[1] = mf->id & 0xff;
 	buf += 2;
@@ -341,8 +341,8 @@ msg_stamp_field(byte *buf, const msg_field *mf)
 	*buf++ = (msg_field_type) mf->type;
 	
 	// Stamp the field itself (forward over the length, we'll patch that later
-	size_t flen;
-	buf += 3;
+	uint32_t flen;
+	buf += 4;
 	switch(mf->type) {
 		case M_FT_INT32:
 			flen = 4;
@@ -394,14 +394,15 @@ msg_stamp_field(byte *buf, const msg_field *mf)
 	}
 	
 	// Now, patch the length back in
+	buf[-4] = (flen >> 24) & 0xFF;
 	buf[-3] = (flen >> 16) & 0xff;
 	buf[-2] = (flen >> 8) & 0xff;
 	buf[-1] = flen & 0xff;
 	
-	if (flen > 1024 * 1024)
-		fprintf(stderr, "large field: size %zd\n",flen);
+//	if (flen > 1024 * 1024)
+//		fprintf(stderr, "large field: size %zd\n",flen);
 
-	return(6 + flen);
+	return(7 + flen);
 }
 
 
@@ -418,12 +419,12 @@ msg_fillbuf(const msg *m, byte *buf, size_t *buflen)
 	// memset(buf, 0xff, *buflen);
 	
 	// Figure out the size
-	size_t	sz = 6;
+	uint32_t	sz = 6;
 	
 	for (int i=0;i<m->len;i++) {
 		const msg_field *mf = &m->f[i];
 		if ((mf->is_valid==true) && (mf->is_set==true)) {
-			sz += 6 + msg_get_wire_field_size(mf);
+			sz += msg_get_wire_field_size(mf);
 		}
 	}
 	
@@ -646,7 +647,7 @@ msg_get_bytearray(const msg *m, int field_id, cf_bytearray **r)
 		*r = 0;
 		return(-2);
 	}
-	uint64_t field_len = m->f[field_id].field_len;
+	uint32_t field_len = m->f[field_id].field_len;
 	*r = cf_rc_alloc( field_len + sizeof(cf_bytearray) );
 	cf_assert(*r, CF_MSG, CF_THREAD, CF_CRITICAL, "rcalloc");
 	(*r)->sz = field_len;
@@ -1023,7 +1024,7 @@ void msg_destroy(msg *m)
 void
 msg_dump(const msg *m)
 {
-	printf("msg_dump: msg %p acount %d flen %d bytesused %zu bytesallocd %zu type %d  mt %p\n",
+	printf("msg_dump: msg %p acount %d flen %d bytesused %u bytesallocd %u type %d  mt %p\n",
 		m,(int)cf_rc_count((void *)m),m->len,m->bytes_used,m->bytes_alloc,m->type,m->mt);
 	for (int i=0;i<m->len;i++) {
 		printf("mf %02d: id %d isvalid %d iset %d\n",i,m->f[i].id,m->f[i].is_valid,m->f[i].is_set);

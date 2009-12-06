@@ -62,7 +62,7 @@ typedef msg_field_template msg_template;
 typedef struct msg_field_t {
 	unsigned int 		id; // really probabaly don't need this in the represenation we have
 	msg_field_type 	type; 		// don't actually need this - but leave for faster access
-	int 		field_len;  // used only for str and buf and int arrays - always bytes
+	uint32_t 		field_len;  // used only for str and buf and int arrays - always bytes
 	bool		is_valid;   // DEBUG - helps return errors on invalid types
 	bool		is_set;     // keep track of whether the field was ever set
 	union {
@@ -83,8 +83,8 @@ typedef struct msg_field_t {
 
 typedef struct msg_t {
 	int		 len; // number of elements in the field structure
-	size_t   bytes_used;
-	size_t	 bytes_alloc;
+	uint32_t     bytes_used;
+	uint32_t	 bytes_alloc;
 	bool     is_stack; // allocated on stack no need to free
 	msg_type type;
 	const msg_template    *mt;  // the message descriptor used to create this
@@ -104,7 +104,7 @@ extern int msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy);
 
 // If you've received a little bit of a buffer, grab the size header and type
 // return = -2 means "not enough to tell yet"
-extern int msg_get_initial(size_t *size, msg_type *type, const byte *buf, const size_t buflen);
+extern int msg_get_initial(uint32_t *size, msg_type *type, const byte *buf, const uint32_t buflen);
 
 // msg_tobuf - parse a message out into a buffer. Ret
 extern int msg_fillbuf(const msg *m, byte *buf, size_t *buflen);
