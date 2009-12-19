@@ -17,7 +17,7 @@
 #include "cf.h"
 
 // this debug tests for reference counts on the object an aweful lot
-// #define DEBUG
+// #define VALIDATE
 
 int
 rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint32_t key_len, uint32_t sz, uint flags)
@@ -77,14 +77,43 @@ rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint
 uint32_t
 rchash_get_size(rchash *h)
 {
-	return(h->elements);
+
+// In the 'manylock' case, this function is slow.
+// To make it faster, you'd replace the elements count with
+// an atomic, which will make all the other cases slower
+    
+    if (h->flags & RCHASH_CR_MT_MANYLOCK) {
+        uint32_t validate_size = 0;
+    
+        for (uint i=0; i<h->table_len ; i++) {
+    
+            pthread_mutex_t *l = &(h->lock_table[i]);
+            pthread_mutex_lock( l );
+    
+            rchash_elem *list_he = (rchash_elem *) ( ((uint8_t *)h->table) + (sizeof(rchash_elem) * i));	
+    
+            while (list_he) {
+                // 0 length means an unused head pointer - break
+                if (list_he->key_len == 0)
+                    break;
+                validate_size++;
+                list_he = list_he->next;
+            };
+            
+            pthread_mutex_unlock(l);
+            
+        }
+    
+        return( validate_size );
+    }
+
+	return( h->elements );
 }
 
 void
 rchash_free(rchash *h, void *object)
 {
 	if (cf_rc_release(object) == 0) {
-		
 		if (h->d_fn)	(h->d_fn) (object) ;
 		cf_rc_free(object);
 	}
@@ -120,13 +149,14 @@ rchash_put(rchash *h, void *key, uint32_t key_len, void *object)
 	// This loop might be skippable if you know the key is not already in the hash
 	// (like, you just searched and it's single-threaded)	
 	while (e) {
-#ifdef DEBUG
+#ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
-			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
+			cf_info(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
 			if (l)		pthread_mutex_unlock(l);
 			return(RCHASH_ERR);
 		}
 #endif		
+        // in this case we're replacing the previous object with the new object
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
 			rchash_free(h,e->object);
@@ -164,10 +194,12 @@ rchash_put_unique(rchash *h, void *key, uint32_t key_len, void *object)
 {
 	if ((h->key_len) &&  (h->key_len != key_len) ) return(RCHASH_ERR);
 
+#ifdef VALIDATE
 	if (cf_rc_count(object) < 1) {
-		cf_debug(CF_RCHASH,"put unique! bad reference count on %p");
+		cf_info(CF_RCHASH,"put unique! bad reference count on %p");
 		return(RCHASH_ERR);
 	}
+#endif    
 	
 	// Calculate hash
 	uint hash = h->h_fn(key, key_len);
@@ -193,9 +225,9 @@ rchash_put_unique(rchash *h, void *key, uint32_t key_len, void *object)
 
 	// check for uniqueness of key - if not unique, fail!
 	while (e) {
-#ifdef DEBUG
+#ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
-			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
+			cf_info(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(RCHASH_ERR);
 		}
@@ -247,9 +279,9 @@ rchash_get(rchash *h, void *key, uint32_t key_len, void **object)
 	rchash_elem *e = (rchash_elem *) ( ((byte *)h->table) + (sizeof(rchash_elem) * hash));	
 
 	do {
-#ifdef DEBUG
+#ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
-			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
+			cf_info(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(RCHASH_ERR);
 		}
@@ -306,9 +338,9 @@ rchash_delete(rchash *h, void *key, uint32_t key_len)
 	// Look for teh element and destroy if found
 	while (e) {
 		
-#ifdef DEBUG
+#ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
-			cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
+			cf_info(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(RCHASH_ERR);
 		}
@@ -380,9 +412,9 @@ rchash_reduce(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			if (list_he->key_len == 0)
 				break;
 			
-#ifdef DEBUG
+#ifdef VALIDATE
 			if (cf_rc_count(list_he->object) < 1) {
-				cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, list_he->object);
+				cf_info(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, list_he->object);
 			}
 #endif		
 
@@ -433,11 +465,11 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			if (list_he->key_len == 0)
 				break;
 			
-#ifdef DEBUG
+#ifdef VALIDATE
 			if (cf_rc_count(list_he->object) < 1) {
-				cf_debug(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, list_he->object);
+				cf_info(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, list_he->object);
 				if (l)	pthread_mutex_unlock(l);
-				return(RCHASH_ERR);
+				return;
 			}
 #endif		
 			
@@ -446,8 +478,11 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			// Delete is requested
 			// Leave the pointers in a "next" state
 			if (rv == RCHASH_REDUCE_DELETE) {
+                
 				free(list_he->key);
 				rchash_free(h, list_he->object);
+                h->elements--;
+                
 				// patchup pointers & free element if not head
 				if (prev_he) {
 					prev_he->next = list_he->next;

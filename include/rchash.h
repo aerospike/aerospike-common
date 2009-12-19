@@ -55,9 +55,21 @@ typedef struct rchash_elem_s {
 	void *key; 
 } rchash_elem;
 
+//
+// An interesting tradeoff regarding 'get_size'
+// In the case of many-locks, there's no real size at any given instant,
+// because the hash is parallelized. Yet, the overhead of creating
+// an atomic for the elements is silly.
+// Thus, when 'manylock', the elements field is not useful because
+// its not protected by a lock - it will *typically* get boned up.
+// Thus, get_size has to slowly troop through the hashset
+// This seems reasonable because 'get_size' with many lock can't be important,
+// since it's always an estimate anyway.
+//
+
 
 typedef struct rchash_s {
-	uint elements;
+	uint32_t elements;   // INVALID IF MANYLOCK
 	uint32_t key_len;
 	uint flags;
 	rchash_hash_fn	h_fn;

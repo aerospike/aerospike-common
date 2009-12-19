@@ -60,7 +60,7 @@ typedef struct shash_elem_s {
 #define SHASH_ELEM_VALUE_PTR(_h, _e) ( (void *) (_e->data + _h->key_len) )
 
 typedef struct shash_s {
-	uint elements;
+	uint elements; // INVALID in manylocks case - see notes under get_size
 	uint32_t key_len;
 	uint32_t value_len;
 	uint flags;

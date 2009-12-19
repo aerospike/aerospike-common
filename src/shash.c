@@ -78,9 +78,45 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 	return(SHASH_OK);
 }
 
+//
+// If MANYLOCK, then the elements counter will be wrong because there's no single
+// lock to use to protect. We've got a choice to use an atomic to make sure
+// the get_size call is fast in that case (thus slowing down every access), or
+// running the list and make get_size slow.
+// Choose making get_size slow in the case, but retaining parallelism
+
+
 uint32_t
 shash_get_size(shash *h)
 {
+	
+	if (h->flags & SHASH_CR_MT_MANYLOCK) {
+
+        uint32_t elements = 0;
+        
+        for (uint i=0; i<h->table_len ; i++) {
+            
+            pthread_mutex_t *l = &(h->lock_table[i]);
+            pthread_mutex_lock( l );
+            
+            shash_elem *list_he = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * i));
+            while (list_he) {
+                
+                // not in use is common at head pointer - unused bucket
+                if (list_he->in_use == false) 
+                    break;
+                
+                elements++;
+                
+                list_he = list_he->next;
+            };
+    
+            pthread_mutex_unlock(l);
+    
+        }
+        return(elements);
+    }
+    
 	return(h->elements);
 }
 
@@ -508,14 +544,12 @@ shash_reduce(shash *h, shash_reduce_fn reduce_fn, void *udata)
 		while (list_he) {
 			
 			// not in use is common at head pointer - unused bucket
-			if (list_he->in_use == false) {
-				if (l) 	pthread_mutex_unlock(l);
+			if (list_he->in_use == false)
 				break;
-			}
 			
 			rv = reduce_fn(	SHASH_ELEM_KEY_PTR(h, list_he), SHASH_ELEM_VALUE_PTR(h, list_he), udata);
 			if (0 != rv) {
-				if (l)  pthread_mutex_unlock(l);
+                if (l) pthread_mutex_unlock(l);
 				goto Out;
 			}
 			
@@ -569,6 +603,8 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 			// Leave the pointers in a "next" state
 			if (rv == SHASH_REDUCE_DELETE) {
 
+                h->elements--;
+                
 				// patchup pointers & free element if not head
 				if (prev_he) {
 					prev_he->next = list_he->next;
