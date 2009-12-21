@@ -190,7 +190,8 @@ cf_digest_compare( cf_digest *d1, cf_digest *d2 )
 // Sorry, too lazy to create a whole new file for just one function
 #define CF_NODE_UNSET (0xFFFFFFFFFFFFFFFF)
 typedef uint64_t cf_node;
-extern uint32_t cf_nodeid_hash_fn(void *value);
+extern uint32_t cf_nodeid_shash_fn(void *value);
+extern uint32_t cf_nodeid_rchash_fn(void *value, uint32_t value_len);
 extern int cf_nodeid_get( unsigned short port, cf_node *id );
 extern unsigned short cf_nodeid_get_port(cf_node id);
 

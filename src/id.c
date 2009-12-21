@@ -28,15 +28,27 @@ cf_digest cf_digest_zero = { { 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 } };
 
 
 uint32_t
-cf_nodeid_hash_fn(void *value)
+cf_nodeid_shash_fn(void *value)
 {
-	byte *b = value;
+	uint32_t *b = value;
 	uint32_t acc = 0;
 	for (int i=0;i<sizeof(cf_node);i++) {
 		acc += *b;
 	}
 	return(acc);
 }
+
+uint32_t
+cf_nodeid_rchash_fn(void *value, uint32_t value_len)
+{
+	uint32_t *b = value;
+	uint32_t acc = 0;
+	for (int i=0;i<sizeof(cf_node);i++) {
+		acc += *b;
+	}
+	return(acc);
+}
+
 
 /*
  * Gets a unique id for this process instance
