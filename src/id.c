@@ -49,6 +49,51 @@ cf_nodeid_rchash_fn(void *value, uint32_t value_len)
 	return(acc);
 }
 
+/*
+ * Gets the ip address of an interface.
+ */
+
+int
+cf_ipaddr_get(int socket, char *nic_id, char **node_ip )
+{
+	struct sockaddr_in sin;
+	struct ifreq ifr;
+	in_addr_t ip_addr;
+	
+	memset(&ip_addr, 0, sizeof(in_addr_t));
+	memset(&sin, 0, sizeof(struct sockaddr));
+	memset(&ifr, 0, sizeof(ifr));
+	
+	// copy the nic name (eth0, eth1, eth2, etc.) ifr variable structure
+	strncpy(ifr.ifr_name, nic_id, IFNAMSIZ);
+	
+	// get the ifindex for the adapter...
+	if (ioctl(socket, SIOCGIFINDEX, &ifr) < 0) {
+		cf_warning(CF_MISC, "Can't get ifindex for adapter %s - %d %s\n", nic_id, errno, cf_strerror(errno));
+		return(-1);
+	}
+	
+	// get the IP address
+	memset(&sin, 0, sizeof(struct sockaddr));
+	memset(&ifr, 0, sizeof(ifr));
+	strncpy(ifr.ifr_name, nic_id, IFNAMSIZ);
+	ifr.ifr_addr.sa_family = AF_INET;
+	if (ioctl(socket, SIOCGIFADDR, &ifr)< 0)    {
+		cf_warning(CF_MISC, "can't get IP address: %d %s", errno, cf_strerror(errno));
+		return(-1);
+	}
+	memcpy(&sin, &ifr.ifr_addr, sizeof(struct sockaddr));
+	ip_addr = sin.sin_addr.s_addr;
+	char cpaddr[24];
+	if (NULL == inet_ntop(AF_INET, &ip_addr, (char *)cpaddr, sizeof(cpaddr))) {
+		cf_warning(CF_MISC, "received suspicious address %s : %s", cpaddr, cf_strerror(errno));
+		return(-1);
+	}
+	cf_info (CF_MISC, "Node ip: %s", cpaddr);
+	*node_ip = strdup(cpaddr);
+
+	return(0);
+}
 
 /*
  * Gets a unique id for this process instance
@@ -62,7 +107,7 @@ cf_nodeid_rchash_fn(void *value, uint32_t value_len)
 
 
 int
-cf_nodeid_get( unsigned short port, cf_node *id )
+cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum hb_mode, char **hb_addrp )
 {
 
 	int fdesc;
@@ -79,12 +124,32 @@ cf_nodeid_get( unsigned short port, cf_node *id )
 			break;
 		cf_warning(CF_MISC, "can't get physical address of interface %d: %d %s", i, errno, cf_strerror(errno));
 	}
-	close(fdesc);
 	if (i == 10) {
 		cf_warning(CF_MISC, "can't get physical address: %d %s", errno, cf_strerror(errno));
+		close(fdesc);
 		return(-1);
+		
 	}
-
+	
+    if (cf_ipaddr_get(fdesc, req.ifr_name, node_ipp) != 0) {
+		cf_warning(CF_MISC, "can't get IP address for %s", req.ifr_name);
+		close(fdesc);
+		return(-1);
+    }
+    close(fdesc);
+    /*
+     * Set the hb_addr to be the same as the ip address if the mode is mesh and the hb_addr parameter is empty
+     * Configuration file overrides the automatic node ip detection
+     *    - this gives us a work around in case the node ip is somehow detected wrong in production
+     */
+     if (hb_mode == AS_HB_MODE_MESH)
+     {
+     	if (*hb_addrp == NULL)
+     		*hb_addrp = strdup(*node_ipp);
+     		
+        cf_info (CF_MISC, "Heartbeat address for mesh: %s", *hb_addrp);		
+     }
+        	
 	*id = 0;
 	memcpy(id, req.ifr_hwaddr.sa_data, 6);
 	
@@ -107,3 +172,4 @@ cf_nodeid_get_port(cf_node id)
 	return(port);
 	
 }
+
