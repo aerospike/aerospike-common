@@ -390,8 +390,12 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 				abort();
 				break;
 			case CF_PROCESS:
+				// having process failures attempt restart is sometimes very confusing
+				abort();
+#if 0				
 				if (-1 == execvp(cf_fault_restart_argv[0], cf_fault_restart_argv))
 					cf_assert(NULL, CF_MISC, CF_GLOBAL, CF_CRITICAL, "execvp failed: %s", cf_strerror(errno));
+#endif				
 				break;
 			case CF_THREAD:
 			    /* Since we may have asynchronous cancellation disabled,
