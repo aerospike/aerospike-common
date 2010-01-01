@@ -35,13 +35,17 @@ void histogram_dump( histogram *h )
 {
 	fprintf(stderr, "histogram dump: %s (%zu total)\n",h->name, h->n_counts);
 	int i, j;
-	for ( j=N_COUNTS-1 ; j >= 0 ; j-- ) if (h->count[j]) break;
+	int k = 0;
+	for (j=N_COUNTS-1 ; j >= 0 ; j-- ) if (h->count[j]) break;
 	for (i=0;i<N_COUNTS;i++) if (h->count[i]) break;
 	for (; i<=j;i++) {
-		fprintf(stderr, " (%02d: %010zu) ",i,h->count[i]);
-		if (i % 4 == 3) fprintf(stderr, "\n");
+		if (h->count[i] > 0) { // print only non zero columns
+		    fprintf(stderr, " (%02d: %010zu) ",i,h->count[i]);
+		    if (k % 4 == 3) fprintf(stderr, "\n");
+		    k++;
+		}
 	}
-	if (i-1 % 4 != 3) fprintf(stderr, "\n");
+	if (k-1 % 4 != 3) fprintf(stderr, "\n");
 }
 
 #ifdef USE_CLOCK
