@@ -80,12 +80,14 @@ void histogram_stop(histogram *h, histogram_measure *hm)
 void histogram_start( histogram *h, histogram_measure *hm)
 {
 	cf_atomic_int_incr(&h->n_counts);
-	hm->start = hist_getcycles();
+	hm->start = cf_getms();
+//	hm->start = hist_getcycles();
 }
 
 void histogram_stop(histogram *h, histogram_measure *hm)
 {
-	uint64_t delta = hist_getcycles() - hm->start;
+//	uint64_t delta = hist_getcycles() - hm->start;
+    uint64_t delta = cf_getms() - hm->start;
 	
 	int index = bits_find_last_set_64(delta);
 	if (index < 0) index = 0;
