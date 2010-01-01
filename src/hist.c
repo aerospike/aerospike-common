@@ -33,19 +33,34 @@ histogram_create(char *name)
 
 void histogram_dump( histogram *h )
 {
-	fprintf(stderr, "histogram dump: %s (%zu total)\n",h->name, h->n_counts);
+	char printbuf[100];
+	int pos = 0; // location to print from
+	printbuf[0] = '\0';
+	
+	cf_info(AS_INFO, "histogram dump: %s (%zu total)",h->name, h->n_counts);
 	int i, j;
 	int k = 0;
 	for (j=N_COUNTS-1 ; j >= 0 ; j-- ) if (h->count[j]) break;
 	for (i=0;i<N_COUNTS;i++) if (h->count[i]) break;
 	for (; i<=j;i++) {
 		if (h->count[i] > 0) { // print only non zero columns
-		    fprintf(stderr, " (%02d: %010zu) ",i,h->count[i]);
-		    if (k % 4 == 3) fprintf(stderr, "\n");
+			int bytes = sprintf((char *) (printbuf + pos), " (%02d: %010zu) ", i, h->count[i]);
+			if (bytes <= 0) 
+			{
+				cf_info(AS_INFO, "histogram printing error. Bailing ...");
+				return;
+			}
+			pos += bytes;
+		    if (k % 4 == 3){
+		    	 cf_info(AS_INFO, "%s", (char *) printbuf);
+		    	 pos = 0;
+		    	 printbuf[0] = '\0';
+		    }
 		    k++;
 		}
 	}
-	if (k-1 % 4 != 3) fprintf(stderr, "\n");
+	if (pos > 0) 
+	    cf_info(AS_INFO, "%s", (char *) printbuf);
 }
 
 #ifdef USE_CLOCK
