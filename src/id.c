@@ -69,7 +69,7 @@ cf_ipaddr_get(int socket, char *nic_id, char **node_ip )
 	
 	// get the ifindex for the adapter...
 	if (ioctl(socket, SIOCGIFINDEX, &ifr) < 0) {
-		cf_warning(CF_MISC, "Can't get ifindex for adapter %s - %d %s\n", nic_id, errno, cf_strerror(errno));
+		cf_debug(CF_MISC, "Can't get ifindex for adapter %s - %d %s\n", nic_id, errno, cf_strerror(errno));
 		return(-1);
 	}
 	
@@ -79,7 +79,7 @@ cf_ipaddr_get(int socket, char *nic_id, char **node_ip )
 	strncpy(ifr.ifr_name, nic_id, IFNAMSIZ);
 	ifr.ifr_addr.sa_family = AF_INET;
 	if (ioctl(socket, SIOCGIFADDR, &ifr)< 0)    {
-		cf_warning(CF_MISC, "can't get IP address: %d %s", errno, cf_strerror(errno));
+		cf_debug(CF_MISC, "can't get IP address: %d %s", errno, cf_strerror(errno));
 		return(-1);
 	}
 	memcpy(&sin, &ifr.ifr_addr, sizeof(struct sockaddr));
@@ -117,25 +117,31 @@ cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum h
 		cf_warning(CF_MISC, "can't open socket: %d %s", errno, cf_strerror(errno));
 		return(-1);
 	}
-	int i;
-	for (i=0;i<10;i++) {
+	int i = 0;
+	bool done = false;
+	while ( (done == false) && (i < 11) ) {
+
 		sprintf(req.ifr_name, "eth%d",i);
-		if (0 == ioctl(fdesc, SIOCGIFHWADDR, &req)) 
-			break;
-		cf_warning(CF_MISC, "can't get physical address of interface %d: %d %s", i, errno, cf_strerror(errno));
+
+		if (0 == ioctl(fdesc, SIOCGIFHWADDR, &req)) { 
+	    	if (cf_ipaddr_get(fdesc, req.ifr_name, node_ipp) == 0) {
+				done = true;
+    		}
+		}
+
+		cf_debug(CF_MISC, "can't get physical address of interface %d: %d %s", i, errno, cf_strerror(errno));
+
+		i++;
+
 	}
-	if (i == 10) {
-		cf_warning(CF_MISC, "can't get physical address: %d %s", errno, cf_strerror(errno));
+
+	if (done == false) {
+		cf_warning(CF_MISC, "can't get physical address, tried eth0 to eth10, fatal: %d %s", errno, cf_strerror(errno));
 		close(fdesc);
 		return(-1);
 		
 	}
 	
-    if (cf_ipaddr_get(fdesc, req.ifr_name, node_ipp) != 0) {
-		cf_warning(CF_MISC, "can't get IP address for %s", req.ifr_name);
-		close(fdesc);
-		return(-1);
-    }
     close(fdesc);
     /*
      * Set the hb_addr to be the same as the ip address if the mode is mesh and the hb_addr parameter is empty
