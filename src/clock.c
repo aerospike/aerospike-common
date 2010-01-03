@@ -9,7 +9,25 @@
 #include <time.h>
 #include "cf.h"
 
-#define TIMESPEC_TO_MS( __ts )  ((__ts.tv_sec * 1000) + (__ts.tv_nsec / 1000000)) 
+inline static uint64_t
+TIMESPEC_TO_MS_P( struct timespec *ts )
+{
+	uint64_t r1 = ts->tv_nsec;
+	r1 /= 1000000;
+	uint64_t r2 = ts->tv_sec;
+	r2 *= 1000;
+	return( r1 + r2 );
+}
+
+inline static uint64_t
+TIMESPEC_TO_MS( struct timespec ts )
+{
+	uint64_t r1 = ts.tv_nsec;
+	r1 /= 1000000;
+	uint64_t r2 = ts.tv_sec;
+	r2 *= 1000;
+	return ( r1 + r2 );
+}
 
 
 // FIXME ought to be cf_clock_getvolatile or some shit
