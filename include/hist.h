@@ -57,6 +57,10 @@ extern void histogram_start( histogram *h, histogram_measure *hm);
 extern void histogram_stop(histogram *h, histogram_measure *hm);
 extern void histogram_get_counts(histogram *h, histogram_counts *hc);
 
+#ifdef USE_GETCYCLES
+extern void histogram_insert_data_point(histogram *h, uint64_t start);
+#endif
+
 // this is probably the same as the processor specific call, see if it works the same...
 
 static inline uint64_t

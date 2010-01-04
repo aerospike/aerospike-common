@@ -111,6 +111,27 @@ void histogram_stop(histogram *h, histogram_measure *hm)
 	
 }
 
+void histogram_insert_data_point( histogram *h, uint64_t start)
+{
+	cf_atomic_int_incr(&h->n_counts);
+	
+    uint64_t end = cf_getms(); 
+    uint64_t delta = end - start;
+	
+	int index = bits_find_last_set_64(delta);
+	if (index < 0) index = 0;   
+	if (start > end)
+	{
+	    // Need to investigate why in some cases start is a couple of ms greater than end
+		// Could it be rounding error (usually the difference is 1 but sometimes I have seen 2
+	    // cf_info(AS_INFO, "start = %"PRIu64" > end = %"PRIu64"", start, end);
+		index = 0;
+	}   
+       
+	cf_atomic_int_incr( &h->count[ index ] );
+	
+}
+
 #endif // USE_GETCYCLES
 
 
