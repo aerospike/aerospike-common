@@ -20,7 +20,7 @@
 
 /* cf_rc_count
  * Get the reservation count for a memory region */
-cf_atomic_int_t
+int
 cf_rc_count(void *addr)
 {
 	cf_rc_counter *rc;
@@ -31,7 +31,7 @@ cf_rc_count(void *addr)
 
 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 
-	return(*rc);
+	return((int) *rc);
 }
 
 
@@ -50,17 +50,17 @@ cf_rc_reserve(void *addr)
 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 
 //	return(cf_atomic_int_addunless(rc, 0, 1));
-	return(cf_atomic_int_add(rc, 1));
+	return((int) cf_atomic_int_add(rc, 1));
 }
 
 
 /* _cf_rc_release
  * Release a reservation on a memory region */
-cf_atomic_int_t
+int
 _cf_rc_release(void *addr, bool autofree)
 {
 	cf_rc_counter *rc;
-	uint64_t c;
+	int c;
 	if (addr == 0) {
 		cf_warning(CF_RCALLOC, "rcrelease: null address");
 		return(0);
@@ -70,8 +70,8 @@ _cf_rc_release(void *addr, bool autofree)
 	 * then free the block if autofree is set, and return 1.  Otherwise,
 	 * return 0 */
 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
-	if (0 == (c = cf_atomic_int_decr(rc)))
-		if (autofree)
+    c = cf_atomic_int_decr(rc);
+	if ((0 == c) && autofree)
 			free((void *)rc);
 
 	return(c);
@@ -84,7 +84,7 @@ _cf_rc_release(void *addr, bool autofree)
 void *
 cf_rc_alloc(size_t sz)
 {
-	byte *addr;
+	uint8_t *addr;
 	size_t asz = sizeof(cf_rc_counter) + sz;
 
 	addr = malloc(asz);
@@ -92,7 +92,7 @@ cf_rc_alloc(size_t sz)
 		return(NULL);
 
 	cf_atomic_int_set((cf_atomic_int *)addr, 1);
-	byte *base = addr + sizeof(asz);
+	byte *base = addr + sizeof(cf_rc_counter);
 
 	return(base);
 }
@@ -106,7 +106,7 @@ cf_rc_free(void *addr)
 	cf_rc_counter *rc;
 	cf_assert(addr, CF_RCALLOC, CF_PROCESS, CF_CRITICAL, "null address");
 
-	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
+	rc = (cf_rc_counter *) (  ((uint8_t *)addr) - sizeof(cf_rc_counter) );
 
 	cf_assert(cf_atomic_int_get(*(cf_atomic_int *)rc) == 0,
 		CF_RCALLOC, CF_PROCESS, CF_CRITICAL, "attempt to free reserved object");
