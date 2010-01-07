@@ -17,7 +17,7 @@
 #include "cf.h"
 
 // this debug tests for reference counts on the object an aweful lot
-// #define VALIDATE
+#define VALIDATE
 
 int
 rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint32_t key_len, uint32_t sz, uint flags)
@@ -278,7 +278,13 @@ rchash_get(rchash *h, void *key, uint32_t key_len, void **object)
 	
 	rchash_elem *e = (rchash_elem *) ( ((byte *)h->table) + (sizeof(rchash_elem) * hash));	
 
-	do {
+  	// most common case should be insert into empty bucket, special case
+	if ( ( e->next == 0 ) && (e->key_len == 0) ) {
+        rv = RCHASH_ERR_NOTFOUND;
+        goto Out;
+	}
+    
+	while (e) {
 #ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
 			cf_info(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, e->object);
@@ -295,7 +301,8 @@ rchash_get(rchash *h, void *key, uint32_t key_len, void **object)
 			goto Out;
 		}
 		e = e->next;
-	} while (e);
+	};
+    
 	rv = RCHASH_ERR_NOTFOUND;
 	
 Out:
