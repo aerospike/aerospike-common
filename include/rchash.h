@@ -48,12 +48,20 @@ typedef void (*rchash_destructor_fn) (void *object);
 
 // Simple (and slow) element is when
 // everything is variable (although a very nicely packed structure for 32 or 64
-typedef struct rchash_elem_s {
-	struct rchash_elem_s *next;
+typedef struct rchash_elem_v_s {
+	struct rchash_elem_v_s *next;
 	void *object; // this is a reference counted object
 	uint32_t key_len;
 	void *key; 
-} rchash_elem;
+} rchash_elem_v;
+
+// When the key size is fixed, life can be simpler
+typedef struct rchash_elem_f_s {
+	struct rchash_elem_f_s *next;
+	void *object; // this is a reference counted object
+	uint8_t key[];
+} rchash_elem_f;
+
 
 //
 // An interesting tradeoff regarding 'get_size'
@@ -70,7 +78,7 @@ typedef struct rchash_elem_s {
 
 typedef struct rchash_s {
 	uint32_t elements;   // INVALID IF MANYLOCK
-	uint32_t key_len;
+	uint32_t key_len;    // if key_len == 0, then use the variable size functions
 	uint flags;
 	rchash_hash_fn	h_fn;
 	rchash_destructor_fn d_fn;
