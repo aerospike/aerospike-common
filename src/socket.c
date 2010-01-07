@@ -73,7 +73,7 @@ int
 cf_socket_recv(int sock, void *buf, size_t buflen, int flags)
 {
 	int i;
-
+    flags |= MSG_NOSIGNAL;
 	if (0 >= (i = recv(sock, buf, buflen, flags))) {
 		if (EAGAIN == errno)
 			return(0);
@@ -95,7 +95,7 @@ int
 cf_socket_send(int sock, void *buf, size_t buflen, int flags)
 {
 	int i;
-
+    flags |= MSG_NOSIGNAL;
 	if (0 >= (i = send(sock, buf, buflen, flags)))
 		cf_warning(CF_SOCKET, "send() failed: %s", cf_strerror(errno));
 
@@ -118,6 +118,8 @@ cf_socket_recvfrom(int sock, void *buf, size_t buflen, int flags, cf_sockaddr *f
         f.sin_family = AF_INET;
     }
 
+    flags |= MSG_NOSIGNAL;
+    
 	if (0 >= (i = recvfrom(sock, buf, buflen, flags, (struct sockaddr *)fp, &fl)))
 		cf_warning(CF_SOCKET, "recvfrom() failed: %s", cf_strerror(errno));
 
@@ -141,6 +143,8 @@ cf_socket_sendto(int sock, void *buf, size_t buflen, int flags, cf_sockaddr to)
 	    cf_sockaddr_convertfrom(to, sp);
 	}
 	
+    flags |= MSG_NOSIGNAL;
+    
 	if (0 >= (i = sendto(sock, buf, buflen, flags, (struct sockaddr *)sp, sizeof(const struct sockaddr))))
 		cf_info(CF_SOCKET, "send() failed: %s", cf_strerror(errno));
 
@@ -195,7 +199,7 @@ cf_socket_init_svc(cf_socket_cfg *s)
 			return(errno);
 		}
 
-		cf_warning(CF_SOCKET, "bind: socket in use, waiting");
+		cf_warning(CF_SOCKET, "bind: socket in use, waiting (port:%d)",s->port);
 
 		nanosleep(&delay, NULL);
 	}
@@ -211,7 +215,9 @@ cf_socket_init_svc(cf_socket_cfg *s)
 
 
 /* cf_socket_init_client
- * Connect a socket to a remote endpoint */
+ * Connect a socket to a remote endpoint
+ * DOES A BLOCKING CONNECT INLINE
+ */
 int
 cf_socket_init_client(cf_socket_cfg *s)
 {
