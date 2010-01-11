@@ -18,6 +18,9 @@
 #include <ifaddrs.h>
 #include <time.h>
 #include <unistd.h>
+
+#include <netinet/tcp.h>
+
 #include "cf.h"
 
 void
@@ -190,8 +193,18 @@ cf_socket_init_svc(cf_socket_cfg *s)
 	}
 
 	/* Set close-on-exec */
-	fcntl(s->sock, F_SETFD, 1);
+	fcntl(s->sock, F_SETFD, FD_CLOEXEC);
 
+    // I've tried a little tuning here, doesn't seem terribly important.
+    // int flag = (1024 * 32);
+	// setsockopt(s->sock, SOL_SOCKET, SO_SNDBUF, &flag, sizeof(flag) );
+	// setsockopt(s->sock, SOL_SOCKET, SO_RCVBUF, &flag, sizeof(flag) );
+    
+    // Nodelay is terribly important, but setting here doesn't seem all that effective. Doesn't
+    // seem to effect the accepted file descriptors derived from the listen fd
+    // int flag = 1;
+	// setsockopt(s->sock, SOL_TCP, TCP_NODELAY, &flag, sizeof(flag) );    
+    
 	/* Bind to the socket; if we can't, nanosleep() and retry */
 	while (0 > (bind(s->sock, (struct sockaddr *)&s->saddr, sizeof(struct sockaddr)))) {
 		if (EADDRINUSE != errno) {
@@ -229,8 +242,14 @@ cf_socket_init_client(cf_socket_cfg *s)
 	}
 
 	/* Set close-on-exec */
-	fcntl(s->sock, F_SETFD, 1);
+	fcntl(s->sock, F_SETFD, FD_CLOEXEC);
 
+    // Try tuning the window: must be done before connect
+//    int flag = (1024 * 32);
+//	setsockopt(s->sock, SOL_SOCKET, SO_SNDBUF, &flag, sizeof(flag) );
+//	setsockopt(s->sock, SOL_SOCKET, SO_RCVBUF, &flag, sizeof(flag) );
+
+        
 	memset(&s->saddr,0,sizeof(s->saddr));
 	s->saddr.sin_family = AF_INET;
     if (0 >= inet_pton(AF_INET, s->addr, &s->saddr.sin_addr.s_addr)) {
@@ -246,6 +265,12 @@ cf_socket_init_client(cf_socket_cfg *s)
 		return(errno);
 	}
 
+    // regarding this: calling here doesn't seem terribly effective.
+    // on the fabric threads, it seems important to set nodelay much later
+    int flag = 1;
+	setsockopt(s->sock, SOL_TCP, TCP_NODELAY, &flag, sizeof(flag) );    
+
+    
 	return(0);
 }
 
