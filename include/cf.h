@@ -59,6 +59,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "cf_str.h"
 #include "hist.h"
 #include "olock.h"
+#include "clock.h"
 
 
 /* cf_hash_fnv
@@ -209,3 +210,12 @@ extern cf_clock cf_clock_getabsolute();
 /* daemon.c */
 extern void cf_process_privsep(uid_t uid, gid_t gid);
 
+/* a mutex timeout macro */
+static inline int 
+cf_mutex_timedlock(pthread_mutex_t *lock, uint ms)
+{
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	TIMESPEC_ADD_MS(&ts,ms);
+	return( pthread_mutex_timedlock( lock, &ts) );
+}
