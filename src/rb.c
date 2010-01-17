@@ -274,12 +274,12 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
 	// TODO: Bug. This error case can't really be handled without removing the element
 	// from the tree again, we're handing back an unlocked lock and shit.
 #ifdef OLOCK	
-	olock_vlock( tree->value_locks, &n->key, vlock);
+	olock_vlock( tree->value_locks, &u->key, vlock);
 #else	
-	if (0 != pthread_mutex_lock(&n->VALUE_LOCK)) {
+	if (0 != pthread_mutex_lock(&u->VALUE_LOCK)) {
 		cf_debug(CF_RB," what? can't lock mutex? So BONED!");
 	}
-    *vlock = &n->VALUE_LOCK;
+    *vlock = &u->VALUE_LOCK;
 #endif
 
 	pthread_mutex_unlock(&tree->lock);
@@ -402,12 +402,12 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mut
 	tree->elements++;
 
 #ifdef OLOCK	
-	olock_vlock( tree->value_locks, &n->key, vlock);
+	olock_vlock( tree->value_locks, &u->key, vlock);
 #else	
-	if (0 != pthread_mutex_lock(&n->VALUE_LOCK)) {
+	if (0 != pthread_mutex_lock(&u->VALUE_LOCK)) {
 		cf_debug(CF_RB," what? can't lock mutex? So BONED!");
 	}
-    *vlock = &n->VALUE_LOCK;
+    *vlock = &u->VALUE_LOCK;
 #endif
 
 	pthread_mutex_unlock(&tree->lock);
@@ -527,7 +527,7 @@ cf_rb_search_lockless(cf_rb_tree *tree, cf_digest dkey)
     s = r;
     while (s != tree->sentinel) {
 		
-		cf_debug(CF_RB,"  at %p: key %"PRIx64": right %p left %p",s,*(uint64_t *)&s->key,s->right,s->left);
+//		cf_debug(CF_RB,"  at %p: key %"PRIx64": right %p left %p",s,*(uint64_t *)&s->key,s->right,s->left);
 
         c = cf_digest_compare(&dkey, &s->key);
         if (c)
@@ -549,6 +549,8 @@ cf_rb_search(cf_rb_tree *tree, cf_digest key)
 {
     cf_rb_node *r;
 
+    cf_info(CF_RB, " bad use: should not search without taking value lock");
+    
     /* Lock the tree */
     pthread_mutex_lock(&tree->lock);
 
@@ -622,10 +624,12 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key, void *destructor_udata)
 	}
 
 	/* Hold the value lock */
+    pthread_mutex_t *vlock = 0;
 #ifdef OLOCK	
-	olock_lock( tree->value_locks, &r->key);
+	olock_vlock( tree->value_locks, &r->key, &vlock);
 #else	
-	if (0 != pthread_mutex_lock(&r->VALUE_LOCK)) {
+    vlock = &r->VALUE_LOCK;
+	if (0 != pthread_mutex_lock(vlock)) {
 		cf_debug(CF_RB," what? can't lock mutex? So BONED!");
 		rv = -1;
 		goto release;
@@ -643,12 +647,14 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key, void *destructor_udata)
             s->parent->right = t;
     }
 
+
+    
     /* s is the node to splice out, and t is its child */
     if (s != r) {
 
         if (CF_RB_BLACK == s->color)
             cf_rb_deleterebalance(tree, t);
-
+        
         /* Reassign pointers and coloration */
         s->left = r->left;
         s->right = r->right;
@@ -668,11 +674,9 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key, void *destructor_udata)
 			free(r->value);
 
 		// todoo
-#ifdef OLOCK		
-		olock_unlock(tree->value_locks, &r->key );
-#else
-		if (0 != pthread_mutex_unlock(&r->VALUE_LOCK))
-			cf_warning(CF_RB, "unable to acquire value lock: %s", cf_strerror(errno));
+        pthread_mutex_unlock(vlock);
+        
+#ifndef OLOCK
 		if (0 != pthread_mutex_destroy(&r->VALUE_LOCK))
 			cf_warning(CF_RB, "unable to destroy value lock: %s", cf_strerror(errno));
 #endif
@@ -685,17 +689,18 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key, void *destructor_udata)
 	        tree->destructor(s->value, destructor_udata);
 		else
 			free(s->value);
-#ifdef OLOCK
-		olock_unlock(tree->value_locks, &s->key );
-#else
-		if (0 != pthread_mutex_unlock(&s->VALUE_LOCK))
-			cf_warning(CF_RB, "unable to acquire value lock: %s", cf_strerror(errno));
-		if (0 != pthread_mutex_destroy(&s->VALUE_LOCK))
+        
+        pthread_mutex_unlock(vlock);
+
+#ifndef OLOCK
+        if (0 != pthread_mutex_destroy(&s->VALUE_LOCK))
 			cf_warning(CF_RB, "unable to destroy value lock: %s", cf_strerror(errno));
 #endif		
 
+        // I don't understand why this has to be here -b
         if (CF_RB_BLACK == s->color)
             cf_rb_deleterebalance(tree, t);
+
         free(s);
     }
 	tree->elements--;
