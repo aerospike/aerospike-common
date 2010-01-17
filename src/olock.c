@@ -17,17 +17,20 @@
 
 #include "cf.h"
 
+#include <signal.h>
 
-// #define DEBUG 1
 
 void
 olock_lock(olock *ol, cf_digest *d)
 {
 	uint32_t n = *(uint32_t *)d;
+
+//	if (0 != cf_mutex_timedlock( &ol->locks[ n & ol->mask ], 2000 ) ) {
 	if (0 != pthread_mutex_lock( &ol->locks[ n & ol->mask ] ) ) {
 		fprintf(stderr, "olock lock failed %d\n",errno);
+		raise(SIGINT);
 	}
-	
+
 	return;
 }
 
@@ -36,6 +39,13 @@ olock_vlock(olock *ol, cf_digest *d, pthread_mutex_t **vlock)
 {
 	uint32_t n = *(uint32_t *)d;
 	*vlock = &ol->locks[ n & ol->mask ];
+
+//	int rv = cf_mutex_timedlock( *vlock, 2000 );
+//	if (rv != 0 ) {
+//		fprintf(stderr, "mutex olock vlock fail: rv %d errno %d\n",rv,errno);
+//		raise(SIGINT);
+//	}
+
 	if (0 != pthread_mutex_lock( *vlock )) {
 		fprintf(stderr, "olock vlock failed\n");
 	}
@@ -47,6 +57,7 @@ void
 olock_unlock(olock *ol, cf_digest *d)
 {
 	uint32_t n = *(uint32_t *)d;
+//	fprintf(stderr, "-%p", &ol->locks[ n & ol->mask ] );
 	if (0 != pthread_mutex_unlock( &ol->locks[ n & ol->mask ] )) {
 		fprintf(stderr, "olock unlock failed %d\n",errno);
 	}
