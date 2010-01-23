@@ -49,7 +49,7 @@ cf_rc_reserve(void *addr)
 	/* Extract the address of the reference counter, then increment it */
 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 
-//	return(cf_atomic_int_addunless(rc, 0, 1));
+//	return(cf_atomic32_addunless(rc, 0, 1));
 	return((int) cf_atomic32_add(rc, 1));
 }
 
@@ -91,7 +91,7 @@ cf_rc_alloc(size_t sz)
 	if (NULL == addr)
 		return(NULL);
 
-	cf_atomic32_set((cf_atomic_int *)addr, 1);
+	cf_atomic32_set((cf_atomic32 *)addr, 1);
 	byte *base = addr + sizeof(cf_rc_counter);
 
 	return(base);
@@ -108,7 +108,7 @@ cf_rc_free(void *addr)
 
 	rc = (cf_rc_counter *) (  ((uint8_t *)addr) - sizeof(cf_rc_counter) );
 
-	cf_assert(cf_atomic_int_get(*(cf_atomic_int *)rc) == 0,
+	cf_assert(cf_atomic32_get(*(cf_atomic32 *)rc) == 0,
 		CF_RCALLOC, CF_PROCESS, CF_CRITICAL, "attempt to free reserved object");
 
 	free((void *)rc);
