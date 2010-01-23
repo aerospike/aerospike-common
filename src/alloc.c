@@ -50,7 +50,7 @@ cf_rc_reserve(void *addr)
 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 
 //	return(cf_atomic_int_addunless(rc, 0, 1));
-	return((int) cf_atomic_int_add(rc, 1));
+	return((int) cf_atomic32_add(rc, 1));
 }
 
 
@@ -70,7 +70,7 @@ _cf_rc_release(void *addr, bool autofree)
 	 * then free the block if autofree is set, and return 1.  Otherwise,
 	 * return 0 */
 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
-    c = cf_atomic_int_decr(rc);
+	c = cf_atomic32_decr(rc);
 	if ((0 == c) && autofree)
 			free((void *)rc);
 
@@ -91,7 +91,7 @@ cf_rc_alloc(size_t sz)
 	if (NULL == addr)
 		return(NULL);
 
-	cf_atomic_int_set((cf_atomic_int *)addr, 1);
+	cf_atomic32_set((cf_atomic_int *)addr, 1);
 	byte *base = addr + sizeof(cf_rc_counter);
 
 	return(base);
