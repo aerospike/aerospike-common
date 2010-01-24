@@ -585,14 +585,34 @@ cf_rcrb_size(cf_rcrb_tree *tree)
 	pthread_mutex_unlock(&tree->lock);
 	return(sz);
 }
+
+typedef struct {
+	cf_digest 	key;
+	void		*value;
+} cf_rcrb_value;
+
+typedef struct {
+	uint alloc_sz;
+	uint pos;
+	cf_rcrb_value values[];
+} cf_rcrb_value_array;
+
+
 /*
 ** call a function on all the nodes in the tree
 */
 void
 cf_rcrb_reduce_traverse( cf_rcrb_tree *tree, cf_rcrb_node *r, cf_rcrb_node *sentinel, cf_rcrb_reduce_fn cb, void *udata)
 {
+	cf_rcrb_value_array *v_a = (cf_rcrb_value_array *) udata;
+	
+	if (v_a->pos >= v_a->alloc_sz)	return;
+	
 	if (r->value) {
-		(cb) (r->key, r->value, udata);
+		cf_rc_reserve(r->value);
+		v_a->values[v_a->pos].value = r->value;
+		v_a->values[v_a->pos].key = r->key;
+		v_a->pos++;
     }
 
 	if (r->left != sentinel)		
@@ -610,12 +630,34 @@ cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
     /* Lock the tree */
     pthread_mutex_lock(&tree->lock);
 	
+    // I heart stack allocation. I should probably make this an if and use malloc
+    // if it's large
+    uint	sz = sizeof( cf_rcrb_value_array ) + ( sizeof(cf_rcrb_value) * tree->elements);
+    cf_rcrb_value_array *v_a;
+    uint8_t buf[128 * 1024];
+    
+    if (sz > 128 * 1024) {
+    	v_a = malloc(sz);
+    	if (!v_a)	return;
+    }
+    else
+    	v_a = (cf_rcrb_value_array *) buf;
+	
+    v_a->alloc_sz = tree->elements;
+    v_a->pos = 0;
+    
 	if ( (tree->root) && 
 		 (tree->root->left) && 
 		 (tree->root->left != tree->sentinel) )
-		cf_rcrb_reduce_traverse(tree, tree->root->left, tree->sentinel, cb, udata);
+		cf_rcrb_reduce_traverse(tree, tree->root->left, tree->sentinel, cb, v_a);
 
 	pthread_mutex_unlock(&tree->lock);
+	
+	for (uint i=0 ; i<v_a->pos ; i++) 
+		cb ( & (v_a->values[i].key), v_a->values[i].value  , udata);
+
+	if (v_a != (cf_rcrb_value_array *) buf)	free(v_a);
+	
     return;
 	
 }

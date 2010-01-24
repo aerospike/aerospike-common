@@ -54,7 +54,7 @@ struct cf_rcrb_tree_t
 	cf_rcrb_node *sentinel;
 	
     cf_rcrb_value_destructor destructor;
-    void *destructor_udata;
+    void 					*destructor_udata;
     
 	uint32_t      elements; // no bother in making this atomic, it's not very exact
 };
@@ -86,5 +86,6 @@ extern void cf_rcrb_purge(cf_rcrb_tree *tree, cf_rcrb_node *r);
 extern int cf_rcrb_release(cf_rcrb_tree *tree, void *destructor_udata);
 
 extern uint32_t cf_rcrb_size(cf_rcrb_tree *tree); // number of elements
-typedef void (*cf_rcrb_reduce_fn) (cf_digest digest, void *value, void *udata);
+
+typedef void (*cf_rcrb_reduce_fn) (cf_digest *key, void *value, void *udata);
 extern void cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata);
