@@ -400,8 +400,6 @@ cf_rcrb_search(cf_rcrb_tree *tree, cf_digest *key)
 {
     void *v = 0;
 
-    cf_info(CF_RB, " bad use: should not search without taking value lock");
-    
     /* Lock the tree */
     pthread_mutex_lock(&tree->lock);
 
@@ -410,7 +408,7 @@ cf_rcrb_search(cf_rcrb_tree *tree, cf_digest *key)
     	v = n->value;
     	cf_rc_reserve(v);
     }
-
+    
     /* Unlock the tree */
     pthread_mutex_unlock(&tree->lock);
 
