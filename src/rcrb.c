@@ -487,8 +487,8 @@ cf_rcrb_delete(cf_rcrb_tree *tree, cf_digest *key)
             cf_rcrb_deleterebalance(tree, t);
 
 		/* Destroy the node contents */
-		if (0 == cf_rc_release(r->value)) {
-			tree->destructor(r->value, tree->destructor_udata);
+		if (0 == cf_rc_release(s->value)) {
+			tree->destructor(s->value, tree->destructor_udata);
 		}
 
         free(s);
@@ -626,8 +626,7 @@ cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 		return;    
 	}
 	
-    // I heart stack allocation. I should probably make this an if and use malloc
-    // if it's large
+    // I heart stack allocation. 
     uint	sz = sizeof( cf_rcrb_value_array ) + ( sizeof(cf_rcrb_value) * tree->elements);
     cf_rcrb_value_array *v_a;
     uint8_t buf[128 * 1024];
@@ -641,7 +640,9 @@ cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 	
     v_a->alloc_sz = tree->elements;
     v_a->pos = 0;
-    
+
+    // recursively, fetch all the value pointers into this array, guarenteed in-memory,
+    // so we can call the reduce function outside the big lock
 	if ( (tree->root) && 
 		 (tree->root->left) && 
 		 (tree->root->left != tree->sentinel) )
