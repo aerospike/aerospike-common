@@ -67,17 +67,19 @@ typedef struct cf_rcrb_tree_t cf_rcrb_tree;
 // Except for get-insert, which is a little weird
 // if a value is returned (thus a different value is gotten), its refcount is increased
 // If the value is inserted (and not returend), the refcount is consumed
-
+//
+// What's cool about the insert and get_insert functions is you can avoid a double-search
+// in the cases where you want to 
 
 
 /* External functions */
-extern void * cf_rcrb_get_insert(cf_rcrb_tree *tree, cf_digest key, void *value);
-// 0 - ok, -1 mallocfail, -2 duplicate
-extern int cf_rcrb_insert(cf_rcrb_tree *tree, cf_digest key, void *value);
-extern void *cf_rcrb_get_insert(cf_rcrb_tree *tree, cf_digest key, void *value);
-extern void *cf_rcrb_search(cf_rcrb_tree *tree, cf_digest key);
+
+extern cf_rcrb_node * cf_rcrb_get_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock);
+extern cf_rcrb_node * cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock);
+
+extern void *cf_rcrb_search(cf_rcrb_tree *tree, cf_digest *key);
 // delete- 0 is ok, -1 is fail, -2 is key not found
-extern int cf_rcrb_delete(cf_rcrb_tree *tree, cf_digest key);
+extern int cf_rcrb_delete(cf_rcrb_tree *tree, cf_digest *key);
 
 extern cf_rcrb_tree *cf_rcrb_create(cf_rcrb_value_destructor destructor, void *destructor_udata);
 
@@ -88,4 +90,10 @@ extern int cf_rcrb_release(cf_rcrb_tree *tree, void *destructor_udata);
 extern uint32_t cf_rcrb_size(cf_rcrb_tree *tree); // number of elements
 
 typedef void (*cf_rcrb_reduce_fn) (cf_digest *key, void *value, void *udata);
+
+// reduce gives a reference count of the value: you must release it
+// and it contains, internally, code to not block the tree lock - so you can spend as much time
+// in the reduce function as you want
 extern void cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata);
+// reduce_sync doesn't take a reference, and holds the tree lock
+extern void cf_rcrb_reduce_sync(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata);

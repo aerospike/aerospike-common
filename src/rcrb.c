@@ -71,49 +71,47 @@ cf_rcrb_rotate_right(cf_rcrb_tree *tree, cf_rcrb_node *r)
 
 /* cf_rcrb_insert
  * Insert a node with a given key into a red-black tree */
-int
-cf_rcrb_insert(cf_rcrb_tree *tree, cf_digest key, void *value)
+cf_rcrb_node *
+cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock)
 {
     cf_rcrb_node *n, *s, *t, *u;
 
-    /* Allocate memory for the new node and set the node parameters */
-	// this could be done later, but doing the malloc ahead of the tree lock
-	// increases parallelism and decreases lock hold times
-    if (NULL == (n = (cf_rcrb_node *)malloc(sizeof(cf_rcrb_node))))
-        return(-1);
-    n->color = CF_RCRB_RED;
-	n->key = key;
-	n->value = value;
-//    n->left = n->right = tree->sentinel;
-// left, right, parent are set during insert
-	
-    u = n;
-
     /* Lock the tree */
 	pthread_mutex_lock(&tree->lock);
+	*vlock = &tree->lock;
 
     /* find the place to insert, via the typical method of
      * binary tree insertion */
-    n->left = n->right = tree->sentinel;
     s = tree->root;
     t = tree->root->left;
     while (t != tree->sentinel) {
         s = t;
-		int c = cf_digest_compare(&key, &t->key);
+		int c = cf_digest_compare(key, &t->key);
         if (c)
             t = (c > 0) ? t->left : t->right;
         else
             break;
     }
-    n->parent = s;
 
     /* If the node already exists, stop a double-insertion */
     if ((s != tree->root) && (0 == cf_digest_compare(&n->key, &s->key))) {
-        free(n);
 		pthread_mutex_unlock(&tree->lock);
-        return(-2);
+        return(0);
     }
 
+    /* Allocate memory for the new node and set the node parameters */
+    if (NULL == (n = (cf_rcrb_node *)malloc(sizeof(cf_rcrb_node)))) {
+    	pthread_mutex_unlock(&tree->lock);
+        return(0);
+    }
+    n->color = CF_RCRB_RED;
+	n->key = *key;
+	n->value = 0;
+    n->parent = s;
+	n->left = n->right = tree->sentinel;
+	
+    u = n;
+    
     /* Insert the node */
     if ((s == tree->root) || (0 < cf_digest_compare(&n->key, &s->key)))
         s->left = n;
@@ -158,12 +156,8 @@ cf_rcrb_insert(cf_rcrb_tree *tree, cf_digest key, void *value)
     }
     tree->root->left->color = CF_RCRB_BLACK;
 	tree->elements++;
-	
-	cf_rc_reserve(u->value);
 
-	pthread_mutex_unlock(&tree->lock);
-	
-    return(0);
+    return(u);
 }
 
 
@@ -171,51 +165,52 @@ cf_rcrb_insert(cf_rcrb_tree *tree, cf_digest key, void *value)
 
 /* cf_rcrb_get_insert
  * Get or insert a node with a given tree into a red-black tree.
+ *
+ * The purpose of this admittadly strange API is it allows the caller to insert a new value after
+ * determinging whether the item existed in the first place.
  * */
-void *
-cf_rcrb_get_insert(cf_rcrb_tree *tree, cf_digest key, void *value)
+cf_rcrb_node *
+cf_rcrb_get_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock)
 {
     cf_rcrb_node *n, *s, *t, *u;
 
     /* Lock the tree */
 	pthread_mutex_lock(&tree->lock);
+	*vlock = &tree->lock;
 
     /* Insert the node directly into the tree, via the typical method of
      * binary tree insertion */
     s = tree->root;
     t = tree->root->left;
-	cf_debug(CF_RB,"get-insert: key %"PRIx64" sentinal %p",*(uint64_t *)&key, tree->sentinel);
+	cf_debug(CF_RB,"get-insert: key %"PRIx64" sentinal %p",*(uint64_t *)key, tree->sentinel);
 
     while (t != tree->sentinel) {
         s = t;
 //		cf_debug(CF_RB,"  at %p: key %"PRIx64": right %p left %p",t,*(uint64_t *)&t->key,t->right,t->left);
 
-		int c = cf_digest_compare(&key, &t->key);
+		int c = cf_digest_compare(key, &t->key);
         if (c)
             t = (c > 0) ? t->left : t->right;
         else
 			break;
     }
 
-    /* If the node already exists, stop a double-insertion */
-    if ((s != tree->root) && (0 == cf_digest_compare(&key, &s->key))) {
+    /* If the node already exists, simply return it */
+    if ((s != tree->root) && (0 == cf_digest_compare(key, &s->key))) {
 
-    	value = s->value;
-		cf_rc_reserve(value);
-		pthread_mutex_unlock(&tree->lock);
-        return(value);
+        return(s);
         
     }
 
-	cf_debug(CF_RB,"get-insert: not found");
+//	cf_debug(CF_RB,"get-insert: not found");
 	
     /* Allocate memory for the new node and set the node parameters */
     if (NULL == (n = (cf_rcrb_node *)malloc(sizeof(cf_rcrb_node)))) {
 		cf_debug(CF_RB," malloc failed ");
         return(NULL);
 	}
-	n->key = key;
-	n->value = value;
+	n->key = *key;
+	n->value = 0;
     n->left = n->right = tree->sentinel;
     n->color = CF_RCRB_RED;
     n->parent = s;
@@ -265,10 +260,8 @@ cf_rcrb_get_insert(cf_rcrb_tree *tree, cf_digest key, void *value)
     }
     tree->root->left->color = CF_RCRB_BLACK;
 	tree->elements++;
-	
-	pthread_mutex_unlock(&tree->lock);
 
-    return(0);
+    return(u);
 }
 
 
@@ -370,13 +363,13 @@ cf_rcrb_deleterebalance(cf_rcrb_tree *tree, cf_rcrb_node *r)
 /* cf_rcrb_search_lockless
  * Perform a lockless search for a node in a red-black tree */
 cf_rcrb_node *
-cf_rcrb_search_lockless(cf_rcrb_tree *tree, cf_digest dkey)
+cf_rcrb_search_lockless(cf_rcrb_tree *tree, cf_digest *key)
 {
     cf_rcrb_node *r = tree->root->left;
     cf_rcrb_node *s = NULL;
     int c;
 
-	cf_debug(CF_RB,"search: key %"PRIx64" sentinal %p",*(uint64_t *)&dkey, tree->sentinel);
+	cf_debug(CF_RB,"search: key %"PRIx64" sentinal %p",*(uint64_t *)&key, tree->sentinel);
 	
     /* If there are no entries in the tree, we're done */
     if (r == tree->sentinel)
@@ -387,7 +380,7 @@ cf_rcrb_search_lockless(cf_rcrb_tree *tree, cf_digest dkey)
 		
 //		cf_debug(CF_RB,"  at %p: key %"PRIx64": right %p left %p",s,*(uint64_t *)&s->key,s->right,s->left);
 
-        c = cf_digest_compare(&dkey, &s->key);
+        c = cf_digest_compare(key, &s->key);
         if (c)
             s = (c > 0) ? s->left : s->right;
         else
@@ -403,7 +396,7 @@ miss:
 /* cf_rcrb_search
  * Search a red-black tree for a node with a particular key */
 void *
-cf_rcrb_search(cf_rcrb_tree *tree, cf_digest key)
+cf_rcrb_search(cf_rcrb_tree *tree, cf_digest *key)
 {
     void *v = 0;
 
@@ -436,7 +429,7 @@ cf_rcrb_search(cf_rcrb_tree *tree, cf_digest key)
  *   -2 means value not found
  */
 int
-cf_rcrb_delete(cf_rcrb_tree *tree, cf_digest key)
+cf_rcrb_delete(cf_rcrb_tree *tree, cf_digest *key)
 {
     cf_rcrb_node *r, *s, *t;
 	int rv = 0;
@@ -602,9 +595,8 @@ typedef struct {
 ** call a function on all the nodes in the tree
 */
 void
-cf_rcrb_reduce_traverse( cf_rcrb_tree *tree, cf_rcrb_node *r, cf_rcrb_node *sentinel, cf_rcrb_reduce_fn cb, void *udata)
+cf_rcrb_reduce_traverse( cf_rcrb_tree *tree, cf_rcrb_node *r, cf_rcrb_node *sentinel, cf_rcrb_value_array *v_a)
 {
-	cf_rcrb_value_array *v_a = (cf_rcrb_value_array *) udata;
 	
 	if (v_a->pos >= v_a->alloc_sz)	return;
 	
@@ -616,10 +608,10 @@ cf_rcrb_reduce_traverse( cf_rcrb_tree *tree, cf_rcrb_node *r, cf_rcrb_node *sent
     }
 
 	if (r->left != sentinel)		
-		cf_rcrb_reduce_traverse(tree, r->left, sentinel, cb, udata);
+		cf_rcrb_reduce_traverse(tree, r->left, sentinel, v_a);
 	
 	if (r->right != sentinel)
-		cf_rcrb_reduce_traverse(tree, r->right, sentinel, cb, udata);
+		cf_rcrb_reduce_traverse(tree, r->right, sentinel, v_a);
 	
 }
 
@@ -627,8 +619,14 @@ cf_rcrb_reduce_traverse( cf_rcrb_tree *tree, cf_rcrb_node *r, cf_rcrb_node *sent
 void
 cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 {
+
     /* Lock the tree */
     pthread_mutex_lock(&tree->lock);
+    
+	if (tree->elements == 0)	{
+		pthread_mutex_unlock(&tree->lock);
+		return;    
+	}
 	
     // I heart stack allocation. I should probably make this an if and use malloc
     // if it's large
@@ -649,7 +647,7 @@ cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 	if ( (tree->root) && 
 		 (tree->root->left) && 
 		 (tree->root->left != tree->sentinel) )
-		cf_rcrb_reduce_traverse(tree, tree->root->left, tree->sentinel, cb, v_a);
+		cf_rcrb_reduce_traverse(tree, tree->root->left, tree->sentinel, v_a);
 
 	pthread_mutex_unlock(&tree->lock);
 	
@@ -657,6 +655,40 @@ cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 		cb ( & (v_a->values[i].key), v_a->values[i].value  , udata);
 
 	if (v_a != (cf_rcrb_value_array *) buf)	free(v_a);
+	
+    return;
+	
+}
+
+/*
+** call a function on all the nodes in the tree
+*/
+void
+cf_rcrb_reduce_sync_traverse( cf_rcrb_tree *tree, cf_rcrb_node *r, cf_rcrb_node *sentinel, cf_rcrb_reduce_fn cb, void *udata)
+{
+	if (r->value)
+		cb ( &r->key, r->value, udata); 
+
+	if (r->left != sentinel)		
+		cf_rcrb_reduce_sync_traverse(tree, r->left, sentinel, cb, udata);
+	
+	if (r->right != sentinel)
+		cf_rcrb_reduce_sync_traverse(tree, r->right, sentinel, cb, udata);
+}
+
+
+void
+cf_rcrb_reduce_sync(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
+{
+    /* Lock the tree */
+    pthread_mutex_lock(&tree->lock);
+	
+	if ( (tree->root) && 
+		 (tree->root->left) && 
+		 (tree->root->left != tree->sentinel) )
+		cf_rcrb_reduce_sync_traverse(tree, tree->root->left, tree->sentinel, cb, udata);
+
+	pthread_mutex_unlock(&tree->lock);
 	
     return;
 	

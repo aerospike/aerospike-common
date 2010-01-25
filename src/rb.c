@@ -71,7 +71,7 @@ cf_rb_rotate_right(cf_rb_tree *tree, cf_rb_node *r)
 /* cf_rb_insert
  * Insert a node with a given key into a red-black tree */
 cf_rb_node *
-cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
+cf_rb_insert(cf_rb_tree *tree, cf_digest *key, void *value)
 {
     cf_rb_node *n, *s, *t, *u;
 
@@ -81,16 +81,10 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     if (NULL == (n = (cf_rb_node *)malloc(sizeof(cf_rb_node))))
         return(NULL);
     n->color = CF_RB_RED;
-	n->key = key;
+	n->key = *key;
 	n->value = value;
 //    n->left = n->right = tree->sentinel;
 // left, right, parent are set during insert
-#ifndef OLOCK
-	if (0 != pthread_mutex_init(&n->VALUE_LOCK, NULL)) {
-        free(n);
-        return(NULL);
-    }
-#endif
 	
     u = n;
 
@@ -104,7 +98,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
     t = tree->root->left;
     while (t != tree->sentinel) {
         s = t;
-		int c = cf_digest_compare(&key, &t->key);
+		int c = cf_digest_compare(key, &t->key);
         if (c)
             t = (c > 0) ? t->left : t->right;
         else
@@ -173,7 +167,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest key, void *value)
  * Insert a node with a given key into a red-black tree and acquire the
  * value lock */
 cf_rb_node *
-cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t **vlock)
+cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest *key, pthread_mutex_t **vlock)
 {
     cf_rb_node *n, *s, *t, *u;
 
@@ -185,17 +179,10 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
 		cf_debug(CF_RB," malloc failed ");
         return(NULL);
 	}
-	n->key = key;
-	n->value = value;
+	n->key = *key;
+	n->value = 0;
 //    n->left = n->right = tree->sentinel;
     n->color = CF_RB_RED;
-#ifndef OLOCK	
-	if (0 != pthread_mutex_init(&n->VALUE_LOCK, NULL)) {
-		cf_debug(CF_RB," mutex init failed ");
-        free(n);
-        return(NULL);
-    }
-#endif	
     u = n;
 	
     /* Lock the tree */
@@ -218,9 +205,6 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
 
     /* If the node already exists, stop a double-insertion */
     if ((s != tree->root) && (0 == cf_digest_compare(&n->key, &s->key))) {
-#ifndef OLOCK		
-		pthread_mutex_destroy(&n->VALUE_LOCK);
-#endif		
         free(n);
 		pthread_mutex_unlock(&tree->lock);
         return(NULL);
@@ -273,14 +257,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
 
 	// TODO: Bug. This error case can't really be handled without removing the element
 	// from the tree again, we're handing back an unlocked lock and shit.
-#ifdef OLOCK	
 	olock_vlock( tree->value_locks, &u->key, vlock);
-#else	
-	if (0 != pthread_mutex_lock(&u->VALUE_LOCK)) {
-		cf_debug(CF_RB," what? can't lock mutex? So BONED!");
-	}
-    *vlock = &u->VALUE_LOCK;
-#endif
 
 	pthread_mutex_unlock(&tree->lock);
 
@@ -295,7 +272,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t
  * Insert a node with a given key into a red-black tree and acquire the
  * value lock. If the key already exists, return the node and don't set the value */
 cf_rb_node *
-cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mutex_t **vlock)
+cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest *key, pthread_mutex_t **vlock)
 {
     cf_rb_node *n, *s, *t, *u;
     *vlock = NULL;
@@ -307,13 +284,13 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mut
      * binary tree insertion */
     s = tree->root;
     t = tree->root->left;
-	cf_debug(CF_RB,"get-insert: key %"PRIx64" sentinal %p",*(uint64_t *)&key, tree->sentinel);
+	cf_debug(CF_RB,"get-insert: key %"PRIx64" sentinal %p",*(uint64_t *)key, tree->sentinel);
 
     while (t != tree->sentinel) {
         s = t;
 		cf_debug(CF_RB,"  at %p: key %"PRIx64": right %p left %p",t,*(uint64_t *)&t->key,t->right,t->left);
 
-		int c = cf_digest_compare(&key, &t->key);
+		int c = cf_digest_compare(key, &t->key);
         if (c)
             t = (c > 0) ? t->left : t->right;
         else
@@ -321,16 +298,9 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mut
     }
 
     /* If the node already exists, stop a double-insertion */
-    if ((s != tree->root) && (0 == cf_digest_compare(&key, &s->key))) {
+    if ((s != tree->root) && (0 == cf_digest_compare(key, &s->key))) {
 		
-#ifdef OLOCK	
 		olock_vlock( tree->value_locks, &s->key, vlock);
-#else	
-		if (0 != pthread_mutex_lock(&s->VALUE_LOCK)) {
-			cf_debug(CF_RB," what? can't lock mutex? So BONED!");
-		}
-		*vlock = &s->VALUE_LOCK;
-#endif
 		pthread_mutex_unlock(&tree->lock);
         return(s);
     }
@@ -342,17 +312,9 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mut
 		cf_debug(CF_RB," malloc failed ");
         return(NULL);
 	}
-	n->key = key;
-	n->value = value;
+	n->key = *key;
     n->left = n->right = tree->sentinel;
     n->color = CF_RB_RED;
-#ifndef OLOCK	
-	if (0 != pthread_mutex_init(&n->VALUE_LOCK, NULL)) {
-		cf_debug(CF_RB," mutex init failed ");
-        free(n);
-        return(NULL);
-    }
-#endif	
     n->parent = s;
     u = n;
 
@@ -401,14 +363,7 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest key, void *value, pthread_mut
     tree->root->left->color = CF_RB_BLACK;
 	tree->elements++;
 
-#ifdef OLOCK	
 	olock_vlock( tree->value_locks, &u->key, vlock);
-#else	
-	if (0 != pthread_mutex_lock(&u->VALUE_LOCK)) {
-		cf_debug(CF_RB," what? can't lock mutex? So BONED!");
-	}
-    *vlock = &u->VALUE_LOCK;
-#endif
 
 	pthread_mutex_unlock(&tree->lock);
 
@@ -512,13 +467,13 @@ cf_rb_deleterebalance(cf_rb_tree *tree, cf_rb_node *r)
 /* cf_rb_search_lockless
  * Perform a lockless search for a node in a red-black tree */
 cf_rb_node *
-cf_rb_search_lockless(cf_rb_tree *tree, cf_digest dkey)
+cf_rb_search_lockless(cf_rb_tree *tree, cf_digest *key)
 {
     cf_rb_node *r = tree->root->left;
     cf_rb_node *s = NULL;
     int c;
 
-	cf_debug(CF_RB,"search: key %"PRIx64" sentinal %p",*(uint64_t *)&dkey, tree->sentinel);
+	cf_debug(CF_RB,"search: key %"PRIx64" sentinal %p",*(uint64_t *)key, tree->sentinel);
 	
     /* If there are no entries in the tree, we're done */
     if (r == tree->sentinel)
@@ -529,7 +484,7 @@ cf_rb_search_lockless(cf_rb_tree *tree, cf_digest dkey)
 		
 //		cf_debug(CF_RB,"  at %p: key %"PRIx64": right %p left %p",s,*(uint64_t *)&s->key,s->right,s->left);
 
-        c = cf_digest_compare(&dkey, &s->key);
+        c = cf_digest_compare(key, &s->key);
         if (c)
             s = (c > 0) ? s->left : s->right;
         else
@@ -545,7 +500,7 @@ miss:
 /* cf_rb_search
  * Search a red-black tree for a node with a particular key */
 cf_rb_node *
-cf_rb_search(cf_rb_tree *tree, cf_digest key)
+cf_rb_search(cf_rb_tree *tree, cf_digest *key)
 {
     cf_rb_node *r;
 
@@ -567,7 +522,7 @@ cf_rb_search(cf_rb_tree *tree, cf_digest key)
  * Search a red-black tree for a node with a particular key and acquire the
  * value lock */
 cf_rb_node *
-cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock)
+cf_rb_search_vlock(cf_rb_tree *tree, cf_digest *key, pthread_mutex_t **vlock)
 {
     cf_rb_node *r;
 
@@ -578,14 +533,7 @@ cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock)
 
     /* Acquire the value lock */
     if (r) {
-#ifdef OLOCK	
 		olock_vlock( tree->value_locks, &r->key, vlock);
-#else	
-		if (0 != pthread_mutex_lock(&r->VALUE_LOCK)) {
-			cf_debug(CF_RB," what? can't lock mutex? So BONED!");
-		}
-		*vlock = &r->VALUE_LOCK;
-#endif
     }
 
     /* Unlock the tree */
@@ -606,7 +554,7 @@ cf_rb_search_vlock(cf_rb_tree *tree, cf_digest key, pthread_mutex_t **vlock)
  *   -2 means value not found
  */
 int
-cf_rb_delete(cf_rb_tree *tree, cf_digest key, void *destructor_udata)
+cf_rb_delete(cf_rb_tree *tree, cf_digest *key, void *destructor_udata)
 {
     cf_rb_node *r, *s, *t;
 	int rv = 0;
@@ -625,16 +573,7 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key, void *destructor_udata)
 
 	/* Hold the value lock */
     pthread_mutex_t *vlock = 0;
-#ifdef OLOCK	
 	olock_vlock( tree->value_locks, &r->key, &vlock);
-#else	
-    vlock = &r->VALUE_LOCK;
-	if (0 != pthread_mutex_lock(vlock)) {
-		cf_debug(CF_RB," what? can't lock mutex? So BONED!");
-		rv = -1;
-		goto release;
-	}
- #endif
 
     s = ((tree->sentinel == r->left) || (tree->sentinel == r->right)) ? r : cf_rb_successor(tree, r);
     t = (tree->sentinel == s->left) ? s->right : s->left;
@@ -676,11 +615,6 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key, void *destructor_udata)
 		// todoo
         pthread_mutex_unlock(vlock);
         
-#ifndef OLOCK
-		if (0 != pthread_mutex_destroy(&r->VALUE_LOCK))
-			cf_warning(CF_RB, "unable to destroy value lock: %s", cf_strerror(errno));
-#endif
-
         free(r);
     } else {
 
@@ -691,11 +625,6 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest key, void *destructor_udata)
 			free(s->value);
         
         pthread_mutex_unlock(vlock);
-
-#ifndef OLOCK
-        if (0 != pthread_mutex_destroy(&s->VALUE_LOCK))
-			cf_warning(CF_RB, "unable to destroy value lock: %s", cf_strerror(errno));
-#endif		
 
         // I don't understand why this has to be here -b
         if (CF_RB_BLACK == s->color)
@@ -722,9 +651,7 @@ cf_rb_create(cf_rb_value_destructor destructor) {
     if (NULL == (tree = cf_rc_alloc(sizeof(cf_rb_tree))))
         return(NULL);
 
-#ifdef OLOCK
 	tree->value_locks = olock_create( 16, true );
-#endif
 
 	pthread_mutex_init(&tree->lock, NULL);
 
@@ -768,19 +695,10 @@ cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r, void *destructor_udata)
     cf_rb_purge(tree, r->right, destructor_udata);
 
     /* Release this node's memory (I don't think this lock is necessary - b */
-#ifdef OLOCK
 	olock_lock(tree->value_locks, &r->key);
-#else	
-    pthread_mutex_lock(&r->VALUE_LOCK);
-#endif
 	if (tree->destructor)
         (void)tree->destructor(r->value, destructor_udata);
-#ifdef OLOCK
 	olock_unlock(tree->value_locks, &r->key);
-#else
-    pthread_mutex_unlock(&r->VALUE_LOCK);
-    pthread_mutex_destroy(&r->VALUE_LOCK);
-#endif	
 	// debug thing
 	// memset(r, 0xff, sizeof(cf_rb_node));
     free(r);
@@ -804,17 +722,9 @@ void
 cf_rb_reduce_traverse( cf_rb_tree *tree, cf_rb_node *r, cf_rb_node *sentinel, cf_rb_reduce_fn cb, void *udata)
 {
 	if (r->value) {
-#ifdef OLOCK
 		olock_lock(tree->value_locks, &r->key);
-#else
-        pthread_mutex_lock(&r->VALUE_LOCK);
-#endif		
-		(cb) (r->key, r->value, udata);
-#ifdef OLOCK
+		(cb) (&r->key, r->value, udata);
 		olock_unlock(tree->value_locks, &r->key);
-#else		
-        pthread_mutex_unlock(&r->VALUE_LOCK);
-#endif		
     }
 
 	if (r->left != sentinel)		
