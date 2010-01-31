@@ -41,7 +41,16 @@ typedef uint32_t (*rchash_hash_fn) (void *value, uint32_t value_len);
 typedef int (*rchash_reduce_fn) (void *key, uint32_t keylen, void *object, void *udata);
 
 /*
-** need a destructor for the object. It's a little complicated.
+** need a destructor for the object.
+**
+** Importantly - since the hash table knows about the reference-counted nature of 
+** the stored objects, a 'delete' will have to decrement the reference count, thus
+** likely will need to call a function to clean the internals of the object.
+** this destructor should not free the object, and will be called only when the reference
+** count is 0. If you don't have any internal state in the object, you can pass NULL
+** as the destructor.
+**
+** This function is also called if there's a 'reduce' that returns 'delete'
 */
 
 typedef void (*rchash_destructor_fn) (void *object);
