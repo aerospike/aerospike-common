@@ -23,7 +23,8 @@ typedef enum msg_field_type_t {
 	M_FT_STR = 5,
 	M_FT_BUF = 6,
 	M_FT_ARRAY_UINT32 = 7,
-	M_FT_ARRAY_UINT64 = 8
+	M_FT_ARRAY_UINT64 = 8,
+	M_FT_ARRAY_BUF = 9
 } msg_field_type;
 
 // this is somewhat of a helper, because 
@@ -54,10 +55,30 @@ typedef struct msg_field_template_t {
 
 typedef msg_field_template msg_template;
 
+//
+//
+//
+
+typedef struct msg_pbuf_s {
+	uint32_t	len;
+	uint8_t		data[];
+} msg_pbuf;
+
+
+typedef struct msg_buf_array_s {
+	uint32_t    alloc_size;          // number of bytes allocated
+	uint32_t	used_size;			 // bytes used in the buffer
+	uint32_t	len; 				 // number of string offsets
+	uint32_t    offset[];            
+} msg_buf_array; 
+
+
 // This is a very simple linear system for representing a message
 // Insert/read efficiency is paramount, but we think messages will tend
 // to be compact without a lot of holes. If we expected sparse representation,
 // we'd use a data structure better at sparse stuff
+
+
 
 typedef struct msg_field_t {
 	unsigned int 		id; // really probabaly don't need this in the represenation we have
@@ -71,9 +92,10 @@ typedef struct msg_field_t {
 		uint64_t	ui64;
 		int64_t     i64;
 		char 		*str;
-		byte		*buf;
+		uint8_t		*buf;
 		uint32_t    *ui32_a;
 		uint64_t    *ui64_a;
+		msg_buf_array *buf_a;
 	} u;
 	void 		*free;  // this is a pointer that must be freed on destruction,
 						// where exactly it points is a slight mystery
@@ -100,14 +122,14 @@ typedef struct msg_t {
 extern int msg_create(msg **m, msg_type type, const msg_template *mt, size_t mt_sz);
 
 // msg_parse - parse a buffer into a message, which thus can be accessed
-extern int msg_parse(msg *m, const byte *buf, const size_t buflen, bool copy);
+extern int msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy);
 
 // If you've received a little bit of a buffer, grab the size header and type
 // return = -2 means "not enough to tell yet"
-extern int msg_get_initial(uint32_t *size, msg_type *type, const byte *buf, const uint32_t buflen);
+extern int msg_get_initial(uint32_t *size, msg_type *type, const uint8_t *buf, const uint32_t buflen);
 
 // msg_tobuf - parse a message out into a buffer. Ret
-extern int msg_fillbuf(const msg *m, byte *buf, size_t *buflen);
+extern int msg_fillbuf(const msg *m, uint8_t *buf, size_t *buflen);
 
 // msg_reset - after a message has been parsed, and the information consumed,
 // reset all the internal pointers for another parse
@@ -121,6 +143,8 @@ extern void msg_decr_ref(msg *m); // this isn't used much, but helps when unwind
 // If you're reusing a message, and you want to unset a particular field,
 // this function comes in handy
 extern void msg_set_unset(msg *m, int field_id);
+
+extern bool msg_isset(msg *m, int field_id);
 
 // Getters and setters
 
@@ -144,7 +168,9 @@ extern int msg_get_int32(const msg *m, int field_id, int32_t *r);
 extern int msg_get_uint64(const msg *m, int field_id, uint64_t *r);
 extern int msg_get_int64(const msg *m, int field_id, int64_t *r);
 extern int msg_get_str(const msg *m, int field_id, char **r, size_t *len, msg_get_type type);  // this length is strlen+1, the allocated size
-extern int msg_get_buf(const msg *m, int field_id, byte **r, size_t *len, msg_get_type type);
+extern int msg_get_str_len(const msg *m, int field_id, size_t *len);  // this length is strlen+1, the allocated size
+extern int msg_get_buf(const msg *m, int field_id, uint8_t **r, size_t *len, msg_get_type type);
+extern int msg_get_buf_len(const msg *m, int field_id, size_t *len );
 extern int msg_get_bytearray(const msg *m, int field_id, cf_bytearray **r);
 
 extern int msg_set_uint32(msg *m, int field_id, const uint32_t v);
@@ -152,7 +178,7 @@ extern int msg_set_int32(msg *m, int field_id, const int32_t v);
 extern int msg_set_uint64(msg *m, int field_id, const uint64_t v);
 extern int msg_set_int64(msg *m, int field_id, const int64_t v);
 extern int msg_set_str(msg *m, int field_id, const char *v, msg_set_type type);
-extern int msg_set_buf(msg *m, int field_id, const byte *v, size_t len, msg_set_type type);
+extern int msg_set_buf(msg *m, int field_id, const uint8_t *v, size_t len, msg_set_type type);
 extern int msg_set_bytearray(msg *m, int field_id, const cf_bytearray *ba);
 extern int msg_set_bufbuilder(msg *m, int field_id, cf_buf_builder *bb);
 
@@ -161,11 +187,24 @@ extern int msg_get_uint32_array_size(msg *m, int field_id, int *size);
 extern int msg_get_uint32_array(msg *m, int field_id, const int index, uint32_t *r);
 extern int msg_get_uint64_array_size(msg *m, int field_id, int *size);
 extern int msg_get_uint64_array(msg *m, int field_id, const int index, uint64_t *r);
+extern int msg_get_buf_array_size(msg *m, int field_id, int *size);
+extern int msg_get_buf_array(msg *m, int field_id, const int index, uint8_t **r, size_t *len, msg_get_type type);  // this length is strlen+1, the allocated size
 
 extern int msg_set_uint32_array_size(msg *m, int field_id, const int size);
 extern int msg_set_uint32_array(msg *m, int field_id, const int index, const uint32_t v);
 extern int msg_set_uint64_array_size(msg *m, int field_id, const int size);
 extern int msg_set_uint64_array(msg *m, int field_id, const int index, const uint64_t v);
+extern int msg_set_buf_array_size(msg *m, int field_id, const int size);
+extern int msg_set_buf_array(msg *m, int field_id, const int index, const uint8_t *v, size_t len);
+
+
+// Sometimes it's really useful for readability to use a helper function
+static inline uint32_t
+msg_get_uint32_i(const msg *m, int field_id) {
+	uint32_t _t = 0xffffffff;
+	msg_get_uint32(m, field_id, &_t);
+	return(_t);
+}
 
 
 // A little routine that's good for testing
