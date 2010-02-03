@@ -1020,7 +1020,7 @@ msg_set_uint64_array(msg *m, int field_id, const int index, const uint64_t v)
 msg_buf_array *
 msg_buf_array_create(int n_bufs, int buf_len)
 {
-	int len = n_bufs * (buf_len + 4);
+	int len = sizeof(msg_buf_array) + n_bufs * (sizeof(uint32_t) + buf_len + sizeof(msg_pbuf));
 	msg_buf_array *buf_a = malloc( len );
 	if (!buf_a)	return(0);
 	buf_a->alloc_size = len;
@@ -1137,13 +1137,18 @@ msg_get_buf_array(msg *m, int field_id, const int index, uint8_t **r, size_t *le
 }
 
 int 
-msg_set_buf_array_size(msg *m, int field_id, const int size)
+msg_set_buf_array_size(msg *m, int field_id, const int size, const int elem_size)
 {
 	VALIDATE(m, field_id, M_FT_ARRAY_BUF);	
 	
+	if ((size <= 0) || (elem_size <= 0)) {
+		cf_warning(CF_MSG, "Illegal size parameters");
+		return(-1);
+	}
+
 	msg_field *mf = &(m->f[field_id]);
 	if (mf->is_set == false)	{
-		msg_buf_array *buf_a = msg_buf_array_create(size, 100);
+		msg_buf_array *buf_a = msg_buf_array_create(size, elem_size);
 		if (buf_a == 0)	return(-1);
 		mf->u.buf_a = buf_a;
 		mf->free = buf_a;
@@ -1179,8 +1184,6 @@ msg_set_buf_array(msg *m, int field_id, const int index, const uint8_t *v, size_
 
 	return(0);
 }
-
-
 
 
 

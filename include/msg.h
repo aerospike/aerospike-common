@@ -194,7 +194,7 @@ extern int msg_set_uint32_array_size(msg *m, int field_id, const int size);
 extern int msg_set_uint32_array(msg *m, int field_id, const int index, const uint32_t v);
 extern int msg_set_uint64_array_size(msg *m, int field_id, const int size);
 extern int msg_set_uint64_array(msg *m, int field_id, const int index, const uint64_t v);
-extern int msg_set_buf_array_size(msg *m, int field_id, const int size);
+extern int msg_set_buf_array_size(msg *m, int field_id, const int size, const int elem_size);
 extern int msg_set_buf_array(msg *m, int field_id, const int index, const uint8_t *v, size_t len);
 
 
