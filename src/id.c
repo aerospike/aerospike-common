@@ -104,7 +104,9 @@ cf_ipaddr_get(int socket, char *nic_id, char **node_ip )
  * Should stash the mac address or something, in case you have to replace a card.
  */
 
-
+// names to check, in order
+//
+char *interface_names[] = { "eth%d", "bond%d", 0 };
 
 int
 cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum hb_mode, char **hb_addrp )
@@ -119,24 +121,31 @@ cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum h
 	}
 	int i = 0;
 	bool done = false;
-	while ( (done == false) && (i < 11) ) {
-
-		sprintf(req.ifr_name, "eth%d",i);
-
-		if (0 == ioctl(fdesc, SIOCGIFHWADDR, &req)) { 
-	    	if (cf_ipaddr_get(fdesc, req.ifr_name, node_ipp) == 0) {
-				done = true;
-    		}
+	
+	while ((interface_names[i]) && (done == false)) {
+		
+		int j=0;
+		while ( (done == false) && (j < 11) ) {
+	
+			sprintf(req.ifr_name, interface_names[i],j);
+	
+			if (0 == ioctl(fdesc, SIOCGIFHWADDR, &req)) { 
+				if (cf_ipaddr_get(fdesc, req.ifr_name, node_ipp) == 0) {
+					done = true;
+					break;
+				}
+			}
+	
+			cf_info(CF_MISC, "can't get physical address of interface %s: %d %s", req.ifr_name, errno, cf_strerror(errno));
+	
+			j++;
+	
 		}
-
-		cf_debug(CF_MISC, "can't get physical address of interface %d: %d %s", i, errno, cf_strerror(errno));
-
 		i++;
-
 	}
 
 	if (done == false) {
-		cf_warning(CF_MISC, "can't get physical address, tried eth0 to eth10, fatal: %d %s", errno, cf_strerror(errno));
+		cf_warning(CF_MISC, "can't get physical address, tried eth and bond, fatal: %d %s", errno, cf_strerror(errno));
 		close(fdesc);
 		return(-1);
 		
