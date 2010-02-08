@@ -136,7 +136,7 @@ cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum h
 				}
 			}
 	
-			cf_info(CF_MISC, "can't get physical address of interface %s: %d %s", req.ifr_name, errno, cf_strerror(errno));
+			cf_debug(CF_MISC, "can't get physical address of interface %s: %d %s", req.ifr_name, errno, cf_strerror(errno));
 	
 			j++;
 	
