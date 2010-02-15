@@ -10,6 +10,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <openssl/ripemd.h>
+#include <openssl/md4.h>
 
 
 /* SYNOPSIS
@@ -59,4 +60,30 @@ static inline uint32_t cf_digest_gethash_mod(cf_digest *d, uint32_t MOD)
 {
 	return((*(uint32_t *)d->digest) % MOD);
 }
+
+//
+// SIGNATURE
+// A non-crypto-solid signature
+// 
+
+
+#define CF_SIGNATURE_SZ sizeof(uint64_t)
+typedef uint64_t cf_signature;
+
+static inline void
+cf_signature_compute(void *data, size_t len, cf_signature *s)
+{
+	uint8_t sig[MD4_DIGEST_LENGTH];
+
+	MD4_CTX c;
+	MD4_Init( &c );
+	MD4_Update(&c, data, len);
+	MD4_Final( (unsigned char *) &sig[0], &c);
+	memcpy(s, sig, sizeof(*s));
+}
+
+
+
+
+
 
