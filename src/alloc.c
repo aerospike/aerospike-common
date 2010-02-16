@@ -70,11 +70,24 @@ _cf_rc_release(void *addr, bool autofree)
 
 	/* Release the reservation; if this reduced the reference count to zero,
 	 * then free the block if autofree is set, and return 1.  Otherwise,
-	 * return 0 */
-	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
-	c = cf_atomic32_decr(rc);
-	if ((0 == c) && autofree)
-			free((void *)rc);
+	 * return 0
+	 * Note that a straight decrement is not safe.  Consider the case where
+	 * three threads are trying to operate on a block with reference count 1
+	 * (yes this is a bad case).  The first two threads try to release: the
+	 * first one succeeds and frees the block (refcount 0), the second one
+	 * succeeds and decrements the block (refcount -1) but doesn't free it
+	 * (because the refcount is nonzero), and the third thread tries to
+	 * acquire a reference and succeeds, making the refcount 0 on a block
+	 * that has been freed but is also supposedly in use.  What a mess that
+	 * would be */
+ 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
+    c = cf_atomic32_addunless(rc, 0, -1);
+    if (0 == c)
+        cf_warning(CF_RCALLOC, "rcrelease: double release attempted!");
+    /* NB This is safe because once the reference count is set to zero, nobody
+     * will ever increase it to a nonzero value again */
+    if ((0 == cf_atomic32_get(*rc)) && autofree)
+        free((void*)rc);
 
 	return(c);
 }
