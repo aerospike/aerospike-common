@@ -49,8 +49,10 @@ cf_rc_reserve(void *addr)
 	/* Extract the address of the reference counter, then increment it */
 	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
 
-//	return(cf_atomic32_addunless(rc, 0, 1));
-	return((int) cf_atomic32_add(rc, 1));
+    /* An add-unless-zero is required here to avoid a race: a release might
+     * be in flight, which might result in a free() on a reserved region. */
+	return((int)cf_atomic32_addunless(rc, 0, 1));
+//	return((int) cf_atomic32_add(rc, 1));
 }
 
 
