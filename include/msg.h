@@ -38,9 +38,10 @@ typedef enum msg_type_t {
 	M_TYPE_PROXY = 4,
 	M_TYPE_TEST = 5,
 	M_TYPE_WRITE = 6,
-	M_TYPE_INFO = 7,
-	M_TYPE_SCAN = 8,
-	M_TYPE_MAX = 9  /* highest + 1 is correct */
+	M_TYPE_RW = 7,
+	M_TYPE_INFO = 8,
+	M_TYPE_SCAN = 9,
+	M_TYPE_MAX = 10  /* highest + 1 is correct */
 } msg_type;
 
 
