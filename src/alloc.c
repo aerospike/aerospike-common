@@ -18,7 +18,7 @@
 #include "cf.h"
 
 
-#define EXTRA_CHECKS 1
+// #define EXTRA_CHECKS 1
 
 /* cf_rc_count
  * Get the reservation count for a memory region */
