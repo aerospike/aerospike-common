@@ -53,9 +53,10 @@ cf_mcslock_init(cf_mcslock *lock)
 	return;
 }
 
-// pthread_yield is actually not in pthread.h
-// even though it should be and appears supported
-extern int pthread_yield(void);
+//
+// Note regarding pthread yeild! it's agnu-im, requires -D_GNU_SOURCE
+//
+
 
 /* cf_mcslock_lock
  */
