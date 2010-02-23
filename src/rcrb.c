@@ -94,7 +94,7 @@ cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
     }
 
     /* If the node already exists, stop a double-insertion */
-    if ((s != tree->root) && (0 == cf_digest_compare(&n->key, &s->key))) {
+    if ((s != tree->root) && (0 == cf_digest_compare(key, &s->key))) {
 		pthread_mutex_unlock(&tree->lock);
         return(0);
     }
