@@ -215,6 +215,6 @@ extern int msg_compare(const msg *m1, const msg *m2);
 extern void msg_destroy(msg *m);
 
 // a debug funtion for finding out what's in a message
-extern void msg_dump(const msg *m);
+extern void msg_dump(const msg *m, const char *info);
 
 
