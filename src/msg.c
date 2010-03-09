@@ -843,6 +843,8 @@ int msg_set_buf(msg *m, int field_id, const uint8_t *v, size_t len, msg_set_type
 		// Or just malloc if we have to. Sad face.
 		else {
 			mf->u.buf = malloc(len);
+			if (mf->u.buf == NULL)
+				cf_info(CF_MSG, "could not allocate: len %d",len);
 			cf_assert(mf->u.buf, CF_MSG, CF_THREAD, CF_CRITICAL, "malloc");
 			mf->free = mf->u.buf; // free on exit/reset
 			mf->rc_free = 0;
