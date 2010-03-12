@@ -99,8 +99,8 @@ cf_socket_send(int sock, void *buf, size_t buflen, int flags)
 {
 	int i;
     flags |= MSG_NOSIGNAL;
-	if (0 >= (i = send(sock, buf, buflen, flags)))
-		cf_warning(CF_SOCKET, "send() failed: %s", cf_strerror(errno));
+	if (0 >= (i = send(sock, buf, buflen, flags))) 
+		cf_warning(CF_SOCKET, "send() failed: %d %s", i, cf_strerror(errno));
 
 	return(i);
 }
@@ -260,7 +260,7 @@ cf_socket_init_client(cf_socket_cfg *s)
 	s->saddr.sin_port = htons(s->port);
 
 	if (0 > (connect(s->sock, (struct sockaddr *)&s->saddr, sizeof(s->saddr)))) {
-		cf_warning(CF_SOCKET, "connect: %s", cf_strerror(errno));
+		cf_debug(CF_SOCKET, "connect: %s", cf_strerror(errno));
 		close(s->sock);
 		return(errno);
 	}
