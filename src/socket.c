@@ -227,9 +227,11 @@ cf_socket_init_svc(cf_socket_cfg *s)
 }
 
 
+#define CONNECT_TIMEOUT 1000
+
 /* cf_socket_init_client
  * Connect a socket to a remote endpoint
- * DOES A BLOCKING CONNECT INLINE
+ * DOES A BLOCKING CONNECT INLINE - timeout
  */
 int
 cf_socket_init_client(cf_socket_cfg *s)
@@ -241,8 +243,8 @@ cf_socket_init_client(cf_socket_cfg *s)
 		return(errno);
 	}
 
-	/* Set close-on-exec */
-	fcntl(s->sock, F_SETFD, FD_CLOEXEC);
+	fcntl(s->sock, F_SETFD, FD_CLOEXEC);  /* close on exec */
+	fcntl(s->sock, F_SETFL, O_NONBLOCK); /* non-blocking */
 
     // Try tuning the window: must be done before connect
 //    int flag = (1024 * 32);
@@ -259,17 +261,61 @@ cf_socket_init_client(cf_socket_cfg *s)
 	}
 	s->saddr.sin_port = htons(s->port);
 
-	if (0 > (connect(s->sock, (struct sockaddr *)&s->saddr, sizeof(s->saddr)))) {
-		cf_debug(CF_SOCKET, "connect: %s", cf_strerror(errno));
+	int rv = connect(s->sock, (struct sockaddr *)&s->saddr, sizeof(s->saddr));
+//	cf_detail(CF_SOCKET, "connect: rv %d errno %s",rv,cf_strerror(errno));
+	
+	if (rv < 0) {
+		if (errno == EINPROGRESS) {
+			cf_clock start = cf_getms();
+			do {
+				fd_set fdset;
+				struct timeval tv;
+				tv.tv_sec = 0;
+				tv.tv_usec = 500;
+				FD_ZERO(&fdset);
+				FD_SET(s->sock, &fdset);
+				rv = select(s->sock + 1,NULL, &fdset, NULL, &tv);
+				if (rv > 0) {
+					// Socket selected for write
+					int       val_opt;
+					socklen_t val_len = sizeof(val_opt); 
+					if (getsockopt(s->sock, SOL_SOCKET, SO_ERROR, (void*)(&val_opt), &val_len) < 0) { 
+					 cf_info(CF_SOCKET, "Error in getsockopt() %d - %s", s->sock, cf_strerror(errno)); 
+					 goto Fail;
+					} 
+					if (val_opt) { 
+					 cf_detail(CF_SOCKET, "Error in nonblocking connection() %d - %s", val_opt, strerror(val_opt)); 
+					 goto Fail;
+					} 
+
+					cf_detail(CF_SOCKET, "connect: success? fd %d",s->sock);
+					goto Success;
+				}
+				if (rv < 0 && errno != EINTR) {
+					goto Fail;
+				}
+				if (start + CONNECT_TIMEOUT < cf_getms()) {
+					cf_info(CF_SOCKET, "Error in delayed connect() timed out"); 
+					errno = ETIMEDOUT;
+					goto Fail;
+				}
+			} while (1);
+				
+		}
+Fail:		
+		cf_debug(CF_SOCKET, "connect fail: %s", cf_strerror(errno));
 		close(s->sock);
+		s->sock = -1;
 		return(errno);
 	}
-
+Success:	;	
+		
     // regarding this: calling here doesn't seem terribly effective.
     // on the fabric threads, it seems important to set nodelay much later
     int flag = 1;
-	setsockopt(s->sock, SOL_TCP, TCP_NODELAY, &flag, sizeof(flag) );    
-
+	setsockopt(s->sock, SOL_TCP, TCP_NODELAY, &flag, sizeof(flag) );
+	long farg = fcntl(s->sock, F_GETFL, 0);    
+	fcntl(s->sock, F_SETFL, farg & (~O_NONBLOCK)); /* blocking again */
     
 	return(0);
 }
