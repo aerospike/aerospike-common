@@ -123,11 +123,13 @@ cf_socket_recvfrom(int sock, void *buf, size_t buflen, int flags, cf_sockaddr *f
 
     flags |= MSG_NOSIGNAL;
     
-	if (0 >= (i = recvfrom(sock, buf, buflen, flags, (struct sockaddr *)fp, &fl)))
+	if (0 >= (i = recvfrom(sock, buf, buflen, flags, (struct sockaddr *)fp, &fl))) {
 		cf_warning(CF_SOCKET, "recvfrom() failed: %s", cf_strerror(errno));
-
-    if (from)
-	    cf_sockaddr_convertto(fp, from); 
+		if (from) memset(from, 0, sizeof(cf_sockaddr));
+	}
+    else{
+    	if (from) 	    cf_sockaddr_convertto(fp, from);
+    }
 
 	return(i);
 }
