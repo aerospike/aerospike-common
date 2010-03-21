@@ -45,6 +45,15 @@ static inline uint64_t cf_roundup_64( uint64_t i, uint32_t modulus) {
 	return(  i + (modulus - t ) );
 }
 
+// some debate about what's faster
+
+// #define cf_max_uint32(__x, __y) ( __x ^ (( __x ^ __y ) & -(__x < __y)) )
+#define cf_max_uint32(__x, __y) ( (__x) > (__y) ? (__x) : (__y) )
+// static inline uint32_t cf_max_uint32(uint32_t x, uint32_t y) {
+//	return ( __x > __y ? __x : __y);
+//}
+#define cf_max(__x, __y) ( (__x) > (__y) ? (__x) : (__y) )
+
 #ifdef MARCH_i686
 
 static inline uint8_t * cf_roundup_p(uint8_t * p, uint32_t modulus) {
