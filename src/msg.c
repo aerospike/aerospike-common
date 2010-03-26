@@ -20,7 +20,7 @@
 #include "cf.h"
 
 // Define this if you want extra sanity checks enabled
-// #define CHECK 1
+// #define EXTRA_CHECKS 1
 
 int 
 msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
@@ -505,7 +505,7 @@ msg_reset(msg *m)
 	
 }
 
-#ifdef CHECK
+#ifdef EXTRA_CHECKS
 void VALIDATE(const msg *m, int field_id, int type) {
 	if (! m->f[field_id].is_valid) {
 		cf_crash(CF_MSG, CF_PROCESS, "msg: invalid id %d in field ",field_id);
@@ -1196,7 +1196,7 @@ msg_set_buf_array(msg *m, int field_id, const int index, const uint8_t *v, size_
 
 void msg_set_unset(msg *m, int field_id)
 {
-#ifdef CHECK	
+#ifdef EXTRA_CHECKS	
 	if (! m->f[field_id].is_valid) {
 		cf_crash(CF_MSG, CF_PROCESS, "msg: invalid id %d in field set",field_id);
 		return; // not sure the meaning of ERROR - will it throw or not?
@@ -1223,7 +1223,7 @@ void msg_set_unset(msg *m, int field_id)
 
 bool msg_isset(msg *m, int field_id)
 {
-#ifdef CHECK	
+#ifdef EXTRA_CHECKS	
 	if (! m->f[field_id].is_valid) {
 		cf_crash(CF_MSG, CF_PROCESS, "msg: invalid id %d in field set",field_id);
 	}
