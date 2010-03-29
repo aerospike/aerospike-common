@@ -60,13 +60,14 @@ typedef enum {
 	AS_PAXOS = 28,
 	AS_MIGRATE = 29,
 	AS_INFO = 30,
-	AS_STORAGE = 31,
-	AS_DRV_MEM = 32,
-	AS_DRV_FS = 33,
-	AS_DRV_FILES = 34,
-	AS_DRV_SSD = 35,
-	AS_SCAN = 36,
-	CF_FAULT_CONTEXT_UNDEF = 37
+	AS_INFO_PORT = 31,
+	AS_STORAGE = 32,
+	AS_DRV_MEM = 33,
+	AS_DRV_FS = 34,
+	AS_DRV_FILES = 35,
+	AS_DRV_SSD = 36,
+	AS_SCAN = 37,
+	CF_FAULT_CONTEXT_UNDEF = 38
 } cf_fault_context;
 
 /* cf_fault_scope

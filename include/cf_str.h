@@ -54,3 +54,10 @@ static inline int cf_str_atoi_u64(char *s, uint64_t *value)
 // the vector better be created with object size 'void *'
 struct cf_vector_s;
 extern void cf_str_split(char *fmt, char *str, struct cf_vector_s *v);
+
+static inline int cf_str_strnchr(uint8_t *s, int sz, int c) {
+	for (int i=0;i<sz;i++) {
+		if (s[i] == c) return(i);
+	}
+	return(-1);
+}

@@ -69,13 +69,14 @@ static const char *cf_fault_context_strings[] = {
 	"paxos",       // 28
 	"migrate",     // 29
 	"info",        // 30
-	"storage",     // 31
-	"drv_mem",     // 32
-	"drv_fs",      // 33
-	"drv_files",      // 34
-	"drv_ssd",      // 35
-	"scan",			// 36
-	NULL           // 37
+	"info-port",        // 31
+	"storage",     // 32
+	"drv_mem",     // 33
+	"drv_fs",      // 34
+	"drv_files",      // 35
+	"drv_ssd",      // 36
+	"scan",			// 37
+	NULL           // 38
 };
 
 static const char *cf_fault_severity_strings[] = { "CRITICAL", "WARNING", "INFO", "DEBUG", "DETAIL", NULL };
