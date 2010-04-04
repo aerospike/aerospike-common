@@ -11,6 +11,7 @@
 
 
 
+
 /* SYNOPSIS
  * Fault scoping
  *
@@ -118,6 +119,15 @@ typedef struct cf_fault_recovery_stack_t cf_fault_recovery_stack;
 /* Function declarations */
 extern int cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity);
 extern cf_fault_sink *cf_fault_sink_add(char *path);
+
+extern int cf_fault_sink_strlist(cf_dyn_buf *db); // pack all contexts into a string - using ids
+extern int cf_fault_sink_context_all_strlist(int sink_id, cf_dyn_buf *db);
+extern int cf_fault_sink_context_strlist(int sink_id, char *context, cf_dyn_buf *db);
+
+
+extern cf_fault_sink *cf_fault_sink_get_id(int id);
+
+
 extern void cf_fault_event(const cf_fault_context, const cf_fault_scope, const cf_fault_severity severity, const char *fn, const int line, char *msg, ...);
 #define cf_assert(a, context, scope, severity, __msg, ...) ((void)((a) ? (void)0 : cf_fault_event((context), (scope), (severity), __func__, __LINE__, (__msg), ##__VA_ARGS__)))
 #define cf_crash(context, scope, __msg, ...) (cf_fault_event((context), (scope), CF_CRITICAL, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
@@ -126,6 +136,10 @@ extern void cf_fault_event(const cf_fault_context, const cf_fault_scope, const c
 #define cf_debug(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_DEBUG, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
 #define cf_detail(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_DETAIL, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
 extern char *cf_strerror(const int err);
+
+
+// fault recovery, which is not used much
+
 extern int cf_fault_recovery_globalinit(cf_fault_recovery_key *rkey);
 extern int cf_fault_recovery_localinit(cf_fault_recovery_key *rkey, cf_fault_recovery_stack *stack);
 extern int cf_fault_recovery_push(cf_fault_recovery_key *rkey, void (*fn)(void *), void *arg);

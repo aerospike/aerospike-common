@@ -31,7 +31,7 @@ typedef struct cf_dyn_buf_s {
 
 #define cf_dyn_buf_define(__x)  uint8_t dyn_buf##__x[1024]; cf_dyn_buf __x = { dyn_buf##__x, true, 1024, 0 } 
 
-extern int cf_dyn_buf_append_string(cf_dyn_buf *db, char *s);
+extern int cf_dyn_buf_append_string(cf_dyn_buf *db, const char *s);
 extern int cf_dyn_buf_append_char(cf_dyn_buf *db, char c);
 extern int cf_dyn_buf_append_buf(cf_dyn_buf *db, uint8_t *buf, size_t sz);
 extern int cf_dyn_buf_append_int(cf_dyn_buf *db, int i);
@@ -54,7 +54,7 @@ extern int cf_buf_builder_chomp(cf_buf_builder *bb_r);
 // if you use any binary components, this strdup thing is a bad idea
 extern char *cf_buf_builder_strdup(cf_buf_builder *bb_r);
 
-extern int cf_buf_builder_append_string(cf_buf_builder **bb_r, char *s);
+extern int cf_buf_builder_append_string(cf_buf_builder **bb_r, const char *s);
 extern int cf_buf_builder_append_char(cf_buf_builder **bb_r, char c);
 extern int cf_buf_builder_append_buf(cf_buf_builder **bb_r, uint8_t *buf, size_t sz);
 // these append ASCII versions

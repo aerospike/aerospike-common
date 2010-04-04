@@ -70,7 +70,7 @@ cf_dyn_buf_append_buf(cf_dyn_buf *db, uint8_t *buf, size_t sz)
 }
 
 int
-cf_dyn_buf_append_string(cf_dyn_buf *db, char *s)
+cf_dyn_buf_append_string(cf_dyn_buf *db, const char *s)
 {
 	size_t	len = strlen(s);
 	DB_RESERVE(len);
@@ -202,7 +202,7 @@ cf_buf_builder_append_buf(cf_buf_builder **bb_r, uint8_t *buf, size_t sz)
 }
 
 int
-cf_buf_builder_append_string(cf_buf_builder **bb_r, char *s)
+cf_buf_builder_append_string(cf_buf_builder **bb_r, const char *s)
 {
 	size_t	len = strlen(s);
 	BB_RESERVE(len);

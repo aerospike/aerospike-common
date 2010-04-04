@@ -410,3 +410,70 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 
 	return;
 }
+
+int
+cf_fault_sink_strlist(cf_dyn_buf *db)
+{
+	for (int i = 0; i < cf_fault_sinks_inuse; i++) {
+		cf_dyn_buf_append_int(db, i);
+		cf_dyn_buf_append_char(db, ':');
+		cf_dyn_buf_append_string(db,cf_fault_sinks[i].path);
+		cf_dyn_buf_append_char(db, ';');
+	}
+	cf_dyn_buf_chomp(db);
+	return(0);
+}
+
+
+
+cf_fault_sink *cf_fault_sink_get_id(int id)
+{
+	if (id > cf_fault_sinks_inuse)	return(0);
+	return ( &cf_fault_sinks[id] );
+	
+}
+
+int 
+cf_fault_sink_context_all_strlist(int sink_id, cf_dyn_buf *db)
+{
+	// get the sink
+	if (sink_id > cf_fault_sinks_inuse)	return(-1);
+	cf_fault_sink *s = &cf_fault_sinks[sink_id];
+	
+	for (uint i=0; i<CF_FAULT_CONTEXT_UNDEF; i++) {
+		cf_dyn_buf_append_string(db, cf_fault_context_strings[i]);
+		cf_dyn_buf_append_char(db, ':');
+		cf_dyn_buf_append_string(db, cf_fault_severity_strings[s->limit[i]]);
+		cf_dyn_buf_append_char(db, ';');
+	}
+	cf_dyn_buf_chomp(db);
+	return(0);
+}
+
+int 
+cf_fault_sink_context_strlist(int sink_id, char *context, cf_dyn_buf *db)
+{
+	// get the sink
+	if (sink_id > cf_fault_sinks_inuse)	return(-1);
+	cf_fault_sink *s = &cf_fault_sinks[sink_id];
+	
+	// get the severity
+	uint i;
+	for (i=0;i<CF_FAULT_CONTEXT_UNDEF;i++) {
+		if (0 == strcmp(cf_fault_context_strings[i],context))
+			break;
+	}
+	if (i == CF_FAULT_CONTEXT_UNDEF) {
+		cf_dyn_buf_append_string(db, context);
+		cf_dyn_buf_append_string(db, ":unknown");
+		return(0);
+	}
+		
+	// get the string	
+	cf_dyn_buf_append_string(db, context);
+	cf_dyn_buf_append_char(db, ':');
+	cf_dyn_buf_append_string(db, cf_fault_severity_strings[s->limit[i]]);
+	return(0);	
+}
+
+
