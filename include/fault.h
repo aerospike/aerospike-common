@@ -71,6 +71,8 @@ typedef enum {
 	CF_FAULT_CONTEXT_UNDEF = 38
 } cf_fault_context;
 
+extern char *cf_fault_context_strings[];
+
 /* cf_fault_scope
  *     GLOBAL              fatal errors terminate all execution
  *     PROCESS             fatal errors terminate the process
@@ -117,13 +119,13 @@ typedef struct cf_fault_recovery_stack_t cf_fault_recovery_stack;
 
 
 /* Function declarations */
+			// note: passing a null sink sets for all currently known sinks
 extern int cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity);
 extern cf_fault_sink *cf_fault_sink_add(char *path);
 
 extern int cf_fault_sink_strlist(cf_dyn_buf *db); // pack all contexts into a string - using ids
 extern int cf_fault_sink_context_all_strlist(int sink_id, cf_dyn_buf *db);
 extern int cf_fault_sink_context_strlist(int sink_id, char *context, cf_dyn_buf *db);
-
 
 extern cf_fault_sink *cf_fault_sink_get_id(int id);
 

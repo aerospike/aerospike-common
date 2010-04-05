@@ -37,7 +37,7 @@ char **cf_fault_restart_argv;
  
 /* MUST BE KEPT IN SYNC WITH FAULT.H */
  
-static const char *cf_fault_context_strings[] = {
+char *cf_fault_context_strings[] = {
 	"cf:misc",     // 00 
 	"cf:rcalloc",  // 01 
 	"cf:hash",     // 02
@@ -287,10 +287,26 @@ cf_fault_sink_get(char *path)
     return(s);
 }
 
+int cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity);
+
+
+int
+cf_fault_sink_addcontext_all(char *context, char *severity)
+{
+    for (int i = 0; i < cf_fault_sinks_inuse; i++) {
+        cf_fault_sink *s = &cf_fault_sinks[i];
+        int rv = cf_fault_sink_addcontext(s, context, severity);
+        if (rv != 0)	return(rv);
+    }
+    return(0);
+}
+
 
 int
 cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity)
 {
+	if (s == 0) 		return(cf_fault_sink_addcontext_all(context, severity));
+
 	cf_fault_context ctx = CF_FAULT_CONTEXT_UNDEF;
 	cf_fault_severity sev = CF_FAULT_SEVERITY_UNDEF;
 
