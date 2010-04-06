@@ -75,3 +75,36 @@ hist_getcycles()
 
 
 
+/* SYNOPSIS
+ * Linear histogram partitions the values into 20 buckets, < 5%, < 10%, < 15%, ..., < 95%, rest
+ */
+
+#define LINEAR_N_COUNTS 20
+
+//
+// The counts are linear.
+// count[0] is the number in the first 5%
+// count[1] is all data between 5% and 10%
+// count[18] is all data between 90% and 95%
+// count[19] is all data > 95%
+//
+
+
+typedef struct linear_histogram_counts_s {
+	uint64_t count[LINEAR_N_COUNTS];
+} linear_histogram_counts;
+
+typedef struct linear_histogram_s {
+	char name[64];
+	uint64_t start;
+	uint64_t offset20;
+	cf_atomic_int n_counts;
+	cf_atomic_int count[LINEAR_N_COUNTS];
+} linear_histogram;
+
+extern linear_histogram * linear_histogram_create(char *name, uint64_t start, uint64_t max_offset);
+extern void linear_histogram_dump( linear_histogram *h );  // for debugging, dumps to stderr
+extern void linear_histogram_get_counts(linear_histogram *h, linear_histogram_counts *hc);
+extern void linear_histogram_insert_data_point(linear_histogram *h, uint64_t point);
+extern size_t linear_histogram_get_index_for_pct(linear_histogram *h, size_t pct);
+

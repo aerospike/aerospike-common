@@ -147,6 +147,34 @@ cf_atomic64_addunless(cf_atomic64 *a, int64_t b, int64_t x)
 	return(cur != b);
 }
 
+
+static inline int64_t
+cf_atomic64_setmax(cf_atomic64 *a, int64_t x)
+{
+	int64_t prior, cur;
+
+	/* Get the current value of the atomic integer */
+	cur = cf_atomic64_get(*a);
+
+	for ( ;; ) {
+		/* Check if the current value is equal to the criterion */
+		if (cur >= x)
+			break;
+
+		/* Attempt a compare-and-swap, which will return the value of cur
+		 * prior to the operation */
+		prior = cf_atomic64_cas(a, cur, x);
+
+		/* If prior and cur are equal, then the operation has succeeded;
+		 * otherwise, set cur to prior and go around again */
+		if (prior == cur)
+			break;
+		cur = prior;
+	}
+
+	return(cur != x);
+}
+
 #endif // uint64
 
 #ifdef HAS_ATOMIC_32
@@ -231,6 +259,34 @@ cf_atomic32_addunless(cf_atomic32 *a, int32_t b, int32_t x)
 	return(cur != b);
 }
 
+
+static inline int32_t
+cf_atomic32_setmax(cf_atomic32 *a, int32_t x)
+{
+	int32_t prior, cur;
+
+	/* Get the current value of the atomic integer */
+	cur = cf_atomic32_get(*a);
+
+	for ( ;; ) {
+		/* Check if the current value is equal to the criterion */
+		if (cur >= x)
+			break;
+
+		/* Attempt a compare-and-swap, which will return the value of cur
+		 * prior to the operation */
+		prior = cf_atomic32_cas(a, cur, x);
+
+		/* If prior and cur are equal, then the operation has succeeded;
+		 * otherwise, set cur to prior and go around again */
+		if (prior == cur)
+			break;
+		cur = prior;
+	}
+
+	return(cur != x);
+}
+
 #endif // uint32
 
 #ifdef MARCH_i686
@@ -245,6 +301,7 @@ cf_atomic32_addunless(cf_atomic32 *a, int32_t b, int32_t x)
 #define cf_atomic_p_fas(_a, _b) cf_atomic32_fas(_a, _b)
 #define cf_atomic_p_fas_m(_a, _b) cf_atomic32_fas_m(_a, _b)
 #define cf_atomic_p_addunless(_a, _b, _x) cf_atomic32_addunless(_a, _b, _x)
+#define cf_atomic_p_setmax(_a, _x) cf_atomic32_setmax(_a, _x)
 
 #define cf_atomic_int_get(_a) cf_atomic32_get(_a)
 #define cf_atomic_int_set(_a, _b) cf_atomic32_set(_a, _b)
@@ -257,6 +314,7 @@ cf_atomic32_addunless(cf_atomic32 *a, int32_t b, int32_t x)
 #define cf_atomic_int_fas(_a, _b) cf_atomic32_fas(_a, _b)
 #define cf_atomic_int_fas_m(_a, _b) cf_atomic32_fas_m(_a, _b)
 #define cf_atomic_int_addunless(_a, _b, _x) cf_atomic32_addunless(_a, _b, _x)
+#define cf_atomic_int_setmax(_a, _x) cf_atomic32_setmax(_a, _x)
 
 #endif
 
@@ -274,6 +332,7 @@ cf_atomic32_addunless(cf_atomic32 *a, int32_t b, int32_t x)
 #define cf_atomic_p_fas(_a, _b) cf_atomic64_fas(_a, _b)
 #define cf_atomic_p_fas_m(_a, _b) cf_atomic64_fas_m(_a, _b)
 #define cf_atomic_p_addunless(_a, _b, _x) cf_atomic64_addunless(_a, _b, _x)
+#define cf_atomic_p_setmax(_a, _x) cf_atomic64_setmax(_a, _x)
 
 #define cf_atomic_int_get(_a) cf_atomic64_get(_a)
 #define cf_atomic_int_set(_a, _b) cf_atomic64_set(_a, _b)
@@ -286,6 +345,7 @@ cf_atomic32_addunless(cf_atomic32 *a, int32_t b, int32_t x)
 #define cf_atomic_int_fas(_a, _b) cf_atomic64_fas(_a, _b)
 #define cf_atomic_int_fas_m(_a, _b) cf_atomic64_fas_m(_a, _b)
 #define cf_atomic_int_addunless(_a, _b, _x) cf_atomic64_addunless(_a, _b, _x)
+#define cf_atomic_int_setmax(_a, _x) cf_atomic64_setmax(_a, _x)
 
 #endif
 

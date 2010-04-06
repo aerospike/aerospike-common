@@ -142,4 +142,88 @@ void histogram_get_counts(histogram *h, histogram_counts *hc)
 	return;
 }
 
+linear_histogram * 
+linear_histogram_create(char *name, uint64_t start, uint64_t max_offset)
+{
+	linear_histogram * h = malloc(sizeof(linear_histogram));
+	if (!h)	return(0);
+	if (strlen(name) >= sizeof(h->name)-1) { free(h); return(0); }
+	strcpy(h->name, name);
+	h->n_counts = 0;
+	h->start = start;
+    h->offset20 = max_offset / 20;
+	memset(&h->count, 0, sizeof(h->count));
+	return(h);
+}
 
+void linear_histogram_insert_data_point( linear_histogram *h, uint64_t point)
+{
+	cf_atomic_int_incr(&h->n_counts);
+	
+    int64_t offset = point - h->start;
+	int index = 0;
+	if (offset > 0) {
+		index = offset / h->offset20;
+		if (index > 19)
+			index = 19;
+	}
+
+	cf_atomic_int_incr( &h->count[ index ]);
+	
+}
+
+void linear_histogram_get_counts(linear_histogram *h, linear_histogram_counts *hc)
+{
+	for (int i=0;i<LINEAR_N_COUNTS;i++)
+		hc->count[i] = h->count[i];
+	return;
+}
+
+// This routine is not thread safe and should be called from a single threaded routine
+size_t linear_histogram_get_index_for_pct(linear_histogram *h, size_t pct)
+{
+	if (h->n_counts == 0)
+		return 1;
+	int min_limit = (h->n_counts * pct) / 100;
+	if (min_limit >= h->n_counts)
+		return LINEAR_N_COUNTS;
+	int count = 0;
+	for (int i=0;i<LINEAR_N_COUNTS;i++) {
+		count += h->count[i];
+		if (count >= min_limit)
+			return (i+1);
+	}
+	return LINEAR_N_COUNTS;
+}
+
+void linear_histogram_dump( linear_histogram *h )
+{
+	char printbuf[100];
+	int pos = 0; // location to print from
+	printbuf[0] = '\0';
+	
+	cf_info(AS_INFO, "linear histogram dump: %s (%zu total)",h->name, h->n_counts);
+	int i, j;
+	int k = 0;
+	for (j=LINEAR_N_COUNTS-1 ; j >= 0 ; j-- ) if (h->count[j]) break;
+	for (i=0;i<LINEAR_N_COUNTS;i++) if (h->count[i]) break;
+	for (; i<=j;i++) {
+		if (h->count[i] > 0) { // print only non zero columns
+			int bytes = sprintf((char *) (printbuf + pos), " (%02d: %010zu) ", i, h->count[i]);
+			if (bytes <= 0) 
+			{
+				cf_info(AS_INFO, "linear histogram printing error. Bailing ...");
+				return;
+			}
+			pos += bytes;
+		    if (k % 4 == 3){
+		    	 cf_info(AS_INFO, "%s", (char *) printbuf);
+		    	 pos = 0;
+		    	 printbuf[0] = '\0';
+		    }
+		    k++;
+		}
+	}
+	if (pos > 0) 
+	    cf_info(AS_INFO, "%s", (char *) printbuf);
+}
