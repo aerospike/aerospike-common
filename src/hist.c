@@ -152,6 +152,8 @@ linear_histogram_create(char *name, uint64_t start, uint64_t max_offset)
 	h->n_counts = 0;
 	h->start = start;
     h->offset20 = max_offset / 20;
+	if (h->offset20 == 0) // avoid divide by zero while inserting data point
+		h->offset20 = 1;
 	memset(&h->count, 0, sizeof(h->count));
 	return(h);
 }
