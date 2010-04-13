@@ -55,7 +55,7 @@ typedef enum {
 	AS_TEST = 22,
 	AS_NSUP = 23,
 	AS_PROXY = 24,
-	AS_HB = 25, AS_PULSE = 25,
+	AS_HB = 25, 
 	AS_FABRIC = 26,
 	AS_PARTITION = 27,
 	AS_PAXOS = 28,
