@@ -23,6 +23,7 @@
 
 /* This one just looks better to me */
 typedef uint8_t byte;
+typedef unsigned int uint;
 
 
 /* cf_bytearray
@@ -49,6 +50,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "lock.h"
 #include "queue.h"
 #include "rb.h"
+#include "arena.h"
 #include "rcrb.h"
 #include "socket.h"
 #include "msg.h"
@@ -62,7 +64,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "olock.h"
 #include "clock.h"
 #include "cf_random.h"
-#include "arena.h"
+
 
 
 /* cf_hash_fnv
