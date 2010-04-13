@@ -62,6 +62,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "olock.h"
 #include "clock.h"
 #include "cf_random.h"
+#include "arena.h"
 
 
 /* cf_hash_fnv
