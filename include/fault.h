@@ -137,6 +137,7 @@ extern void cf_fault_event(const cf_fault_context, const cf_fault_scope, const c
 #define cf_info(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_INFO, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
 #define cf_debug(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_DEBUG, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
 #define cf_detail(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_DETAIL, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
+// strerror override. GP claims standard strerror has a rare but existant concurrency hole, this fixes that hole
 extern char *cf_strerror(const int err);
 
 
