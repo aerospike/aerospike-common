@@ -399,9 +399,23 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 
 		btn = backtrace(bt, CF_FAULT_BACKTRACE_DEPTH);
 		btstr = backtrace_symbols(bt, btn);
-		cf_assert(btstr, CF_MISC, CF_PROCESS, CF_CRITICAL, "backtrace_symbols() returned NULL");
-		for (int i = 0; i < btn; i++)
-			fprintf(stderr, "  %s\n", btstr[i]);
+		if (!btstr) {
+			for (int i = 0; i < cf_fault_sinks_inuse; i++) {
+				char *no_bkstr = " --- NO BACKTRACE AVAILABLE --- \n";
+				write(cf_fault_sinks[i].fd, no_bkstr, strlen(no_bkstr));
+			}
+		}
+		else {
+			for (int i = 0; i < cf_fault_sinks_inuse; i++) {
+				for (int j=0; j < btn; j++) {
+					char line[60];
+					sprintf(line, "critical error: backtrace: frame %d ",j);
+					write(cf_fault_sinks[i].fd, line, strlen(line));
+					write(cf_fault_sinks[i].fd, btstr[j], strlen(btstr[j]));
+					write(cf_fault_sinks[i].fd, "\n", 1);
+				}
+			}
+		}
 
 		switch(scope) {
 			case CF_GLOBAL:
