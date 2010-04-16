@@ -397,12 +397,14 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	if (CF_CRITICAL == severity) {
 		fflush(NULL);
 
+		int wb = 0;
+		
 		btn = backtrace(bt, CF_FAULT_BACKTRACE_DEPTH);
 		btstr = backtrace_symbols(bt, btn);
 		if (!btstr) {
 			for (int i = 0; i < cf_fault_sinks_inuse; i++) {
 				char *no_bkstr = " --- NO BACKTRACE AVAILABLE --- \n";
-				write(cf_fault_sinks[i].fd, no_bkstr, strlen(no_bkstr));
+				wb += write(cf_fault_sinks[i].fd, no_bkstr, strlen(no_bkstr));
 			}
 		}
 		else {
@@ -410,9 +412,9 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 				for (int j=0; j < btn; j++) {
 					char line[60];
 					sprintf(line, "critical error: backtrace: frame %d ",j);
-					write(cf_fault_sinks[i].fd, line, strlen(line));
-					write(cf_fault_sinks[i].fd, btstr[j], strlen(btstr[j]));
-					write(cf_fault_sinks[i].fd, "\n", 1);
+					wb += write(cf_fault_sinks[i].fd, line, strlen(line));
+					wb += write(cf_fault_sinks[i].fd, btstr[j], strlen(btstr[j]));
+					wb += write(cf_fault_sinks[i].fd, "\n", 1);
 				}
 			}
 		}
