@@ -352,6 +352,11 @@ cf_atomic32_setmax(cf_atomic32 *a, int32_t x)
 
 /* Memory barriers */
 
+// Knowledge taken from Linux's atomic_ops.h:
+
+#define smb_mb() asm volatile("mfence":::"memory")
+
+
 /* CF_BARRIER
  * All preceding memory accesses must commit before any following accesses */
 #define CF_MEMORY_BARRIER() __asm__ __volatile__ ("lock; addl $0,0(%%esp)" : : : "memory")
