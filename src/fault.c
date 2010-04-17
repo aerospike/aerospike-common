@@ -360,23 +360,23 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	/* Set the timestamp */
 	now = time(NULL);
 	gmtime_r(&now, &nowtm);
-	strftime(mbuf, sizeof(mbuf), "%b %d %Y %T: ", &nowtm);
+	size_t pos = strftime(mbuf, sizeof(mbuf), "%b %d %Y %T: ", &nowtm);
 
 	/* Set the context/scope/severity tag */
 	if (CF_CRITICAL == severity)
-		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "%s %s (%s): ", cf_fault_severity_strings[severity], cf_fault_scope_strings[scope], cf_fault_context_strings[context]);
+		pos += snprintf(mbuf + pos, sizeof(mbuf) - pos, "%s %s (%s): ", cf_fault_severity_strings[severity], cf_fault_scope_strings[scope], cf_fault_context_strings[context]);
 	else
-		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "%s (%s): ", cf_fault_severity_strings[severity], cf_fault_context_strings[context]);
+		pos += snprintf(mbuf + pos, sizeof(mbuf) - pos, "%s (%s): ", cf_fault_severity_strings[severity], cf_fault_context_strings[context]);
 
 	/* Set the location */
 	if (fn)
-		snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "(%s:%d) ", fn, line);
+		pos += snprintf(mbuf + pos, sizeof(mbuf) - pos, "(%s:%d) ", fn, line);
 
 	/* Append the message */
 	va_start(argp, msg);
-	vsnprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), msg, argp);
+	pos += vsnprintf(mbuf + pos, sizeof(mbuf) - pos, msg, argp);
 	va_end(argp);
-	snprintf(mbuf + strlen(mbuf), sizeof(mbuf) - strlen(mbuf), "\n");
+	pos += snprintf(mbuf + pos, sizeof(mbuf) - pos, "\n");
 
 	/* Route the message to the correct destinations */
 	if (0 == cf_fault_sinks_inuse) {
@@ -386,7 +386,7 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	} else {
 		for (int i = 0; i < cf_fault_sinks_inuse; i++) {
 			if ((severity <= cf_fault_sinks[i].limit[context]) || (CF_CRITICAL == severity)) {
-				if (0 >= write(cf_fault_sinks[i].fd, mbuf, strlen(mbuf))) {
+				if (0 >= write(cf_fault_sinks[i].fd, mbuf, pos)) {
 					fprintf(stderr, "internal failure in fault message write: %s\n", cf_strerror(errno));
 				}
 			}
