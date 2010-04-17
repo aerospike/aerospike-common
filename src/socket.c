@@ -426,7 +426,7 @@ cf_ifaddr_get( cf_ifaddr **ifaddr, int *ifaddr_sz, uint8_t *buf, size_t bufsz)
 	struct ifaddrs *ifa;
 	int rv = getifaddrs(&ifa);
 	if (rv != 0) {
-		cf_info(CF_SOCKET, " could not get interfact information: return value %d errno %d",rv,errno);
+		cf_info(CF_SOCKET, " could not get interface information: return value %d errno %d",rv,errno);
 		return(-1);
 	}
 	struct ifaddrs *ifa_orig = ifa;
