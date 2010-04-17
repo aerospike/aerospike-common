@@ -18,6 +18,8 @@
 
 #include "cf.h"
 
+#define TIMETREE 1
+
 
 /* cf_rcrb_rotate_left
  * Rotate a tree left */
@@ -76,6 +78,10 @@ cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
 {
     cf_rcrb_node *n, *s, *t, *u;
 
+#ifdef TIMETREE
+    cf_clock now = cf_getms();
+#endif    
+    
     /* Lock the tree */
 	pthread_mutex_lock(&tree->lock);
 	*vlock = &tree->lock;
@@ -96,12 +102,18 @@ cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
     /* If the node already exists, stop a double-insertion */
     if ((s != tree->root) && (0 == cf_digest_compare(key, &s->key))) {
 		pthread_mutex_unlock(&tree->lock);
+#ifdef TIMETREE		
+		if (cf_getms() - now > 10)	fprintf(stderr, "insert(bounce) took long\n");
+#endif		
         return(0);
     }
 
     /* Allocate memory for the new node and set the node parameters */
     if (NULL == (n = (cf_rcrb_node *)malloc(sizeof(cf_rcrb_node)))) {
     	pthread_mutex_unlock(&tree->lock);
+#ifdef TIMETREE    	
+		if (cf_getms() - now > 10)	fprintf(stderr, "insert(mallocfail) took long\n");
+#endif		
         return(0);
     }
     n->color = CF_RCRB_RED;
@@ -157,6 +169,10 @@ cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
     tree->root->left->color = CF_RCRB_BLACK;
 	tree->elements++;
 
+#ifdef TIMETREE
+	if (cf_getms() - now > 10)	fprintf(stderr, "insert(ok) took long\n");
+#endif	
+	
     return(u);
 }
 
@@ -174,6 +190,10 @@ cf_rcrb_get_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **v
 {
     cf_rcrb_node *n, *s, *t, *u;
 
+#ifdef TIMETREE    
+    cf_clock now = cf_getms();
+#endif    
+    
     /* Lock the tree */
 	pthread_mutex_lock(&tree->lock);
 	*vlock = &tree->lock;
@@ -197,7 +217,9 @@ cf_rcrb_get_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **v
 
     /* If the node already exists, simply return it */
     if ((s != tree->root) && (0 == cf_digest_compare(key, &s->key))) {
-
+#ifdef TIMETREE
+    	if (cf_getms() - now > 10) fprintf(stderr, "get(insert) took long\n");
+#endif    	
         return(s);
         
     }
@@ -260,6 +282,10 @@ cf_rcrb_get_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **v
     }
     tree->root->left->color = CF_RCRB_BLACK;
 	tree->elements++;
+
+#ifdef TIMETREE
+   	if (cf_getms() - now > 10) fprintf(stderr, "insert(get) took long\n");
+#endif
 
     return(u);
 }
@@ -432,6 +458,10 @@ cf_rcrb_delete(cf_rcrb_tree *tree, cf_digest *key)
     cf_rcrb_node *r, *s, *t;
 	int rv = 0;
 
+#ifdef TIMETREE	
+	cf_clock now = cf_getms();
+#endif	
+	
     /* Lock the tree */
     if (0 != pthread_mutex_lock(&tree->lock)) {
 		cf_warning(CF_RB, "unable to acquire tree lock: %s", cf_strerror(errno));
@@ -497,7 +527,9 @@ cf_rcrb_delete(cf_rcrb_tree *tree, cf_digest *key)
 
 release:
     pthread_mutex_unlock(&tree->lock);
-
+#ifdef TIMETREE
+    if (cf_getms() - now > 10) fprintf(stderr, "delete: took too long\n");
+#endif
     return(rv);
 }
 
@@ -617,6 +649,9 @@ cf_rcrb_reduce_traverse( cf_rcrb_tree *tree, cf_rcrb_node *r, cf_rcrb_node *sent
 void
 cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 {
+#ifdef TIMETREE
+	cf_clock now = cf_getms();
+#endif
 
     /* Lock the tree */
     pthread_mutex_lock(&tree->lock);
@@ -629,9 +664,9 @@ cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
     // I heart stack allocation. 
     uint	sz = sizeof( cf_rcrb_value_array ) + ( sizeof(cf_rcrb_value) * tree->elements);
     cf_rcrb_value_array *v_a;
-    uint8_t buf[128 * 1024];
+    uint8_t buf[64 * 1024];
     
-    if (sz > 128 * 1024) {
+    if (sz > 64 * 1024) {
     	v_a = malloc(sz);
     	if (!v_a)	return;
     }
@@ -649,11 +684,17 @@ cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 		cf_rcrb_reduce_traverse(tree, tree->root->left, tree->sentinel, v_a);
 
 	pthread_mutex_unlock(&tree->lock);
+
+#ifdef TIMETREE	
+	if (cf_getms() - now > 10) fprintf(stderr, "reduce: held tree lock more than 10 ms");
+#endif	
 	
 	for (uint i=0 ; i<v_a->pos ; i++) 
 		cb ( & (v_a->values[i].key), v_a->values[i].value  , udata);
 
 	if (v_a != (cf_rcrb_value_array *) buf)	free(v_a);
+	
+	
 	
     return;
 	
@@ -679,6 +720,9 @@ cf_rcrb_reduce_sync_traverse( cf_rcrb_tree *tree, cf_rcrb_node *r, cf_rcrb_node 
 void
 cf_rcrb_reduce_sync(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 {
+#ifdef TIMETREE
+	cf_clock now = cf_getms();
+#endif
     /* Lock the tree */
     pthread_mutex_lock(&tree->lock);
 	
@@ -688,7 +732,9 @@ cf_rcrb_reduce_sync(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 		cf_rcrb_reduce_sync_traverse(tree, tree->root->left, tree->sentinel, cb, udata);
 
 	pthread_mutex_unlock(&tree->lock);
-	
+#ifdef TIMETREE
+	if (cf_getms() - now > 10) fprintf(stderr, "reduce: held tree lock more than 10 ms");
+#endif
     return;
 	
 }
