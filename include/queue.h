@@ -21,7 +21,7 @@ typedef struct cf_queue_s {
 	bool threadsafe;  // sometimes it's good to live dangerously
 	unsigned int allocsz;      // number of queue elements currently allocated
 	unsigned int write_offset; // 0 offset is first queue element.
-						   // write is always greater than or equal to read
+						   		// write is always greater than or equal to read
 	unsigned int read_offset; // 
 	size_t elementsz;     // number of bytes in an element
 	pthread_mutex_t LOCK;  // the mutex lock

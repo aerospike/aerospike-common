@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include "cf.h"
 
-#define DEBUG 1
+// #define DEBUG 1
 
 /* SYNOPSIS
  * Queue
@@ -106,7 +106,7 @@ cf_queue_resize(cf_queue *q, uint new_sz)
 {
 	// check - a lot of the code explodes badly if queue is not full
 	if (CF_Q_SZ(q) != q->allocsz) {
-		cf_debug(CF_QUEUE,"cf_queue: internal error: resize on non-full queue");
+		cf_info(CF_QUEUE,"cf_queue: internal error: resize on non-full queue");
 		return(-1);
 	}
 	
@@ -115,7 +115,7 @@ cf_queue_resize(cf_queue *q, uint new_sz)
 	if (0 == q->read_offset % q->allocsz) {
 		q->queue = realloc(q->queue, new_sz * q->elementsz);
 		if (!q->queue) {
-			cf_debug(CF_QUEUE," pfft! out of memory! crash!");
+			cf_info(CF_QUEUE," queue memory failure");
 			return(-1);
 		}
 		q->read_offset = 0;
@@ -125,7 +125,7 @@ cf_queue_resize(cf_queue *q, uint new_sz)
 		
 		byte *newq = malloc(new_sz * q->elementsz);
 		if (!newq) {
-			cf_debug(CF_QUEUE," pffth! out of memory! crash!");
+			cf_info(CF_QUEUE," queue resize memory failure");
 			return(-1);
 		}
 		// endsz is used bytes in the old queue from the insert point to the end
