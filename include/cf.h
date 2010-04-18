@@ -42,11 +42,12 @@ typedef struct cf_bytearray_t cf_bytearray;
 #define INVALID_FD (-1)
 
 #include "atomic.h"
+#include "dynbuf.h"
+#include "fault.h"
+#include "arena.h"
 #include "alloc.h"
 #include "bits.h"
 #include "digest.h"
-#include "dynbuf.h"
-#include "fault.h"
 #include "lock.h"
 #include "queue.h"
 #include "rb.h"

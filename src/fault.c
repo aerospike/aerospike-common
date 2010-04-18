@@ -49,34 +49,35 @@ char *cf_fault_context_strings[] = {
 	"cf:socket",   // 08
 	"cf:timer",    // 09
 	"cf:ll",       // 10
-	"config",      // 11
-	"namespace",   // 12
-	"as", 		   // 13
-	"bin",         // 14
-	"record",      // 15
-	"proto",       // 16
-	"particle",    // 17
-	"demarshal",   // 18
-	"write",       // 19
-	"rw",       	// 20
-	"tsvc",        // 21 
-	"test",        // 22
-	"nsup",        // 23
-	"proxy",       // 24
-	"hb",          // 25
-	"fabric",      // 26
-	"partition",   // 27
-	"paxos",       // 28
-	"migrate",     // 29
-	"info",        // 30
-	"info-port",        // 31
-	"storage",     // 32
-	"drv_mem",     // 33
-	"drv_fs",      // 34
-	"drv_files",      // 35
-	"drv_ssd",      // 36
-	"scan",			// 37
-	NULL           // 38
+	"cf:arena",       // 11
+	"config",      // 12
+	"namespace",   // 13
+	"as", 		   // 14
+	"bin",         // 15
+	"record",      // 16
+	"proto",       // 17
+	"particle",    // 18
+	"demarshal",   // 19
+	"write",       // 20
+	"rw",       	// 21
+	"tsvc",        // 22
+	"test",        // 23
+	"nsup",        // 24
+	"proxy",       // 25
+	"hb",          // 26
+	"fabric",      // 27
+	"partition",   // 28
+	"paxos",       // 29
+	"migrate",     // 30
+	"info",        // 31
+	"info-port",        // 32
+	"storage",     // 33
+	"drv_mem",     // 34
+	"drv_fs",      // 35
+	"drv_files",      // 36
+	"drv_ssd",      // 37
+	"scan",			// 38
+	NULL           // 39
 };
 
 static const char *cf_fault_severity_strings[] = { "CRITICAL", "WARNING", "INFO", "DEBUG", "DETAIL", NULL };
