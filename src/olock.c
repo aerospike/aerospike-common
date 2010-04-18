@@ -26,10 +26,10 @@ olock_lock(olock *ol, cf_digest *d)
 	uint32_t n = *(uint32_t *)d;
 
 //	if (0 != cf_mutex_timedlock( &ol->locks[ n & ol->mask ], 2000 ) ) {
-	if (0 != pthread_mutex_lock( &ol->locks[ n & ol->mask ] ) ) {
-		fprintf(stderr, "olock lock failed %d\n",errno);
-		raise(SIGINT);
-	}
+	pthread_mutex_lock( &ol->locks[ n & ol->mask ] );
+	
+//		fprintf(stderr, "olock lock failed %d\n",errno);
+//		raise(SIGINT);
 
 	return;
 }
