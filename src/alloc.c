@@ -86,7 +86,6 @@ cf_rc_reserve(void *addr)
 	
 /* please see the previous note about add vs addunless
 */
-//	return((int)cf_atomic32_addunless(rc, 0, 1));
 	int i = (int) cf_atomic32_add(rc, 1);
 	smb_mb();
 	return(i);
@@ -143,7 +142,6 @@ _cf_rc_release(void *addr, bool autofree)
 		return(-1);
 	}
 #endif
-	
 	if ((0 == c) && autofree)
 		free((void *)rc);
 
