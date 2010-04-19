@@ -121,7 +121,7 @@ cf_fault_recovery_globalinit(cf_fault_recovery_key *rkey)
 int
 cf_fault_recovery_localinit(cf_fault_recovery_key *rkey, cf_fault_recovery_stack *stack)
 {
-	cf_assert((NULL != rkey || NULL != stack), CF_MISC, CF_THREAD, CF_CRITICAL, "invalid argument");
+	cf_assert((NULL != rkey || NULL != stack), CF_MISC, CF_PROCESS, CF_CRITICAL, "invalid argument");
 
 	/* Set the stack attributes */
 	stack->sz = -1;
@@ -432,7 +432,7 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 					cf_assert(NULL, CF_MISC, CF_GLOBAL, CF_CRITICAL, "execvp failed: %s", cf_strerror(errno));
 #endif				
 				break;
-			case CF_THREAD:
+			case CF_THR:
 			    /* Since we may have asynchronous cancellation disabled,
 				 * we always force a check for cancellation */
 				pthread_cancel(pthread_self());

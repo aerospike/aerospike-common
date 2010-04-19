@@ -77,9 +77,9 @@ extern char *cf_fault_context_strings[];
 /* cf_fault_scope
  *     GLOBAL              fatal errors terminate all execution
  *     PROCESS             fatal errors terminate the process
- *     THREAD              fatal errors terminate the enclosing thread
+ *     THR              fatal errors terminate the enclosing thread
  */
-typedef enum { CF_GLOBAL = 0, CF_PROCESS = 1, CF_THREAD = 2 } cf_fault_scope;
+typedef enum { CF_GLOBAL = 0, CF_PROCESS = 1, CF_THR = 2 } cf_fault_scope;
 
 /* cf_fault_severity
  *     CRITICAL            fatal runtime panics
@@ -134,10 +134,10 @@ extern cf_fault_sink *cf_fault_sink_get_id(int id);
 extern void cf_fault_event(const cf_fault_context, const cf_fault_scope, const cf_fault_severity severity, const char *fn, const int line, char *msg, ...);
 #define cf_assert(a, context, scope, severity, __msg, ...) ((void)((a) ? (void)0 : cf_fault_event((context), (scope), (severity), __func__, __LINE__, (__msg), ##__VA_ARGS__)))
 #define cf_crash(context, scope, __msg, ...) (cf_fault_event((context), (scope), CF_CRITICAL, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
-#define cf_warning(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_WARNING, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
-#define cf_info(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_INFO, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
-#define cf_debug(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_DEBUG, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
-#define cf_detail(context, __msg, ...) (cf_fault_event((context), CF_THREAD, CF_DETAIL, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
+#define cf_warning(context, __msg, ...) (cf_fault_event((context), CF_THR, CF_WARNING, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
+#define cf_info(context, __msg, ...) (cf_fault_event((context), CF_THR, CF_INFO, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
+#define cf_debug(context, __msg, ...) (cf_fault_event((context), CF_THR, CF_DEBUG, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
+#define cf_detail(context, __msg, ...) (cf_fault_event((context), CF_THR, CF_DETAIL, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
 // strerror override. GP claims standard strerror has a rare but existant concurrency hole, this fixes that hole
 extern char *cf_strerror(const int err);
 

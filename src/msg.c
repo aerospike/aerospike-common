@@ -28,7 +28,7 @@ msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 	// Figure out how many bytes you need
 	int mt_rows = mt_sz / sizeof(msg_template);
 	if (mt_rows <= 0)
-		cf_crash( CF_MSG, CF_THREAD,  "msg create: invalid parameter");
+		cf_crash( CF_MSG, CF_PROCESS,  "msg create: invalid parameter");
 	unsigned int max_id = 0;
 	for (int i=0;i<mt_rows;i++) {
 		if (mt[i].id >= max_id) {
@@ -204,7 +204,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 						}
 						else {
 							mf->u.buf = malloc(flen);
-							cf_assert(mf->u.buf, CF_MSG, CF_THREAD, CF_WARNING, "malloc");
+							cf_assert(mf->u.buf, CF_MSG, CF_THR, CF_WARNING, "malloc");
 							mf->free = mf->u.buf;
 							mf->rc_free = 0;
 						}
@@ -225,7 +225,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 						}
 						else {
 							mf->u.ui32_a = malloc(flen);
-							cf_assert(mf->u.ui32_a, CF_MSG, CF_THREAD, CF_WARNING, "malloc");
+							cf_assert(mf->u.ui32_a, CF_MSG, CF_THR, CF_WARNING, "malloc");
 							mf->free = mf->u.ui32_a;
 							mf->rc_free = 0;
 						}
@@ -248,7 +248,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 						}
 						else {
 							mf->u.ui32_a = malloc(flen);
-							cf_assert(mf->u.ui64_a, CF_MSG, CF_THREAD, CF_WARNING, "malloc");
+							cf_assert(mf->u.ui64_a, CF_MSG, CF_THR, CF_WARNING, "malloc");
 							mf->free = mf->u.ui64_a;
 							mf->rc_free = 0;
 						}
@@ -271,7 +271,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 						}
 						else {
 							mf->u.buf_a = malloc(flen);
-							cf_assert(mf->u.buf_a, CF_MSG, CF_THREAD, CF_WARNING, "malloc");
+							cf_assert(mf->u.buf_a, CF_MSG, CF_THR, CF_WARNING, "malloc");
 							mf->free = mf->u.buf_a;
 							mf->rc_free = 0;
 						}
@@ -610,7 +610,7 @@ msg_get_str(const msg *m, int field_id, char **r, size_t *len, msg_get_type type
 	}
 	else if (MSG_GET_COPY_MALLOC == type) {
 		*r = strdup( m->f[field_id].u.str );
-		cf_assert(*r, CF_MSG, CF_THREAD, CF_CRITICAL, "malloc");
+		cf_assert(*r, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
 	} else if (MSG_GET_COPY_RC == type) {
 		size_t sz = m->f[field_id].field_len + 1;
 		*r = cf_rc_alloc(sz);
@@ -664,12 +664,12 @@ msg_get_buf(const msg *m, int field_id, uint8_t **r, size_t *len, msg_get_type t
 	}
 	else if (MSG_GET_COPY_MALLOC == type) {
 		*r = malloc( m->f[field_id].field_len );
-		cf_assert(*r, CF_MSG, CF_THREAD, CF_CRITICAL, "malloc");
+		cf_assert(*r, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
 		memcpy(*r, m->f[field_id].u.buf, m->f[field_id].field_len );
 	}
 	else if (MSG_GET_COPY_RC == type) {
 		*r = cf_rc_alloc( m->f[field_id].field_len );
-		cf_assert(*r, CF_MSG, CF_THREAD, CF_CRITICAL, "malloc");
+		cf_assert(*r, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
 		memcpy(*r, m->f[field_id].u.buf, m->f[field_id].field_len );
 	} else {
 		cf_warning(CF_MSG, "msg_get_str: illegal type");
@@ -721,7 +721,7 @@ msg_get_bytearray(const msg *m, int field_id, cf_bytearray **r)
 	}
 	uint32_t field_len = m->f[field_id].field_len;
 	*r = cf_rc_alloc( field_len + sizeof(cf_bytearray) );
-	cf_assert(*r, CF_MSG, CF_THREAD, CF_CRITICAL, "rcalloc");
+	cf_assert(*r, CF_MSG, CF_PROCESS, CF_CRITICAL, "rcalloc");
 	(*r)->sz = field_len;
 	memcpy((*r)->data, m->f[field_id].u.buf, field_len );
 	
@@ -799,7 +799,7 @@ msg_set_str(msg *m, int field_id, const char *v, msg_set_type type)
 		}
 		else {
 			mf->u.str = strdup(v);
-			cf_assert(mf->u.str, CF_MSG, CF_THREAD, CF_CRITICAL, "malloc");
+			cf_assert(mf->u.str, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
 			mf->free = mf->u.str;
 			mf->rc_free = 0;
 		}
@@ -845,7 +845,7 @@ int msg_set_buf(msg *m, int field_id, const uint8_t *v, size_t len, msg_set_type
 			mf->u.buf = malloc(len);
 			if (mf->u.buf == NULL)
 				cf_info(CF_MSG, "could not allocate: len %d",len);
-			cf_assert(mf->u.buf, CF_MSG, CF_THREAD, CF_CRITICAL, "malloc");
+			cf_assert(mf->u.buf, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
 			mf->free = mf->u.buf; // free on exit/reset
 			mf->rc_free = 0;
 		}
