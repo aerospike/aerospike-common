@@ -15,6 +15,7 @@
 #include <strings.h>
 #include <time.h>
 #include <unistd.h>
+#include <signal.h>
 #include "cf.h"
 
 
@@ -30,6 +31,7 @@ cf_rc_count(void *addr)
 #ifdef EXTRA_CHECKS	
 	if (addr == 0) {
 		cf_warning(CF_RCALLOC, "rccount: null address");
+		raise(SIGINT);
 		return(0);
 	}
 #endif	
@@ -80,6 +82,7 @@ cf_rc_reserve(void *addr)
 	// tripped up by this check
 	if (*rc & 0x80000000) {
 		cf_warning(CF_RCALLOC, "rcreserve: reserving without reference count, count %d very bad",*rc);
+		raise(SIGINT);
 		return(0);
 	}
 #endif	
@@ -104,6 +107,7 @@ _cf_rc_release(void *addr, bool autofree)
 #ifdef EXTRA_CHECKS	
 	if (addr == 0) {
 		cf_warning(CF_RCALLOC, "rcrelease: null address");
+		raise(SIGINT);
 		return(-1); // don't tell misbehaving code to free null
 	} 
 #endif	
@@ -141,6 +145,7 @@ _cf_rc_release(void *addr, bool autofree)
 #ifdef EXTRA_CHECKS
 	if (c & 0xF0000000) {
 		cf_warning(CF_RCALLOC, "rcrelease: releasing to a negative reference count");
+		raise(SIGINT);
 		return(-1);
 	}
 #endif
@@ -158,7 +163,7 @@ void *
 cf_rc_alloc(size_t sz)
 {
 	uint8_t *addr;
-	size_t asz = sizeof(cf_rc_counter) + sz;
+	size_t asz = sizeof(cf_rc_counter) + sz + 4; // debug for stability - rounds us back to regular alignment on all systems
 
 	addr = malloc(asz);
 	if (NULL == addr)
