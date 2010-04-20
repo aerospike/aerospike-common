@@ -16,7 +16,7 @@
 
 /* cf_queue
  * A queue */
-#define CF_QUEUE_ALLOCSZ 64
+#define CF_QUEUE_ALLOCSZ (64 * 1024)
 typedef struct cf_queue_s {
 	bool threadsafe;  // sometimes it's good to live dangerously
 	unsigned int allocsz;      // number of queue elements currently allocated
