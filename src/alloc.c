@@ -86,6 +86,7 @@ cf_rc_reserve(void *addr)
 	
 /* please see the previous note about add vs addunless
 */
+	smb_mb();
 	int i = (int) cf_atomic32_add(rc, 1);
 	smb_mb();
 	return(i);
@@ -136,6 +137,7 @@ _cf_rc_release(void *addr, bool autofree)
 	
 	smb_mb();
 	c = cf_atomic32_decr(rc);
+	smb_mb();
 #ifdef EXTRA_CHECKS
 	if (c & 0xF0000000) {
 		cf_warning(CF_RCALLOC, "rcrelease: releasing to a negative reference count");

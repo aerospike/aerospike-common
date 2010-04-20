@@ -149,8 +149,10 @@ cf_queue_resize(cf_queue *q, uint new_sz)
 void
 cf_queue_unwrap(cf_queue *q)
 {
+	cf_warning(CF_QUEUE, " queue memory unwrap!!!! ");
+	int sz = CF_Q_SZ(q);
 	q->read_offset %= q->allocsz;
-	q->write_offset %= q->allocsz;
+	q->write_offset = q->read_offset + sz;
 }
 
 
@@ -170,9 +172,10 @@ cf_queue_push(cf_queue *q, void *ptr)
 	/* Check queue length */
 	if (CF_Q_SZ(q) == q->allocsz) {
 		/* resize is a pain for circular buffers */
-		if (0 != cf_queue_resize(q, q->allocsz + CF_QUEUE_ALLOCSZ)) {
+		if (0 != cf_queue_resize(q, q->allocsz * 2)) {
 			if (q->threadsafe)
 				pthread_mutex_unlock(&q->LOCK);
+			cf_warning(CF_QUEUE, "queue resize failure");
 			return(-1);
 		}
 	}
@@ -180,7 +183,7 @@ cf_queue_push(cf_queue *q, void *ptr)
 	// todo: if queues are power of 2, this can be a shift
 	memcpy(CF_Q_ELEM_PTR(q,q->write_offset), ptr, q->elementsz);
 	q->write_offset++;
-	if (q->write_offset & 0x80000000) cf_queue_unwrap(q);
+	if (q->write_offset & 0x8000000) cf_queue_unwrap(q);
 	
 	if (q->threadsafe)
 		pthread_cond_signal(&q->CV);
@@ -247,13 +250,16 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 	q->read_offset++;
 	
 	// interesting idea - this probably keeps the cache fresher
+	// because the queue is fully empty just make it all zero
 	if (q->read_offset == q->write_offset) {
 		q->read_offset = q->write_offset = 0;
 	}
 
 	/* FIXME blow a gasket */
-	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK)))
+	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK))) {
+		cf_info(CF_QUEUE, "queue pop failed");
 		return(-1);
+	}
 
 	return(0);
 }
@@ -267,10 +273,13 @@ cf_queue_delete_offset(cf_queue *q, uint index)
 	uint w_index = q->write_offset % q->allocsz;
 	
 	// assumes index is validated!
+	
+	// if we're deleting the one at the head, just increase the readoffset
 	if (index == r_index) {
 		q->read_offset++;
 		return;
 	}
+	// if we're deleting the tail just decrease the write offset
 	if (w_index && (index == w_index - 1)) {
 		q->write_offset--;
 		return;
@@ -330,10 +339,12 @@ cf_queue_reduce(cf_queue *q,  cf_queue_reduce_fn cb, void *udata)
 			}
 			else if (rv == -2) { // delete!
 				cf_queue_delete_offset(q, i);
+				goto Found;
 			}
 		};
 	}
 	
+Found:	
 	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK))) {
 		fprintf(stderr, "unlock failed\n");
 		return(-1);
