@@ -20,7 +20,7 @@
 #include "cf.h"
 
 // Define this if you want extra sanity checks enabled
-// #define EXTRA_CHECKS 1
+#define EXTRA_CHECKS 1
 
 int 
 msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
