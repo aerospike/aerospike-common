@@ -26,7 +26,7 @@
  * This will result in undefined behavior.
  */
 
-
+extern void cf_rc_init();
 
 /* cf_rc_counter
  * A reference counter */
@@ -36,7 +36,11 @@ typedef cf_atomic32 cf_rc_counter;
 extern int cf_rc_count(void *addr);
 extern void *cf_rc_alloc(size_t sz);
 extern int cf_rc_reserve(void *addr);
-extern int _cf_rc_release(void *addr, bool autofree);
-#define cf_rc_release(a) (_cf_rc_release((a), FALSE))
-#define cf_rc_releaseandfree(a) (_cf_rc_release((a), TRUE))
-extern void cf_rc_free(void *addr);
+extern int _cf_rc_release(void *addr, bool autofree, char *file, int line);
+#define cf_rc_release(__a) (_cf_rc_release((__a), FALSE, __FILE__, __LINE__ ))
+#define cf_rc_releaseandfree(__a) (_cf_rc_release((__a), TRUE, __FILE__, __LINE__ ))
+extern void _cf_rc_free(void *addr, char *file, int line);
+#define cf_rc_free(__a) (_cf_rc_free((__a), __FILE__, __LINE__ ))
+
+
+

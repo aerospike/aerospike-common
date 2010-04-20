@@ -16,10 +16,89 @@
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
+#include <pthread.h>
+
 #include "cf.h"
 
+#define USE_CIRCUS 1
 
 #define EXTRA_CHECKS 1
+
+
+#ifdef USE_CIRCUS
+
+#define CIRCUS_SIZE (1024 * 8)
+
+typedef struct {
+	void *ptr;
+	char file[16];
+	int  line;	
+} suspect;
+
+typedef struct {
+	pthread_mutex_t LOCK;
+	int		alloc_sz;
+	int		idx;
+	
+	suspect s[];	
+	
+} free_ring;
+
+
+free_ring *g_free_ring;
+
+void
+cf_alloc_register_free(void *p, char *file, int line)
+{
+	pthread_mutex_lock(&g_free_ring->LOCK);
+	
+	int idx = g_free_ring->idx;
+	g_free_ring->s[idx].ptr = p;
+	memcpy(g_free_ring->s[idx].file,file,16);
+	g_free_ring->s[idx].line = line;
+	idx++;
+	g_free_ring->idx = (idx == CIRCUS_SIZE) ? 0 : idx;
+	
+//	if (idx == 1024)
+//		raise(SIGINT);
+	
+	pthread_mutex_unlock(&g_free_ring->LOCK);
+	
+}
+
+
+void cf_rc_init() {
+	
+	// if we're using the circus, initialize it
+	g_free_ring = malloc( sizeof(free_ring) + (CIRCUS_SIZE * sizeof(suspect)) );
+		
+	pthread_mutex_init(&g_free_ring->LOCK, 0);
+	g_free_ring->alloc_sz = CIRCUS_SIZE;
+	g_free_ring->idx = 0;
+	memset(g_free_ring->s, 0, CIRCUS_SIZE * sizeof(suspect));
+	return;
+
+}
+
+#else // NO CIRCUS
+
+void cf_rc_init() {
+	;	
+}
+
+#endif
+
+/*
+**
+**
+**
+**
+**
+*/
+
+
+
+
 
 /* cf_rc_count
  * Get the reservation count for a memory region */
@@ -99,7 +178,7 @@ cf_rc_reserve(void *addr)
 /* _cf_rc_release
  * Release a reservation on a memory region */
 int
-_cf_rc_release(void *addr, bool autofree)
+_cf_rc_release(void *addr, bool autofree, char *file, int line)
 {
 	cf_rc_counter *rc;
 	int c;
@@ -149,8 +228,13 @@ _cf_rc_release(void *addr, bool autofree)
 		return(-1);
 	}
 #endif
-	if ((0 == c) && autofree)
+	if ((0 == c) && autofree) {
+#ifdef USE_CIRCUS
+		cf_alloc_register_free(addr, file, line);
+#endif		
+
 		free((void *)rc);
+	}
 
 	return(c);
 }
@@ -179,7 +263,7 @@ cf_rc_alloc(size_t sz)
 /* cf_rc_free
  * Deallocate a reference-counted memory region */
 void
-cf_rc_free(void *addr)
+_cf_rc_free(void *addr, char *file, int line)
 {
 	cf_rc_counter *rc;
 	cf_assert(addr, CF_RCALLOC, CF_PROCESS, CF_CRITICAL, "null address");
@@ -188,7 +272,11 @@ cf_rc_free(void *addr)
 
 	cf_assert(cf_atomic32_get(*(cf_atomic32 *)rc) == 0,
 		CF_RCALLOC, CF_PROCESS, CF_CRITICAL, "attempt to free reserved object");
-
+	
+#ifdef USE_CIRCUS
+	cf_alloc_register_free(addr, file, line);
+#endif		
+	
 	free((void *)rc);
 
 	return;
