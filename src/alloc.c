@@ -122,12 +122,13 @@ cf_alloc_register_reserve(void *p, char *file, int line)
 
 
 void
-cf_alloc_print_history(void *p)
+cf_alloc_print_history(void *p, char *file, int line)
 {
 // log the history out to the log file, good if you're about to crash
 	pthread_mutex_lock(&g_free_ring->LOCK);
 
-	cf_info(CF_RCALLOC, "--------- p %p history ------------",p);
+	cf_info(CF_RCALLOC, "--------- p %p history (idx %d) ------------",p, g_free_ring->idx);
+	cf_info(CF_RCALLOC, "--------- 	  %s %d ------------",file,line);
 	
 	for (int i = g_free_ring->idx - 1;i >= 0; i--) {
 		if (g_free_ring->s[i].ptr == p) {
@@ -247,7 +248,7 @@ _cf_rc_reserve(void *addr, char *file, int line)
 		cf_warning(CF_RCALLOC, "rcreserve: reserving without reference count, addr %p count %d very bad",
 			addr,*rc);
 #ifdef USE_CIRCUS
-		cf_alloc_print_history(addr);
+		cf_alloc_print_history(addr, file, line);
 #endif
 		raise(SIGINT);
 		return(0);
@@ -318,7 +319,7 @@ _cf_rc_release(void *addr, bool autofree, char *file, int line)
 	if (c & 0xF0000000) {
 		cf_warning(CF_RCALLOC, "rcrelease: releasing to a negative reference count: %p",addr);
 #ifdef USE_CIRCUS
-		cf_alloc_print_history(addr);
+		cf_alloc_print_history(addr, file, line);
 #endif
 		raise(SIGINT);
 		return(-1);
