@@ -20,9 +20,9 @@
 
 #include "cf.h"
 
-#define USE_CIRCUS 1
+// #define USE_CIRCUS 1
 
-#define EXTRA_CHECKS 1
+// #define EXTRA_CHECKS 1
 
 
 #ifdef USE_CIRCUS
