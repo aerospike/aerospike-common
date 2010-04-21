@@ -30,7 +30,7 @@ extern void cf_rc_init();
 
 /* cf_rc_counter
  * A reference counter */
-typedef cf_atomic32 cf_rc_counter;
+// typedef cf_atomic32 cf_rc_counter;
 
 /* Function declarations */
 extern int cf_rc_count(void *addr);

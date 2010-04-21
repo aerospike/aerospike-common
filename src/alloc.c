@@ -27,7 +27,13 @@
 
 #ifdef USE_CIRCUS
 
-#define CIRCUS_SIZE (1024 * 8)
+#define CIRCUS_SIZE (1024 * 1024)
+
+// default is track all
+// int cf_alloc_track_sz = 0;
+
+// track something specific in size
+int cf_alloc_track_sz = 40;
 
 #define STATE_FREE 1
 #define STATE_ALLOC 2
@@ -181,7 +187,10 @@ void cf_rc_init() {
 **
 */
 
-
+typedef struct {
+	cf_atomic32 count;
+	uint32_t	sz;
+} cf_rc_hdr;
 
 
 
@@ -190,8 +199,6 @@ void cf_rc_init() {
 int
 cf_rc_count(void *addr)
 {
-	cf_rc_counter *rc;
-	
 #ifdef EXTRA_CHECKS	
 	if (addr == 0) {
 		cf_warning(CF_RCALLOC, "rccount: null address");
@@ -200,9 +207,9 @@ cf_rc_count(void *addr)
 	}
 #endif	
 
-	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
+	cf_rc_hdr *hdr = (cf_rc_hdr *) ( ((uint8_t *)addr) - sizeof(cf_rc_hdr));
 
-	return((int) *rc);
+	return((int) hdr->sz );
 }
 
 /* notes regarding 'add' and 'decr' vs 'addunless' ---
@@ -234,19 +241,16 @@ _cf_rc_reserve(void *addr, char *file, int line)
 		return(0);
 	}
 #endif	
-	cf_rc_counter *rc;	
-
-	/* Extract the address of the reference counter, then increment it */
-	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
+	cf_rc_hdr *hdr = (cf_rc_hdr *) ( ((uint8_t *)addr) - sizeof(cf_rc_hdr));
 
 #ifdef EXTRA_CHECKS
 	// while not very atomic, does provide an interesting test
 	// warning. While it might seem logical to check for 0 as well, the as fabric
 	// system uses a perversion which doesn't use the standard semantics and will get
 	// tripped up by this check
-	if (*rc & 0x80000000) {
+	if (hdr->count & 0x80000000) {
 		cf_warning(CF_RCALLOC, "rcreserve: reserving without reference count, addr %p count %d very bad",
-			addr,*rc);
+			addr,hdr->count);
 #ifdef USE_CIRCUS
 		cf_alloc_print_history(addr, file, line);
 #endif
@@ -256,14 +260,15 @@ _cf_rc_reserve(void *addr, char *file, int line)
 #endif	
 
 #ifdef USE_CIRCUS
-	cf_alloc_register_reserve(addr, file, line);
+	if (cf_alloc_track_sz && (cf_alloc_track_sz == hdr->sz))
+		cf_alloc_register_reserve(addr, file, line);
 #endif		
 
 
 /* please see the previous note about add vs addunless
 */
 	smb_mb();
-	int i = (int) cf_atomic32_add(rc, 1);
+	int i = (int) cf_atomic32_add(&hdr->count, 1);
 	smb_mb();
 	return(i);
 }
@@ -274,7 +279,6 @@ _cf_rc_reserve(void *addr, char *file, int line)
 int
 _cf_rc_release(void *addr, bool autofree, char *file, int line)
 {
-	cf_rc_counter *rc;
 	int c;
 	
 #ifdef EXTRA_CHECKS	
@@ -310,10 +314,10 @@ _cf_rc_release(void *addr, bool autofree, char *file, int line)
     else if (autofree && (0 == cf_atomic32_get(*rc)))
         free((void*)rc);
 */        
-	rc = (cf_rc_counter *) (((byte *)addr) - sizeof(cf_rc_counter));
+	cf_rc_hdr *hdr = (cf_rc_hdr *) ( ((uint8_t *)addr) - sizeof(cf_rc_hdr));
 	
 	smb_mb();
-	c = cf_atomic32_decr(rc);
+	c = cf_atomic32_decr(&hdr->count);
 	smb_mb();
 #ifdef EXTRA_CHECKS
 	if (c & 0xF0000000) {
@@ -327,10 +331,11 @@ _cf_rc_release(void *addr, bool autofree, char *file, int line)
 #endif
 	if ((0 == c) && autofree) {
 #ifdef USE_CIRCUS
-		cf_alloc_register_free(addr, file, line);
+		if (cf_alloc_track_sz && (cf_alloc_track_sz == hdr->sz))
+			cf_alloc_register_free(addr, file, line);
 #endif		
 
-		free((void *)rc);
+		free((void *)hdr);
 	}
 
 	return(c);
@@ -344,17 +349,20 @@ void *
 _cf_rc_alloc(size_t sz, char *file, int line)
 {
 	uint8_t *addr;
-	size_t asz = sizeof(cf_rc_counter) + sz + 4; // debug for stability - rounds us back to regular alignment on all systems
+	size_t asz = sizeof(cf_rc_hdr) + sz; // debug for stability - rounds us back to regular alignment on all systems
 
 	addr = malloc(asz);
 	if (NULL == addr)
 		return(NULL);
 
-	*(cf_atomic32 *)addr = 1; // doesn't have to be atomic
-	byte *base = addr + sizeof(cf_rc_counter);
+	cf_rc_hdr *hdr = (cf_rc_hdr *) addr;
+	hdr->count = 1;  // doesn't have to be atomic
+	hdr->sz = sz;
+	byte *base = addr + sizeof(cf_rc_hdr);
 
 #ifdef USE_CIRCUS
-	cf_alloc_register_alloc(addr, file, line);
+	if (cf_alloc_track_sz && (cf_alloc_track_sz == hdr->sz))
+		cf_alloc_register_alloc(addr, file, line);
 #endif		
 	
 	return(base);
@@ -366,19 +374,27 @@ _cf_rc_alloc(size_t sz, char *file, int line)
 void
 _cf_rc_free(void *addr, char *file, int line)
 {
-	cf_rc_counter *rc;
 	cf_assert(addr, CF_RCALLOC, CF_PROCESS, CF_CRITICAL, "null address");
 
-	rc = (cf_rc_counter *) (  ((uint8_t *)addr) - sizeof(cf_rc_counter) );
+	cf_rc_hdr *hdr = (cf_rc_hdr *) ( ((uint8_t *)addr) - sizeof(cf_rc_hdr));
 
-	cf_assert(cf_atomic32_get(*(cf_atomic32 *)rc) == 0,
-		CF_RCALLOC, CF_PROCESS, CF_CRITICAL, "attempt to free reserved object");
+#if 0
+	if (hdr->count == 0) {
+		cf_warning(CF_RCALLOC, "rcfree: freeing an object that still has a refcount %p",addr);
+#ifdef USE_CIRCUS
+		cf_alloc_print_history(addr, file, line);
+#endif
+		raise(SIGINT);
+		return;
+	}
+#endif
 	
 #ifdef USE_CIRCUS
-	cf_alloc_register_free(addr, file, line);
+	if (cf_alloc_track_sz && (cf_alloc_track_sz == hdr->sz))
+		cf_alloc_register_free(addr, file, line);
 #endif		
 	
-	free((void *)rc);
+	free((void *)hdr);
 
 	return;
 }
