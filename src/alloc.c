@@ -29,17 +29,23 @@
 
 #define CIRCUS_SIZE (1024 * 8)
 
+#define STATE_FREE 1
+#define STATE_ALLOC 2
+#define STATE_RESERVE 3
+
+char *state_str[] = {0, "free", "alloc", "reserve" };
+
 typedef struct {
 	void *ptr;
 	char file[16];
 	int  line;	
+	int  state;
 } suspect;
 
 typedef struct {
 	pthread_mutex_t LOCK;
 	int		alloc_sz;
 	int		idx;
-	
 	suspect s[];	
 	
 } free_ring;
@@ -53,9 +59,12 @@ cf_alloc_register_free(void *p, char *file, int line)
 	pthread_mutex_lock(&g_free_ring->LOCK);
 	
 	int idx = g_free_ring->idx;
-	g_free_ring->s[idx].ptr = p;
-	memcpy(g_free_ring->s[idx].file,file,16);
-	g_free_ring->s[idx].line = line;
+	suspect *s = &g_free_ring->s[idx];
+	s->ptr = p;
+	memcpy(s->file,file,15);
+	s->file[15] = 0;
+	s->line = line;
+	s->state = STATE_FREE;
 	idx++;
 	g_free_ring->idx = (idx == CIRCUS_SIZE) ? 0 : idx;
 	
@@ -63,6 +72,81 @@ cf_alloc_register_free(void *p, char *file, int line)
 //		raise(SIGINT);
 	
 	pthread_mutex_unlock(&g_free_ring->LOCK);
+	
+}
+
+void
+cf_alloc_register_alloc(void *p, char *file, int line)
+{
+	pthread_mutex_lock(&g_free_ring->LOCK);
+	
+	int idx = g_free_ring->idx;
+	suspect *s = &g_free_ring->s[idx];
+	s->ptr = p;
+	memcpy(s->file,file,15);
+	s->file[15] = 0;
+	s->line = line;
+	s->state = STATE_ALLOC;
+	idx++;
+	g_free_ring->idx = (idx == CIRCUS_SIZE) ? 0 : idx;
+	
+//	if (idx == 1024)
+//		raise(SIGINT);
+	
+	pthread_mutex_unlock(&g_free_ring->LOCK);
+	
+}
+
+void
+cf_alloc_register_reserve(void *p, char *file, int line)
+{
+	pthread_mutex_lock(&g_free_ring->LOCK);
+	
+	int idx = g_free_ring->idx;
+	suspect *s = &g_free_ring->s[idx];
+	s->ptr = p;
+	memcpy(s->file,file,15);
+	s->file[15] = 0;
+	s->line = line;
+	s->state = STATE_RESERVE;
+
+	idx++;
+	g_free_ring->idx = (idx == CIRCUS_SIZE) ? 0 : idx;
+	
+//	if (idx == 1024)
+//		raise(SIGINT);
+	
+	pthread_mutex_unlock(&g_free_ring->LOCK);
+	
+}
+
+
+void
+cf_alloc_print_history(void *p)
+{
+// log the history out to the log file, good if you're about to crash
+	pthread_mutex_lock(&g_free_ring->LOCK);
+
+	cf_info(CF_RCALLOC, "--------- p %p history ------------",p);
+	
+	for (int i = g_free_ring->idx - 1;i >= 0; i--) {
+		if (g_free_ring->s[i].ptr == p) {
+			suspect *s = &g_free_ring->s[i];
+			cf_info(CF_RCALLOC, "%05d : %s %s %d",
+				i, state_str[s->state], s->file, s->line); 
+		}
+	}
+	
+	for (int i = g_free_ring->alloc_sz - 1; i >= g_free_ring->idx; i--) {
+		if (g_free_ring->s[i].ptr == p) {
+			suspect *s = &g_free_ring->s[i];
+			cf_info(CF_RCALLOC, "%05d : %s %s %d",
+				i, state_str[s->state], s->file, s->line); 
+		}
+	}		
+	
+	pthread_mutex_unlock(&g_free_ring->LOCK);
+	
 	
 }
 
@@ -141,7 +225,7 @@ cf_rc_count(void *addr)
 /* cf_rc_reserve
  * Get a reservation on a memory region */
 int
-cf_rc_reserve(void *addr)
+_cf_rc_reserve(void *addr, char *file, int line)
 {
 #ifdef EXTRA_CHECKS	
 	if (addr == 0) {
@@ -160,12 +244,21 @@ cf_rc_reserve(void *addr)
 	// system uses a perversion which doesn't use the standard semantics and will get
 	// tripped up by this check
 	if (*rc & 0x80000000) {
-		cf_warning(CF_RCALLOC, "rcreserve: reserving without reference count, count %d very bad",*rc);
+		cf_warning(CF_RCALLOC, "rcreserve: reserving without reference count, addr %p count %d very bad",
+			addr,*rc);
+#ifdef USE_CIRCUS
+		cf_alloc_print_history(addr);
+#endif
 		raise(SIGINT);
 		return(0);
 	}
 #endif	
-	
+
+#ifdef USE_CIRCUS
+	cf_alloc_register_reserve(addr, file, line);
+#endif		
+
+
 /* please see the previous note about add vs addunless
 */
 	smb_mb();
@@ -223,7 +316,10 @@ _cf_rc_release(void *addr, bool autofree, char *file, int line)
 	smb_mb();
 #ifdef EXTRA_CHECKS
 	if (c & 0xF0000000) {
-		cf_warning(CF_RCALLOC, "rcrelease: releasing to a negative reference count");
+		cf_warning(CF_RCALLOC, "rcrelease: releasing to a negative reference count: %p",addr);
+#ifdef USE_CIRCUS
+		cf_alloc_print_history(addr);
+#endif
 		raise(SIGINT);
 		return(-1);
 	}
@@ -244,7 +340,7 @@ _cf_rc_release(void *addr, bool autofree, char *file, int line)
  * Allocate a reference-counted memory region.  This region will be filled
  * with bytes of value zero */
 void *
-cf_rc_alloc(size_t sz)
+_cf_rc_alloc(size_t sz, char *file, int line)
 {
 	uint8_t *addr;
 	size_t asz = sizeof(cf_rc_counter) + sz + 4; // debug for stability - rounds us back to regular alignment on all systems
@@ -256,6 +352,10 @@ cf_rc_alloc(size_t sz)
 	*(cf_atomic32 *)addr = 1; // doesn't have to be atomic
 	byte *base = addr + sizeof(cf_rc_counter);
 
+#ifdef USE_CIRCUS
+	cf_alloc_register_alloc(addr, file, line);
+#endif		
+	
 	return(base);
 }
 

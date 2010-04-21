@@ -34,11 +34,17 @@ typedef cf_atomic32 cf_rc_counter;
 
 /* Function declarations */
 extern int cf_rc_count(void *addr);
-extern void *cf_rc_alloc(size_t sz);
-extern int cf_rc_reserve(void *addr);
+
+extern void *_cf_rc_alloc(size_t sz, char *file, int line);
+#define cf_rc_alloc(__sz) (_cf_rc_alloc(__sz, __FILE__, __LINE__ ))
+
+extern int _cf_rc_reserve(void *addr, char *file, int line);
+#define cf_rc_reserve(__addr) (_cf_rc_reserve(__addr, __FILE__, __LINE__))
+
 extern int _cf_rc_release(void *addr, bool autofree, char *file, int line);
 #define cf_rc_release(__a) (_cf_rc_release((__a), FALSE, __FILE__, __LINE__ ))
 #define cf_rc_releaseandfree(__a) (_cf_rc_release((__a), TRUE, __FILE__, __LINE__ ))
+
 extern void _cf_rc_free(void *addr, char *file, int line);
 #define cf_rc_free(__a) (_cf_rc_free((__a), __FILE__, __LINE__ ))
 
