@@ -20,7 +20,7 @@
 
 #include "cf.h"
 
-// #define USE_CIRCUS 1
+#define USE_CIRCUS 1
 
 // #define EXTRA_CHECKS 1
 
@@ -209,7 +209,7 @@ cf_rc_count(void *addr)
 
 	cf_rc_hdr *hdr = (cf_rc_hdr *) ( ((uint8_t *)addr) - sizeof(cf_rc_hdr));
 
-	return((int) hdr->sz );
+	return((int) hdr->count );
 }
 
 /* notes regarding 'add' and 'decr' vs 'addunless' ---
