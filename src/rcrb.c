@@ -20,6 +20,10 @@
 
 // #define TIMETREE 1
 
+extern void incr_global_record_ref_count(void);
+extern void decr_global_record_ref_count(void);
+extern void incr_global_tree_count(void);
+extern void decr_global_tree_count(void);
 
 /* cf_rcrb_rotate_left
  * Rotate a tree left */
@@ -433,6 +437,8 @@ cf_rcrb_search(cf_rcrb_tree *tree, cf_digest *key)
     if (n) {
     	v = n->value;
     	cf_rc_reserve(v);
+		cf_detail(AS_RECORD, "cf_rcrb_search EXISTING RECORD REFERENCE ACQUIRED:  %p", v);
+		incr_global_record_ref_count();
     }
     
     /* Unlock the tree */
@@ -504,6 +510,8 @@ cf_rcrb_delete(cf_rcrb_tree *tree, cf_digest *key)
             r->parent->right = s;
 
 		/* Consume the node */
+		cf_detail(AS_RECORD, "cf_rcrb_delete RECORD REFERENCE RELEASED:  %p", r->value);
+		decr_global_record_ref_count();
 		if (0 == cf_rc_release(r->value)) {
 			tree->destructor(r->value, tree->destructor_udata);
 		}
@@ -516,6 +524,8 @@ cf_rcrb_delete(cf_rcrb_tree *tree, cf_digest *key)
         if (CF_RCRB_BLACK == s->color)
             cf_rcrb_deleterebalance(tree, t);
 
+		cf_detail(AS_RECORD, "cf_rcrb_delete RECORD REFERENCE RELEASED:  %p", s->value);
+		decr_global_record_ref_count();
 		/* Destroy the node contents */
 		if (0 == cf_rc_release(s->value)) {
 			tree->destructor(s->value, tree->destructor_udata);
@@ -570,6 +580,8 @@ cf_rcrb_create(cf_rcrb_value_destructor destructor, void *destructor_udata) {
     
 	tree->elements = 0;
 
+	incr_global_tree_count();
+	cf_debug(AS_RECORD, "cf_rcrb_create CREATING TREE :  %p", tree);
     /* Return a pointer to the new tree */
     return(tree);
 }
@@ -588,6 +600,8 @@ cf_rcrb_purge(cf_rcrb_tree *tree, cf_rcrb_node *r)
     cf_rcrb_purge(tree, r->left);
     cf_rcrb_purge(tree, r->right);
 
+	cf_detail(AS_RECORD, "cf_rcrb_purge RECORD REFERENCE RELEASED:  %p", r->value);
+	decr_global_record_ref_count();
     if (0 == cf_rc_release(r->value)) {
     	tree->destructor(r->value, tree->destructor_udata);
     }
@@ -632,6 +646,8 @@ cf_rcrb_reduce_traverse( cf_rcrb_tree *tree, cf_rcrb_node *r, cf_rcrb_node *sent
 	
 	if (r->value) {
 		cf_rc_reserve(r->value);
+		incr_global_record_ref_count();
+		cf_detail(AS_RECORD, "cf_rcrb_reduce_traverse EXISTING RECORD REFERENCE ACQUIRED:  %p", r->value);
 		v_a->values[v_a->pos].value = r->value;
 		v_a->values[v_a->pos].key = r->key;
 		v_a->pos++;
@@ -748,6 +764,8 @@ cf_rcrb_release(cf_rcrb_tree *tree, void *destructor_udata)
 {
 	if (0 != cf_rc_release(tree))
 		return(1);
+	cf_debug(AS_RECORD, "cf_rcrb_release FREEING TREE :  %p", tree);
+	decr_global_tree_count();
 
 	/* Purge the tree and all it's ilk */
 	pthread_mutex_lock(&tree->lock);
