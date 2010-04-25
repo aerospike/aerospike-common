@@ -89,10 +89,12 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 uint32_t
 shash_get_size(shash *h)
 {
+
+    uint32_t elements = 0;
 	
 	if (h->flags & SHASH_CR_MT_MANYLOCK) {
 
-        uint32_t elements = 0;
+
         
         for (uint i=0; i<h->table_len ; i++) {
             
@@ -114,10 +116,19 @@ shash_get_size(shash *h)
             pthread_mutex_unlock(l);
     
         }
-        return(elements);
+
     }
     
-	return(h->elements);
+    else if (h->flags & SHASH_CR_MT_BIGLOCK) {
+    	pthread_mutex_lock(&h->biglock);
+    	elements = h->elements;
+    	pthread_mutex_unlock(&h->biglock);
+    }
+    else {
+    	elements = h->elements;
+    }
+    
+	return(elements);
 }
 
 int
