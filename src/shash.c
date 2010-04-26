@@ -19,7 +19,7 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 {
 	shash *h;
 
-	h = malloc(sizeof(shash));
+	h = CF_MALLOC(sizeof(shash));
 	if (!h)	return(SHASH_ERR);
 
 	h->elements = 0;
@@ -34,7 +34,7 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 		return(SHASH_ERR);
 	}
 	
-	h->table = malloc(sz * SHASH_ELEM_SZ(h));
+	h->table = CF_MALLOC(sz * SHASH_ELEM_SZ(h));
 	if (!h->table) {
 		free(h);
 		*h_r = 0;
@@ -59,7 +59,7 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 		memset( &h->biglock, 0, sizeof( h->biglock ) );
 	
 	if (flags & SHASH_CR_MT_MANYLOCK) {
-		h->lock_table = malloc( sizeof(pthread_mutex_t) * sz);
+		h->lock_table = CF_MALLOC( sizeof(pthread_mutex_t) * sz);
 		if (! h->lock_table) {
 			free(h);
 			*h_r = 0;
@@ -167,7 +167,7 @@ shash_put(shash *h, void *key, void *value)
 		e = e->next;
 	}
 
-	e = (shash_elem *) malloc( SHASH_ELEM_SZ(h) );
+	e = (shash_elem *) CF_MALLOC( SHASH_ELEM_SZ(h) );
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -216,7 +216,7 @@ shash_put_unique(shash *h, void *key, void *value)
 		e = e->next;
 	}
 
-	e = (shash_elem *) malloc( SHASH_ELEM_SZ(h) );
+	e = (shash_elem *) CF_MALLOC( SHASH_ELEM_SZ(h) );
 	e->next = e_head->next;
 	e_head->next = e;
 	

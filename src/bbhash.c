@@ -18,7 +18,7 @@ bbhash_create(bbhash **h_r, bbhash_hash_fn h_fn, uint32_t key_len, uint32_t valu
 {
 	bbhash *h;
 
-	h = malloc(sizeof(bbhash));
+	h = CF_MALLOC(sizeof(bbhash));
 	if (!h)	return(BB_ERR);
 
 	h->elements = 0;
@@ -81,7 +81,7 @@ bbhash_put(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t value_l
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
 			free(e->value);
-			e->value = malloc(value_len);
+			e->value = CF_MALLOC(value_len);
 			memcpy(e->value, value, value_len);
 			if (h->flags & BBHASH_CR_MT_BIGLOCK)
 				pthread_mutex_unlock(&h->biglock);
@@ -90,15 +90,15 @@ bbhash_put(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t value_l
 		e = e->next;
 	}
 
-	e = (bbhash_elem *) malloc(sizeof(bbhash_elem));
+	e = (bbhash_elem *) CF_MALLOC(sizeof(bbhash_elem));
 	e->next = e_head->next;
 	e_head->next = e;
 	
 Copy:
-	e->key = malloc(key_len);
+	e->key = CF_MALLOC(key_len);
 	memcpy(e->key, key, key_len);
 	e->key_len = key_len;
-	e->value = malloc(value_len);
+	e->value = CF_MALLOC(value_len);
 	memcpy(e->value, value, value_len);
 	e->value_len = value_len;
 	h->elements++;
@@ -145,15 +145,15 @@ bbhash_put_unique(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t 
 		e = e->next;
 	}
 
-	e = (bbhash_elem *) malloc(sizeof(bbhash_elem));
+	e = (bbhash_elem *) CF_MALLOC(sizeof(bbhash_elem));
 	e->next = e_head->next;
 	e_head->next = e;
 	
 Copy:
-	e->key = malloc(key_len);
+	e->key = CF_MALLOC(key_len);
 	memcpy(e->key, key, key_len);
 	e->key_len = key_len;
-	e->value = malloc(value_len);
+	e->value = CF_MALLOC(value_len);
 	memcpy(e->value, value, value_len);
 	e->value_len = value_len;
 	h->elements++;

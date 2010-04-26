@@ -210,7 +210,7 @@ cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
 	int i = 0;
 	cf_assert((0 != argc || NULL != argv), CF_MISC, CF_GLOBAL, CF_CRITICAL, "invalid argument");
 
-    cf_fault_restart_argv = malloc((argc + 2) * sizeof(char *));
+    cf_fault_restart_argv = CF_MALLOC((argc + 2) * sizeof(char *));
 	cf_assert(cf_fault_restart_argv, CF_MISC, CF_GLOBAL, CF_CRITICAL, "alloc: %s", cf_strerror(errno));
 
     for (int j = 0; j < argc; j++) {
@@ -223,7 +223,7 @@ cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
         }
 
         if (copy) {
-            cf_fault_restart_argv[i] = malloc((strlen(argv[j]) + 1) * sizeof(char));
+            cf_fault_restart_argv[i] = CF_MALLOC((strlen(argv[j]) + 1) * sizeof(char));
             cf_assert(cf_fault_restart_argv[i], CF_MISC, CF_GLOBAL, CF_CRITICAL, "alloc: %s", cf_strerror(errno));
             memcpy(cf_fault_restart_argv[i], argv[j], strlen(argv[j]) + 1);
             i++;

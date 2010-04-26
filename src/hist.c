@@ -22,7 +22,7 @@
 histogram * 
 histogram_create(char *name)
 {
-	histogram * h = malloc(sizeof(histogram));
+	histogram * h = CF_MALLOC(sizeof(histogram));
 	if (!h)	return(0);
 	if (strlen(name) >= sizeof(h->name)-1) { free(h); return(0); }
 	strcpy(h->name, name);
@@ -145,7 +145,7 @@ void histogram_get_counts(histogram *h, histogram_counts *hc)
 linear_histogram * 
 linear_histogram_create(char *name, uint64_t start, uint64_t max_offset)
 {
-	linear_histogram * h = malloc(sizeof(linear_histogram));
+	linear_histogram * h = CF_MALLOC(sizeof(linear_histogram));
 	if (!h)	return(0);
 	if (strlen(name) >= sizeof(h->name)-1) { free(h); return(0); }
 	strcpy(h->name, name);

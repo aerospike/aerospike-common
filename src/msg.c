@@ -203,7 +203,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 							mf->free = mf->rc_free = 0;
 						}
 						else {
-							mf->u.buf = malloc(flen);
+							mf->u.buf = CF_MALLOC(flen);
 							cf_assert(mf->u.buf, CF_MSG, CF_THR, CF_WARNING, "malloc");
 							mf->free = mf->u.buf;
 							mf->rc_free = 0;
@@ -224,7 +224,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 							mf->free = mf->rc_free = 0;
 						}
 						else {
-							mf->u.ui32_a = malloc(flen);
+							mf->u.ui32_a = CF_MALLOC(flen);
 							cf_assert(mf->u.ui32_a, CF_MSG, CF_THR, CF_WARNING, "malloc");
 							mf->free = mf->u.ui32_a;
 							mf->rc_free = 0;
@@ -247,7 +247,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 							mf->free = mf->rc_free = 0;
 						}
 						else {
-							mf->u.ui32_a = malloc(flen);
+							mf->u.ui32_a = CF_MALLOC(flen);
 							cf_assert(mf->u.ui64_a, CF_MSG, CF_THR, CF_WARNING, "malloc");
 							mf->free = mf->u.ui64_a;
 							mf->rc_free = 0;
@@ -270,7 +270,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 							mf->free = mf->rc_free = 0;
 						}
 						else {
-							mf->u.buf_a = malloc(flen);
+							mf->u.buf_a = CF_MALLOC(flen);
 							cf_assert(mf->u.buf_a, CF_MSG, CF_THR, CF_WARNING, "malloc");
 							mf->free = mf->u.buf_a;
 							mf->rc_free = 0;
@@ -663,7 +663,7 @@ msg_get_buf(const msg *m, int field_id, uint8_t **r, size_t *len, msg_get_type t
 		*r = m->f[field_id].u.buf;
 	}
 	else if (MSG_GET_COPY_MALLOC == type) {
-		*r = malloc( m->f[field_id].field_len );
+		*r = CF_MALLOC( m->f[field_id].field_len );
 		cf_assert(*r, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
 		memcpy(*r, m->f[field_id].u.buf, m->f[field_id].field_len );
 	}
@@ -842,7 +842,7 @@ int msg_set_buf(msg *m, int field_id, const uint8_t *v, size_t len, msg_set_type
 		}
 		// Or just malloc if we have to. Sad face.
 		else {
-			mf->u.buf = malloc(len);
+			mf->u.buf = CF_MALLOC(len);
 			if (mf->u.buf == NULL)
 				cf_info(CF_MSG, "could not allocate: len %d",len);
 			cf_assert(mf->u.buf, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
@@ -931,7 +931,7 @@ msg_set_uint32_array_size(msg *m, int field_id, const int size)
 		if (! mf->u.ui32_a) return(-1);
 	}
 	else {
-		mf->u.ui32_a = malloc( mf->field_len );
+		mf->u.ui32_a = CF_MALLOC( mf->field_len );
 		if (! mf->u.ui32_a) return(-1);
 		mf->is_set = true;
 	}
@@ -994,7 +994,7 @@ msg_set_uint64_array_size(msg *m, int field_id, const int size)
 		if (! mf->u.ui64_a) return(-1);
 	}
 	else {
-		mf->u.ui64_a = malloc( mf->field_len );
+		mf->u.ui64_a = CF_MALLOC( mf->field_len );
 		if (! mf->u.ui64_a) return(-1);
 		mf->is_set = true;
 	}
@@ -1023,7 +1023,7 @@ msg_buf_array *
 msg_buf_array_create(int n_bufs, int buf_len)
 {
 	int len = sizeof(msg_buf_array) + n_bufs * (sizeof(uint32_t) + buf_len + sizeof(msg_pbuf));
-	msg_buf_array *buf_a = malloc( len );
+	msg_buf_array *buf_a = CF_MALLOC( len );
 	if (!buf_a)	return(0);
 	buf_a->alloc_size = len;
 	buf_a->used_size = sizeof(msg_buf_array) + (n_bufs * sizeof(uint32_t)); 
@@ -1130,7 +1130,7 @@ msg_get_buf_array(msg *m, int field_id, const int index, uint8_t **r, size_t *le
 			memcpy(*r, b, *len);
 			break;
 		case MSG_GET_COPY_MALLOC:
-			*r = malloc(*len);
+			*r = CF_MALLOC(*len);
 			memcpy(*r, b, *len);
 			break;
 	}

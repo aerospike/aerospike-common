@@ -113,7 +113,7 @@ cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
     }
 
     /* Allocate memory for the new node and set the node parameters */
-    if (NULL == (n = (cf_rcrb_node *)malloc(sizeof(cf_rcrb_node)))) {
+    if (NULL == (n = (cf_rcrb_node *)CF_MALLOC(sizeof(cf_rcrb_node)))) {
     	pthread_mutex_unlock(&tree->lock);
 #ifdef TIMETREE    	
 		if (cf_getms() - now > 10)	fprintf(stderr, "insert(mallocfail) took long\n");
@@ -231,7 +231,7 @@ cf_rcrb_get_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **v
 //	cf_debug(CF_RB,"get-insert: not found");
 	
     /* Allocate memory for the new node and set the node parameters */
-    if (NULL == (n = (cf_rcrb_node *)malloc(sizeof(cf_rcrb_node)))) {
+    if (NULL == (n = (cf_rcrb_node *)CF_MALLOC(sizeof(cf_rcrb_node)))) {
 		cf_debug(CF_RB," malloc failed ");
         return(NULL);
 	}
@@ -683,7 +683,7 @@ cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
     uint8_t buf[64 * 1024];
     
     if (sz > 64 * 1024) {
-    	v_a = malloc(sz);
+    	v_a = CF_MALLOC(sz);
     	if (!v_a)	return;
     }
     else

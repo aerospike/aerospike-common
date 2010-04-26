@@ -19,7 +19,7 @@ cf_vector_create( uint32_t value_len, uint32_t init_sz, uint flags)
 {
 	cf_vector *v;
 
-	v = malloc(sizeof(cf_vector));
+	v = CF_MALLOC(sizeof(cf_vector));
 	if (!v)	return(0);
 
 	v->value_len = value_len;
@@ -29,7 +29,7 @@ cf_vector_create( uint32_t value_len, uint32_t init_sz, uint flags)
 	v->stack_struct = false;
 	v->stack_vector = false;
 	if (init_sz) {
-		v->vector = malloc(init_sz * value_len);
+		v->vector = CF_MALLOC(init_sz * value_len);
 		if (!v->vector)	return(0);
 	}
 	else
@@ -51,7 +51,7 @@ cf_vector_init(cf_vector *v, uint32_t value_len, uint32_t init_sz, uint flags)
 	v->stack_struct = true;
 	v->stack_vector = false;
 	if (init_sz) {
-		v->vector = malloc(init_sz * value_len);
+		v->vector = CF_MALLOC(init_sz * value_len);
 		if (!v->vector)	return(-1);
 	}
 	else
@@ -99,7 +99,7 @@ cf_vector_resize(cf_vector *v, uint32_t new_sz)
 	}
 	uint8_t *_t;
 	if (v->vector == 0 || v->stack_vector) {
-		_t = malloc(new_sz * v->value_len);
+		_t = CF_MALLOC(new_sz * v->value_len);
 		if (v->stack_vector) {
 			memcpy(_t, v->vector, v->alloc_len * v->value_len); 
 			v->stack_vector = false;

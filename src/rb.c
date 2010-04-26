@@ -78,7 +78,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest *key, void *value)
     /* Allocate memory for the new node and set the node parameters */
 	// this could be done later, but doing the malloc ahead of the tree lock
 	// increases parallelism and decreases lock hold times
-    if (NULL == (n = (cf_rb_node *)malloc(sizeof(cf_rb_node))))
+    if (NULL == (n = (cf_rb_node *)CF_MALLOC(sizeof(cf_rb_node))))
         return(NULL);
     n->color = CF_RB_RED;
 	n->key = *key;
@@ -175,7 +175,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest *key, pthread_mutex_t **vlock)
     *vlock = NULL;
 
     /* Allocate memory for the new node and set the node parameters */
-    if (NULL == (n = (cf_rb_node *)malloc(sizeof(cf_rb_node)))) {
+    if (NULL == (n = (cf_rb_node *)CF_MALLOC(sizeof(cf_rb_node)))) {
 		cf_debug(CF_RB," malloc failed ");
         return(NULL);
 	}
@@ -308,7 +308,7 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
 	cf_debug(CF_RB,"get-insert: not found");
 	
     /* Allocate memory for the new node and set the node parameters */
-    if (NULL == (n = (cf_rb_node *)malloc(sizeof(cf_rb_node)))) {
+    if (NULL == (n = (cf_rb_node *)CF_MALLOC(sizeof(cf_rb_node)))) {
 		cf_debug(CF_RB," malloc failed ");
         return(NULL);
 	}

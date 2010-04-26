@@ -31,7 +31,7 @@ cf_queue_create(size_t elementsz, bool threadsafe)
 {
 	cf_queue *q = NULL;
 
-	q = malloc( sizeof(cf_queue));
+	q = CF_MALLOC( sizeof(cf_queue));
 	/* FIXME error msg */
 	if (!q)
 		return(NULL);
@@ -40,7 +40,7 @@ cf_queue_create(size_t elementsz, bool threadsafe)
 	q->elementsz = elementsz;
 	q->threadsafe = threadsafe;
 
-	q->queue = malloc(CF_QUEUE_ALLOCSZ * elementsz);
+	q->queue = CF_MALLOC(CF_QUEUE_ALLOCSZ * elementsz);
 	if (! q->queue) {
 		free(q);
 		return(NULL);
@@ -123,7 +123,7 @@ cf_queue_resize(cf_queue *q, uint new_sz)
 	}
 	else {
 		
-		byte *newq = malloc(new_sz * q->elementsz);
+		byte *newq = CF_MALLOC(new_sz * q->elementsz);
 		if (!newq) {
 			cf_info(CF_QUEUE," queue resize memory failure");
 			return(-1);
@@ -407,7 +407,7 @@ Done:
 cf_queue_priority *
 cf_queue_priority_create(size_t elementsz, bool threadsafe)
 {
-	cf_queue_priority *q = malloc(sizeof(cf_queue_priority));
+	cf_queue_priority *q = CF_MALLOC(sizeof(cf_queue_priority));
 	if (!q)	return(0);
 	
 	q->threadsafe = threadsafe;

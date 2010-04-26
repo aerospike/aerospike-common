@@ -67,6 +67,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "cf_random.h"
 
 
+#define CF_MALLOC(__sz)		malloc((__sz)+0)
 
 /* cf_hash_fnv
  * The 64-bit Fowler-Noll-Voll hash function (FNV-1a) */

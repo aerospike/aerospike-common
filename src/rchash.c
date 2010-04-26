@@ -36,7 +36,7 @@ rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint
 {
 	rchash *h;
 
-	h = malloc(sizeof(rchash));
+	h = CF_MALLOC(sizeof(rchash));
 	if (!h)	return(RCHASH_ERR);
 
 	h->elements = 0;
@@ -71,7 +71,7 @@ rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint
 		memset( &h->biglock, 0, sizeof( h->biglock ) );
 	
 	if (flags & RCHASH_CR_MT_MANYLOCK) {
-		h->lock_table = malloc( sizeof(pthread_mutex_t) * sz);
+		h->lock_table = CF_MALLOC( sizeof(pthread_mutex_t) * sz);
 		if (! h->lock_table) {
 			free(h);
 			*h_r = 0;
@@ -194,7 +194,7 @@ rchash_put(rchash *h, void *key, uint32_t key_len, void *object)
 		e = e->next;
 	}
 
-	e = (rchash_elem_f *) malloc(sizeof(rchash_elem_f) + key_len);
+	e = (rchash_elem_f *) CF_MALLOC(sizeof(rchash_elem_f) + key_len);
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -264,7 +264,7 @@ rchash_put_unique(rchash *h, void *key, uint32_t key_len, void *object)
 		e = e->next;
 	}
 
-	e = (rchash_elem_f *) malloc(sizeof(rchash_elem_f) + key_len);
+	e = (rchash_elem_f *) CF_MALLOC(sizeof(rchash_elem_f) + key_len);
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -699,12 +699,12 @@ rchash_put_v(rchash *h, void *key, uint32_t key_len, void *object)
 		e = e->next;
 	}
 
-	e = (rchash_elem_v *) malloc(sizeof(rchash_elem_v));
+	e = (rchash_elem_v *) CF_MALLOC(sizeof(rchash_elem_v));
 	e->next = e_head->next;
 	e_head->next = e;
 	
 Copy:
-	e->key = malloc(key_len);
+	e->key = CF_MALLOC(key_len);
 	memcpy(e->key, key, key_len);
 	e->key_len = key_len;
 
@@ -771,12 +771,12 @@ rchash_put_unique_v(rchash *h, void *key, uint32_t key_len, void *object)
 		e = e->next;
 	}
 
-	e = (rchash_elem_v *) malloc(sizeof(rchash_elem_v));
+	e = (rchash_elem_v *) CF_MALLOC(sizeof(rchash_elem_v));
 	e->next = e_head->next;
 	e_head->next = e;
 	
 Copy:
-	e->key = malloc(key_len);
+	e->key = CF_MALLOC(key_len);
 	memcpy(e->key, key, key_len);
 	e->key_len = key_len;
 

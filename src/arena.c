@@ -36,7 +36,7 @@ cf_arena *cf_arena_create(uint element_sz, uint stage_sz, uint max_stages, int f
 		return(0);
 	}
 	
-	cf_arena *arena = malloc( sizeof(cf_arena) + (sizeof(void *) * max_stages));
+	cf_arena *arena = CF_MALLOC( sizeof(cf_arena) + (sizeof(void *) * max_stages));
 	if (!arena)	{
 		cf_warning(CF_ARENA, "malloc fail sz %"PRIu64,(sizeof(cf_arena)+ (sizeof(void *) * max_stages)) );
 		return(0);
@@ -55,7 +55,7 @@ cf_arena *cf_arena_create(uint element_sz, uint stage_sz, uint max_stages, int f
 	
 	arena->free_stage_id = 0;
 	arena->free_element_id = 1; // burn the first so 0:0 is never in use (null)
-	arena->stages[0] = malloc(arena->stage_bytes);
+	arena->stages[0] = CF_MALLOC(arena->stage_bytes);
 	
 	arena->max_stages = max_stages;
 	for (uint i=1;i<max_stages;i++) {
@@ -80,7 +80,7 @@ void cf_arena_destroy(cf_arena *arena)
 
 int cf_arena_stage_add(cf_arena *arena)
 {
-	uint8_t *stage = malloc(arena->stage_bytes);
+	uint8_t *stage = CF_MALLOC(arena->stage_bytes);
 	if (!stage) {
 		return(-1);
 	}
@@ -221,8 +221,8 @@ cf_arena_test()
 		return(-1);
 	}
 	
-	cf_arena_handle *objects = malloc( sizeof(cf_arena_handle) * n_handles); 
-//	int		*random_magic = malloc( sizeof(int) * n_handles );
+	cf_arena_handle *objects = CF_MALLOC( sizeof(cf_arena_handle) * n_handles); 
+//	int		*random_magic = CF_MALLOC( sizeof(int) * n_handles );
 	
 	// create as many objects are you are can
 	for (int i =0; i< n_handles; i++) {
