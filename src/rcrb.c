@@ -18,12 +18,13 @@
 
 #include "cf.h"
 
-// #define TIMETREE 1
+#define TIMETREE 1
 
 extern void incr_global_record_ref_count(void);
 extern void decr_global_record_ref_count(void);
 extern void incr_global_tree_count(void);
 extern void decr_global_tree_count(void);
+extern void incr_err_rcrb_reduce_gt5(void);
 
 /* cf_rcrb_rotate_left
  * Rotate a tree left */
@@ -107,7 +108,7 @@ cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
     if ((s != tree->root) && (0 == cf_digest_compare(key, &s->key))) {
 		pthread_mutex_unlock(&tree->lock);
 #ifdef TIMETREE		
-		if (cf_getms() - now > 10)	fprintf(stderr, "insert(bounce) took long\n");
+		if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
 #endif		
         return(0);
     }
@@ -116,7 +117,7 @@ cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
     if (NULL == (n = (cf_rcrb_node *)CF_MALLOC(sizeof(cf_rcrb_node)))) {
     	pthread_mutex_unlock(&tree->lock);
 #ifdef TIMETREE    	
-		if (cf_getms() - now > 10)	fprintf(stderr, "insert(mallocfail) took long\n");
+		if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
 #endif		
         return(0);
     }
@@ -174,7 +175,7 @@ cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
 	tree->elements++;
 
 #ifdef TIMETREE
-	if (cf_getms() - now > 10)	fprintf(stderr, "insert(ok) took long\n");
+	if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
 #endif	
 	
     return(u);
@@ -222,7 +223,7 @@ cf_rcrb_get_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **v
     /* If the node already exists, simply return it */
     if ((s != tree->root) && (0 == cf_digest_compare(key, &s->key))) {
 #ifdef TIMETREE
-    	if (cf_getms() - now > 10) fprintf(stderr, "get(insert) took long\n");
+		if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
 #endif    	
         return(s);
         
@@ -288,7 +289,7 @@ cf_rcrb_get_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **v
 	tree->elements++;
 
 #ifdef TIMETREE
-   	if (cf_getms() - now > 10) fprintf(stderr, "insert(get) took long\n");
+	if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
 #endif
 
     return(u);
@@ -538,7 +539,7 @@ cf_rcrb_delete(cf_rcrb_tree *tree, cf_digest *key)
 release:
     pthread_mutex_unlock(&tree->lock);
 #ifdef TIMETREE
-    if (cf_getms() - now > 10) fprintf(stderr, "delete: took too long\n");
+	if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
 #endif
     return(rv);
 }
@@ -702,7 +703,7 @@ cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 	pthread_mutex_unlock(&tree->lock);
 
 #ifdef TIMETREE	
-	if (cf_getms() - now > 10) fprintf(stderr, "reduce: held tree lock more than 10 ms");
+	if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
 #endif	
 	
 	for (uint i=0 ; i<v_a->pos ; i++) 
@@ -749,7 +750,7 @@ cf_rcrb_reduce_sync(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 
 	pthread_mutex_unlock(&tree->lock);
 #ifdef TIMETREE
-	if (cf_getms() - now > 10) fprintf(stderr, "reduce: held tree lock more than 10 ms");
+	if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
 #endif
     return;
 	
