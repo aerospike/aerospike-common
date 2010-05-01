@@ -15,6 +15,7 @@
 #include <strings.h>
 #include <time.h>
 #include <unistd.h>
+#include <signal.h>
 #include "cf.h"
 
 // #define DEBUG 1
@@ -146,10 +147,12 @@ cf_queue_resize(cf_queue *q, uint new_sz)
 
 // we have to guard against wraparound, call this occasionally
 // I really expect this will never get called....
+// HOWEVER it can be a symptom of a queue getting really, really deep
+//
 void
 cf_queue_unwrap(cf_queue *q)
 {
-	cf_warning(CF_QUEUE, " queue memory unwrap!!!! ");
+	cf_debug(CF_QUEUE, " queue memory unwrap!!!! queue: %p",q);
 	int sz = CF_Q_SZ(q);
 	q->read_offset %= q->allocsz;
 	q->write_offset = q->read_offset + sz;
@@ -183,7 +186,8 @@ cf_queue_push(cf_queue *q, void *ptr)
 	// todo: if queues are power of 2, this can be a shift
 	memcpy(CF_Q_ELEM_PTR(q,q->write_offset), ptr, q->elementsz);
 	q->write_offset++;
-	if (q->write_offset & 0x8000000) cf_queue_unwrap(q);
+	// we're at risk of overflow if the write offset is that high
+	if (q->write_offset & 0xC0000000) cf_queue_unwrap(q);
 	
 	if (q->threadsafe)
 		pthread_cond_signal(&q->CV);
