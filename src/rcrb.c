@@ -25,6 +25,25 @@ extern void decr_global_record_ref_count(void);
 extern void incr_global_tree_count(void);
 extern void decr_global_tree_count(void);
 extern void incr_err_rcrb_reduce_gt5(void);
+extern void incr_err_rcrb_reduce_gt50(void);
+extern void incr_err_rcrb_reduce_gt100(void);
+extern void incr_err_rcrb_reduce_gt250(void);
+
+#ifdef TIMETREE
+void rcrb_count_time(uint64_t start)
+{
+	int elapsed = cf_getms() - start;
+
+	if (elapsed > 250)  	
+		incr_err_rcrb_reduce_gt250();
+	else if (elapsed > 100)  	
+		incr_err_rcrb_reduce_gt100();
+	else if (elapsed > 50)  	
+		incr_err_rcrb_reduce_gt50();
+	else if (elapsed > 5)  	
+		incr_err_rcrb_reduce_gt5();
+}
+#endif 
 
 /* cf_rcrb_rotate_left
  * Rotate a tree left */
@@ -108,7 +127,7 @@ cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
     if ((s != tree->root) && (0 == cf_digest_compare(key, &s->key))) {
 		pthread_mutex_unlock(&tree->lock);
 #ifdef TIMETREE		
-		if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
+		rcrb_count_time(now);
 #endif		
         return(0);
     }
@@ -117,7 +136,7 @@ cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
     if (NULL == (n = (cf_rcrb_node *)CF_MALLOC(sizeof(cf_rcrb_node)))) {
     	pthread_mutex_unlock(&tree->lock);
 #ifdef TIMETREE    	
-		if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
+		rcrb_count_time(now);
 #endif		
         return(0);
     }
@@ -175,7 +194,7 @@ cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
 	tree->elements++;
 
 #ifdef TIMETREE
-	if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
+	rcrb_count_time(now);
 #endif	
 	
     return(u);
@@ -223,7 +242,7 @@ cf_rcrb_get_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **v
     /* If the node already exists, simply return it */
     if ((s != tree->root) && (0 == cf_digest_compare(key, &s->key))) {
 #ifdef TIMETREE
-		if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
+		rcrb_count_time(now);
 #endif    	
         return(s);
         
@@ -289,7 +308,7 @@ cf_rcrb_get_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **v
 	tree->elements++;
 
 #ifdef TIMETREE
-	if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
+	rcrb_count_time(now);
 #endif
 
     return(u);
@@ -539,7 +558,7 @@ cf_rcrb_delete(cf_rcrb_tree *tree, cf_digest *key)
 release:
     pthread_mutex_unlock(&tree->lock);
 #ifdef TIMETREE
-	if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
+	rcrb_count_time(now);
 #endif
     return(rv);
 }
@@ -703,7 +722,7 @@ cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 	pthread_mutex_unlock(&tree->lock);
 
 #ifdef TIMETREE	
-	if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
+	rcrb_count_time(now);
 #endif	
 	
 	for (uint i=0 ; i<v_a->pos ; i++) 
@@ -750,7 +769,7 @@ cf_rcrb_reduce_sync(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 
 	pthread_mutex_unlock(&tree->lock);
 #ifdef TIMETREE
-	if (cf_getms() - now > 5)  	incr_err_rcrb_reduce_gt5();
+	rcrb_count_time(now);
 #endif
     return;
 	
