@@ -65,6 +65,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "olock.h"
 #include "clock.h"
 #include "cf_random.h"
+#include "meminfo.h"
 
 
 #define CF_MALLOC(__sz)		malloc((__sz)+0)
