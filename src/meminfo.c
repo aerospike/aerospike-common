@@ -88,8 +88,11 @@ cf_meminfo(uint64_t *physmem, uint64_t *freemem, bool *swapping)
 	*freemem = (physMem - activeMem) * 1024;
 
 	*swapping = false;
-	uint64_t swapFreePct = ((swapTotal - swapFree)*100)/swapTotal;
-	if (swapFreePct < 90) *swapping = true;
+	uint64_t swapUsedPct = ((swapTotal - swapFree)*100)/swapTotal;
+	if (swapUsedPct > 10) *swapping = true;
+
+//	fprintf(stderr, "%u swapTotal %u swapFree %u swapFreePct ::: swapping %d\n",
+//		(unsigned int) swapTotal,(unsigned int)swapFree,(int)swapUsedPct,(int) *swapping);
 	
 	return(0);
 	
