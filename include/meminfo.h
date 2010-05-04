@@ -21,6 +21,6 @@
 // #define DEBUG_VERBOSE 1
 
 int
-cf_meminfo(uint64_t *physmem, uint64_t *freemem, bool *swapping);
+cf_meminfo(uint64_t *physmem, uint64_t *freemem, int *freepct, bool *swapping);
 
 

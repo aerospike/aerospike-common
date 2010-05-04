@@ -23,7 +23,7 @@
 #include "cf.h"
 
 int
-cf_meminfo(uint64_t *physmem, uint64_t *freemem, bool *swapping)
+cf_meminfo(uint64_t *physmem, uint64_t *freemem, int *freepct, bool *swapping)
 {
 	// do this without a malloc, because we might be in trouble, malloc-wise
 	char buf[4096];
@@ -38,7 +38,7 @@ cf_meminfo(uint64_t *physmem, uint64_t *freemem, bool *swapping)
 	// this loop is overkill. proc read won't block, realistically 
 	int pos = 0, lim = sizeof(buf);
 	int rv = 0;
-	do {
+	do {	
 		
 		rv = read(fd, &buf[pos], lim - pos);
 		if (rv > 0)
@@ -84,12 +84,23 @@ cf_meminfo(uint64_t *physmem, uint64_t *freemem, bool *swapping)
 	} while(tok1 && tok2 && tok3);
 	
 	
-	*physmem = physMem * 1024;
-	*freemem = (physMem - activeMem) * 1024;
+	if (physmem) *physmem = physMem * 1024L;
+	if (freemem) *freemem = (physMem - activeMem) * 1024L;
 
-	*swapping = false;
-	uint64_t swapUsedPct = ((swapTotal - swapFree)*100)/swapTotal;
-	if (swapUsedPct > 10) *swapping = true;
+	// just easier to do this kind of thing in one place
+	if (freepct) *freepct = (100L * (physMem - activeMem)) / physMem;
+	
+	if (swapping) {
+		*swapping = false;
+#if 0		
+		uint64_t swapUsedPct = ((swapTotal - swapFree)*100)/swapTotal;
+		if (swapUsedPct > 10) {
+			*swapping = true;
+			fprintf(stderr, " SWAPPING: %"PRIu64" %"PRIu64" %"PRIu64,
+				swapUsedPct, swapTotal, swapFree);
+		}
+#endif		
+	}
 
 //	fprintf(stderr, "%u swapTotal %u swapFree %u swapFreePct ::: swapping %d\n",
 //		(unsigned int) swapTotal,(unsigned int)swapFree,(int)swapUsedPct,(int) *swapping);
