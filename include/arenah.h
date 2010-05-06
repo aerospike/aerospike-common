@@ -28,16 +28,26 @@
  // Note about arena handles. We want 0 to be 'null', so we burn 0:0
  // and just don't use it. 1:0 is legal. 
 
+// the struct we use internally to resolve
+typedef struct cf_arenah_handle_s {
+	uint32_t	stage_id:8;
+ 	uint32_t	element_id:24;
+} __attribute__ ((__packed__)) cf_arenah_handle_s;
 
-#define CF_ARENA_FREE_MAGIC 0x9ff21931
+// external people use this
+typedef uint32_t cf_arenah_handle;
 
-typedef struct cf_arena_free_element_s {
-	struct cf_arena_free_element_s * next;
+#define CF_ARENAH_FREE_MAGIC 0x9ff71239
+
+typedef struct cf_arenah_free_element_s {
+	cf_arenah_handle next;
 	unsigned int    free_magic;
-} cf_arena_free_element;
+} cf_arenah_free_element;
 
+// big cast
+#define TO_HANDLE( __hs ) ( *(uint32_t *) &__hs )
 
-typedef struct cf_arena_s {
+typedef struct cf_arenah_s {
 	
 	int flags;
 	
@@ -45,7 +55,7 @@ typedef struct cf_arena_s {
 	pthread_mutex_t	LOCK;
 
 	// a free list makes many allocations quick
-	cf_arena_free_element *free;
+	cf_arenah_handle    free;
 
 	uint32_t     free_stage_id;   // stage currently end-allocating from
 	uint32_t     free_element_id; // element currently end-allocating from
@@ -59,20 +69,30 @@ typedef struct cf_arena_s {
 	uint32_t	max_stages;
 	uint8_t    *stages[];
 	
-} cf_arena;
+} cf_arenah;
 
-#define CF_ARENA_MT_BIGLOCK 	(1 << 0)
-#define CF_ARENA_EXTRACHECKS 	(1 << 1)
-#define CF_ARENA_CALLOC 		(1 << 2)
+#define CF_ARENAH_MT_BIGLOCK 	(1 << 0)
+#define CF_ARENAH_EXTRACHECKS 	(1 << 1)
+#define CF_ARENAH_CALLOC 		(1 << 2)
 
 
-extern cf_arena *cf_arena_create(uint element_sz, uint stage_sz, uint max_stages , int flags);
-extern void cf_arena_destroy(cf_arena *arena);
+extern cf_arenah *cf_arenah_create(uint element_sz, uint stage_sz, uint max_stages , int flags);
+extern void cf_arenah_destroy(cf_arenah *arena);
 
-extern void *cf_arena_alloc(cf_arena *arena);
-extern void cf_arena_free(cf_arena *arena, void *ptr);
+extern cf_arenah_handle cf_arenah_alloc(cf_arenah *arena);
+extern void cf_arenah_free(cf_arenah *arena, cf_arenah_handle h);
 
+
+static inline
+void *cf_arenah_resolve(cf_arenah *arena, cf_arenah_handle h)
+{
+	cf_arenah_handle_s *h_p = (cf_arenah_handle_s *) &h;
+//	fprintf(stderr, "arena %p elem_sz %d stage_id %d element_id %d\n",arena,arena->element_sz,h_p->stage_id, h_p->element_id);
+	return( arena->stages[h_p->stage_id] + (h_p->element_id * arena->element_sz) );
+}
+
+extern cf_arenah_handle cf_arenah_pointer_resolve(cf_arenah *arena, void *ptr);
 
 /* an external unit test */
-extern int cf_arena_test();
+extern int cf_arenah_test();
 

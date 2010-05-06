@@ -96,10 +96,10 @@ int cf_arena_stage_add(cf_arena *arena)
 }
 
 
-cf_arena_handle 
+void * 
 cf_arena_alloc(cf_arena *arena )
 {
-	cf_arena_handle h;
+	void *h;
 	
 	if (arena->flags & CF_ARENA_MT_BIGLOCK)
 		pthread_mutex_lock(&arena->LOCK);
@@ -107,8 +107,7 @@ cf_arena_alloc(cf_arena *arena )
 	// look on the free list
 	if (arena->free != 0 ) {
 		h = arena->free;
-		cf_arena_free_element * fe = cf_arena_resolve(arena, h);
-		arena->free = fe->next;
+		arena->free = arena->free->next;
 	}
 	// or slice out next element
 	else {
@@ -117,34 +116,30 @@ cf_arena_alloc(cf_arena *arena )
 			arena->free_stage_id++;
 			arena->free_element_id = 0;
 		}
-		cf_arena_handle_s hs;
-		hs.stage_id = arena->free_stage_id;
-		hs.element_id = arena->free_element_id;
+		h = arena->stages[arena->free_stage_id] + (arena->free_element_id * arena->element_sz);
 		arena->free_element_id++;
-		h = *(cf_arena_handle *) &hs;
 	}
 	
 	if (arena->flags & CF_ARENA_MT_BIGLOCK)
 		pthread_mutex_unlock(&arena->LOCK);
 	
 	if (arena->flags & CF_ARENA_CALLOC) {
-		uint8_t *p = cf_arena_resolve(arena, h);
-		memset(p, 0, arena->element_sz);
+		memset(h, 0, arena->element_sz);
 	}
 	
 	return(h);
 }
 
 
-void cf_arena_free(cf_arena *arena, cf_arena_handle h)
+void cf_arena_free(cf_arena *arena, void *p)
 {
+	cf_arena_free_element *e = p;
 	
 	// figure out what I'm inserting
-	cf_arena_free_element *e = cf_arena_resolve(arena, h);
 	if (arena->flags & CF_ARENA_EXTRACHECKS) {
 		memset(e, 0xff, arena->element_sz);
-		if (e->free_magic == CF_FREE_MAGIC) {
-			cf_info(CF_ARENA, "warning: likely duplicate free of handle %x",h);
+		if (e->free_magic == CF_ARENA_FREE_MAGIC) {
+			cf_info(CF_ARENA, "warning: likely duplicate free of %x",p);
 		}
 	}
 	
@@ -152,35 +147,14 @@ void cf_arena_free(cf_arena *arena, cf_arena_handle h)
 	if (arena->flags & CF_ARENA_MT_BIGLOCK)
 		pthread_mutex_lock(&arena->LOCK);
 	
+
 	e->next = arena->free;
-	arena->free = h;
+	arena->free = e;
 
 	if (arena->flags & CF_ARENA_MT_BIGLOCK)
 		pthread_mutex_unlock(&arena->LOCK);
 }
 
-//
-//  this is expensive - but sometimes worth it?
-//    almost don't want to write this routine, that encourages people to use it
-cf_arena_handle
-cf_arena_pointer_resolve(cf_arena *arena, void *ptr)
-{
-	uint8_t *pb = (uint8_t *)ptr;
-	// never need to take lock because structure never gets rwitten
-	for (int i=0 ; (arena->stages[i]) && (i<arena->max_stages) ; i++) {
-		
-		if (pb >= arena->stages[i]) {
-			if (pb <= (arena->stages[i] + arena->stage_sz)) {
-				cf_arena_handle_s hs;
-				hs.stage_id = i;
-				hs.element_id = (pb - arena->stages[i]) / arena->element_sz;
-				return( TO_HANDLE( hs ) );
-			}
-		}
-	}
-	
-	return(0);
-}
 
 /*
 ****************************
@@ -221,7 +195,7 @@ cf_arena_test()
 		return(-1);
 	}
 	
-	cf_arena_handle *objects = CF_MALLOC( sizeof(cf_arena_handle) * n_handles); 
+	void **objects = CF_MALLOC( sizeof(void *) * n_handles); 
 //	int		*random_magic = CF_MALLOC( sizeof(int) * n_handles );
 	
 	// create as many objects are you are can
@@ -229,7 +203,7 @@ cf_arena_test()
 		objects[i] = cf_arena_alloc(arena);
 		if (objects[i] == 0) { cf_info(CF_ARENA, "could not create some object: %d",i); continue; }
 //		cf_info(CF_ARENA, "allocated object %x index %d",objects[i],i);
-		arena_test_struct *ts = cf_arena_resolve(arena, objects[i]);
+		arena_test_struct *ts = objects[i];
 		if (ts == 0) { cf_info(CF_ARENA, "could not resolve some object: %x %d",objects[i], i); continue; }
 //		cf_info(CF_ARENA, "arena resolve: pointer is %p",ts);
 		memset(ts, 0, sizeof(*ts));
@@ -241,7 +215,7 @@ cf_arena_test()
 	}
 	
 	for (int i=0;i< n_handles; i++) {
-		arena_test_struct *ts = cf_arena_resolve(arena, objects[i]);
+		arena_test_struct *ts = objects[i];
 		if (ts->test1 != TEST1_MAGIC)	return(-1);
 		if (ts->test2 != TEST2_MAGIC)	return(-1);
 		if (ts->test3 != TEST3_MAGIC)	return(-1);
@@ -260,7 +234,7 @@ cf_arena_test()
 			objects[i] = cf_arena_alloc(arena);
 			if (objects[i] == 0) { cf_info(CF_ARENA, "could not create some object: %d",i); continue; }
 	//		cf_info(CF_ARENA, "allocated object %x index %d",objects[i],i);
-			arena_test_struct *ts = cf_arena_resolve(arena, objects[i]);
+			arena_test_struct *ts = objects[i];
 			if (ts == 0) { cf_info(CF_ARENA, "could not resolve some object: %x %d",objects[i], i); continue; }
 	//		cf_info(CF_ARENA, "arena resolve: pointer is %p",ts);
 			memset(ts, 0, sizeof(*ts));
@@ -273,7 +247,7 @@ cf_arena_test()
 
 	// validate all
 	for (int i=0;i< n_handles; i++) {
-		arena_test_struct *ts = cf_arena_resolve(arena, objects[i]);
+		arena_test_struct *ts = objects[i];
 		if (ts->test1 != TEST1_MAGIC)	return(-1);
 		if (ts->test2 != TEST2_MAGIC)	return(-1);
 		if (ts->test3 != TEST3_MAGIC)	return(-1);
@@ -294,7 +268,7 @@ cf_arena_test()
 			objects[i] = cf_arena_alloc(arena);
 			if (objects[i] == 0) { cf_info(CF_ARENA, "could not create some object: %d",i); continue; }
 	//		cf_info(CF_ARENA, "allocated object %x index %d",objects[i],i);
-			arena_test_struct *ts = cf_arena_resolve(arena, objects[i]);
+			arena_test_struct *ts = objects[i];
 			if (ts == 0) { cf_info(CF_ARENA, "could not resolve some object: %x %d",objects[i], i); continue; }
 	//		cf_info(CF_ARENA, "arena resolve: pointer is %p",ts);
 			memset(ts, 0, sizeof(*ts));
@@ -307,7 +281,7 @@ cf_arena_test()
 
 	// validate all - one last time
 	for (int i=0;i< n_handles; i++) {
-		arena_test_struct *ts = cf_arena_resolve(arena, objects[i]);
+		arena_test_struct *ts = objects[i];
 		if (ts->test1 != TEST1_MAGIC)	return(-1);
 		if (ts->test2 != TEST2_MAGIC)	return(-1);
 		if (ts->test3 != TEST3_MAGIC)	return(-1);

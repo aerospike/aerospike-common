@@ -45,6 +45,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "dynbuf.h"
 #include "fault.h"
 #include "arena.h"
+#include "arenah.h"
 #include "alloc.h"
 #include "bits.h"
 #include "digest.h"
