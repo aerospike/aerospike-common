@@ -22,11 +22,6 @@
 
 #include "cf.h"
 
-/*
-** note: this is a little heuristic. Physical - Active is the wrong measurement
-** for free, using the actual free pct is far better
-*/
-
 int
 cf_meminfo(uint64_t *physmem, uint64_t *freemem, int *freepct, bool *swapping)
 {
@@ -59,6 +54,7 @@ cf_meminfo(uint64_t *physmem, uint64_t *freemem, int *freepct, bool *swapping)
 	
 	char *physMemStr = "MemTotal"; uint64_t physMem = 0;
 	char *freeMemStr = "MemFree"; uint64_t freeMem = 0;
+	char *activeMemStr = "Active"; uint64_t activeMem = 0;
 	char *swapTotalStr = "SwapTotal"; uint64_t swapTotal = 0;
 	char *swapFreeStr = "SwapFree"; uint64_t swapFree = 0;
 	
@@ -81,16 +77,18 @@ cf_meminfo(uint64_t *physmem, uint64_t *freemem, int *freepct, bool *swapping)
 				swapTotal = atoi(tok2);
 			else if (strcmp(tok1, swapFreeStr) == 0)
 				swapFree = atoi(tok2);
+			else if (strcmp(tok1, activeMemStr) == 0)
+				activeMem = atoi(tok2);
 		}
 	
 	} while(tok1 && tok2 && tok3);
 	
 	
 	if (physmem) *physmem = physMem * 1024L;
-	if (freemem) *freemem = freeMem * 1024L;
+	if (freemem) *freemem = (physMem - activeMem) * 1024L;
 
 	// just easier to do this kind of thing in one place
-	if (freepct) *freepct = (100L * freeMem) / physMem;
+	if (freepct) *freepct = (100L * (physMem - activeMem)) / physMem;
 	
 	if (swapping) {
 		*swapping = false;
