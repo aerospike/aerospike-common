@@ -31,6 +31,7 @@ cf_get_rand64()
 			int rsz = read(rfd, rand_buf, SEED_SZ);
 			if (rsz < SEED_SZ) {
 				fprintf(stderr, "warning! can't seed random number generator");
+				pthread_mutex_unlock(&rand_buf_lock);
 				return(0);
 			}
 			close(rfd);
@@ -61,6 +62,7 @@ cf_get_rand32()
 			int rsz = read(rfd, rand_buf, SEED_SZ);
 			if (rsz < SEED_SZ) {
 				fprintf(stderr, "warning! can't seed random number generator");
+				pthread_mutex_unlock(&rand_buf_lock);
 				return(0);
 			}
 			close(rfd);
