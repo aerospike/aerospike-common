@@ -26,7 +26,7 @@
 #define RCHASH_CR_GRAB   0x02   // support 'grab' call (requires more memory)
 #define RCHASH_CR_MT_BIGLOCK 0x04 // support multithreaded access with a single big lock
 #define RCHASH_CR_MT_MANYLOCK 0x08 // support multithreaded access with a pool of object loccks
-
+#define RCHASH_CR_NOSIZE 0x10 // don't calculate the size on every call, which makes 'getsize' expensive if you ever call it
 
 /*
  * A generic call for hash functions the user can create

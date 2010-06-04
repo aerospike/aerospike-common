@@ -113,36 +113,47 @@ rchash_get_size(rchash *h)
 {
     if (h->key_len == 0)    return(rchash_get_size_v(h));
     
-// In the 'manylock' case, this function is slow.
-// To make it faster, you'd replace the elements count with
-// an atomic, which will make all the other cases slower
+    uint32_t sz = 0;
     
-    if (h->flags & RCHASH_CR_MT_MANYLOCK) {
-        uint32_t validate_size = 0;
-    
-        for (uint i=0; i<h->table_len ; i++) {
-    
-            pthread_mutex_t *l = &(h->lock_table[i]);
-            pthread_mutex_lock( l );
-    
-            rchash_elem_f *list_he = get_bucket(h, i);	
-    
-            while (list_he) {
-                // null object means unused head pointer
-                if (list_he->object == 0)
-                    break;
-                validate_size++;
-                list_he = list_he->next;
-            };
-            
-            pthread_mutex_unlock(l);
-            
-        }
-    
-        return( validate_size );
+    if (h->flags & RCHASH_CR_MT_BIGLOCK) {
+    	pthread_mutex_lock(&h->biglock);
+    	sz = h->elements;
+    	pthread_mutex_unlock(&h->biglock);
+    }
+    else if (h->flags & RCHASH_CR_MT_MANYLOCK) {
+    	sz = cf_atomic32_get(h->elements);
+    }
+    else {
+    	sz = h->elements;
     }
 
-	return( h->elements );
+// interesting working code to spin through a table, taking locks, to find the exact size
+// written for manylock case only
+#if 0    
+	uint32_t validate_size = 0;
+
+	for (uint i=0; i<h->table_len ; i++) {
+
+		pthread_mutex_t *l = &(h->lock_table[i]);
+		pthread_mutex_lock( l );
+
+		rchash_elem_f *list_he = get_bucket(h, i);	
+
+		while (list_he) {
+			// null object means unused head pointer
+			if (list_he->object == 0)
+				break;
+			validate_size++;
+			list_he = list_he->next;
+		};
+		
+		pthread_mutex_unlock(l);
+		
+	}
+#endif
+
+    return(sz);
+    
 }
 
 int
@@ -203,7 +214,11 @@ Copy:
 
 	e->object = object;
 
-	h->elements++;
+	if (h->flags & RCHASH_CR_MT_MANYLOCK)
+		cf_atomic32_incr(&h->elements);
+	else
+		h->elements++;
+	
 	if (l)		pthread_mutex_unlock(l);
 	return(RCHASH_OK);	
 
@@ -273,7 +288,11 @@ Copy:
 
 	e->object = object;
 
-	h->elements++;
+	if (h->flags & RCHASH_CR_MT_MANYLOCK)
+		cf_atomic32_incr(&h->elements);
+	else
+		h->elements++;
+
 	if (l)		pthread_mutex_unlock(l);
 	return(RCHASH_OK);	
 
@@ -400,7 +419,12 @@ rchash_delete(rchash *h, void *key, uint32_t key_len)
 					free(_t);
 				}
 			}
-			h->elements--;
+			
+			if (h->flags & RCHASH_CR_MT_MANYLOCK)
+				cf_atomic32_decr(&h->elements);
+			else
+				h->elements--;
+			
 			rv = RCHASH_OK;
 			goto Out;
 
@@ -519,7 +543,11 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			if (rv == RCHASH_REDUCE_DELETE) {
                 
 				rchash_free(h, list_he->object);
-                h->elements--;
+				
+				if (h->flags & RCHASH_CR_MT_MANYLOCK)
+					cf_atomic32_decr(&h->elements);
+				else
+					h->elements--;
                 
 				// patchup pointers & free element if not head
 				if (prev_he) {
@@ -581,6 +609,7 @@ rchash_destroy_elements(rchash *h)
             e = t;
 		}
 	}
+	h->elements = 0;
 }
 
 void
@@ -618,37 +647,20 @@ get_bucket_v(rchash *h, uint i)
 uint32_t
 rchash_get_size_v(rchash *h)
 {
-
-// In the 'manylock' case, this function is slow.
-// To make it faster, you'd replace the elements count with
-// an atomic, which will make all the other cases slower
+    uint32_t sz = 0;
     
-    if (h->flags & RCHASH_CR_MT_MANYLOCK) {
-        uint32_t validate_size = 0;
-    
-        for (uint i=0; i<h->table_len ; i++) {
-    
-            pthread_mutex_t *l = &(h->lock_table[i]);
-            pthread_mutex_lock( l );
-    
-            rchash_elem_v *list_he = get_bucket_v(h, i);	
-    
-            while (list_he) {
-                // 0 length means an unused head pointer - break
-                if (list_he->object == 0)
-                    break;
-                validate_size++;
-                list_he = list_he->next;
-            };
-            
-            pthread_mutex_unlock(l);
-            
-        }
-    
-        return( validate_size );
+    if (h->flags & RCHASH_CR_MT_BIGLOCK) {
+    	pthread_mutex_lock(&h->biglock);
+    	sz = h->elements;
+    	pthread_mutex_unlock(&h->biglock);
     }
-
-	return( h->elements );
+    else if (h->flags & RCHASH_CR_MT_MANYLOCK) {
+    	sz = cf_atomic32_get(h->elements);
+    }
+    else {
+    	sz = h->elements;
+    }
+    return(sz);
 }
 
 
