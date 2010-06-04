@@ -95,6 +95,8 @@ typedef struct rchash_s {
 	uint table_len; // number of elements currently in the table
 	void *table;
 	pthread_mutex_t		biglock;
+	int					lock_table_len;
+	int					buckets_per_lock; // precompute: buckets / locks
 	pthread_mutex_t		*lock_table;
 } rchash;
 
@@ -115,6 +117,10 @@ typedef struct rchash_s {
 
 int
 rchash_create(rchash **h, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint32_t key_len, uint32_t sz, uint flags);
+
+int
+rchash_set_nlocks(rchash *h, int n_locks);
+
 
 /* Place a value into the hash
  * Value will be copied into the hash
