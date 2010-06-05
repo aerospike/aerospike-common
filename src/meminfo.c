@@ -27,6 +27,7 @@ cf_meminfo(uint64_t *physmem, uint64_t *freemem, int *freepct, bool *swapping)
 {
 	// do this without a malloc, because we might be in trouble, malloc-wise
 	char buf[4096];
+	memset(buf, 0, sizeof(buf)); // makes valgrind happy?
 	
 	// open /proc/meminfo
 	int fd = open("/proc/meminfo", O_RDONLY , 0 /*mask not used if not creating*/ );
@@ -60,7 +61,7 @@ cf_meminfo(uint64_t *physmem, uint64_t *freemem, int *freepct, bool *swapping)
 	
 	// parse each line - always three tokens, the name, the integer, and 'kb'
 	char *cur = buf;
-	char *saveptr, *tok1, *tok2, *tok3;
+	char *saveptr = 0, *tok1, *tok2, *tok3;
 	do {
 		tok1 = tok2 = tok3 = 0;
 		tok1 = strtok_r(cur,": \r\n" , &saveptr); 
