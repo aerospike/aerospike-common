@@ -19,14 +19,29 @@
 
 #include <signal.h>
 
+// TALK ABOUT HACKS
+// an interesting detail: since this digest is used to choose among
+// servers, you must use different bits to choose which OLOCK
+// this is mediated in the application :-(
+//
+// need a fancier architecture to share the hash bits, hacking it for now
+// (please laugh when you read this code in 2020 and it still works the same way)
+// -brian
+
+//
+// ASSUMES d is DIGEST and ol is OLOCK *
+//
+
+#define OLOCK_HASH(__ol, __d) ( ( (__d->digest[10] << 8) | (__d->digest[11]) ) & __ol->mask )
+
 
 void
 olock_lock(olock *ol, cf_digest *d)
 {
-	uint32_t n = *(uint32_t *)d;
+	uint32_t n = OLOCK_HASH(ol, d);
 
 //	if (0 != cf_mutex_timedlock( &ol->locks[ n & ol->mask ], 2000 ) ) {
-	pthread_mutex_lock( &ol->locks[ n & ol->mask ] );
+	pthread_mutex_lock( &ol->locks[ n ] );
 	
 //		fprintf(stderr, "olock lock failed %d\n",errno);
 //		raise(SIGINT);
@@ -37,8 +52,9 @@ olock_lock(olock *ol, cf_digest *d)
 void
 olock_vlock(olock *ol, cf_digest *d, pthread_mutex_t **vlock)
 {
-	uint32_t n = *(uint32_t *)d;
-	*vlock = &ol->locks[ n & ol->mask ];
+	uint32_t n = OLOCK_HASH(ol, d);
+	
+	*vlock = &ol->locks[ n ];
 
 //	int rv = cf_mutex_timedlock( *vlock, 2000 );
 //	if (rv != 0 ) {
@@ -56,9 +72,10 @@ olock_vlock(olock *ol, cf_digest *d, pthread_mutex_t **vlock)
 void
 olock_unlock(olock *ol, cf_digest *d)
 {
-	uint32_t n = *(uint32_t *)d;
+	uint32_t n = OLOCK_HASH(ol, d);
+
 //	fprintf(stderr, "-%p", &ol->locks[ n & ol->mask ] );
-	if (0 != pthread_mutex_unlock( &ol->locks[ n & ol->mask ] )) {
+	if (0 != pthread_mutex_unlock( &ol->locks[ n ] )) {
 		fprintf(stderr, "olock unlock failed %d\n",errno);
 	}
 	return;
