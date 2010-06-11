@@ -29,6 +29,12 @@ cf_meminfo(uint64_t *physmem, uint64_t *freemem, int *freepct, bool *swapping)
 	char buf[4096];
 	memset(buf, 0, sizeof(buf)); // makes valgrind happy?
 	
+	// be a little oversafe
+	if (physmem) *physmem = 0;
+	if (freemem) *freemem = 0;
+	if (freepct) *freepct = 0;
+	if (swapping) *swapping = 0;
+	
 	// open /proc/meminfo
 	int fd = open("/proc/meminfo", O_RDONLY , 0 /*mask not used if not creating*/ );
 	if (fd < 0) {
@@ -46,6 +52,7 @@ cf_meminfo(uint64_t *physmem, uint64_t *freemem, int *freepct, bool *swapping)
 			pos += rv;
 		else if (rv < 0) {
 			fprintf(stderr, "meminfo failed: read returned %d errno %d pos %d\n",rv,errno,pos);
+			close(fd);
 			return(-1);
 		}
 		
