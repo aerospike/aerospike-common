@@ -776,6 +776,137 @@ cf_rcrb_reduce_sync(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 }
 
 
+//
+// validate various things about a tree. Does it have the right length?
+// is it properly colored?
+//
+
+int
+key_compar (const void *k1, const void *k2)
+{
+	return ( memcmp(k1, k2, sizeof(cf_digest)) );
+}
+
+
+
+typedef struct {
+	int max_depth;
+	int digest_alloc_sz;
+	int extra_digests;
+	int n_digests;
+	cf_digest d[];
+} cf_rcrb_validate_data;
+
+int
+cf_rcrb_validate_traverse( cf_rcrb_node *r, cf_rcrb_node *sentinel, int depth, int color, cf_rcrb_validate_data *vd)
+{
+	if (depth > vd->max_depth) vd->max_depth = depth;	
+	
+	if (r->color == color) {
+//		cf_info(CF_RB, "ILLEGAL COLOR: node %p color %d depth %d, same as parent",r,r->color,depth);
+//		return(-1);
+	}
+	
+	if (vd->n_digests >= vd->digest_alloc_sz) {
+		cf_info(CF_RB, "VALIDATE: more nodes in tree than suspected, can't record node %p",r);
+		vd->extra_digests++;
+	}
+	else {
+		vd->d[vd->n_digests] = r->key;
+		vd->n_digests++;
+	}
+	
+	int rv = 0;
+	
+	if (r->left != sentinel)		
+		rv = cf_rcrb_validate_traverse(r->left, sentinel, depth + 1, r->color, vd);
+	
+	if (rv == 0 && (r->right != sentinel))
+		rv = cf_rcrb_validate_traverse(r->right, sentinel, depth + 1, r->color, vd);
+	
+	return(rv);
+}
+
+
+
+int 
+cf_rcrb_validate_lockfree( cf_rcrb_tree *tree )
+{
+
+	cf_detail(CF_RB, "starting validate: %d elements",tree->elements);
+	
+	int rv = 0;
+	
+	if ( !tree->root) return(0);
+	if ( tree->root->left == 0 ) {
+		if (tree->elements != 0) {
+			cf_info(CF_RB, "supposedly has elements, doesn't ---");
+			return(-1);
+		}
+	}
+	if (tree->root->left == tree->sentinel) {
+		if (tree->elements != 0) {
+			cf_info(CF_RB, "supposedly has elements, doesn't ---");
+			return(-1);
+		}
+	}
+	
+	cf_rcrb_validate_data *vd = malloc(sizeof(cf_rcrb_validate_data) + (tree->elements * sizeof(cf_digest)));
+	
+	vd->max_depth = 0;
+	vd->digest_alloc_sz = tree->elements;
+	vd->n_digests = 0;
+	vd->extra_digests = 0;
+
+	rv = cf_rcrb_validate_traverse(tree->root->left, tree->sentinel, 1, -1, vd);
+
+	// make sure all the digests are unique and the number of elements matches what is suspected
+	if (tree->elements != vd->n_digests) 
+		cf_info(CF_RB, "size mismatch: %d elements counted, elements size %d",vd->n_digests,tree->elements);
+		
+	if (vd->n_digests > 1) {
+		qsort(vd->d, vd->n_digests, sizeof(cf_digest), key_compar);
+	
+		// validate no key is seen twice
+		for (int i=1; i < vd->n_digests;i++) {
+			if (0 == memcmp(&vd->d[i-1], &vd->d[i], sizeof(cf_digest))) {
+				cf_info(CF_RB, "validate: two of same key in tree, PROBLEM");
+				rv = -1;
+			}
+		}
+	}	
+	
+	if (vd->extra_digests)	rv = -1;
+
+	if (rv == 0)
+		cf_detail(CF_RB,"validate complete: SUCCESS (depth %d)",vd->max_depth);
+	else
+		cf_info(CF_RB, "validate complete: FAIL %d extrad %d tree %p",rv,vd->extra_digests,tree);
+
+	free(vd);	
+	
+	return(rv);
+
+}	
+
+#include <signal.h>
+
+// 0 is success, -1 is failure
+int
+cf_rcrb_validate( cf_rcrb_tree *tree)
+{
+
+	
+	pthread_mutex_lock(&tree->lock);
+	
+	int rv = cf_rcrb_validate_lockfree(tree);
+	
+	pthread_mutex_unlock(&tree->lock);
+
+	return(rv);
+}	
+
+
 /* cf_rcrb_release
  * Destroy a red-black tree; return 0 if the tree was destroyed or 1
  * otherwise */
