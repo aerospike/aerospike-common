@@ -775,6 +775,37 @@ cf_rcrb_reduce_sync(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 	
 }
 
+/* cf_rcrb_release
+ * Destroy a red-black tree; return 0 if the tree was destroyed or 1
+ * otherwise */
+int
+cf_rcrb_release(cf_rcrb_tree *tree, void *destructor_udata)
+{
+	if (0 != cf_rc_release(tree))
+		return(1);
+	cf_debug(AS_RECORD, "cf_rcrb_release FREEING TREE :  %p", tree);
+	decr_global_tree_count();
+
+	/* Purge the tree and all it's ilk */
+	pthread_mutex_lock(&tree->lock);
+    cf_rcrb_purge(tree, tree->root->left);
+
+    /* Release the tree's memory */
+    free(tree->root);
+    free(tree->sentinel);
+	pthread_mutex_unlock(&tree->lock);
+	memset(tree, 0, sizeof(cf_rcrb_tree)); // a little debug
+    cf_rc_free(tree);
+
+    return(0);
+}
+
+/*
+** UNIT TESTS
+** This unit really needs tests
+*/
+
+
 
 //
 // validate various things about a tree. Does it have the right length?
@@ -787,15 +818,25 @@ key_compar (const void *k1, const void *k2)
 	return ( memcmp(k1, k2, sizeof(cf_digest)) );
 }
 
+typedef struct {
+	cf_digest key;
+	bool	  active;
+} test_data;
+
+typedef struct {
+	int alloc_sz;
+	int sz;
+	test_data d[];
+} test_data_array;
 
 
 typedef struct {
 	int max_depth;
-	int digest_alloc_sz;
 	int extra_digests;
-	int n_digests;
-	cf_digest d[];
+	test_data_array *data_a;
 } cf_rcrb_validate_data;
+
+
 
 int
 cf_rcrb_validate_traverse( cf_rcrb_node *r, cf_rcrb_node *sentinel, int depth, int color, cf_rcrb_validate_data *vd)
@@ -803,17 +844,18 @@ cf_rcrb_validate_traverse( cf_rcrb_node *r, cf_rcrb_node *sentinel, int depth, i
 	if (depth > vd->max_depth) vd->max_depth = depth;	
 	
 	if (r->color == color) {
-//		cf_info(CF_RB, "ILLEGAL COLOR: node %p color %d depth %d, same as parent",r,r->color,depth);
-//		return(-1);
+		// cf_info(CF_RB, "ILLEGAL COLOR: node %p color %d depth %d, same as parent",r,r->color,depth);
+		//return(-1);
 	}
-	
-	if (vd->n_digests >= vd->digest_alloc_sz) {
+
+	test_data_array *da = vd->data_a;	
+	if (da->sz >= da->alloc_sz) {
 		cf_info(CF_RB, "VALIDATE: more nodes in tree than suspected, can't record node %p",r);
 		vd->extra_digests++;
 	}
 	else {
-		vd->d[vd->n_digests] = r->key;
-		vd->n_digests++;
+		da->d[da->sz].key = r->key;
+		da->sz++;
 	}
 	
 	int rv = 0;
@@ -850,41 +892,44 @@ cf_rcrb_validate_lockfree( cf_rcrb_tree *tree )
 			return(-1);
 		}
 	}
-	
-	cf_rcrb_validate_data *vd = malloc(sizeof(cf_rcrb_validate_data) + (tree->elements * sizeof(cf_digest)));
-	
-	vd->max_depth = 0;
-	vd->digest_alloc_sz = tree->elements;
-	vd->n_digests = 0;
-	vd->extra_digests = 0;
 
-	rv = cf_rcrb_validate_traverse(tree->root->left, tree->sentinel, 1, -1, vd);
+	cf_rcrb_validate_data vd;
+	
+	vd.max_depth = 0;
+	vd.extra_digests = 0;
+	
+	test_data_array *da = malloc(sizeof(test_data_array) + (tree->elements * sizeof(test_data)));
+	memset(da, 0,sizeof(test_data_array) + (tree->elements * sizeof(test_data)) );
+	da->alloc_sz = tree->elements;
+	vd.data_a = da;
+
+	rv = cf_rcrb_validate_traverse(tree->root->left, tree->sentinel, 1, -1, &vd);
 
 	// make sure all the digests are unique and the number of elements matches what is suspected
-	if (tree->elements != vd->n_digests) 
-		cf_info(CF_RB, "size mismatch: %d elements counted, elements size %d",vd->n_digests,tree->elements);
+	if (tree->elements != da->sz) 
+		cf_info(CF_RB, "size mismatch: too few in tree: %d elements counted, elements size %d",da->sz,tree->elements);
+	if (vd.extra_digests) 
+		cf_info(CF_RB, "size mismatch: too many in tree: %d extra more than %d elements",vd.extra_digests,tree->elements);
 		
-	if (vd->n_digests > 1) {
-		qsort(vd->d, vd->n_digests, sizeof(cf_digest), key_compar);
+	if (da->sz > 1) {
+		qsort(da->d, da->sz, sizeof(cf_digest), key_compar);
 	
 		// validate no key is seen twice
-		for (int i=1; i < vd->n_digests;i++) {
-			if (0 == memcmp(&vd->d[i-1], &vd->d[i], sizeof(cf_digest))) {
+		for (int i=1; i < da->sz;i++) {
+			if (0 == memcmp(&da->d[i-1], &da->d[i], sizeof(cf_digest))) {
 				cf_info(CF_RB, "validate: two of same key in tree, PROBLEM");
 				rv = -1;
 			}
 		}
 	}	
 	
-	if (vd->extra_digests)	rv = -1;
+	if (vd.extra_digests)	rv = -1;
 
 	if (rv == 0)
-		cf_detail(CF_RB,"validate complete: SUCCESS (depth %d)",vd->max_depth);
+		cf_info(CF_RB,"validate complete: SUCCESS (depth %d)",vd.max_depth);
 	else
-		cf_info(CF_RB, "validate complete: FAIL %d extrad %d tree %p",rv,vd->extra_digests,tree);
+		cf_info(CF_RB, "validate complete: FAIL %d extrad %d depth %d tree %p",rv,vd.extra_digests,vd.max_depth,tree);
 
-	free(vd);	
-	
 	return(rv);
 
 }	
@@ -895,7 +940,6 @@ cf_rcrb_validate_lockfree( cf_rcrb_tree *tree )
 int
 cf_rcrb_validate( cf_rcrb_tree *tree)
 {
-
 	
 	pthread_mutex_lock(&tree->lock);
 	
@@ -906,28 +950,254 @@ cf_rcrb_validate( cf_rcrb_tree *tree)
 	return(rv);
 }	
 
+//
+// Allocate a new array of random things
+//
 
-/* cf_rcrb_release
- * Destroy a red-black tree; return 0 if the tree was destroyed or 1
- * otherwise */
-int
-cf_rcrb_release(cf_rcrb_tree *tree, void *destructor_udata)
+
+test_data_array *
+cf_rcrb_test_make_array(int n)
 {
-	if (0 != cf_rc_release(tree))
-		return(1);
-	cf_debug(AS_RECORD, "cf_rcrb_release FREEING TREE :  %p", tree);
-	decr_global_tree_count();
-
-	/* Purge the tree and all it's ilk */
-	pthread_mutex_lock(&tree->lock);
-    cf_rcrb_purge(tree, tree->root->left);
-
-    /* Release the tree's memory */
-    free(tree->root);
-    free(tree->sentinel);
-	pthread_mutex_unlock(&tree->lock);
-	memset(tree, 0, sizeof(cf_rcrb_tree)); // a little debug
-    cf_rc_free(tree);
-
-    return(0);
+	test_data_array *a = malloc(sizeof(test_data_array) + (n * sizeof(test_data)));
+	if (!a)	return(0);
+	
+	for (int i=0;i<n;i++) {
+		uint8_t r_buf[40];
+		cf_get_rand_buf(r_buf, sizeof(r_buf));
+		cf_digest_compute(r_buf, sizeof(r_buf),&(a->d[i].key) );
+		a->d[i].active = false;
+	}
+	a->alloc_sz = n;
+	a->sz = n;
+	return(a);
 }
+
+//
+// the application code never uses insert, always get-insert. So just test
+// that code path.
+//
+
+int
+cf_rcrb_test_insert(cf_rcrb_tree *tree, test_data_array *da, int percent)
+{
+	int n_inserted = 0;
+	// int tree_sz = cf_rcrb_size(tree);
+	
+	for (int i=0;i<da->sz;i++) {
+		
+		if (da->d[i].active == false) {
+		
+			if ( cf_get_rand32() % 100 < percent) {
+			
+				pthread_mutex_t *lock;
+				cf_rcrb_node *node = cf_rcrb_get_insert_vlock( tree, &da->d[i].key, &lock);
+				if (!node) return(-1);
+				if (node->value == 0) {
+					if (da->d[i].active == true) {
+						cf_warning(CF_RB, "inserting data: ERROR, active but data not found");
+						pthread_mutex_unlock(lock);
+						return(-1);
+					}
+					uint8_t *u = cf_rc_alloc( sizeof(cf_digest) );
+					memcpy(u, &da->d[i].key, sizeof(cf_digest) );
+					node->value = u;
+					da->d[i].active = true;
+					n_inserted++;
+				}
+				else { 
+					cf_warning(CF_RB, "inserting data: ERROR, not active but data found");
+					pthread_mutex_unlock(lock);
+					return(-1);
+				}
+				pthread_mutex_unlock(lock);
+			}
+			
+		}
+	}
+	
+	cf_info(CF_RB, "inserted %d elements into tree, now %d",n_inserted,cf_rcrb_size(tree));
+	
+	return(0);
+}	
+
+//
+// consider changing to validate subportions?
+//
+
+int
+cf_rcrb_test_validate_data(cf_rcrb_tree *tree, test_data_array *da)
+{
+	int rv = 0;
+	for (int i=0; i<da->sz; i++) {
+		cf_digest *d = cf_rcrb_search(tree, &da->d[i].key);
+		if (d == 0) {
+			if (da->d[i].active == true) {
+				cf_info(CF_RB, "ERROR: KEY NOT FOUND in validate data");
+				return(-1);
+			}
+		}
+		else {
+			if (da->d[i].active == false) {
+				cf_info(CF_RB, "ERROR: KEY found when was supposed to be deleted!");
+				return(-1);
+			}
+			
+			// validate data
+			if (0 != memcmp(d, &da->d[i].key, sizeof(cf_digest) ) ) {
+				rv = -1;
+				cf_info(CF_RB, "KEY HAS WRONG DATA IN VALIDATE DATA");
+			}
+			// release acquired reference count
+			if (0 == cf_rc_release(d)) {
+				cf_rc_free(d);
+			}
+			if (rv != 0)	return(rv);
+		}
+	}
+	return(0);
+}
+
+int cf_rcrb_test_delete(cf_rcrb_tree *tree, test_data_array *da, int percent)
+{
+	int n_deleted = 0;
+	int tree_sz = cf_rcrb_size(tree);
+	
+	for (int i=0 ; i<da->sz ; i++) {
+		if (da->d[i].active == true) {
+			if ( cf_get_rand32() % 100 < percent) {
+				
+				int rv = cf_rcrb_delete(tree, &da->d[i].key);
+				if (rv != 0) {
+					cf_warning(CF_RB, "fail: could not delete valid value! (%d)",rv);
+					return(-1);
+				}
+				
+				da->d[i].active = false;
+				n_deleted ++;
+			}
+		}
+	}
+	
+	if (cf_rcrb_size(tree) + n_deleted != tree_sz) {
+		cf_warning(CF_RB, "fail: size after delete is incorrect");
+		return(-1);
+	}
+	
+	cf_info(CF_RB, "delete: deleted %d of %d elements",n_deleted,tree_sz);
+	
+	return(0);	
+}
+
+//
+// Run a suite of unit tests
+//
+
+void cf_rcrb_test_destructor(void *value, void *udata)
+{
+	cf_rc_free(value);
+}
+
+
+#define RCRB_TEST_SIZE 200000
+#define RCRB_TEST_ITERATIONS 50
+#define RCRB_TEST_ITERATE_DELETE_PCT 10
+#define RCRB_TEST_ITERATE_INSERT_PCT 30
+
+int
+cf_rcrb_test()
+{
+	cf_info(CF_RB, "starting the RCRB test with %d elements\n",RCRB_TEST_SIZE);
+	
+	// create a new tree
+	cf_rcrb_tree *tree = cf_rcrb_create(cf_rcrb_test_destructor , 0);
+	
+	// create some test data
+	test_data_array *da = cf_rcrb_test_make_array( RCRB_TEST_SIZE );
+	if (!da) {
+		cf_warning(CF_RB, "fail: can't make array");
+		cf_rcrb_release(tree, 0);
+		return(-1);
+	}
+	
+	// insert all the data
+	if (0 != cf_rcrb_test_insert(tree, da, 100)) {
+		cf_warning(CF_RB, "fail: can't insert data");
+		cf_rcrb_release(tree, 0);
+		return(-1);
+	}
+
+	// make sure it's there
+	if (0 != cf_rcrb_test_validate_data(tree, da)) {
+		cf_warning(CF_RB, "fail: can't read data");
+		cf_rcrb_release(tree, 0);
+		return(-1);
+	}
+
+	// validate the tree	
+	if (0 != cf_rcrb_validate(tree)) {
+		cf_warning(CF_RB, "fail: tree does not validate");
+		cf_rcrb_release(tree, 0);
+		return -1;
+	}
+	
+	for (int i=0 ; i < RCRB_TEST_ITERATIONS; i++) {
+	
+		cf_info(CF_RB, "iteraction %d: start: elements in tree %d",i,cf_rcrb_size(tree));
+		
+		// delete 10 percent of the elements
+		if (0 != cf_rcrb_test_delete(tree, da, RCRB_TEST_ITERATE_DELETE_PCT)) {
+			cf_warning(CF_RB, "fail: could not delete some lements");
+			cf_rcrb_release(tree, 0);
+			return -1;
+		}
+	
+		// make sure what's there is or isn't there
+		if (0 != cf_rcrb_test_validate_data(tree, da)) {
+			cf_warning(CF_RB, "fail: can't read data");
+			cf_rcrb_release(tree, 0);
+			return(-1);
+		}
+	
+		// validate the tree	
+		if (0 != cf_rcrb_validate(tree)) {
+			cf_warning(CF_RB, "fail: tree does not validate");
+			cf_rcrb_release(tree, 0);
+			return -1;
+		}
+
+		cf_info(CF_RB, "iteraction %d: after delete: elements in tree %d",i,cf_rcrb_size(tree));
+		
+		// insert 98 percent of what's not there
+		if (0 != cf_rcrb_test_insert(tree, da, RCRB_TEST_ITERATE_INSERT_PCT)) {
+			cf_warning(CF_RB, "fail: can't insert data");
+			cf_rcrb_release(tree, 0);
+			return(-1);
+		}
+	
+		// make sure it's there
+		if (0 != cf_rcrb_test_validate_data(tree, da)) {
+			cf_warning(CF_RB, "fail: can't read data");
+			cf_rcrb_release(tree, 0);
+			return(-1);
+		}
+	
+		// validate the tree	
+		if (0 != cf_rcrb_validate(tree)) {
+			cf_warning(CF_RB, "fail: tree does not validate");
+			cf_rcrb_release(tree, 0);
+			return -1;
+		}
+	
+	}
+	
+	// delete the tree
+	cf_rcrb_release(tree, 0);
+	
+	// free the array
+	free(da);
+
+	cf_info(CF_RB, "successfully completed the RCRB test with %d elements\n",RCRB_TEST_SIZE);
+	
+	return(0);
+}
+

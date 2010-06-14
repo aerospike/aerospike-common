@@ -93,6 +93,7 @@ typedef void (*cf_rcrb_reduce_fn) (cf_digest *key, void *value, void *udata);
 
 extern int cf_rcrb_validate_lockfree( cf_rcrb_tree *tree );
 extern int cf_rcrb_validate( cf_rcrb_tree *tree );
+extern int cf_rcrb_test(); // run a unit test
 
 // reduce gives a reference count of the value: you must release it
 // and it contains, internally, code to not block the tree lock - so you can spend as much time
