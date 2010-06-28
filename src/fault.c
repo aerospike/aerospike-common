@@ -211,7 +211,7 @@ cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
 	int i = 0;
 	cf_assert((0 != argc || NULL != argv), CF_MISC, CF_GLOBAL, CF_CRITICAL, "invalid argument");
 
-    cf_fault_restart_argv = CF_MALLOC((argc + 2) * sizeof(char *));
+    cf_fault_restart_argv = cf_malloc((argc + 2) * sizeof(char *));
 	cf_assert(cf_fault_restart_argv, CF_MISC, CF_GLOBAL, CF_CRITICAL, "alloc: %s", cf_strerror(errno));
 
     for (int j = 0; j < argc; j++) {
@@ -224,13 +224,13 @@ cf_fault_init(const int argc, char **argv, const int excludec, char **exclude)
         }
 
         if (copy) {
-            cf_fault_restart_argv[i] = CF_MALLOC((strlen(argv[j]) + 1) * sizeof(char));
+            cf_fault_restart_argv[i] = cf_malloc((strlen(argv[j]) + 1) * sizeof(char));
             cf_assert(cf_fault_restart_argv[i], CF_MISC, CF_GLOBAL, CF_CRITICAL, "alloc: %s", cf_strerror(errno));
             memcpy(cf_fault_restart_argv[i], argv[j], strlen(argv[j]) + 1);
             i++;
         }
     }
-	cf_fault_restart_argv[i] = strdup("--process-fault");
+	cf_fault_restart_argv[i] = cf_strdup("--process-fault");
 	cf_fault_restart_argv[i + 1] = NULL;
     cf_fault_restart_argc = i + 1;
 
@@ -254,7 +254,7 @@ cf_fault_sink_add(char *path)
 		return(NULL);
 
 	s = &cf_fault_sinks[cf_fault_sinks_inuse++];
-    s->path = strdup(path);
+    s->path = cf_strdup(path);
 	if (0 == strncmp(path, "stderr", 6))
 		s->fd = 2;
 	else {

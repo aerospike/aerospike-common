@@ -32,7 +32,7 @@ cf_queue_create(size_t elementsz, bool threadsafe)
 {
 	cf_queue *q = NULL;
 
-	q = CF_MALLOC( sizeof(cf_queue));
+	q = cf_malloc( sizeof(cf_queue));
 	/* FIXME error msg */
 	if (!q)
 		return(NULL);
@@ -41,9 +41,9 @@ cf_queue_create(size_t elementsz, bool threadsafe)
 	q->elementsz = elementsz;
 	q->threadsafe = threadsafe;
 
-	q->queue = CF_MALLOC(CF_QUEUE_ALLOCSZ * elementsz);
+	q->queue = cf_malloc(CF_QUEUE_ALLOCSZ * elementsz);
 	if (! q->queue) {
-		free(q);
+		cf_free(q);
 		return(NULL);
 	}
 
@@ -52,15 +52,15 @@ cf_queue_create(size_t elementsz, bool threadsafe)
 
 	if (0 != pthread_mutex_init(&q->LOCK, NULL)) {
 		/* FIXME error msg */
-		free(q->queue);
-		free(q);
+		cf_free(q->queue);
+		cf_free(q);
 		return(NULL);
 	}
 
 	if (0 != pthread_cond_init(&q->CV, NULL)) {
 		pthread_mutex_destroy(&q->LOCK);
-		free(q->queue);
-		free(q);
+		cf_free(q->queue);
+		cf_free(q);
 		return(NULL);
 	}
 
@@ -79,9 +79,9 @@ cf_queue_destroy(cf_queue *q)
 		pthread_mutex_destroy(&q->LOCK);
 	}
 	memset(q->queue, 0, sizeof(q->allocsz * q->elementsz));
-	free(q->queue);
+	cf_free(q->queue);
 	memset(q, 0, sizeof(cf_queue) );
-	free(q);
+	cf_free(q);
 }
 
 int
@@ -114,7 +114,7 @@ cf_queue_resize(cf_queue *q, uint new_sz)
 	// the rare case where the queue is not fragmented, and realloc makes sense
 	// and none of the offsets need to move
 	if (0 == q->read_offset % q->allocsz) {
-		q->queue = realloc(q->queue, new_sz * q->elementsz);
+		q->queue = cf_realloc(q->queue, new_sz * q->elementsz);
 		if (!q->queue) {
 			cf_info(CF_QUEUE," queue memory failure");
 			return(-1);
@@ -124,7 +124,7 @@ cf_queue_resize(cf_queue *q, uint new_sz)
 	}
 	else {
 		
-		byte *newq = CF_MALLOC(new_sz * q->elementsz);
+		byte *newq = cf_malloc(new_sz * q->elementsz);
 		if (!newq) {
 			cf_info(CF_QUEUE," queue resize memory failure");
 			return(-1);
@@ -134,7 +134,7 @@ cf_queue_resize(cf_queue *q, uint new_sz)
 		memcpy(&newq[0], CF_Q_ELEM_PTR(q, q->read_offset), endsz);
 		memcpy(&newq[endsz], &q->queue[0], (q->allocsz * q->elementsz) - endsz); 
 		
-		free(q->queue);
+		cf_free(q->queue);
 		q->queue = newq;
 
 		q->write_offset = q->allocsz;
@@ -411,7 +411,7 @@ Done:
 cf_queue_priority *
 cf_queue_priority_create(size_t elementsz, bool threadsafe)
 {
-	cf_queue_priority *q = CF_MALLOC(sizeof(cf_queue_priority));
+	cf_queue_priority *q = cf_malloc(sizeof(cf_queue_priority));
 	if (!q)	return(0);
 	
 	q->threadsafe = threadsafe;
@@ -442,7 +442,7 @@ Fail3:
 Fail2:	
 	cf_queue_destroy(q->low_q);
 Fail1:	
-	free(q);
+	cf_free(q);
 	return(0);
 }
 
@@ -456,7 +456,7 @@ cf_queue_priority_destroy(cf_queue_priority *q)
 		pthread_mutex_destroy(&q->LOCK);
 		pthread_cond_destroy(&q->CV);
 	}
-	free(q);
+	cf_free(q);
 }
 
 int 

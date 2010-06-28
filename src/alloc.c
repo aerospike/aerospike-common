@@ -20,9 +20,48 @@
 
 #include "cf.h"
 
+#include <dlfcn.h>
+
 // #define USE_CIRCUS 1
 
 // #define EXTRA_CHECKS 1
+
+void *   (*g_malloc_fn) (size_t s) = 0;
+void     (*g_free_fn) (void *p) = 0;
+void *   (*g_calloc_fn) (size_t nmemb, size_t sz) = 0;
+void *   (*g_realloc_fn) (void *p, size_t sz) = 0;
+char *   (*g_strdup_fn) (const char *s) = 0;
+char *   (*g_strndup_fn) (const char *s, size_t n) = 0;
+
+
+int
+alloc_function_init(char *so_name)
+{
+	if (so_name) {
+//		void *clib_h = dlopen(so_name, RTLD_LAZY | RTLD_LOCAL );
+		void *clib_h = dlopen(so_name, RTLD_NOW | RTLD_GLOBAL );
+		if (!clib_h) return(-1);
+		
+		g_malloc_fn = dlsym(clib_h, "malloc");
+		g_free_fn = dlsym(clib_h, "free");
+		g_calloc_fn = dlsym(clib_h, "calloc");
+		g_realloc_fn = dlsym(clib_h, "realloc");
+		g_strdup_fn = dlsym(clib_h, "strdup");
+		g_strndup_fn = dlsym(clib_h, "strndup");
+		
+		// dlclose(alloc_fn);
+	}
+	else {
+		g_malloc_fn = malloc;
+		g_free_fn = free;
+		g_calloc_fn = calloc;
+		g_realloc_fn = realloc;
+		g_strdup_fn = strdup;
+		g_strndup_fn = strndup;
+	}
+	
+}
+
 
 
 #ifdef USE_CIRCUS
@@ -158,10 +197,12 @@ cf_alloc_print_history(void *p, char *file, int line)
 }
 
 
-void cf_rc_init() {
+void cf_rc_init(char *clib_path) {
+
+	alloc_function_init(clib_path);
 	
 	// if we're using the circus, initialize it
-	g_free_ring = malloc( sizeof(free_ring) + (CIRCUS_SIZE * sizeof(suspect)) );
+	g_free_ring = g_malloc_fn( sizeof(free_ring) + (CIRCUS_SIZE * sizeof(suspect)) );
 		
 	pthread_mutex_init(&g_free_ring->LOCK, 0);
 	g_free_ring->alloc_sz = CIRCUS_SIZE;
@@ -173,8 +214,10 @@ void cf_rc_init() {
 
 #else // NO CIRCUS
 
-void cf_rc_init() {
-	;	
+
+
+void cf_rc_init(char *clib_path) {
+	alloc_function_init(clib_path);
 }
 
 #endif
@@ -316,9 +359,7 @@ _cf_rc_release(void *addr, bool autofree, char *file, int line)
 */        
 	cf_rc_hdr *hdr = (cf_rc_hdr *) ( ((uint8_t *)addr) - sizeof(cf_rc_hdr));
 	
-	smb_mb();
 	c = cf_atomic32_decr(&hdr->count);
-	smb_mb();
 #ifdef EXTRA_CHECKS
 	if (c & 0xF0000000) {
 		cf_warning(CF_RCALLOC, "rcrelease: releasing to a negative reference count: %p",addr);
@@ -335,7 +376,7 @@ _cf_rc_release(void *addr, bool autofree, char *file, int line)
 			cf_alloc_register_free(addr, file, line);
 #endif		
 
-		free((void *)hdr);
+		g_free_fn((void *)hdr);
 	}
 
 	return(c);
@@ -351,7 +392,7 @@ _cf_rc_alloc(size_t sz, char *file, int line)
 	uint8_t *addr;
 	size_t asz = sizeof(cf_rc_hdr) + sz; // debug for stability - rounds us back to regular alignment on all systems
 
-	addr = malloc(asz);
+	addr = g_malloc_fn(asz);
 	if (NULL == addr)
 		return(NULL);
 
@@ -394,7 +435,7 @@ _cf_rc_free(void *addr, char *file, int line)
 		cf_alloc_register_free(addr, file, line);
 #endif		
 	
-	free((void *)hdr);
+	g_free_fn((void *)hdr);
 
 	return;
 }

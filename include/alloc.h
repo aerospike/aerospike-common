@@ -48,5 +48,91 @@ extern int _cf_rc_release(void *addr, bool autofree, char *file, int line);
 extern void _cf_rc_free(void *addr, char *file, int line);
 #define cf_rc_free(__a) (_cf_rc_free((__a), __FILE__, __LINE__ ))
 
+//
+// A SIMPLE WAY OF ALLOCATING MEMORY
+//
+#if 0
+
+#include <stdlib.h>
+
+static inline void *cf_malloc(size_t s) {
+	return(malloc(s));
+}
+static inline void cf_free(void *p) {
+	free(p);
+}
+static inline void *cf_calloc(size_t nmemb, size_t sz) {
+	return(calloc(nmemb, sz));
+}
+static inline void *cf_realloc(void *ptr, size_t sz) {
+	return(realloc(ptr, sz));
+}
+static inline void *cf_strdup(const char *s) {
+	return(strdup(s));
+}
+static inline void *cf_strndup(const char *s, size_t n) {
+	return(strndup(s, n));
+}
+
+#endif
+
+//
+// A COMPLCIATED WAY
+//
+
+#if 1
+
+extern void *   (*g_malloc_fn) (size_t s);
+extern void     (*g_free_fn) (void *p);
+extern void *   (*g_calloc_fn) (size_t nmemb, size_t sz);
+extern void *   (*g_realloc_fn) (void *p, size_t sz);
+extern char *   (*g_strdup_fn) (const char *s);
+extern char *   (*g_strndup_fn) (const char *s, size_t n);
+
+static inline void *cf_malloc(size_t s) {
+	return(g_malloc_fn(s));
+}
+static inline void cf_free(void *p) {
+	g_free_fn(p);
+}
+static inline void *cf_calloc(size_t nmemb, size_t sz) {
+	return(g_calloc_fn(nmemb, sz));
+}
+static inline void *cf_realloc(void *ptr, size_t sz) {
+	return(g_realloc_fn(ptr, sz));
+}
+static inline char *cf_strdup(const char *s) {
+	return(g_strdup_fn(s));
+}
+static inline char *cf_strndup(const char *s, size_t n) {
+	return(g_strndup_fn(s, n));
+}
+
+#endif
 
 
+// extern void *cf_malloc(size_t sz);
+// extern void cf_free(void *p);
+// extern void cf_calloc(size_t nmemb, size_t sz);
+// extern void *cf_realloc(void *ptr, size_t sz);
+// extern char *strdup(const char *s)
+// extern char *strndup(const char *s, size_t n);
+
+// this is a good test to see we're not using forbidden functions
+// except that one in signal.c
+//
+// IN ORDER TO USE THIS, you'll have to comment out (temporarily)
+// the use of these functions in alloc.
+//
+#if 0
+
+#define malloc(_x) DONTUSEMALLOC(_x)
+#define free(_x)   DONTUSEFREE(_x)
+#define calloc(_x, _y) DONTUSECALLOC(_x, _y)
+#define realloc(_x, _y) DONTUSEREALLOC(_x, _y)
+#undef strdup
+#define strdup DONTUSESTRDUP
+#undef strndup
+#define strndup DONTUSESTRNDUP
+
+#endif

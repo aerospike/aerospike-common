@@ -53,7 +53,7 @@ static cf_ll cf_timer_list;
 void
 cf_timer_destructor_fn(cf_ll_element *e)
 {
-	free(e);
+	cf_free(e);
 }
 
 //
@@ -174,7 +174,7 @@ cf_timer_add_reduce_fn(cf_ll_element *ll, void *udata)
 cf_timer_handle *
 cf_timer_add(uint32_t ms, cf_timer_fn cb, void *udata)
 {
-	cf_timer_element *e = (cf_timer_element *) CF_MALLOC(sizeof(cf_timer_element));
+	cf_timer_element *e = (cf_timer_element *) cf_malloc(sizeof(cf_timer_element));
 	if (e == 0)	return(0);
 	
 	e->cb = cb;

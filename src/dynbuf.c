@@ -37,14 +37,14 @@ cf_dyn_buf_reserve(cf_dyn_buf *db, size_t	sz)
 
 		uint8_t	*_t;
 		if (db->is_stack) {
-			_t = CF_MALLOC(new_sz);
+			_t = cf_malloc(new_sz);
 			if (!_t)	return(-1);
 			memcpy(_t, db->buf, db->used_sz);
 			db->is_stack = false;
 			db->buf = _t;
 		}
 		else {
-			_t = realloc(db->buf, new_sz);
+			_t = cf_realloc(db->buf, new_sz);
 			if (!_t)	return(-1);
 			db->buf = _t;
 		}
@@ -136,7 +136,7 @@ char *
 cf_dyn_buf_strdup(cf_dyn_buf *db)
 {
 	if (db->used_sz == 0)	return(0);
-	char *r = CF_MALLOC(db->used_sz+1);
+	char *r = cf_malloc(db->used_sz+1);
 	if (!r)	return(0);
 	memcpy(r, db->buf, db->used_sz);
 	r[db->used_sz] = 0;
@@ -149,7 +149,7 @@ void
 cf_dyn_buf_free(cf_dyn_buf *db)
 {
 	if (db->is_stack == false)
-		free(db->buf);
+		cf_free(db->buf);
 }
 
 //
@@ -176,7 +176,7 @@ cf_buf_builder_reserve_internal(cf_buf_builder **bb_r, size_t	sz)
 		
 		new_sz = new_sz + (backoff - (new_sz % backoff));
 
-		bb = realloc(bb, new_sz);
+		bb = cf_realloc(bb, new_sz);
 		if (!bb)	return(-1);
 		bb->alloc_sz = new_sz - sizeof(cf_buf_builder);
 		*bb_r = bb;
@@ -330,7 +330,7 @@ char *
 cf_buf_builder_strdup(cf_buf_builder *bb)
 {
 	if (bb->used_sz == 0)	return(0);
-	char *r = CF_MALLOC(bb->used_sz+1);
+	char *r = cf_malloc(bb->used_sz+1);
 	if (!r)	return(0);
 	memcpy(r, bb->buf, bb->used_sz);
 	r[bb->used_sz] = 0;
@@ -341,7 +341,7 @@ cf_buf_builder_strdup(cf_buf_builder *bb)
 cf_buf_builder *
 cf_buf_builder_create()
 {
-	cf_buf_builder *bb = CF_MALLOC(1024);
+	cf_buf_builder *bb = cf_malloc(1024);
 	if (!bb)	return(0);
 	bb->alloc_sz = 1024 - sizeof(cf_buf_builder);
 	bb->used_sz = 0;
@@ -351,5 +351,5 @@ cf_buf_builder_create()
 void
 cf_buf_builder_free(cf_buf_builder *bb)
 {
-	free(bb);
+	cf_free(bb);
 }

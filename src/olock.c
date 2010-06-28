@@ -85,7 +85,7 @@ olock *
 olock_create(uint32_t n_locks,  bool mutex) 
 {
 	
-	olock *ol = CF_MALLOC( sizeof (olock) + (sizeof(pthread_mutex_t) * n_locks));
+	olock *ol = cf_malloc( sizeof (olock) + (sizeof(pthread_mutex_t) * n_locks));
 	if (!ol)	return(0);
 	
 	uint32_t mask = n_locks - 1;
@@ -110,6 +110,6 @@ olock_destroy(olock *ol)
 {
 	for (int i=0;i<ol->n_locks;i++)
 		pthread_mutex_destroy( & ol->locks[i] );
-	free(ol);
+	cf_free(ol);
 }
 

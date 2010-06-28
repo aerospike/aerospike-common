@@ -78,7 +78,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest *key, void *value)
     /* Allocate memory for the new node and set the node parameters */
 	// this could be done later, but doing the malloc ahead of the tree lock
 	// increases parallelism and decreases lock hold times
-    if (NULL == (n = (cf_rb_node *)CF_MALLOC(sizeof(cf_rb_node))))
+    if (NULL == (n = (cf_rb_node *)cf_malloc(sizeof(cf_rb_node))))
         return(NULL);
     n->color = CF_RB_RED;
 	n->key = *key;
@@ -108,7 +108,7 @@ cf_rb_insert(cf_rb_tree *tree, cf_digest *key, void *value)
 
     /* If the node already exists, stop a double-insertion */
     if ((s != tree->root) && (0 == cf_digest_compare(&n->key, &s->key))) {
-        free(n);
+        cf_free(n);
 		pthread_mutex_unlock(&tree->lock);
         return(NULL);
     }
@@ -175,7 +175,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest *key, pthread_mutex_t **vlock)
     *vlock = NULL;
 
     /* Allocate memory for the new node and set the node parameters */
-    if (NULL == (n = (cf_rb_node *)CF_MALLOC(sizeof(cf_rb_node)))) {
+    if (NULL == (n = (cf_rb_node *)cf_malloc(sizeof(cf_rb_node)))) {
 		cf_debug(CF_RB," malloc failed ");
         return(NULL);
 	}
@@ -205,7 +205,7 @@ cf_rb_insert_vlock(cf_rb_tree *tree, cf_digest *key, pthread_mutex_t **vlock)
 
     /* If the node already exists, stop a double-insertion */
     if ((s != tree->root) && (0 == cf_digest_compare(&n->key, &s->key))) {
-        free(n);
+        cf_free(n);
 		pthread_mutex_unlock(&tree->lock);
         return(NULL);
     }
@@ -308,7 +308,7 @@ cf_rb_get_insert_vlock(cf_rb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
 	cf_debug(CF_RB,"get-insert: not found");
 	
     /* Allocate memory for the new node and set the node parameters */
-    if (NULL == (n = (cf_rb_node *)CF_MALLOC(sizeof(cf_rb_node)))) {
+    if (NULL == (n = (cf_rb_node *)cf_malloc(sizeof(cf_rb_node)))) {
 		cf_debug(CF_RB," malloc failed ");
         return(NULL);
 	}
@@ -610,19 +610,19 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest *key, void *destructor_udata)
 		if (tree->destructor)
 	        tree->destructor(r->value, destructor_udata);
 		else
-			free(r->value);
+			cf_free(r->value);
 
 		// todoo
         pthread_mutex_unlock(vlock);
         
-        free(r);
+        cf_free(r);
     } else {
 
 		/* Destroy the node contents */
 		if (tree->destructor)
 	        tree->destructor(s->value, destructor_udata);
 		else
-			free(s->value);
+			cf_free(s->value);
         
         pthread_mutex_unlock(vlock);
 
@@ -630,7 +630,7 @@ cf_rb_delete(cf_rb_tree *tree, cf_digest *key, void *destructor_udata)
         if (CF_RB_BLACK == s->color)
             cf_rb_deleterebalance(tree, t);
 
-        free(s);
+        cf_free(s);
     }
 	tree->elements--;
 
@@ -657,17 +657,17 @@ cf_rb_create(cf_rb_value_destructor destructor) {
 
     /* Allocate memory for the sentinel; note that it's pointers are all set
      * to itself */
-    if (NULL == (tree->sentinel = (cf_rb_node *)calloc(1, sizeof(cf_rb_node)))) {
-        free(tree);
+    if (NULL == (tree->sentinel = (cf_rb_node *)cf_calloc(1, sizeof(cf_rb_node)))) {
+        cf_free(tree);
         return(NULL);
     }
     tree->sentinel->parent = tree->sentinel->left = tree->sentinel->right = tree->sentinel;
     tree->sentinel->color = CF_RB_BLACK;
 
     /* Allocate memory for the root node, and set things up */
-    if (NULL == (tree->root = (cf_rb_node *)calloc(1, sizeof(cf_rb_node)))) {
-        free(tree->sentinel);
-        free(tree);
+    if (NULL == (tree->root = (cf_rb_node *)cf_calloc(1, sizeof(cf_rb_node)))) {
+        cf_free(tree->sentinel);
+        cf_free(tree);
         return(NULL);
     }
     tree->root->parent = tree->root->left = tree->root->right = tree->sentinel;
@@ -701,7 +701,7 @@ cf_rb_purge(cf_rb_tree *tree, cf_rb_node *r, void *destructor_udata)
 	olock_unlock(tree->value_locks, &r->key);
 	// debug thing
 	// memset(r, 0xff, sizeof(cf_rb_node));
-    free(r);
+    cf_free(r);
 
     return;
 }
@@ -767,8 +767,8 @@ cf_rb_release(cf_rb_tree *tree, void *destructor_udata)
     cf_rb_purge(tree, tree->root->left, destructor_udata);
 
     /* Release the tree's memory */
-    free(tree->root);
-    free(tree->sentinel);
+    cf_free(tree->root);
+    cf_free(tree->sentinel);
 	pthread_mutex_unlock(&tree->lock);
 	memset(tree, 0, sizeof(cf_rb_tree)); // a little debug
     cf_rc_free(tree);

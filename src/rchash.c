@@ -36,7 +36,7 @@ rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint
 {
 	rchash *h;
 
-	h = CF_MALLOC(sizeof(rchash));
+	h = cf_malloc(sizeof(rchash));
 	if (!h)	return(RCHASH_ERR);
 
 	h->elements = 0;
@@ -52,18 +52,18 @@ rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint
 	}
 
 	if (key_len == 0)
-        h->table = calloc(sz, sizeof(rchash_elem_v));
+        h->table = cf_calloc(sz, sizeof(rchash_elem_v));
     else
-        h->table = calloc(sz, sizeof(rchash_elem_f) + key_len);
+        h->table = cf_calloc(sz, sizeof(rchash_elem_f) + key_len);
     
 	if (!h->table) {
-		free(h);
+		cf_free(h);
 		return(RCHASH_ERR);
 	}
 
 	if (flags & RCHASH_CR_MT_BIGLOCK) {
 		if (0 != pthread_mutex_init ( &h->biglock, 0) ) {
-			free(h->table); free(h);
+			cf_free(h->table); cf_free(h);
 			return(SHASH_ERR);
 		}
 	}
@@ -71,9 +71,9 @@ rchash_create(rchash **h_r, rchash_hash_fn h_fn, rchash_destructor_fn d_fn, uint
 		memset( &h->biglock, 0, sizeof( h->biglock ) );
 	
 	if (flags & RCHASH_CR_MT_MANYLOCK) {
-		h->lock_table = CF_MALLOC( sizeof(pthread_mutex_t) * sz);
+		h->lock_table = cf_malloc( sizeof(pthread_mutex_t) * sz);
 		if (! h->lock_table) {
-			free(h);
+			cf_free(h);
 			*h_r = 0;
 			return(SHASH_ERR);
 		}
@@ -205,7 +205,7 @@ rchash_put(rchash *h, void *key, uint32_t key_len, void *object)
 		e = e->next;
 	}
 
-	e = (rchash_elem_f *) CF_MALLOC(sizeof(rchash_elem_f) + key_len);
+	e = (rchash_elem_f *) cf_malloc(sizeof(rchash_elem_f) + key_len);
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -279,7 +279,7 @@ rchash_put_unique(rchash *h, void *key, uint32_t key_len, void *object)
 		e = e->next;
 	}
 
-	e = (rchash_elem_f *) CF_MALLOC(sizeof(rchash_elem_f) + key_len);
+	e = (rchash_elem_f *) cf_malloc(sizeof(rchash_elem_f) + key_len);
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -404,7 +404,7 @@ rchash_delete(rchash *h, void *key, uint32_t key_len)
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
-				free (e);
+				cf_free(e);
 			}
 			// am at head - more complicated
 			else {
@@ -416,7 +416,7 @@ rchash_delete(rchash *h, void *key, uint32_t key_len)
 				else {
 					rchash_elem_f *_t = e->next;
 					memcpy(e, e->next, sizeof(rchash_elem_f)+key_len);
-					free(_t);
+					cf_free(_t);
 				}
 			}
 			
@@ -552,7 +552,7 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 				// patchup pointers & free element if not head
 				if (prev_he) {
 					prev_he->next = list_he->next;
-					free (list_he);
+					cf_free(list_he);
 					list_he = prev_he->next;
 				}
 				// am at head - more complicated
@@ -571,7 +571,7 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 					else {
 						rchash_elem_f *_t = list_he->next;
 						memcpy(list_he, list_he->next, sizeof(rchash_elem_f)+h->key_len);
-						free(_t);
+						cf_free(_t);
 					}
 				}
 
@@ -605,7 +605,7 @@ rchash_destroy_elements(rchash *h)
         while (e) {
             rchash_elem_f *t = e->next;
             rchash_free(h, e->object);
-            free(e);
+            cf_free(e);
             e = t;
 		}
 	}
@@ -625,11 +625,11 @@ rchash_destroy(rchash *h)
 		for (uint i=0;i<h->table_len;i++) {
 			pthread_mutex_destroy(&(h->lock_table[i]));
 		}
-		free(h->lock_table);
+		cf_free(h->lock_table);
 	}
 
-	free(h->table);
-	free(h);	
+	cf_free(h->table);
+	cf_free(h);	
 }	
 
 inline static
@@ -711,12 +711,12 @@ rchash_put_v(rchash *h, void *key, uint32_t key_len, void *object)
 		e = e->next;
 	}
 
-	e = (rchash_elem_v *) CF_MALLOC(sizeof(rchash_elem_v));
+	e = (rchash_elem_v *) cf_malloc(sizeof(rchash_elem_v));
 	e->next = e_head->next;
 	e_head->next = e;
 	
 Copy:
-	e->key = CF_MALLOC(key_len);
+	e->key = cf_malloc(key_len);
 	memcpy(e->key, key, key_len);
 	e->key_len = key_len;
 
@@ -783,12 +783,12 @@ rchash_put_unique_v(rchash *h, void *key, uint32_t key_len, void *object)
 		e = e->next;
 	}
 
-	e = (rchash_elem_v *) CF_MALLOC(sizeof(rchash_elem_v));
+	e = (rchash_elem_v *) cf_malloc(sizeof(rchash_elem_v));
 	e->next = e_head->next;
 	e_head->next = e;
 	
 Copy:
-	e->key = CF_MALLOC(key_len);
+	e->key = cf_malloc(key_len);
 	memcpy(e->key, key, key_len);
 	e->key_len = key_len;
 
@@ -899,12 +899,12 @@ rchash_delete_v(rchash *h, void *key, uint32_t key_len)
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
 			// Found it, kill it
-			free(e->key);
+			cf_free(e->key);
 			rchash_free(h, e->object);
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
-				free (e);
+				cf_free(e);
 			}
 			// am at head - more complicated
 			else {
@@ -916,7 +916,7 @@ rchash_delete_v(rchash *h, void *key, uint32_t key_len)
 				else {
 					rchash_elem_v *_t = e->next;
 					memcpy(e, e->next, sizeof(rchash_elem_v));
-					free(_t);
+					cf_free(_t);
 				}
 			}
 			h->elements--;
@@ -1029,14 +1029,14 @@ rchash_reduce_delete_v(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			// Leave the pointers in a "next" state
 			if (rv == RCHASH_REDUCE_DELETE) {
                 
-				free(list_he->key);
+				cf_free(list_he->key);
 				rchash_free(h, list_he->object);
                 h->elements--;
                 
 				// patchup pointers & free element if not head
 				if (prev_he) {
 					prev_he->next = list_he->next;
-					free (list_he);
+					cf_free(list_he);
 					list_he = prev_he->next;
 				}
 				// am at head - more complicated
@@ -1055,7 +1055,7 @@ rchash_reduce_delete_v(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 					else {
 						rchash_elem_v *_t = list_he->next;
 						memcpy(list_he, list_he->next, sizeof(rchash_elem_v));
-						free(_t);
+						cf_free(_t);
 					}
 				}
 
@@ -1087,14 +1087,14 @@ rchash_destroy_elements_v(rchash *h)
         if (e->object == 0) continue;
         
         rchash_free(h, e->object);
-        free(e->key);
+        cf_free(e->key);
         e = e->next; // skip the first, it's in place
 
         while (e) {
             rchash_elem_f *t = e->next;
             rchash_free(h, e->object);
-            free(e->key);
-            free(e);
+            cf_free(e->key);
+            cf_free(e);
             e = t;
 		}
 	}

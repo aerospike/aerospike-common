@@ -18,7 +18,7 @@ bbhash_create(bbhash **h_r, bbhash_hash_fn h_fn, uint32_t key_len, uint32_t valu
 {
 	bbhash *h;
 
-	h = CF_MALLOC(sizeof(bbhash));
+	h = cf_malloc(sizeof(bbhash));
 	if (!h)	return(BB_ERR);
 
 	h->elements = 0;
@@ -28,15 +28,15 @@ bbhash_create(bbhash **h_r, bbhash_hash_fn h_fn, uint32_t key_len, uint32_t valu
 	h->flags = flags;
 	h->h_fn = h_fn;
 
-	h->table = calloc(sz, sizeof(bbhash_elem));
+	h->table = cf_calloc(sz, sizeof(bbhash_elem));
 	if (!h->table) {
-		free(h);
+		cf_free(h);
 		return(BB_ERR);
 	}
 
 	if (flags & BBHASH_CR_MT_BIGLOCK || flags & BBHASH_CR_MT_LOCKPOOL) {
 		if (0 != pthread_mutex_init ( &h->biglock, 0) ) {
-			free(h->table); free(h);
+			cf_free(h->table); cf_free(h);
 			return(BB_ERR);
 		}
 	}
@@ -80,8 +80,8 @@ bbhash_put(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t value_l
 	while (e) {
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
-			free(e->value);
-			e->value = CF_MALLOC(value_len);
+			cf_free(e->value);
+			e->value = cf_malloc(value_len);
 			memcpy(e->value, value, value_len);
 			if (h->flags & BBHASH_CR_MT_BIGLOCK)
 				pthread_mutex_unlock(&h->biglock);
@@ -90,15 +90,15 @@ bbhash_put(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t value_l
 		e = e->next;
 	}
 
-	e = (bbhash_elem *) CF_MALLOC(sizeof(bbhash_elem));
+	e = (bbhash_elem *) cf_malloc(sizeof(bbhash_elem));
 	e->next = e_head->next;
 	e_head->next = e;
 	
 Copy:
-	e->key = CF_MALLOC(key_len);
+	e->key = cf_malloc(key_len);
 	memcpy(e->key, key, key_len);
 	e->key_len = key_len;
-	e->value = CF_MALLOC(value_len);
+	e->value = cf_malloc(value_len);
 	memcpy(e->value, value, value_len);
 	e->value_len = value_len;
 	h->elements++;
@@ -145,15 +145,15 @@ bbhash_put_unique(bbhash *h, void *key, uint32_t key_len, void *value, uint32_t 
 		e = e->next;
 	}
 
-	e = (bbhash_elem *) CF_MALLOC(sizeof(bbhash_elem));
+	e = (bbhash_elem *) cf_malloc(sizeof(bbhash_elem));
 	e->next = e_head->next;
 	e_head->next = e;
 	
 Copy:
-	e->key = CF_MALLOC(key_len);
+	e->key = cf_malloc(key_len);
 	memcpy(e->key, key, key_len);
 	e->key_len = key_len;
-	e->value = CF_MALLOC(value_len);
+	e->value = cf_malloc(value_len);
 	memcpy(e->value, value, value_len);
 	e->value_len = value_len;
 	h->elements++;
@@ -232,8 +232,8 @@ bbhash_delete(bbhash *h, void *key, uint32_t key_len)
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
 			// Found it
-			free(e->key);
-			free(e->value);
+			cf_free(e->key);
+			cf_free(e->value);
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
@@ -249,7 +249,7 @@ bbhash_delete(bbhash *h, void *key, uint32_t key_len)
 				else {
 					bbhash_elem *_t = e->next;
 					memcpy(e, e->next, sizeof(bbhash_elem));
-					free(_t);
+					cf_free(_t);
 				}
 			}
 			h->elements--;
@@ -309,8 +309,8 @@ bbhash_get_and_delete(bbhash *h, void *key, uint32_t key_len, void *value, uint3
 			*value_len = e->value_len;
 			
 			// free the underlying data
-			free(e->key);
-			free(e->value);
+			cf_free(e->key);
+			cf_free(e->value);
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
@@ -326,7 +326,7 @@ bbhash_get_and_delete(bbhash *h, void *key, uint32_t key_len, void *value, uint3
 				else {
 					bbhash_elem *_t = e->next;
 					memcpy(e, e->next, sizeof(bbhash_elem));
-					free(_t);
+					cf_free(_t);
 				}
 			}
 			h->elements--;
@@ -419,8 +419,8 @@ bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 			// Delete is requested
 			// Leave the pointers in a "next" state
 			if (rv == BBHASH_REDUCE_DELETE) {
-				free(list_he->key);
-				free(list_he->value);
+				cf_free(list_he->key);
+				cf_free(list_he->value);
 				// patchup pointers & free element if not head
 				if (prev_he) {
 					prev_he->next = list_he->next;
@@ -443,7 +443,7 @@ bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 					else {
 						bbhash_elem *_t = list_he->next;
 						memcpy(list_he, list_he->next, sizeof(bbhash_elem));
-						free(_t);
+						cf_free(_t);
 					}
 				}
 				rv = 0;
@@ -478,9 +478,9 @@ bbhash_destroy(bbhash *h)
 			bbhash_elem *t;
 			while (e) {
 				t = e->next;
-				free(e->key);
-				free(e->value);
-				free(e);
+				cf_free(e->key);
+				cf_free(e->value);
+				cf_free(e);
 				e = t;
 			}
 		}
@@ -491,6 +491,6 @@ bbhash_destroy(bbhash *h)
 		pthread_mutex_destroy(&h->biglock);
 
 
-	free(h->table);
-	free(h);	
+	cf_free(h->table);
+	cf_free(h);	
 }	

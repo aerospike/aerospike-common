@@ -19,7 +19,7 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 {
 	shash *h;
 
-	h = CF_MALLOC(sizeof(shash));
+	h = cf_malloc(sizeof(shash));
 	if (!h)	return(SHASH_ERR);
 
 	h->elements = 0;
@@ -34,9 +34,9 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 		return(SHASH_ERR);
 	}
 	
-	h->table = CF_MALLOC(sz * SHASH_ELEM_SZ(h));
+	h->table = cf_malloc(sz * SHASH_ELEM_SZ(h));
 	if (!h->table) {
-		free(h);
+		cf_free(h);
 		*h_r = 0;
 		return(SHASH_ERR);
 	}
@@ -51,7 +51,7 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 	
 	if (flags & SHASH_CR_MT_BIGLOCK) {
 		if (0 != pthread_mutex_init ( &h->biglock, 0) ) {
-			free(h->table); free(h);
+			cf_free(h->table); cf_free(h);
 			return(SHASH_ERR);
 		}
 	}
@@ -59,9 +59,9 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 		memset( &h->biglock, 0, sizeof( h->biglock ) );
 	
 	if (flags & SHASH_CR_MT_MANYLOCK) {
-		h->lock_table = CF_MALLOC( sizeof(pthread_mutex_t) * sz);
+		h->lock_table = cf_malloc( sizeof(pthread_mutex_t) * sz);
 		if (! h->lock_table) {
-			free(h);
+			cf_free(h);
 			*h_r = 0;
 			return(SHASH_ERR);
 		}
@@ -167,7 +167,7 @@ shash_put(shash *h, void *key, void *value)
 		e = e->next;
 	}
 
-	e = (shash_elem *) CF_MALLOC( SHASH_ELEM_SZ(h) );
+	e = (shash_elem *) cf_malloc( SHASH_ELEM_SZ(h) );
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -216,7 +216,7 @@ shash_put_unique(shash *h, void *key, void *value)
 		e = e->next;
 	}
 
-	e = (shash_elem *) CF_MALLOC( SHASH_ELEM_SZ(h) );
+	e = (shash_elem *) cf_malloc( SHASH_ELEM_SZ(h) );
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -369,7 +369,7 @@ shash_delete(shash *h, void *key)
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
-				free (e);
+				cf_free(e);
 			}
 			// am at head - more complicated
 			else {
@@ -381,7 +381,7 @@ shash_delete(shash *h, void *key)
 				else {
 					shash_elem *_t = e->next;
 					memcpy(e, e->next, SHASH_ELEM_SZ(h) );
-					free(_t);
+					cf_free(_t);
 				}
 			}
 			h->elements--;
@@ -429,7 +429,7 @@ shash_delete_lockfree(shash *h, void *key)
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
-				free (e);
+				cf_free(e);
 			}
 			// am at head - more complicated
 			else {
@@ -441,7 +441,7 @@ shash_delete_lockfree(shash *h, void *key)
 				else {
 					shash_elem *_t = e->next;
 					memcpy(e, e->next, SHASH_ELEM_SZ(h) );
-					free(_t);
+					cf_free(_t);
 				}
 			}
 			h->elements--;
@@ -494,7 +494,7 @@ shash_get_and_delete(shash *h, void *key, void *value)
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
-				free (e);
+				cf_free(e);
 			}
 			// am at head - more complicated
 			else {
@@ -506,7 +506,7 @@ shash_get_and_delete(shash *h, void *key, void *value)
 				else {
 					shash_elem *_t = e->next;
 					memcpy(e, e->next, SHASH_ELEM_SZ(h) );
-					free(_t);
+					cf_free(_t);
 				}
 			}
 			h->elements--;
@@ -619,7 +619,7 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 				// patchup pointers & free element if not head
 				if (prev_he) {
 					prev_he->next = list_he->next;
-					free (list_he);
+					cf_free(list_he);
 					list_he = prev_he->next;
 				}
 				// am at head - more complicated
@@ -638,7 +638,7 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 					else {
 						shash_elem *_t = list_he->next;
 						memcpy(list_he, list_he->next, SHASH_ELEM_SZ(h) );
-						free(_t);
+						cf_free(_t);
 					}
 				}
 				rv = 0;
@@ -675,7 +675,7 @@ shash_destroy(shash *h)
 			shash_elem *t;
 			while (e) {
 				t = e->next;
-				free(e);
+				cf_free(e);
 				e = t;
 			}
 		}
@@ -689,9 +689,9 @@ shash_destroy(shash *h)
 		for (uint i=0;i<h->table_len;i++) {
 			pthread_mutex_destroy(&(h->lock_table[i]));
 		}
-		free(h->lock_table);
+		cf_free(h->lock_table);
 	}
 
-	free(h->table);
-	free(h);	
+	cf_free(h->table);
+	cf_free(h);	
 }	

@@ -203,7 +203,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 							mf->free = mf->rc_free = 0;
 						}
 						else {
-							mf->u.buf = CF_MALLOC(flen);
+							mf->u.buf = cf_malloc(flen);
 							cf_assert(mf->u.buf, CF_MSG, CF_THR, CF_WARNING, "malloc");
 							mf->free = mf->u.buf;
 							mf->rc_free = 0;
@@ -224,7 +224,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 							mf->free = mf->rc_free = 0;
 						}
 						else {
-							mf->u.ui32_a = CF_MALLOC(flen);
+							mf->u.ui32_a = cf_malloc(flen);
 							cf_assert(mf->u.ui32_a, CF_MSG, CF_THR, CF_WARNING, "malloc");
 							mf->free = mf->u.ui32_a;
 							mf->rc_free = 0;
@@ -247,7 +247,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 							mf->free = mf->rc_free = 0;
 						}
 						else {
-							mf->u.ui32_a = CF_MALLOC(flen);
+							mf->u.ui32_a = cf_malloc(flen);
 							cf_assert(mf->u.ui64_a, CF_MSG, CF_THR, CF_WARNING, "malloc");
 							mf->free = mf->u.ui64_a;
 							mf->rc_free = 0;
@@ -270,7 +270,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 							mf->free = mf->rc_free = 0;
 						}
 						else {
-							mf->u.buf_a = CF_MALLOC(flen);
+							mf->u.buf_a = cf_malloc(flen);
 							cf_assert(mf->u.buf_a, CF_MSG, CF_THR, CF_WARNING, "malloc");
 							mf->free = mf->u.buf_a;
 							mf->rc_free = 0;
@@ -496,7 +496,7 @@ msg_reset(msg *m)
 		if (m->f[i].is_valid == true) {
 			if (m->f[i].is_set == true) {
 //				cf_debug(CF_MSG,"msg_reset: freeing %p rcfree %p",m->f[i].free,m->f[i].rc_free);
-				if (m->f[i].free) free(m->f[i].free); 
+				if (m->f[i].free) cf_free(m->f[i].free); 
 				if (m->f[i].rc_free) cf_rc_releaseandfree(m->f[i].rc_free);
 				m->f[i].is_set = false;
 			}
@@ -609,7 +609,7 @@ msg_get_str(const msg *m, int field_id, char **r, size_t *len, msg_get_type type
 		*r = m->f[field_id].u.str;
 	}
 	else if (MSG_GET_COPY_MALLOC == type) {
-		*r = strdup( m->f[field_id].u.str );
+		*r = cf_strdup( m->f[field_id].u.str );
 		cf_assert(*r, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
 	} else if (MSG_GET_COPY_RC == type) {
 		size_t sz = m->f[field_id].field_len + 1;
@@ -663,7 +663,7 @@ msg_get_buf(const msg *m, int field_id, uint8_t **r, size_t *len, msg_get_type t
 		*r = m->f[field_id].u.buf;
 	}
 	else if (MSG_GET_COPY_MALLOC == type) {
-		*r = CF_MALLOC( m->f[field_id].field_len );
+		*r = cf_malloc( m->f[field_id].field_len );
 		cf_assert(*r, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
 		memcpy(*r, m->f[field_id].u.buf, m->f[field_id].field_len );
 	}
@@ -782,7 +782,7 @@ msg_set_str(msg *m, int field_id, const char *v, msg_set_type type)
 	
 	// free auld value if necessary
 	if (mf->is_set) {
-		if (mf->free) {	free(mf->free); mf->free = 0; }
+		if (mf->free) {	cf_free(mf->free); mf->free = 0; }
 		if (mf->rc_free) { cf_rc_releaseandfree(mf->rc_free); mf->rc_free = 0; }
 	}
 	
@@ -798,7 +798,7 @@ msg_set_str(msg *m, int field_id, const char *v, msg_set_type type)
 			memcpy(mf->u.str, v, len);
 		}
 		else {
-			mf->u.str = strdup(v);
+			mf->u.str = cf_strdup(v);
 			cf_assert(mf->u.str, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
 			mf->free = mf->u.str;
 			mf->rc_free = 0;
@@ -827,7 +827,7 @@ int msg_set_buf(msg *m, int field_id, const uint8_t *v, size_t len, msg_set_type
 	
 	// free auld value if necessary
 	if (mf->is_set) {
-		if (mf->free) {	free(mf->free); mf->free = 0; }
+		if (mf->free) {	cf_free(mf->free); mf->free = 0; }
 		if (mf->rc_free) { cf_rc_releaseandfree(mf->rc_free); mf->rc_free = 0; }
 	}
 	
@@ -842,7 +842,7 @@ int msg_set_buf(msg *m, int field_id, const uint8_t *v, size_t len, msg_set_type
 		}
 		// Or just malloc if we have to. Sad face.
 		else {
-			mf->u.buf = CF_MALLOC(len);
+			mf->u.buf = cf_malloc(len);
 			if (mf->u.buf == NULL)
 				cf_info(CF_MSG, "could not allocate: len %d",len);
 			cf_assert(mf->u.buf, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
@@ -876,7 +876,7 @@ int msg_set_bufbuilder(msg *m, int field_id, cf_buf_builder *bb)
 	
 	// free auld value if necessary
 	if (mf->is_set) {
-		if (mf->free) {	free(mf->free); mf->free = 0; }
+		if (mf->free) {	cf_free(mf->free); mf->free = 0; }
 		if (mf->rc_free) { cf_rc_releaseandfree(mf->rc_free); mf->rc_free = 0; }
 	}
 	
@@ -927,11 +927,11 @@ msg_set_uint32_array_size(msg *m, int field_id, const int size)
 
 	mf->field_len = size * sizeof(uint32_t);
 	if (mf->is_set) {
-		mf->u.ui32_a = realloc( mf->u.ui32_a, mf->field_len);
+		mf->u.ui32_a = cf_realloc( mf->u.ui32_a, mf->field_len);
 		if (! mf->u.ui32_a) return(-1);
 	}
 	else {
-		mf->u.ui32_a = CF_MALLOC( mf->field_len );
+		mf->u.ui32_a = cf_malloc( mf->field_len );
 		if (! mf->u.ui32_a) return(-1);
 		mf->is_set = true;
 	}
@@ -990,11 +990,11 @@ msg_set_uint64_array_size(msg *m, int field_id, const int size)
 	mf->field_len = size * sizeof(uint64_t);
 	if (mf->is_set == true) {
 			
-		mf->u.ui64_a = realloc( mf->u.ui64_a, mf->field_len );
+		mf->u.ui64_a = cf_realloc( mf->u.ui64_a, mf->field_len );
 		if (! mf->u.ui64_a) return(-1);
 	}
 	else {
-		mf->u.ui64_a = CF_MALLOC( mf->field_len );
+		mf->u.ui64_a = cf_malloc( mf->field_len );
 		if (! mf->u.ui64_a) return(-1);
 		mf->is_set = true;
 	}
@@ -1023,7 +1023,7 @@ msg_buf_array *
 msg_buf_array_create(int n_bufs, int buf_len)
 {
 	int len = sizeof(msg_buf_array) + n_bufs * (sizeof(uint32_t) + buf_len + sizeof(msg_pbuf));
-	msg_buf_array *buf_a = CF_MALLOC( len );
+	msg_buf_array *buf_a = cf_malloc( len );
 	if (!buf_a)	return(0);
 	buf_a->alloc_size = len;
 	buf_a->used_size = sizeof(msg_buf_array) + (n_bufs * sizeof(uint32_t)); 
@@ -1130,7 +1130,7 @@ msg_get_buf_array(msg *m, int field_id, const int index, uint8_t **r, size_t *le
 			memcpy(*r, b, *len);
 			break;
 		case MSG_GET_COPY_MALLOC:
-			*r = CF_MALLOC(*len);
+			*r = cf_malloc(*len);
 			memcpy(*r, b, *len);
 			break;
 	}
@@ -1211,7 +1211,7 @@ void msg_set_unset(msg *m, int field_id)
 	switch (mf->type) {
 		case M_FT_BUF:
 		case M_FT_STR:
-			if (mf->free)	free(mf->free);
+			if (mf->free)	cf_free(mf->free);
 			if (mf->rc_free) cf_rc_releaseandfree(mf->rc_free);
 			break;
 		default:
@@ -1240,7 +1240,7 @@ int msg_set_bytearray(msg *m, int field_id, const cf_bytearray *v)
 	
 	// free auld value if necessary
 	if (mf->is_set) {
-		if (mf->free) {	free(mf->free); mf->free = 0; }
+		if (mf->free) {	cf_free(mf->free); mf->free = 0; }
 		if (mf->rc_free) { cf_rc_releaseandfree(mf->rc_free); mf->rc_free = 0; }
 	}
 	
@@ -1272,7 +1272,7 @@ void msg_destroy(msg *m)
 		for (int i=0;i<m->len;i++) {
 			if ((m->f[i].is_valid == true) && (m->f[i].is_set == true)) {
 				
-				if (m->f[i].free) free(m->f[i].free);
+				if (m->f[i].free) cf_free(m->f[i].free);
 				if (m->f[i].rc_free) cf_rc_releaseandfree(m->f[i].free);
 			}		
 		}

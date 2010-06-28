@@ -133,7 +133,7 @@ cf_rcrb_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **vlock
     }
 
     /* Allocate memory for the new node and set the node parameters */
-    if (NULL == (n = (cf_rcrb_node *)CF_MALLOC(sizeof(cf_rcrb_node)))) {
+    if (NULL == (n = (cf_rcrb_node *)cf_malloc(sizeof(cf_rcrb_node)))) {
     	pthread_mutex_unlock(&tree->lock);
 #ifdef TIMETREE    	
 		rcrb_count_time(now);
@@ -251,7 +251,7 @@ cf_rcrb_get_insert_vlock(cf_rcrb_tree *tree, cf_digest *key, pthread_mutex_t **v
 //	cf_debug(CF_RB,"get-insert: not found");
 	
     /* Allocate memory for the new node and set the node parameters */
-    if (NULL == (n = (cf_rcrb_node *)CF_MALLOC(sizeof(cf_rcrb_node)))) {
+    if (NULL == (n = (cf_rcrb_node *)cf_malloc(sizeof(cf_rcrb_node)))) {
 		cf_debug(CF_RB," malloc failed ");
         return(NULL);
 	}
@@ -536,7 +536,7 @@ cf_rcrb_delete(cf_rcrb_tree *tree, cf_digest *key)
 			tree->destructor(r->value, tree->destructor_udata);
 		}
 
-        free(r);
+        cf_free(r);
         
     } else {
 
@@ -551,7 +551,7 @@ cf_rcrb_delete(cf_rcrb_tree *tree, cf_digest *key)
 			tree->destructor(s->value, tree->destructor_udata);
 		}
 
-        free(s);
+        cf_free(s);
     }
 	tree->elements--;
 
@@ -579,17 +579,17 @@ cf_rcrb_create(cf_rcrb_value_destructor destructor, void *destructor_udata) {
 
     /* Allocate memory for the sentinel; note that it's pointers are all set
      * to itself */
-    if (NULL == (tree->sentinel = (cf_rcrb_node *)calloc(1, sizeof(cf_rcrb_node)))) {
-        free(tree);
+    if (NULL == (tree->sentinel = (cf_rcrb_node *)cf_calloc(1, sizeof(cf_rcrb_node)))) {
+        cf_free(tree);
         return(NULL);
     }
     tree->sentinel->parent = tree->sentinel->left = tree->sentinel->right = tree->sentinel;
     tree->sentinel->color = CF_RCRB_BLACK;
 
     /* Allocate memory for the root node, and set things up */
-    if (NULL == (tree->root = (cf_rcrb_node *)calloc(1, sizeof(cf_rcrb_node)))) {
-        free(tree->sentinel);
-        free(tree);
+    if (NULL == (tree->root = (cf_rcrb_node *)cf_calloc(1, sizeof(cf_rcrb_node)))) {
+        cf_free(tree->sentinel);
+        cf_free(tree);
         return(NULL);
     }
     tree->root->parent = tree->root->left = tree->root->right = tree->sentinel;
@@ -628,7 +628,7 @@ cf_rcrb_purge(cf_rcrb_tree *tree, cf_rcrb_node *r)
     
 	// debug thing
 	// memset(r, 0xff, sizeof(cf_rcrb_node));
-    free(r);
+    cf_free(r);
 
     return;
 }
@@ -703,7 +703,7 @@ cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
     uint8_t buf[64 * 1024];
     
     if (sz > 64 * 1024) {
-    	v_a = CF_MALLOC(sz);
+    	v_a = cf_malloc(sz);
     	if (!v_a)	return;
     }
     else
@@ -728,7 +728,7 @@ cf_rcrb_reduce(cf_rcrb_tree *tree, cf_rcrb_reduce_fn cb, void *udata)
 	for (uint i=0 ; i<v_a->pos ; i++) 
 		cb ( & (v_a->values[i].key), v_a->values[i].value  , udata);
 
-	if (v_a != (cf_rcrb_value_array *) buf)	free(v_a);
+	if (v_a != (cf_rcrb_value_array *) buf)	cf_free(v_a);
 	
 	
 	
@@ -791,8 +791,8 @@ cf_rcrb_release(cf_rcrb_tree *tree, void *destructor_udata)
     cf_rcrb_purge(tree, tree->root->left);
 
     /* Release the tree's memory */
-    free(tree->root);
-    free(tree->sentinel);
+    cf_free(tree->root);
+    cf_free(tree->sentinel);
 	pthread_mutex_unlock(&tree->lock);
 	memset(tree, 0, sizeof(cf_rcrb_tree)); // a little debug
     cf_rc_free(tree);
@@ -898,7 +898,7 @@ cf_rcrb_validate_lockfree( cf_rcrb_tree *tree )
 	vd.max_depth = 0;
 	vd.extra_digests = 0;
 	
-	test_data_array *da = malloc(sizeof(test_data_array) + (tree->elements * sizeof(test_data)));
+	test_data_array *da = cf_malloc(sizeof(test_data_array) + (tree->elements * sizeof(test_data)));
 	memset(da, 0,sizeof(test_data_array) + (tree->elements * sizeof(test_data)) );
 	da->alloc_sz = tree->elements;
 	vd.data_a = da;
@@ -958,7 +958,7 @@ cf_rcrb_validate( cf_rcrb_tree *tree)
 test_data_array *
 cf_rcrb_test_make_array(int n)
 {
-	test_data_array *a = malloc(sizeof(test_data_array) + (n * sizeof(test_data)));
+	test_data_array *a = cf_malloc(sizeof(test_data_array) + (n * sizeof(test_data)));
 	if (!a)	return(0);
 	
 	for (int i=0;i<n;i++) {
@@ -1194,7 +1194,7 @@ cf_rcrb_test()
 	cf_rcrb_release(tree, 0);
 	
 	// free the array
-	free(da);
+	cf_free(da);
 
 	cf_info(CF_RB, "successfully completed the RCRB test with %d elements\n",RCRB_TEST_SIZE);
 	

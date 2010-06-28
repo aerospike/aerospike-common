@@ -14,7 +14,7 @@
 // We have lots of use of basic types like uint8_t
 #include <inttypes.h>
 // Some people use ssize_t (signed size), which is in unistd.h
-#include <unistd.h>
+#include <unistd.h>                                          
 
 /* Truth and falsehood !!! use C99 bool types instead, dude !!! */
 #define FALSE 0
@@ -69,7 +69,6 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "meminfo.h"
 
 
-#define CF_MALLOC(__sz)		malloc((__sz)+0)
 
 /* cf_hash_fnv
  * The 64-bit Fowler-Noll-Voll hash function (FNV-1a) */

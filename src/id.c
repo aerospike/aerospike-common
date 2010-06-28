@@ -90,7 +90,7 @@ cf_ipaddr_get(int socket, char *nic_id, char **node_ip )
 		return(-1);
 	}
 	cf_info (CF_MISC, "Node ip: %s", cpaddr);
-	*node_ip = strdup(cpaddr);
+	*node_ip = cf_strdup(cpaddr);
 
 	return(0);
 }
@@ -160,7 +160,7 @@ cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum h
      if (hb_mode == AS_HB_MODE_MESH)
      {
      	if (*hb_addrp == NULL)
-     		*hb_addrp = strdup(*node_ipp);
+     		*hb_addrp = cf_strdup(*node_ipp);
      		
         cf_info (CF_MISC, "Heartbeat address for mesh: %s", *hb_addrp);		
      }
