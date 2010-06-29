@@ -46,6 +46,9 @@ extern void cf_queue_destroy(cf_queue *q);
 // Always pushes to the end of the queue
 extern int cf_queue_push(cf_queue *q, void *ptr);
 
+// Pushes to the head of the queue
+extern int cf_queue_push_head(cf_queue *q, void *ptr);
+
 // Get the number of elements currently in the queue
 extern int cf_queue_sz(cf_queue *q);
 
