@@ -160,8 +160,7 @@ cf_queue_unwrap(cf_queue *q)
 
 
 /* cf_queue_push
- * Push goes to the front, which currently means memcpying the entire queue contents
- * which is suck-licious
+ * 
  * */
 int
 cf_queue_push(cf_queue *q, void *ptr)
@@ -186,6 +185,60 @@ cf_queue_push(cf_queue *q, void *ptr)
 	// todo: if queues are power of 2, this can be a shift
 	memcpy(CF_Q_ELEM_PTR(q,q->write_offset), ptr, q->elementsz);
 	q->write_offset++;
+	// we're at risk of overflow if the write offset is that high
+	if (q->write_offset & 0xC0000000) cf_queue_unwrap(q);
+	
+	if (q->threadsafe)
+		pthread_cond_signal(&q->CV);
+
+	/* FIXME blow a gasket */
+	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK)))
+		return(-1);
+
+	return(0);
+}
+
+/* cf_queue_push_head
+ * Push head goes to the front, which currently means memcpying the entire queue contents
+ * which is suck-licious
+ * */
+int
+cf_queue_push_head(cf_queue *q, void *ptr)
+{
+	/* FIXME arg check - and how do you do that, boyo? Magic numbers? */
+
+	/* FIXME error */
+	if (q->threadsafe && (0 != pthread_mutex_lock(&q->LOCK)))
+			return(-1);
+
+	/* Check queue length */
+	if (CF_Q_SZ(q) == q->allocsz) {
+		/* resize is a pain for circular buffers */
+		if (0 != cf_queue_resize(q, q->allocsz * 2)) {
+			if (q->threadsafe)
+				pthread_mutex_unlock(&q->LOCK);
+			cf_warning(CF_QUEUE, "queue resize failure");
+			return(-1);
+		}
+	}
+	
+	// easy case, tail insert is head insert
+	if (q->read_offset == q->write_offset) {
+		memcpy(CF_Q_ELEM_PTR(q,q->write_offset), ptr, q->elementsz);
+		q->write_offset++;
+	}		
+	// another easy case, there's space up front
+	else if (q->read_offset > 0) {
+		q->read_offset--;
+		memcpy(CF_Q_ELEM_PTR(q,q->read_offset), ptr, q->elementsz);
+	}
+	// hard case, we're going to have to shift everything back
+	else {
+		memmove(CF_Q_ELEM_PTR(q, 1),CF_Q_ELEM_PTR(q, 0),q->elementsz * CF_Q_SZ(q) );
+		memcpy(CF_Q_ELEM_PTR(q,0), ptr, q->elementsz);		
+		q->write_offset++;
+	}	
+		
 	// we're at risk of overflow if the write offset is that high
 	if (q->write_offset & 0xC0000000) cf_queue_unwrap(q);
 	

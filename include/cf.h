@@ -214,6 +214,7 @@ extern void cf_process_daemonize();
 typedef uint64_t cf_clock;
 extern cf_clock cf_getms();
 extern cf_clock cf_clock_getabsolute();
+extern cf_clock cf_get_seconds();
 
 /* daemon.c */
 extern void cf_process_privsep(uid_t uid, gid_t gid);

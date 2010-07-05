@@ -73,7 +73,11 @@ static inline void *cf_strdup(const char *s) {
 static inline void *cf_strndup(const char *s, size_t n) {
 	return(strndup(s, n));
 }
-
+static inline void *cf_valloc(size_t sz) {
+	void *r = 0;
+	if (0 == posix_memalign( &r, 4096, sz)) return(r);
+	return(0);
+}
 #endif
 
 //
@@ -83,6 +87,7 @@ static inline void *cf_strndup(const char *s, size_t n) {
 #if 1
 
 extern void *   (*g_malloc_fn) (size_t s);
+extern int      (*g_posix_memalign_fn) (void **memptr, size_t alignment, size_t sz);
 extern void     (*g_free_fn) (void *p);
 extern void *   (*g_calloc_fn) (size_t nmemb, size_t sz);
 extern void *   (*g_realloc_fn) (void *p, size_t sz);
@@ -91,6 +96,11 @@ extern char *   (*g_strndup_fn) (const char *s, size_t n);
 
 static inline void *cf_malloc(size_t s) {
 	return(g_malloc_fn(s));
+}
+static inline void *cf_valloc(size_t sz) {
+	void *r = 0;
+	if (0 == g_posix_memalign_fn( &r, 4096, sz)) return(r);
+	return(0);
 }
 static inline void cf_free(void *p) {
 	g_free_fn(p);
@@ -127,6 +137,9 @@ static inline char *cf_strndup(const char *s, size_t n) {
 #if 0
 
 #define malloc(_x) DONTUSEMALLOC(_x)
+#define posix_memalign(__x, __y, __z) DONTUSEMEMALIGN(__x, __y, __z)
+#define memalign(__x, __y) DONTUSEMEMALIGN(__x, __y)
+#define valloc(__x) DONTUSEVALLOC(__x)
 #define free(_x)   DONTUSEFREE(_x)
 #define calloc(_x, _y) DONTUSECALLOC(_x, _y)
 #define realloc(_x, _y) DONTUSEREALLOC(_x, _y)

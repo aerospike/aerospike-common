@@ -24,3 +24,10 @@ cf_clock_getabsolute() {
 	clock_gettime(CLOCK_REALTIME, &ts);
 	return(TIMESPEC_TO_MS(ts));
 }
+
+cf_clock
+cf_get_seconds() {
+	struct timespec ts;
+	clock_gettime( CLOCK_MONOTONIC, &ts);
+	return ( ts.tv_sec );
+}

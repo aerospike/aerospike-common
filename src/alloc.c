@@ -27,6 +27,7 @@
 // #define EXTRA_CHECKS 1
 
 void *   (*g_malloc_fn) (size_t s) = 0;
+int      (*g_posix_memalign_fn) (void **memptr, size_t alignment, size_t sz);
 void     (*g_free_fn) (void *p) = 0;
 void *   (*g_calloc_fn) (size_t nmemb, size_t sz) = 0;
 void *   (*g_realloc_fn) (void *p, size_t sz) = 0;
@@ -43,6 +44,7 @@ alloc_function_init(char *so_name)
 		if (!clib_h) return(-1);
 		
 		g_malloc_fn = dlsym(clib_h, "malloc");
+		g_posix_memalign_fn = dlsym(clib_h, "posix_memalign");
 		g_free_fn = dlsym(clib_h, "free");
 		g_calloc_fn = dlsym(clib_h, "calloc");
 		g_realloc_fn = dlsym(clib_h, "realloc");
@@ -53,13 +55,14 @@ alloc_function_init(char *so_name)
 	}
 	else {
 		g_malloc_fn = malloc;
+		g_posix_memalign_fn = posix_memalign;
 		g_free_fn = free;
 		g_calloc_fn = calloc;
 		g_realloc_fn = realloc;
 		g_strdup_fn = strdup;
 		g_strndup_fn = strndup;
 	}
-	
+	return(0);	
 }
 
 
