@@ -21,18 +21,21 @@ int cf_arena_stage_add(cf_arena *arena);
 
 cf_arena *cf_arena_create(uint element_sz, uint stage_sz, uint max_stages, int flags  )
 {
+	if (max_stages == 0) max_stages = 0xff;
 	if (max_stages > 0xff)   {
-		cf_warning(CF_ARENA, "could not create arena: stage size %d out of bounds",stage_sz);
+		cf_warning(CF_ARENA, "could not create arena: too many stages: max stages %d out of bounds",max_stages);
 		return(0);
 	}
 	
+	if (stage_sz == 0) stage_sz = 0xFFFFFF;
 	if (stage_sz > 0xFFFFFF) {
-		cf_warning(CF_ARENA, "coul dnot create arena: stage size too large: %d",stage_sz);
+		cf_warning(CF_ARENA, "could not create arena: stage size too large: %d",stage_sz);
 		return(0);
 	}
 	
-	if (element_sz * stage_sz > 0xFFFFFF) {
-		cf_warning(CF_ARENA, "could not create arena, bytes per stage too large %"PRIu64,(uint64_t) element_sz * stage_sz);
+	if ( ((uint64_t)element_sz) * ((uint64_t)stage_sz) > 0xFFFFFFFFL) {
+		stage_sz = 0xFFFFFFFFL / (max_stages * element_sz);
+		//cf_warning(CF_ARENA, "could not create arena, bytes per stage too large %"PRIu64,(uint64_t) element_sz * stage_sz);
 		return(0);
 	}
 	

@@ -51,7 +51,7 @@ extern void _cf_rc_free(void *addr, char *file, int line);
 //
 // A SIMPLE WAY OF ALLOCATING MEMORY
 //
-#if 0
+#if 1
 
 #include <stdlib.h>
 
@@ -84,7 +84,7 @@ static inline void *cf_valloc(size_t sz) {
 // A COMPLCIATED WAY
 //
 
-#if 1
+#if 0
 
 extern void *   (*g_malloc_fn) (size_t s);
 extern int      (*g_posix_memalign_fn) (void **memptr, size_t alignment, size_t sz);
