@@ -41,7 +41,11 @@ alloc_function_init(char *so_name)
 	if (so_name) {
 //		void *clib_h = dlopen(so_name, RTLD_LAZY | RTLD_LOCAL );
 		void *clib_h = dlopen(so_name, RTLD_NOW | RTLD_GLOBAL );
-		if (!clib_h) return(-1);
+		if (!clib_h) {
+			cf_warning(AS_AS, " WARNING: could not initialize memory subsystem, allocator %s not found",so_name);
+			fprintf(stderr, " WARNING: could not initialize memory subsystem, allocator %s not found\n",so_name);
+			return(-1);
+		}
 		
 		g_malloc_fn = dlsym(clib_h, "malloc");
 		g_posix_memalign_fn = dlsym(clib_h, "posix_memalign");
@@ -205,7 +209,7 @@ void cf_rc_init(char *clib_path) {
 	alloc_function_init(clib_path);
 	
 	// if we're using the circus, initialize it
-	g_free_ring = g_malloc_fn( sizeof(free_ring) + (CIRCUS_SIZE * sizeof(suspect)) );
+	g_free_ring = cf_malloc( sizeof(free_ring) + (CIRCUS_SIZE * sizeof(suspect)) );
 		
 	pthread_mutex_init(&g_free_ring->LOCK, 0);
 	g_free_ring->alloc_sz = CIRCUS_SIZE;
@@ -379,7 +383,7 @@ _cf_rc_release(void *addr, bool autofree, char *file, int line)
 			cf_alloc_register_free(addr, file, line);
 #endif		
 
-		g_free_fn((void *)hdr);
+		cf_free((void *)hdr);
 	}
 
 	return(c);
@@ -395,7 +399,7 @@ _cf_rc_alloc(size_t sz, char *file, int line)
 	uint8_t *addr;
 	size_t asz = sizeof(cf_rc_hdr) + sz; // debug for stability - rounds us back to regular alignment on all systems
 
-	addr = g_malloc_fn(asz);
+	addr = cf_malloc(asz);
 	if (NULL == addr)
 		return(NULL);
 
@@ -438,7 +442,7 @@ _cf_rc_free(void *addr, char *file, int line)
 		cf_alloc_register_free(addr, file, line);
 #endif		
 	
-	g_free_fn((void *)hdr);
+	cf_free((void *)hdr);
 
 	return;
 }
