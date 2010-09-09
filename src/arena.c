@@ -16,6 +16,8 @@
 
 // #define EXTRA_CHECKS 1
 
+#define USE_MALLOC 1 // this helps debugging using valgrind 
+
 int cf_arena_stage_add(cf_arena *arena);
 
 
@@ -98,7 +100,7 @@ int cf_arena_stage_add(cf_arena *arena)
 	return(0);
 }
 
-
+#ifndef USE_MALLOC
 void * 
 cf_arena_alloc(cf_arena *arena )
 {
@@ -157,6 +159,24 @@ void cf_arena_free(cf_arena *arena, void *p)
 	if (arena->flags & CF_ARENA_MT_BIGLOCK)
 		pthread_mutex_unlock(&arena->LOCK);
 }
+#endif
+
+#ifdef USE_MALLOC
+void * 
+cf_arena_alloc(cf_arena *arena ) 
+{
+	return( cf_malloc(arena->element_sz) );	
+	
+}
+
+void 
+cf_arena_free(cf_arena *arena, void *p)
+{
+	cf_free(p);
+	
+}
+
+#endif // USE_MALLOC
 
 
 /*
