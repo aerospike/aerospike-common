@@ -16,7 +16,7 @@
 
 // #define EXTRA_CHECKS 1
 
-#define USE_MALLOC 1 // this helps debugging using valgrind 
+// #define USE_MALLOC 1 // this helps debugging using valgrind 
 
 int cf_arena_stage_add(cf_arena *arena);
 
