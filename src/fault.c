@@ -347,6 +347,11 @@ cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity)
 void
 cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const cf_fault_severity severity, const char *fn, const int line, char *msg, ...)
 {
+
+	/* Prefilter: don't construct messages we won't end up writing */
+	if (severity > cf_fault_filter[context])
+		return;
+
 	va_list argp;
 	char mbuf[1024];
 	time_t now;
@@ -354,11 +359,7 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	void *bt[CF_FAULT_BACKTRACE_DEPTH];
 	char **btstr;
 	int btn;
-
-	/* Prefilter: don't construct messages we won't end up writing */
-	if (severity > cf_fault_filter[context])
-		return;
-
+	
 	/* Set the timestamp */
 	now = time(NULL);
 	gmtime_r(&now, &nowtm);
