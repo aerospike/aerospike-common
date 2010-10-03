@@ -237,10 +237,6 @@ void cf_rc_init(char *clib_path) {
 **
 */
 
-typedef struct {
-	cf_atomic32 count;
-	uint32_t	sz;
-} cf_rc_hdr;
 
 
 
@@ -317,9 +313,9 @@ _cf_rc_reserve(void *addr, char *file, int line)
 
 /* please see the previous note about add vs addunless
 */
-	smb_mb();
+	// smb_mb();
 	int i = (int) cf_atomic32_add(&hdr->count, 1);
-	smb_mb();
+	// smb_mb();
 	return(i);
 }
 
