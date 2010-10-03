@@ -21,17 +21,19 @@ int cf_arenah_stage_add(cf_arenah *arena);
 
 cf_arenah *cf_arenah_create(uint element_sz, uint stage_sz, uint max_stages, int flags  )
 {
+	if (max_stages == 0) max_stages = 0xff;
 	if (max_stages > 0xff)   {
 		cf_warning(CF_ARENAH, "could not create arenah: stage size %d out of bounds",stage_sz);
 		return(0);
 	}
 	
+	if (stage_sz == 0) stage_sz = 0xFFFFFF;
 	if (stage_sz > 0xFFFFFF) {
 		cf_warning(CF_ARENAH, "coul dnot create arenah: stage size too large: %d",stage_sz);
 		return(0);
 	}
 	
-	if (element_sz * stage_sz > 0xFFFFFF) {
+	if ( ((uint64_t)element_sz) * ((uint64_t)stage_sz) > 0xFFFFFFFFL) {
 		cf_warning(CF_ARENAH, "could not create arenah, bytes per stage too large %"PRIu64,(uint64_t) element_sz * stage_sz);
 		return(0);
 	}
@@ -109,6 +111,9 @@ cf_arenah_alloc(cf_arenah *arena )
 		h = arena->free;
 		cf_arenah_free_element * fe = cf_arenah_resolve(arena, h);
 		arena->free = fe->next;
+		
+//		cf_arenah_handle_s *h_p = (cf_arenah_handle_s *) &h;
+//		cf_info(CF_ARENAH, "alloc: arena %p fromfree: stageid %d elementid %d",arena,h_p->stage_id,h_p->element_id);
 	}
 	// or slice out next element
 	else {
@@ -122,6 +127,9 @@ cf_arenah_alloc(cf_arenah *arena )
 		hs.element_id = arena->free_element_id;
 		arena->free_element_id++;
 		h = *(cf_arenah_handle *) &hs;
+
+//		cf_arenah_handle_s *h_p = (cf_arenah_handle_s *) &h;
+//		cf_info(CF_ARENAH, "alloc: arena %p new: stageid %d elementid %d",arena,h_p->stage_id,h_p->element_id);
 	}
 	
 	if (arena->flags & CF_ARENAH_MT_BIGLOCK)
@@ -138,6 +146,8 @@ cf_arenah_alloc(cf_arenah *arena )
 
 void cf_arenah_free(cf_arenah *arena, cf_arenah_handle h)
 {
+//	cf_arenah_handle_s *h_p = (cf_arenah_handle_s *) &h;
+//	cf_info(CF_ARENAH, "free: arena %p new: stageid %d elementid %d",arena,h_p->stage_id,h_p->element_id);
 	
 	// figure out what I'm inserting
 	cf_arenah_free_element *e = cf_arenah_resolve(arena, h);
@@ -200,11 +210,13 @@ typedef struct {
 #define TEST2_MAGIC 0x99123456
 #define TEST3_MAGIC 0x19191919
 
-void buf_set(uint8_t *buf, int len) {
+
+void arenah_buf_set(uint8_t *buf, int len) {
 	for (int i=0;i<len;i++)	buf[i] = i;
 }
 
-int buf_validate(uint8_t *buf, int len) {
+
+int arenah_buf_validate(uint8_t *buf, int len) {
 	for (int i=0;i<len;i++) if (buf[i] != i) return(-1);
 	return(0);
 }
@@ -236,7 +248,7 @@ cf_arenah_test()
 		ts->test1 = TEST1_MAGIC;
 		ts->test2 = TEST2_MAGIC;
 		ts->test3 = TEST3_MAGIC;
-		buf_set(ts->buf, sizeof(ts->buf) );
+		arenah_buf_set(ts->buf, sizeof(ts->buf) );
 		
 	}
 	
@@ -245,7 +257,7 @@ cf_arenah_test()
 		if (ts->test1 != TEST1_MAGIC)	return(-1);
 		if (ts->test2 != TEST2_MAGIC)	return(-1);
 		if (ts->test3 != TEST3_MAGIC)	return(-1);
-		if (0 != buf_validate(ts->buf, sizeof(ts->buf)));
+		if (0 != arenah_buf_validate(ts->buf, sizeof(ts->buf)));
 	}
 	
 	// free at least a few things
@@ -267,7 +279,7 @@ cf_arenah_test()
 			ts->test1 = TEST1_MAGIC;
 			ts->test2 = TEST2_MAGIC;
 			ts->test3 = TEST3_MAGIC;
-			buf_set(ts->buf, sizeof(ts->buf) );
+			arenah_buf_set(ts->buf, sizeof(ts->buf) );
 		}
 	}
 
@@ -277,7 +289,7 @@ cf_arenah_test()
 		if (ts->test1 != TEST1_MAGIC)	return(-1);
 		if (ts->test2 != TEST2_MAGIC)	return(-1);
 		if (ts->test3 != TEST3_MAGIC)	return(-1);
-		if (0 != buf_validate(ts->buf, sizeof(ts->buf)));
+		if (0 != arenah_buf_validate(ts->buf, sizeof(ts->buf)));
 	}
 	
 	// qsort - let's make sure no one got the same thing
@@ -301,7 +313,7 @@ cf_arenah_test()
 			ts->test1 = TEST1_MAGIC;
 			ts->test2 = TEST2_MAGIC;
 			ts->test3 = TEST3_MAGIC;
-			buf_set(ts->buf, sizeof(ts->buf) );
+			arenah_buf_set(ts->buf, sizeof(ts->buf) );
 		}
 	}
 
@@ -311,7 +323,7 @@ cf_arenah_test()
 		if (ts->test1 != TEST1_MAGIC)	return(-1);
 		if (ts->test2 != TEST2_MAGIC)	return(-1);
 		if (ts->test3 != TEST3_MAGIC)	return(-1);
-		if (0 != buf_validate(ts->buf, sizeof(ts->buf)));
+		if (0 != arenah_buf_validate(ts->buf, sizeof(ts->buf)));
 	}
 	
 	cf_info( CF_ARENAH, "**** arena test success!!!! *****\n");

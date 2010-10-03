@@ -197,11 +197,13 @@ typedef struct {
 #define TEST2_MAGIC 0x99123456
 #define TEST3_MAGIC 0x19191919
 
-void buf_set(uint8_t *buf, int len) {
+static
+void arena_buf_set(uint8_t *buf, int len) {
 	for (int i=0;i<len;i++)	buf[i] = i;
 }
 
-int buf_validate(uint8_t *buf, int len) {
+static
+int arena_buf_validate(uint8_t *buf, int len) {
 	for (int i=0;i<len;i++) if (buf[i] != i) return(-1);
 	return(0);
 }
@@ -233,7 +235,7 @@ cf_arena_test()
 		ts->test1 = TEST1_MAGIC;
 		ts->test2 = TEST2_MAGIC;
 		ts->test3 = TEST3_MAGIC;
-		buf_set(ts->buf, sizeof(ts->buf) );
+		arena_buf_set(ts->buf, sizeof(ts->buf) );
 		
 	}
 	
@@ -242,7 +244,7 @@ cf_arena_test()
 		if (ts->test1 != TEST1_MAGIC)	return(-1);
 		if (ts->test2 != TEST2_MAGIC)	return(-1);
 		if (ts->test3 != TEST3_MAGIC)	return(-1);
-		if (0 != buf_validate(ts->buf, sizeof(ts->buf)));
+		if (0 != arena_buf_validate(ts->buf, sizeof(ts->buf)));
 	}
 	
 	// free at least a few things
@@ -264,7 +266,7 @@ cf_arena_test()
 			ts->test1 = TEST1_MAGIC;
 			ts->test2 = TEST2_MAGIC;
 			ts->test3 = TEST3_MAGIC;
-			buf_set(ts->buf, sizeof(ts->buf) );
+			arena_buf_set(ts->buf, sizeof(ts->buf) );
 		}
 	}
 
@@ -274,7 +276,7 @@ cf_arena_test()
 		if (ts->test1 != TEST1_MAGIC)	return(-1);
 		if (ts->test2 != TEST2_MAGIC)	return(-1);
 		if (ts->test3 != TEST3_MAGIC)	return(-1);
-		if (0 != buf_validate(ts->buf, sizeof(ts->buf)));
+		if (0 != arena_buf_validate(ts->buf, sizeof(ts->buf)));
 	}
 	
 	// qsort - let's make sure no one got the same thing
@@ -298,7 +300,7 @@ cf_arena_test()
 			ts->test1 = TEST1_MAGIC;
 			ts->test2 = TEST2_MAGIC;
 			ts->test3 = TEST3_MAGIC;
-			buf_set(ts->buf, sizeof(ts->buf) );
+			arena_buf_set(ts->buf, sizeof(ts->buf) );
 		}
 	}
 
@@ -308,7 +310,7 @@ cf_arena_test()
 		if (ts->test1 != TEST1_MAGIC)	return(-1);
 		if (ts->test2 != TEST2_MAGIC)	return(-1);
 		if (ts->test3 != TEST3_MAGIC)	return(-1);
-		if (0 != buf_validate(ts->buf, sizeof(ts->buf)));
+		if (0 != arena_buf_validate(ts->buf, sizeof(ts->buf)));
 	}
 	
 	cf_info( CF_ARENA, "**** arena test success!!!! *****\n");

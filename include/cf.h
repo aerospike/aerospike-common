@@ -52,7 +52,6 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "lock.h"
 #include "queue.h"
 #include "rb.h"
-#include "arena.h"
 #include "rcrb.h"
 #include "socket.h"
 #include "msg.h"
