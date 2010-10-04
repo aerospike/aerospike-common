@@ -70,7 +70,8 @@ typedef enum {
 	AS_DRV_FILES = 37,
 	AS_DRV_SSD = 38,
 	AS_SCAN = 39,
-	CF_FAULT_CONTEXT_UNDEF = 40
+	AS_INDEX = 40,
+	CF_FAULT_CONTEXT_UNDEF = 41
 } cf_fault_context;
 
 extern char *cf_fault_context_strings[];
