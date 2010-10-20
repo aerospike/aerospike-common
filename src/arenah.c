@@ -58,6 +58,11 @@ cf_arenah *cf_arenah_create(uint element_sz, uint stage_sz, uint max_stages, int
 	arena->free_stage_id = 0;
 	arena->free_element_id = 1; // burn the first so 0:0 is never in use (null)
 	arena->stages[0] = cf_malloc(arena->stage_bytes);
+	if (0 == arena->stages[0]) {
+		cf_warning(CF_ARENAH, " could not create initial arena stage with %d bytes",arena->stage_bytes);
+		cf_free(arena);
+		return(0);
+	}
 	
 	arena->max_stages = max_stages;
 	for (uint i=1;i<max_stages;i++) {
