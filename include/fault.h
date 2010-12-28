@@ -132,6 +132,8 @@ extern int cf_fault_sink_context_strlist(int sink_id, char *context, cf_dyn_buf 
 
 extern cf_fault_sink *cf_fault_sink_get_id(int id);
 
+extern void cf_fault_sink_logroll(void);
+
 
 extern void cf_fault_event(const cf_fault_context, const cf_fault_scope, const cf_fault_severity severity, const char *fn, const int line, char *msg, ...);
 #define cf_assert(a, context, scope, severity, __msg, ...) ((void)((a) ? (void)0 : cf_fault_event((context), (scope), (severity), __func__, __LINE__, (__msg), ##__VA_ARGS__)))

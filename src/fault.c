@@ -391,6 +391,8 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 		for (int i = 0; i < cf_fault_sinks_inuse; i++) {
 			if ((severity <= cf_fault_sinks[i].limit[context]) || (CF_CRITICAL == severity)) {
 				if (0 >= write(cf_fault_sinks[i].fd, mbuf, pos)) {
+					// this is OK for a bit in case of a HUP. It's even better to queue the buffers and apply them
+					// after the hup. TODO.
 					fprintf(stderr, "internal failure in fault message write: %s\n", cf_strerror(errno));
 				}
 			}
@@ -460,6 +462,31 @@ cf_fault_sink_strlist(cf_dyn_buf *db)
 	return(0);
 }
 
+
+extern void
+cf_fault_sink_logroll(void)
+{
+	fprintf(stderr, "cf_fault: rolling log files\n");
+	for (int i = 0; i < cf_fault_sinks_inuse; i++) {
+		cf_fault_sink *s = &cf_fault_sinks[i];
+		if ((0 != strncmp(s->path,"stderr", 6)) && (s->fd > 2)) {
+
+			int fd = s->fd;
+			s->fd = -1;
+			usleep(1);
+		
+			// hopefully, the file has been relinked elsewhere - or you're OK losing it
+			unlink(s->path);
+			
+			close(fd);
+			
+			fd = open(s->path, O_WRONLY|O_CREAT|O_NONBLOCK|O_APPEND, S_IRUSR|S_IWUSR);
+			s->fd = fd;
+			
+		}
+
+	}
+}
 
 
 cf_fault_sink *cf_fault_sink_get_id(int id)
