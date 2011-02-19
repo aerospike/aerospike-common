@@ -843,9 +843,9 @@ cf_rcrb_validate_traverse( cf_rcrb_node *r, cf_rcrb_node *sentinel, int depth, i
 {
 	if (depth > vd->max_depth) vd->max_depth = depth;	
 	
-	if (r->color == color) {
-		// cf_info(CF_RB, "ILLEGAL COLOR: node %p color %d depth %d, same as parent",r,r->color,depth);
-		//return(-1);
+	if (r->color == CF_RCRB_RED && r->color == color) {
+		cf_info(CF_RB, "ILLEGAL COLOR: node %p color %d depth %d, same as parent",r,r->color,depth);
+		return(-1);
 	}
 
 	test_data_array *da = vd->data_a;	
