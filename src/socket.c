@@ -434,8 +434,9 @@ cf_ifaddr_get( cf_ifaddr **ifaddr, int *ifaddr_sz, uint8_t *buf, size_t bufsz)
 	// currently, return ipv4 only (?)
 	int n_ifs = 0;
 	while (ifa) {
-		if (ifa->ifa_addr->sa_family == AF_INET)
+		if ((ifa->ifa_addr) && (ifa->ifa_addr->sa_family == AF_INET)) {
 			n_ifs++;
+		}
 		ifa = ifa->ifa_next;
 	}
 	
@@ -450,7 +451,7 @@ cf_ifaddr_get( cf_ifaddr **ifaddr, int *ifaddr_sz, uint8_t *buf, size_t bufsz)
 	int i = 0;
 	while (ifa) {
 		
-		if (ifa->ifa_addr->sa_family == AF_INET)
+		if ((ifa->ifa_addr) && (ifa->ifa_addr->sa_family == AF_INET))
 		{
 		
 			(*ifaddr)[i].flags = ifa->ifa_flags;
