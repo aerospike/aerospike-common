@@ -66,6 +66,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "clock.h"
 #include "cf_random.h"
 #include "meminfo.h"
+#include "b64.h"
 
 
 
