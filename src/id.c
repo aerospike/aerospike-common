@@ -106,7 +106,7 @@ cf_ipaddr_get(int socket, char *nic_id, char **node_ip )
 
 // names to check, in order
 //
-char *interface_names[] = { "eth%d", "bond%d", 0 };
+char *interface_names[] = { "eth%d", "bond%d", "wlan%d", 0 };
 
 int
 cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum hb_mode, char **hb_addrp )
