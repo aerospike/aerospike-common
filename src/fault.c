@@ -366,7 +366,7 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	/* Set the timestamp */
 	now = time(NULL);
 	gmtime_r(&now, &nowtm);
-	size_t pos = strftime(mbuf, sizeof(mbuf), "%b %d %Y %T: ", &nowtm);
+	size_t pos = strftime(mbuf, sizeof(mbuf), "%b %d %Y %T %Z: ", &nowtm);
 
 	/* Set the context/scope/severity tag */
 	if (CF_CRITICAL == severity)
