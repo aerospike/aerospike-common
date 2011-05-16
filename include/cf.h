@@ -202,7 +202,7 @@ typedef uint64_t cf_node;
 extern uint32_t cf_nodeid_shash_fn(void *value);
 extern uint32_t cf_nodeid_rchash_fn(void *value, uint32_t value_len);
 typedef	enum hb_mode_enum { AS_HB_MODE_UNDEF, AS_HB_MODE_MCAST, AS_HB_MODE_MESH } hb_mode_enum;
-extern int cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum hb_mode, char **hb_addrp );
+extern int cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum hb_mode, char **hb_addrp, char **interface_names);
 extern unsigned short cf_nodeid_get_port(cf_node id);
 
 extern int cf_sort_firstk(uint64_t *v, size_t sz, int k);

@@ -106,14 +106,25 @@ cf_ipaddr_get(int socket, char *nic_id, char **node_ip )
 
 // names to check, in order
 //
-char *interface_names[] = { "eth%d", "bond%d", "wlan%d", 0 };
+char *default_interface_names[] = { "eth%d", "bond%d", "wlan%d", 0 };
 
 int
-cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum hb_mode, char **hb_addrp )
+cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum hb_mode, char **hb_addrp, char **config_interface_names)
 {
 
 	int fdesc;
 	struct ifreq req;
+
+    // The default interface names can be overridden by the interface name passed into config
+    char **interface_names = default_interface_names;
+	bool default_config = true;
+	int jlimit = 11;
+
+    if (config_interface_names) {
+		interface_names = config_interface_names;
+		default_config = false;
+		jlimit = 1;
+	}
 
 	if (0 >= (fdesc = socket(AF_INET, SOCK_STREAM, 0))) {
 		cf_warning(CF_MISC, "can't open socket: %d %s", errno, cf_strerror(errno));
@@ -125,9 +136,12 @@ cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum h
 	while ((interface_names[i]) && (done == false)) {
 		
 		int j=0;
-		while ( (done == false) && (j < 11) ) {
+		while ( (done == false) && (j < jlimit) ) {
 	
-			sprintf(req.ifr_name, interface_names[i],j);
+			if (default_config)
+				sprintf(req.ifr_name, interface_names[i],j);
+			else
+				sprintf(req.ifr_name, interface_names[i]);
 	
 			if (0 == ioctl(fdesc, SIOCGIFHWADDR, &req)) { 
 				if (cf_ipaddr_get(fdesc, req.ifr_name, node_ipp) == 0) {
@@ -145,7 +159,10 @@ cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum h
 	}
 
 	if (done == false) {
-		cf_warning(CF_MISC, "can't get physical address, tried eth and bond, fatal: %d %s", errno, cf_strerror(errno));
+		if (default_config)
+			cf_warning(CF_MISC, "can't get physical address, tried eth, bond, wlan. fatal: %d %s", errno, cf_strerror(errno));
+		else
+			cf_warning(CF_MISC, "can't get physical address of interface name specfied in config file, tried %s. fatal: %d %s", interface_names[0], errno, cf_strerror(errno));
 		close(fdesc);
 		return(-1);
 		
