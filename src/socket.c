@@ -392,12 +392,25 @@ cf_mcastsocket_init(cf_mcastsocket_cfg *ms)
 	s->saddr.sin_family = AF_INET;
 	s->saddr.sin_addr.s_addr = INADDR_ANY;
 	s->saddr.sin_port = htons(s->port);
+    if (ms->tx_addr) {
+        struct in_addr iface_in;
+        memset((char *)&iface_in,0,sizeof(iface_in));
+        iface_in.s_addr = inet_addr(ms->tx_addr);
+
+        if(setsockopt(s->sock, IPPROTO_IP, IP_MULTICAST_IF, (const char*)&iface_in, sizeof(iface_in)) == -1) {
+            cf_warning(CF_SOCKET, "IP_MULTICAST_IF: %d %s", errno, cf_strerror(errno));
+    		return(errno);
+        }
+    }
 	while (0 > (bind(s->sock, (struct sockaddr *)&s->saddr, sizeof(struct sockaddr))))
 		cf_info(CF_SOCKET, "multicast socket bind failed: %d %s", errno, cf_strerror(errno));
 
 	// Register for the multicast group
 	inet_pton(AF_INET, s->addr, &ms->ireq.imr_multiaddr.s_addr);
 	ms->ireq.imr_interface.s_addr = htonl(INADDR_ANY);
+    if (ms->tx_addr) {
+    	ms->ireq.imr_interface.s_addr = inet_addr(ms->tx_addr);
+    }
 	setsockopt(s->sock, IPPROTO_IP, IP_ADD_MEMBERSHIP, (const void *)&ms->ireq, sizeof(struct ip_mreq));
 
 	return(0);
