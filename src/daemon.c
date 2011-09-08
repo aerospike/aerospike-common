@@ -44,11 +44,13 @@ cf_process_privsep(uid_t uid, gid_t gid)
 }
 
 
-
+/* Function to daemonize the server. Fork a new child process and exit the parent process.
+ * Close all the file decsriptors opened except the ones specified in the fd_ignore_list.
+ * Redirect console messages to a file. */
 void
-cf_process_daemonize(uid_t uid, gid_t gid)
+cf_process_daemonize(int *fd_ignore_list, int list_size)
 {
-    int FD;
+    int FD, j;
     char cfile[128];
     pid_t p;
 
@@ -62,9 +64,18 @@ cf_process_daemonize(uid_t uid, gid_t gid)
     if (-1 == setsid())
         cf_crash(CF_MISC, CF_GLOBAL, CF_CRITICAL, "couldn't set session: %s", cf_strerror(errno));
 
-    /* Drop all the file descriptors */
-    for (int i = getdtablesize(); i > 2; i--)
-        close(i);
+    /* Drop all the file descriptors except the ones in fd_ignore_list*/
+    for (int i = getdtablesize(); i > 2; i--) {
+	for (j = 0; j < list_size; j++) {
+	    if (fd_ignore_list[j] == i) {
+		break;
+	    }
+	}
+	if(j ==  list_size) {
+	    close(i);
+	}
+    }
+		
 
     /* Open a temporary file for console message redirection */
     snprintf(cfile, 128, "/tmp/aerospike-console.%d", getpid());
