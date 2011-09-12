@@ -213,6 +213,7 @@ extern void cf_process_daemonize();
 /* Timekeeping */
 typedef uint64_t cf_clock;
 extern cf_clock cf_getms();
+extern cf_clock cf_getus();
 extern cf_clock cf_clock_getabsolute();
 extern cf_clock cf_get_seconds();
 
