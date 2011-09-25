@@ -31,6 +31,15 @@ histogram_create(char *name)
 	return(h);
 }
 
+void histogram_clear(histogram *h)
+{
+	cf_atomic_int_set(&h->n_counts, 0);
+
+	for (int i = 0; i < N_COUNTS; i++) {
+		cf_atomic_int_set(&h->count[i], 0);
+	}
+}
+
 void histogram_dump( histogram *h )
 {
 	char printbuf[100];
