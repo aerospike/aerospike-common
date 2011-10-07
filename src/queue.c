@@ -411,6 +411,54 @@ Found:
 	
 }
 
+
+// Iterate over all queue members calling the callback
+
+int
+cf_queue_reduce_reverse(cf_queue *q,  cf_queue_reduce_fn cb, void *udata)
+{
+	if (NULL == q)
+		return(-1);
+
+	/* FIXME error checking */
+	if (q->threadsafe && (0 != pthread_mutex_lock(&q->LOCK)))
+		return(-1);
+
+	if (CF_Q_SZ(q)) {
+
+		// it would be faster to have a local variable to hold the index,
+		// and do it in bytes or something, but a delete
+		// will change the read and write offset, so this is simpler for now
+		// can optimize if necessary later....
+
+		for (uint i = q->write_offset - 1 ;
+			 i >= q->read_offset ;
+			 i--)
+		{
+
+			int rv = cb(CF_Q_ELEM_PTR(q, i), udata);
+
+			// rv == 0 i snormal case, just increment to next point
+			if (rv == -1) {
+				break; // found what it was looking for
+			}
+			else if (rv == -2) { // delete!
+				cf_queue_delete_offset(q, i);
+				goto Found;
+			}
+		};
+	}
+
+Found:
+	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK))) {
+		fprintf(stderr, "unlock failed\n");
+		return(-1);
+	}
+
+	return(0);
+
+}
+
 // Special case: delete elements from the queue
 // pass 'true' as the 'only_one' parameter if you know there can be only one element
 // with this value on the queue
