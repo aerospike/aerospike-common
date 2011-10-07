@@ -433,8 +433,11 @@ cf_queue_delete(cf_queue *q, void *buf, bool only_one)
 			 i < q->write_offset ;
 			 i++)
 		{
+
+			int rv = 0;
 			
-			int rv = memcmp(CF_Q_ELEM_PTR(q,i), buf, q->elementsz);
+			if (buf) // if buf is null, delete all
+				rv = memcmp(CF_Q_ELEM_PTR(q,i), buf, q->elementsz);
 			
 			if (rv == 0) { // delete!
 				cf_queue_delete_offset(q, i);
@@ -456,6 +459,9 @@ Done:
 		return(CF_QUEUE_OK);
 }
 
+int cf_queue_delete_all(cf_queue *q) {
+	return cf_queue_delete(q, NULL, false);
+}
 
 //
 // Priority queue implementation

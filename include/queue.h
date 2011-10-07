@@ -87,6 +87,8 @@ extern int cf_queue_reduce(cf_queue *q, cf_queue_reduce_fn cb, void *udata);
 // a simple delete function
 extern int cf_queue_delete(cf_queue *q, void *buf, bool only_one);
 
+extern int cf_queue_delete_all(cf_queue *q);
+
 
 //
 // A simple priority queue implementation, which is simply a set of queues
