@@ -430,6 +430,7 @@ cf_queue_reduce_reverse(cf_queue *q,  cf_queue_reduce_fn cb, void *udata)
 		// and do it in bytes or something, but a delete
 		// will change the read and write offset, so this is simpler for now
 		// can optimize if necessary later....
+		// Iterate over all queue members calling the callback
 
 		for (uint i = q->write_offset - 1 ;
 			 i >= q->read_offset ;
@@ -663,6 +664,142 @@ cf_queue_priority_sz(cf_queue_priority *q)
 }
 
 
+// Iterate over all queue members calling the callback
+
+int
+cf_queue_priority_reduce_pop(cf_queue_priority *priority_q,  void *buf, int ms_wait, cf_queue_reduce_fn cb, void *udata)
+{
+	if (NULL == priority_q)
+		return(-1);
+
+	/* FIXME error checking */
+	if (priority_q->threadsafe && (0 != pthread_mutex_lock(&priority_q->LOCK)))
+		return(-1);
+
+	int rv = 0;
+
+	cf_queue *queues[3];
+	queues[0] = priority_q->high_q;
+	queues[1] = priority_q->medium_q;
+	queues[2] = priority_q->low_q;
+
+	cf_queue *q;
+	int found_index = -1;
+
+	for (int q_itr = 0; q_itr < 3; q_itr++)
+	{
+		q = queues[q_itr];
+
+		if (CF_Q_SZ(q)) {
+
+			// it would be faster to have a local variable to hold the index,
+			// and do it in bytes or something, but a delete
+			// will change the read and write offset, so this is simpler for now
+			// can optimize if necessary later....
+
+			for (uint i = q->read_offset ;
+					i < q->write_offset ;
+					i++)
+			{
+
+				rv = cb(CF_Q_ELEM_PTR(q, i), udata);
+
+				// rv == 0 is normal case, just increment to next point
+				if (rv == -1) {
+					found_index = i;
+					break; // found what it was looking for, so break
+				}
+				else if (rv == -2) {
+					// found new candidate, but keep looking for one better
+					found_index = i;
+				}
+
+			};
+
+			break; // only traverse the highest priority q
+		}
+	}
+
+	if (found_index >= 0) {
+		// found an element, so memcpy to buf, delete from q, and return
+		memcpy(buf, CF_Q_ELEM_PTR(q, found_index), q->elementsz);
+		cf_queue_delete_offset(q, found_index);
+	}
+
+	if (priority_q->threadsafe && (0 != pthread_mutex_unlock(&priority_q->LOCK))) {
+		fprintf(stderr, "unlock failed\n");
+		return(-1);
+	}
+
+	if (found_index == -1 && ms_wait != CF_QUEUE_NOWAIT) {
+		// didn't find anything in the reduce fn, so do a normal q pop
+		cf_queue_priority_pop(priority_q, buf, ms_wait);
+	}
+
+	return(0);
+
+}
+
+
+// Special case: delete elements from the queue
+// pass 'true' as the 'only_one' parameter if you know there can be only one element
+// with this value on the queue
+
+int
+cf_queue_priority_delete(cf_queue_priority *priority_q, void *buf, bool only_one)
+{
+	if (NULL == priority_q)
+		return(CF_QUEUE_ERR);
+
+	/* FIXME error checking */
+	if (priority_q->threadsafe && (0 != pthread_mutex_lock(&priority_q->LOCK)))
+		return(CF_QUEUE_ERR);
+
+	bool found = false;
+
+	int rv = 0;
+
+	cf_queue *queues[3];
+	queues[0] = priority_q->high_q;
+	queues[1] = priority_q->medium_q;
+	queues[2] = priority_q->low_q;
+
+	for (int q_itr = 0; q_itr < 3; q_itr++)
+	{
+		cf_queue *q = queues[q_itr];
+
+		if (CF_Q_SZ(q)) {
+
+			for (uint i = q->read_offset ;
+					i < q->write_offset ;
+					i++)
+			{
+
+				rv = 0;
+
+				if (buf) // if buf is null, delete all
+					rv = memcmp(CF_Q_ELEM_PTR(q,i), buf, q->elementsz);
+
+				if (rv == 0) { // delete!
+					cf_queue_delete_offset(q, i);
+					found = true;
+					if (only_one == true)	goto Done;
+				}
+			};
+		}
+	}
+
+Done:
+	if (priority_q->threadsafe && (0 != pthread_mutex_unlock(&priority_q->LOCK))) {
+		fprintf(stderr, "unlock failed\n");
+		return(-1);
+	}
+
+	if (found == false)
+		return(CF_QUEUE_EMPTY);
+	else
+		return(CF_QUEUE_OK);
+}
 
 //
 // Test code
