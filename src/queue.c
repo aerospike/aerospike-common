@@ -664,7 +664,13 @@ cf_queue_priority_sz(cf_queue_priority *q)
 }
 
 
-// Iterate over all queue members calling the callback
+// Use the callback function to choose which element to pop. Callback
+// returns -1 when you know you want to pop the element, returns -2 when
+// the element is the best candidate for popping found so far but you want
+// to keep looking, and returns 0 when you are not interested in popping
+// the element. You then pop the best candidate you've found - either the
+// "-1 case" or the last "-2 case". If you have not found a suitable candidate,
+// regular cf_queue_priority_pop is called.
 
 int
 cf_queue_priority_reduce_pop(cf_queue_priority *priority_q,  void *buf, int ms_wait, cf_queue_reduce_fn cb, void *udata)
