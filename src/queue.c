@@ -663,17 +663,17 @@ cf_queue_priority_sz(cf_queue_priority *q)
 	return(rv);
 }
 
-
-// Use the callback function to choose which element to pop. Callback
-// returns -1 when you know you want to pop the element, returns -2 when
+// Use this function to find an element to pop from the queue using a reduce
+// callback function. Have the callback function
+// return -1 when you know you want to pop the element, returns -2 when
 // the element is the best candidate for popping found so far but you want
 // to keep looking, and returns 0 when you are not interested in popping
 // the element. You then pop the best candidate you've found - either the
 // "-1 case" or the last "-2 case". If you have not found a suitable candidate,
-// regular cf_queue_priority_pop is called.
+// CF_QUEUE_NOMATCH is returned;
 
 int
-cf_queue_priority_reduce_pop(cf_queue_priority *priority_q,  void *buf, int ms_wait, cf_queue_reduce_fn cb, void *udata)
+cf_queue_priority_reduce_pop(cf_queue_priority *priority_q,  void *buf, cf_queue_reduce_fn cb, void *udata)
 {
 	if (NULL == priority_q)
 		return(-1);
@@ -737,10 +737,8 @@ cf_queue_priority_reduce_pop(cf_queue_priority *priority_q,  void *buf, int ms_w
 		return(-1);
 	}
 
-	if (found_index == -1 && ms_wait != CF_QUEUE_NOWAIT) {
-		// didn't find anything in the reduce fn, so do a normal q pop
-		cf_queue_priority_pop(priority_q, buf, ms_wait);
-	}
+	if (found_index == -1)
+		return(CF_QUEUE_NOMATCH);
 
 	return(0);
 
@@ -806,6 +804,7 @@ Done:
 	else
 		return(CF_QUEUE_OK);
 }
+
 
 //
 // Test code
