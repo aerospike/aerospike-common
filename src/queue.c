@@ -665,12 +665,12 @@ cf_queue_priority_sz(cf_queue_priority *q)
 
 // Use this function to find an element to pop from the queue using a reduce
 // callback function. Have the callback function
-// return -1 when you know you want to pop the element, returns -2 when
-// the element is the best candidate for popping found so far but you want
+// return -1 when you know you want to pop the element immediately, returns -2
+// when the element is the best candidate for popping found so far but you want
 // to keep looking, and returns 0 when you are not interested in popping
 // the element. You then pop the best candidate you've found - either the
 // "-1 case" or the last "-2 case". If you have not found a suitable candidate,
-// CF_QUEUE_NOMATCH is returned;
+// CF_QUEUE_NOMATCH is returned.
 
 int
 cf_queue_priority_reduce_pop(cf_queue_priority *priority_q,  void *buf, cf_queue_reduce_fn cb, void *udata)
@@ -742,67 +742,6 @@ cf_queue_priority_reduce_pop(cf_queue_priority *priority_q,  void *buf, cf_queue
 
 	return(0);
 
-}
-
-
-// Special case: delete elements from the queue
-// pass 'true' as the 'only_one' parameter if you know there can be only one element
-// with this value on the queue
-
-int
-cf_queue_priority_delete(cf_queue_priority *priority_q, void *buf, bool only_one)
-{
-	if (NULL == priority_q)
-		return(CF_QUEUE_ERR);
-
-	/* FIXME error checking */
-	if (priority_q->threadsafe && (0 != pthread_mutex_lock(&priority_q->LOCK)))
-		return(CF_QUEUE_ERR);
-
-	bool found = false;
-
-	int rv = 0;
-
-	cf_queue *queues[3];
-	queues[0] = priority_q->high_q;
-	queues[1] = priority_q->medium_q;
-	queues[2] = priority_q->low_q;
-
-	for (int q_itr = 0; q_itr < 3; q_itr++)
-	{
-		cf_queue *q = queues[q_itr];
-
-		if (CF_Q_SZ(q)) {
-
-			for (uint i = q->read_offset ;
-					i < q->write_offset ;
-					i++)
-			{
-
-				rv = 0;
-
-				if (buf) // if buf is null, delete all
-					rv = memcmp(CF_Q_ELEM_PTR(q,i), buf, q->elementsz);
-
-				if (rv == 0) { // delete!
-					cf_queue_delete_offset(q, i);
-					found = true;
-					if (only_one == true)	goto Done;
-				}
-			};
-		}
-	}
-
-Done:
-	if (priority_q->threadsafe && (0 != pthread_mutex_unlock(&priority_q->LOCK))) {
-		fprintf(stderr, "unlock failed\n");
-		return(-1);
-	}
-
-	if (found == false)
-		return(CF_QUEUE_EMPTY);
-	else
-		return(CF_QUEUE_OK);
 }
 
 

@@ -123,9 +123,6 @@ extern int cf_queue_priority_sz(cf_queue_priority *q);
 
 extern int cf_queue_priority_reduce_pop(cf_queue_priority *q, void *buf, cf_queue_reduce_fn cb, void *udata);
 
-// The most common reason to want to 'reduce' is delete - so provide
-// a simple delete function
-extern int cf_queue_priority_delete(cf_queue_priority *q, void *buf, bool only_one);
 
 //
 // Call this function to do a set of internal validation unit tests
