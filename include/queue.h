@@ -35,7 +35,7 @@ typedef struct cf_queue_s {
 
 // todo: maybe it's faster to keep the read and write offsets in bytes,
 // to avoid the extra multiply?
-#define CF_Q_ELEM_PTR(__q, __i) (&q->queue[ (__i % __q->allocsz) * q->elementsz ] )
+#define CF_Q_ELEM_PTR(__q, __i) (&__q->queue[ (__i % __q->allocsz) * __q->elementsz ] )
 
 
 /* External functions */
@@ -55,10 +55,12 @@ extern int cf_queue_sz(cf_queue *q);
 
 
 
-// POP pops from the end of the queue, which is the most efficient
-// But understand this makes it LIFO, the least fair of queues
-// Elements added at the very beginning might not make it out
+// POP pops from the *beginning* of the queue (making the queue FIFO, the
+// fairest of all queues). Although this is slightly lower performing
+// than LIFO, this is a very good thing for consistently of transaction
+// performance.
 
+#define CF_QUEUE_NOMATCH -3 // used in cf_queue_priority_reduce_pop
 #define CF_QUEUE_EMPTY -2
 #define CF_QUEUE_ERR -1
 #define CF_QUEUE_OK 0
@@ -81,11 +83,14 @@ extern int cf_queue_pop(cf_queue *q, void *buf, int mswait);
 typedef int (*cf_queue_reduce_fn) (void *buf, void *udata);
 
 extern int cf_queue_reduce(cf_queue *q, cf_queue_reduce_fn cb, void *udata);
+extern int cf_queue_reduce_reverse(cf_queue *q, cf_queue_reduce_fn cb, void *udata);
 
 //
 // The most common reason to want to 'reduce' is delete - so provide
 // a simple delete function
 extern int cf_queue_delete(cf_queue *q, void *buf, bool only_one);
+
+extern int cf_queue_delete_all(cf_queue *q);
 
 
 //
@@ -116,6 +121,7 @@ extern int cf_queue_priority_push(cf_queue_priority *q, void *ptr, int pri);
 extern int cf_queue_priority_pop(cf_queue_priority *q, void *buf, int mswait);
 extern int cf_queue_priority_sz(cf_queue_priority *q);
 
+extern int cf_queue_priority_reduce_pop(cf_queue_priority *q, void *buf, cf_queue_reduce_fn cb, void *udata);
 
 
 //

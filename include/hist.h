@@ -52,6 +52,7 @@ typedef struct histogram_measure_s {
 
 
 extern histogram * histogram_create(char *name);
+extern void histogram_clear(histogram *h);
 extern void histogram_dump( histogram *h );  // for debugging, dumps to stderr
 extern void histogram_start( histogram *h, histogram_measure *hm);
 extern void histogram_stop(histogram *h, histogram_measure *hm);

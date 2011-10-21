@@ -207,7 +207,7 @@ extern unsigned short cf_nodeid_get_port(cf_node id);
 
 extern int cf_sort_firstk(uint64_t *v, size_t sz, int k);
 
-extern void cf_process_daemonize();
+extern void cf_process_daemonize(int *fd_ignore_list, int list_size);
 
 
 /* Timekeeping */
