@@ -96,7 +96,7 @@ typedef struct linear_histogram_counts_s {
 } linear_histogram_counts;
 
 typedef struct linear_histogram_s {
-	char name[64];
+	char name[512];
 	uint64_t start;
 	uint64_t offset20;
 	cf_atomic_int n_counts;
