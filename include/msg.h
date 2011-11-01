@@ -42,7 +42,8 @@ typedef enum msg_type_t {
 	M_TYPE_INFO = 8,
 	M_TYPE_SCAN = 9,
 	M_TYPE_BATCH = 10,
-	M_TYPE_MAX = 11  /* highest + 1 is correct */
+	M_TYPE_XDS = 11,
+	M_TYPE_MAX = 12  /* highest + 1 is correct */
 } msg_type;
 
 
