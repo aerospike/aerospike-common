@@ -80,6 +80,8 @@ hist_getcycles()
  * Linear histogram partitions the values into 20 buckets, < 5%, < 10%, < 15%, ..., < 95%, rest
  */
 
+#define HISTOGRAM_NAME_SIZE 512
+
 #define LINEAR_N_COUNTS 20
 
 //
@@ -96,7 +98,7 @@ typedef struct linear_histogram_counts_s {
 } linear_histogram_counts;
 
 typedef struct linear_histogram_s {
-	char name[64];
+	char name[HISTOGRAM_NAME_SIZE];
 	uint64_t start;
 	uint64_t offset20;
 	cf_atomic_int n_counts;
