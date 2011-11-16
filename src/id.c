@@ -187,6 +187,8 @@ cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum h
 	
 	memcpy( ((byte *)id) + 6, &port, 2);
 
+	cf_info(CF_MISC, "Node id %"PRIx64, *id);
+
 	cf_debug(CF_MISC, "port %d id %"PRIx64, port, *id);
 
 	return(0);
