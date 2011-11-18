@@ -400,8 +400,7 @@ cf__rbuffer_startseek(cf_rbuffer *rbuf_des, int mode)
 		num_seg++;
 	}
 
-//	RBTRACE(RDES, info, "cf__rbuffer_startseek: Moved [sptr::rptr] from [%d:%ld::%d:%ld] to ", 
-	fprintf(stderr, "cf__rbuffer_startseek: Moved [sptr::rptr] from [%d:%ld::%d:%ld] to ", 
+	RBTRACE(RDES, info, "cf__rbuffer_startseek: Moved [sptr::rptr] from [%d:%ld::%d:%ld] to ", 
 					CHDR.sptr.fidx, CHDR.sptr.seg_id, CHDR.rptr.fidx, 
 					CHDR.rptr.seg_id);
 
@@ -416,8 +415,7 @@ cf__rbuffer_startseek(cf_rbuffer *rbuf_des, int mode)
 		RDES->rctx.ptr.seg_id = segid;
 	}
 
-	//RBTRACE(RDES, info, "[%d:%ld::%d:%ld::%d:%ld] mode:%d\n", CHDR.sptr.fidx, CHDR.sptr.seg_id, 
-	fprintf(stderr, "[%d:%ld::%d:%ld::%d:%ld] mode:%d\n", CHDR.sptr.fidx, CHDR.sptr.seg_id, 
+	RBTRACE(RDES, info, "[%d:%ld::%d:%ld::%d:%ld] mode:%d\n", CHDR.sptr.fidx, CHDR.sptr.seg_id, 
 					CHDR.rptr.fidx, CHDR.rptr.seg_id, RDES->wctx.ptr.fidx, 
 					RDES->wctx.ptr.seg_id, mode);
 
