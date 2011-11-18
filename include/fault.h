@@ -74,7 +74,8 @@ typedef enum {
 	AS_BATCH = 41,
 	AS_TRIAL = 42,
 	AS_XDS = 43,
-	CF_FAULT_CONTEXT_UNDEF = 44
+	CF_RBUFFER = 44,
+	CF_FAULT_CONTEXT_UNDEF = 45
 } cf_fault_context;
 
 extern char *cf_fault_context_strings[];

@@ -22,6 +22,7 @@
 
 
 #define RBUFFER_MAX_FILES 				4
+#define RBUFFER_MAX_FILENAME			256
 
 // Pointers in Ring Buffer
 typedef struct cf_rbuffer_pointer_s {
@@ -56,6 +57,7 @@ typedef struct cf_rbuffer_chdr_s {
 typedef struct cf_rbuffer_hdr_s {
 	uint64_t			fsize;	// Size
 	uint8_t				fidx;	// Index [in case of multiple files]
+	char 				fname[RBUFFER_MAX_FILENAME];
 	cf_rbuffer_ptr		sseg;	// Start  
 	cf_rbuffer_ptr		nseg;	// Next Segment [after current file]
 	cf_rbuffer_ptr		pseg;	// Prev Segment [before current file]
@@ -115,10 +117,11 @@ extern bool 			cf_rbuffer_reinit(cf_rbuffer *, cf_rbuffer_config *);
 extern bool 			cf_rbuffer_close(cf_rbuffer *);
 extern int 				cf_rbuffer_read(cf_rbuffer *, cf_rbuffer_ctx*, char *, int);
 extern int 				cf_rbuffer_write(cf_rbuffer *, char *, int);
-extern cf_rbuffer_ctx*	cf_rbuffer_getctx(cf_rbuffer *, bool read);
-extern int 				cf_rbuffer_seek(cf_rbuffer *, cf_rbuffer_ctx *, int, bool);
+extern cf_rbuffer_ctx*	cf_rbuffer_getsetctx(cf_rbuffer *, cf_rbuffer_ctx *, int);
+extern int 				cf_rbuffer_seek(cf_rbuffer *, cf_rbuffer_ctx *, int, int);
 extern int				cf_rbuffer_persist(cf_rbuffer *);
 extern bool 			cf__rbuffer_fflush(cf_rbuffer *);
+extern void 			cf_rbuffer_closectx(cf_rbuffer_ctx*);
 
 // Test
 extern int cf_rbuffer_test1(uint64_t);
@@ -126,5 +129,7 @@ extern int cf_rbuffer_test2(uint64_t);
 extern int cf_rbuffer_test3(uint64_t);
 extern int cf_rbuffer_test4(uint64_t);
 extern int cf_rbuffer_test5(uint64_t);
+extern int cf_rbuffer_test6(uint64_t);
+extern int cf_rbuffer_test7(uint64_t);
 
 
