@@ -43,7 +43,7 @@ do{										\
 
 #define RBTRACE(rb, type, ...)					\
 	RBUFFER_ASSERT((rb->chdr.flag & RBUFFER_FLAG_TRACE),	\
-				cf_debug, __VA_ARGS__);
+				cf_ ##type, __VA_ARGS__);
 
 //#define RBTRACE(rb, type, ...) if (rb->chdr.flag & RBUFFER_FLAG_TRACE) fprintf(stderr, __VA_ARGS__);
 
@@ -85,8 +85,8 @@ cf_rbuffer_persist(cf_rbuffer *rbuf_des)
 
 	RBUFFER_ASSERT((CHDR.nfiles > 1), cf_warning, "More than one file configured, illegal conf");
 	
-	RBTRACE(RDES, info, 
-			"cf_rbuffer_persist: Stats [%ld:%ld:%ld:%ld]\n", RDES->read_stat, RDES->write_stat, RDES->fwstat, RDES->frstat);
+	RBTRACE(RDES, debug, 
+			"Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwstat, RDES->frstat);
 
 	// Update pointer on the header. Acquire write lock
 	// first then read lock.
@@ -143,7 +143,7 @@ cf__rbuffer_sanity(cf_rbuffer * rbuf_des)
 			|| (HDR(0).nseg.seg_id != HDR(0).sseg.seg_id)
 			|| (HDR(0).nseg.rec_id != HDR(0).sseg.rec_id))	
 		{
-			RBTRACE(RDES, warning, "cf__rbuffer_sanity: Sanity Check 2 Failed \n");
+			RBTRACE(RDES, warning, "Sanity Check 2 Failed");
 			return false;
 		}
 
@@ -152,7 +152,7 @@ cf__rbuffer_sanity(cf_rbuffer * rbuf_des)
 			|| (HDR(0).pseg.seg_id != HDR(0).sseg.seg_id)
 			|| (HDR(0).pseg.rec_id != HDR(0).sseg.rec_id))	
 		{
-			RBTRACE(RDES, warning, "cf__rbuffer_sanity: Sanity Check 3 Failed \n");
+			RBTRACE(RDES, warning, "Sanity Check 3 Failed");
 			return false;
 		}
 	}
@@ -166,7 +166,7 @@ cf__rbuffer_sanity(cf_rbuffer * rbuf_des)
 			|| (CHDR.sptr.seg_id != HDR(CHDR.sptr.fidx).sseg.seg_id)
 			|| (CHDR.sptr.rec_id != HDR(CHDR.sptr.fidx).sseg.rec_id))	
 		{
-			RBTRACE(RDES, warning, "cf__rbuffer_sanity: Sanity Check 4 Failed \n");
+			RBTRACE(RDES, warning, "Sanity Check 4 Failed");
 			return false;
 		}
 
@@ -178,7 +178,7 @@ cf__rbuffer_sanity(cf_rbuffer * rbuf_des)
 			if ((HDR(i).fidx != HDR(i).sseg.fidx) 
 				|| (HDR(i).nseg.fidx != HDR(next).sseg.fidx))
 			{
-				RBTRACE(RDES, warning, "cf__rbuffer_sanity: Sanity Check 5 Failed \n");
+				RBTRACE(RDES, warning, "Sanity Check 5 Failed");
 				return false;
 			}
 			i++;
@@ -301,7 +301,7 @@ cf__rbuffer_rseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_seg, bool f
 	{
 		goto rseek_err;
 	}
-	RBTRACE(RDES, info, "cf__rbuffer_rseek: Read seek from [%d:%ld:%ld] to [%d:%ld:0] [%d:%ld] [%d:%ld]\n", 
+	RBTRACE(RDES, debug, "Read seek from [%d:%ld:%ld] to [%d:%ld:0] [%d:%ld] [%d:%ld]", 
 					ctx->ptr.fidx, ctx->ptr.seg_id, ctx->ptr.rec_id, fidx, seg_id,
 					CHDR.sptr.fidx, CHDR.sptr.seg_id, RDES->wctx.ptr.fidx, RDES->wctx.ptr.seg_id);
 	ctx->ptr.fidx = fidx;
@@ -400,7 +400,7 @@ cf__rbuffer_startseek(cf_rbuffer *rbuf_des, int mode)
 		num_seg++;
 	}
 
-	RBTRACE(RDES, info, "cf__rbuffer_startseek: Moved [sptr::rptr] from [%d:%ld::%d:%ld] to ", 
+	RBTRACE(RDES, debug, "Moved [sptr::rptr] from [%d:%ld::%d:%ld] to ", 
 					CHDR.sptr.fidx, CHDR.sptr.seg_id, CHDR.rptr.fidx, 
 					CHDR.rptr.seg_id);
 
@@ -415,7 +415,7 @@ cf__rbuffer_startseek(cf_rbuffer *rbuf_des, int mode)
 		RDES->rctx.ptr.seg_id = segid;
 	}
 
-	RBTRACE(RDES, info, "[%d:%ld::%d:%ld::%d:%ld] mode:%d\n", CHDR.sptr.fidx, CHDR.sptr.seg_id, 
+	RBTRACE(RDES, debug, "[%d:%ld::%d:%ld::%d:%ld] mode:%d", CHDR.sptr.fidx, CHDR.sptr.seg_id, 
 					CHDR.rptr.fidx, CHDR.rptr.seg_id, RDES->wctx.ptr.fidx, 
 					RDES->wctx.ptr.seg_id, mode);
 
@@ -446,7 +446,7 @@ cf__rbuffer_wseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 	uint64_t	fidx;
 	int			check = 0;
 
-	RBTRACE(RDES, info, "cf__rbuffer_wseek: Write seek from [%d:%ld:%ld]", ctx->ptr.fidx, ctx->ptr.seg_id,ctx->ptr.rec_id);
+	RBTRACE(RDES, debug, "Write seek from [%d:%ld:%ld]", ctx->ptr.fidx, ctx->ptr.seg_id,ctx->ptr.rec_id);
 	do 
 	{
 		segid = ctx->ptr.seg_id;
@@ -484,7 +484,7 @@ cf__rbuffer_wseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 				|| (fidx > HDR(fidx).nseg.fidx))
 			{
 				CHDR.version++;
-				RBTRACE(RDES, info, "Increment version %ld %ld to %d\n",segid, HDR(fidx).sseg.seg_id,CHDR.version);
+				RBTRACE(RDES, debug, "Increment version %ld %ld to %d",segid, HDR(fidx).sseg.seg_id,CHDR.version);
 			}
 			
 			// Move to nseg perform the checks again
@@ -496,11 +496,11 @@ cf__rbuffer_wseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 		check++;
 	} while (check < 1);
 
-	RBTRACE(RDES, info, "cf__rbuffer_wseek: Write seek from [%d:%ld]", ctx->ptr.fidx, ctx->ptr.seg_id);
+	RBTRACE(RDES, debug, "Write seek from [%d:%ld]", ctx->ptr.fidx, ctx->ptr.seg_id);
 	ctx->ptr.fidx = fidx;
 	ctx->ptr.seg_id = segid; 
 	ctx->ptr.rec_id	= 0;
-	RBTRACE(RDES, info, " to %d:%ld:%ld @ %d:%ld %d:%ld:%ld\n", ctx->ptr.fidx, ctx->ptr.seg_id, ctx->ptr.rec_id, CHDR.sptr.fidx, CHDR.sptr.seg_id, 
+	RBTRACE(RDES, debug, " to %d:%ld:%ld @ %d:%ld %d:%ld:%ld", ctx->ptr.fidx, ctx->ptr.seg_id, ctx->ptr.rec_id, CHDR.sptr.fidx, CHDR.sptr.seg_id, 
 					rbuf_des->rctx.ptr.fidx, rbuf_des->rctx.ptr.seg_id, rbuf_des->rctx.ptr.rec_id);
 	cf__rbuffer_sanity(rbuf_des);
 
@@ -560,7 +560,7 @@ cf_rbuffer_fflush(cf_rbuffer *rbuf_des)
 	}
 	fflush(ctx->fd);
 	
-	RBTRACE(RDES, info, "cf__rbuffer_fflush: Write [file:%d offset:%d seg_id:%ld rec_id:%d size:%d:version:%d] %d\n", 
+	RBTRACE(RDES, debug, "Write [file:%d offset:%d seg_id:%ld rec_id:%d size:%d:version:%d] %d", 
 						ctx->ptr.fidx, offset, ctx->ptr.seg_id, ctx->buf.num_recs, RBUFFER_SEG_SIZE,
 						ctx->buf.version, ctx->buf.magic);
 
@@ -610,7 +610,7 @@ cf__rbuffer_fwrite(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 		
 	fflush(ctx->fd);
 	
-	RBTRACE(RDES, info, "cf__rbuffer_fwrite: Write [file:%d offset:%d seg_id:%ld max_recs:%d, num_recs:%d, rec_id:%ld size:%d:version:%d] %d\n", 
+	RBTRACE(RDES, debug, "Write [file:%d offset:%d seg_id:%ld max_recs:%d, num_recs:%d, rec_id:%ld size:%d:version:%d] %d", 
 						ctx->ptr.fidx, offset, ctx->ptr.seg_id, MAX_RECS, ctx->buf.num_recs, ctx->ptr.rec_id, RBUFFER_SEG_SIZE,
 						ctx->buf.version, ctx->buf.magic);
 
@@ -664,14 +664,14 @@ cf__rbuffer_fread(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 	if (ret != 1)
 	{
 		pthread_mutex_unlock(&RDES->mlock);
-		RBTRACE(RDES, warning, "cf__rbuffer_fread: Fread failed with error %d %d\n", ferror(ctx->fd), feof(ctx->fd));
+		RBTRACE(RDES, warning, "Fread failed with error %d %d", ferror(ctx->fd), feof(ctx->fd));
 		return 0;
 	}
 
 	if (ctx->buf.magic != RBUFFER_SEG_MAGIC)
 	{
 		pthread_mutex_unlock(&RDES->mlock);
-		RBTRACE(RDES, warning, "cf__rbuffer_fread: Read Buffer with Bad Magic\n");
+		RBTRACE(RDES, warning, "Read Buffer with Bad Magic");
 		return 0;
 	}
 	
@@ -682,7 +682,7 @@ cf__rbuffer_fread(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 		if (ctx->version > ctx->buf.version)
 		{
 			pthread_mutex_unlock(&RDES->mlock);
-			RBTRACE(RDES, warning, "cf__rbuffer_fread: Read context at the invalid verstion\n");
+			RBTRACE(RDES, warning, "Read context at the invalid verstion");
 			return -1;
 		}
 		else
@@ -691,8 +691,7 @@ cf__rbuffer_fread(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 		}
 	}
 
-//	printf("cf__rbuffer_fread: Read [file:%d offset:%d seg_id:%ld max_recs:%d num_recs:%d rec_id:%ld size:%d] %d\n",
-	RBTRACE(RDES, info, "cf__rbuffer_fread: Read [file:%d offset:%d seg_id:%ld max_recs:%d num_recs:%d rec_id:%ld size:%d] %d\n",
+	RBTRACE(RDES, debug, "Read [file:%d offset:%d seg_id:%ld max_recs:%d num_recs:%d rec_id:%ld size:%d] %d",
 					ctx->ptr.fidx, offset, ctx->ptr.seg_id, MAX_RECS, ctx->buf.num_recs, ctx->ptr.rec_id, RBUFFER_SEG_SIZE, ctx->buf.magic);
 
 	RDES->frstat++;
@@ -800,7 +799,7 @@ cf__rbuffer_setup(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 
 	if (!ret)
 	{
-		RBTRACE(RDES, warning, "cf__rbuffer_setup: Setting up write buffer failed\n");
+		RBTRACE(RDES, debug, "Setting up write buffer failed");
 	}
 	memset(&RDES->rctx.buf, 0, sizeof(cf_rbuffer_seg));
 
@@ -1135,7 +1134,7 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 			return -1;
 	}
 
-	RBTRACE(RDES, info, "%d move %d with max(%d) from %ld:%ld ",forward, num_recs, MAX_RECS, ctx->ptr.seg_id, ctx->ptr.rec_id);
+	RBTRACE(RDES, debug, "%d move %d with max(%d) from %ld:%ld ",forward, num_recs, MAX_RECS, ctx->ptr.seg_id, ctx->ptr.rec_id);
 	if (forward)
 	{
 		if (num_recs > (MAX_RECS - ctx->ptr.rec_id))
@@ -1147,7 +1146,7 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 
 			if (!num_seg || (num_seg != cf__rbuffer_rseek(rbuf_des, ctx, num_seg, forward)))
 			{
-				RBTRACE(RDES, info, " gives %ld and reaches nowhere\n", num_seg);
+				RBTRACE(RDES, debug, " gives %ld and reaches nowhere", num_seg);
 				return 0;
 			}
 			ctx->ptr.rec_id = temp_recid;
@@ -1168,7 +1167,7 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 
 			if (!num_seg || (num_seg != cf__rbuffer_rseek(rbuf_des, ctx, num_seg, forward))) 
 			{
-				RBTRACE(RDES, info, "gives %ld and reaches nowhere\n", num_seg);
+				RBTRACE(RDES, debug, "gives %ld and reaches nowhere", num_seg);
 				return 0;
 			}
 			ctx->ptr.rec_id = temp_recid;
@@ -1179,7 +1178,7 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 		}
 
 	}
-	RBTRACE(RDES, info, "gives %ld and reaches %ld:%ld\n", num_seg, ctx->ptr.seg_id, ctx->ptr.rec_id);
+	RBTRACE(RDES, debug, "gives %ld and reaches %ld:%ld", num_seg, ctx->ptr.seg_id, ctx->ptr.rec_id);
 
 	// need to force the read if seek happened
 	ctx->buf.magic = 0;
@@ -1261,7 +1260,7 @@ cf_rbuffer_read(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, char *buf, int numrec
 		if (ctx->version > ctx->buf.version)
 		{
 			ctx->buf.magic = 0;	
-			RBTRACE(RDES, info, "Version Mismatch %d:%d:%ld\n", ctx->version, ctx->buf.version,ctx->ptr.seg_id);
+			RBTRACE(RDES, debug, "Version Mismatch %d:%d:%ld", ctx->version, ctx->buf.version,ctx->ptr.seg_id);
 			break;
 		}
 
@@ -1282,7 +1281,7 @@ cf_rbuffer_read(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, char *buf, int numrec
 				count * CHDR.rec_size);
 		total = total + count;
 
-		RBTRACE(RDES, info, "cf__rbuffer_read: Read [%d:%ld:%ld] max_recs:%d total:%d count:%d\n",
+		RBTRACE(RDES, debug, "Read [%d:%ld:%ld] max_recs:%d total:%d count:%d",
 					ctx->ptr.fidx, ctx->ptr.seg_id, ctx->ptr.rec_id, MAX_RECS, numrecs, count);
 
 		ctx->ptr.rec_id += count;
@@ -1349,7 +1348,7 @@ cf_rbuffer_write(cf_rbuffer *rbuf_des, char *buf, int numrecs)
 				count * CHDR.rec_size);
 		total = total + count;
 
-		RBTRACE(RDES, info, "cf_rbuffer_write: Wrote %d:%ld:%ld\n",ctx->ptr.fidx, ctx->ptr.seg_id, 	
+		RBTRACE(RDES, debug, "Wrote %d:%ld:%ld",ctx->ptr.fidx, ctx->ptr.seg_id, 	
 					ctx->ptr.rec_id);
 		ctx->ptr.rec_id += count;
 		RDES->batch_pos += count;

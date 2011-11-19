@@ -81,8 +81,9 @@ char *cf_fault_context_strings[] = {
 	"index",		// 40
 	"batch",		// 41	
 	"trial",        // 42
-	"xds",		// 43
-	NULL		// 44
+	"xds",			// 43
+	"cf:rbuffer", 	// 44
+	NULL			// 45
 };
 
 static const char *cf_fault_severity_strings[] = { "CRITICAL", "WARNING", "INFO", "DEBUG", "DETAIL", NULL };
