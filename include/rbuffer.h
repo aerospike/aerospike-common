@@ -68,7 +68,7 @@ typedef struct cf_rbuffer_hdr_s {
 typedef struct cf_rbuffer_ctx_s {
 	cf_rbuffer_ptr		ptr;		
 	pthread_mutex_t		lock;
-	FILE *				fd;
+	FILE *				fd[RBUFFER_MAX_FILES];
 	cf_rbuffer_seg		buf;
 	uint8_t				flag;
 	int16_t				version;
@@ -131,5 +131,6 @@ extern int cf_rbuffer_test4(uint64_t);
 extern int cf_rbuffer_test5(uint64_t);
 extern int cf_rbuffer_test6(uint64_t);
 extern int cf_rbuffer_test7(uint64_t);
+extern int cf_rbuffer_test8(uint64_t);
 
 

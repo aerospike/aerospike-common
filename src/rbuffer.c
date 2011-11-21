@@ -11,6 +11,11 @@
 #include <rbuffer.h>
 #include <signal.h>
 
+#define RDES		rbuf_des
+#define HDR(i)		(RDES->hdr[(i)])
+#define CHDR 		(RDES->chdr)
+#define MAX_RECS	(CHDR.seg_size / CHDR.rec_size)
+
 #define RBUFFER_FILE_HEADER_SIZE		512
 #define RBUFFER_SEG_HEADER_SIZE			4
 #define RBUFFER_FILE_MAGIC				0xd19e56109f11e000L
@@ -45,7 +50,7 @@ do{										\
 	RBUFFER_ASSERT((rb->chdr.flag & RBUFFER_FLAG_TRACE),	\
 				cf_ ##type, __VA_ARGS__);
 
-//#define RBTRACE(rb, type, ...) if (rb->chdr.flag & RBUFFER_FLAG_TRACE) fprintf(stderr, __VA_ARGS__);
+//#define RBTRACE(rb, type, ...) if (rb->chdr.flag & RBUFFER_FLAG_TRACE) fprintf(stderr, "\n"__VA_ARGS__);
 
 
 #define RBUFFER_NEXT_SEG(seg_id, f_idx) 	\
@@ -55,10 +60,6 @@ do{										\
 	(((seg_id) + (HDR((f_idx)).fsize / CHDR.seg_size) - 1)  \
                      % (HDR((f_idx)).fsize / CHDR.seg_size))
 
-#define RDES		rbuf_des
-#define HDR(i)		(RDES->hdr[(i)])
-#define CHDR 		(RDES->chdr)
-#define MAX_RECS	(CHDR.seg_size / CHDR.rec_size)
 
 
 bool  cf__rbuffer_fwrite(cf_rbuffer *, cf_rbuffer_ctx *);
@@ -77,7 +78,8 @@ bool  cf__rbuffer_fwrite(cf_rbuffer *, cf_rbuffer_ctx *);
 //		otherwise failure
 //
 // Synchronization:
-//		Acquires meta lock while updating file
+//		Caller needs to have read or write context lock.
+//		Acquires the meta lock.
 int 
 cf_rbuffer_persist(cf_rbuffer *rbuf_des)
 {
@@ -88,15 +90,10 @@ cf_rbuffer_persist(cf_rbuffer *rbuf_des)
 	RBTRACE(RDES, debug, 
 			"Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwstat, RDES->frstat);
 
-	// Update pointer on the header. Acquire write lock
-	// first then read lock.
-	pthread_mutex_lock(&RDES->wctx.lock);
-	pthread_mutex_lock(&RDES->rctx.lock);
-
+	pthread_mutex_lock(&RDES->mlock);
 	memcpy (&CHDR.rptr, &RDES->rctx.ptr, sizeof(cf_rbuffer_ptr));
 	memcpy (&CHDR.wptr, &RDES->wctx.ptr, sizeof(cf_rbuffer_ptr));
 
-	pthread_mutex_lock(&RDES->mlock);
 	// Only write header if the log is persistent
 	if ( CHDR.flag & RBUFFER_FLAG_PERSIST ) 
 	{
@@ -119,15 +116,9 @@ cf_rbuffer_persist(cf_rbuffer *rbuf_des)
 	}
 
 	pthread_mutex_unlock(&RDES->mlock);
-
-	pthread_mutex_unlock(&RDES->rctx.lock);
-	pthread_mutex_unlock(&RDES->wctx.lock);
 	return 0;
 err:
 	pthread_mutex_unlock(&RDES->mlock);
-
-	pthread_mutex_unlock(&RDES->rctx.lock);
-	pthread_mutex_unlock(&RDES->wctx.lock);
 	return -1;
 }
 
@@ -163,10 +154,13 @@ cf__rbuffer_sanity(cf_rbuffer * rbuf_des)
 
 		// sptr == sseg[sptr.fidx]	
 		if ((CHDR.sptr.fidx != HDR(CHDR.sptr.fidx).sseg.fidx) 
-			|| (CHDR.sptr.seg_id != HDR(CHDR.sptr.fidx).sseg.seg_id)
 			|| (CHDR.sptr.rec_id != HDR(CHDR.sptr.fidx).sseg.rec_id))	
 		{
 			RBTRACE(RDES, warning, "Sanity Check 4 Failed");
+		
+			RBTRACE(RDES, warning, "%d!=%d || %ld != %ld || %ld != %ld",
+					CHDR.sptr.fidx, HDR(CHDR.sptr.fidx).sseg.fidx, CHDR.sptr.seg_id, HDR(CHDR.sptr.fidx).sseg.seg_id,
+					CHDR.sptr.rec_id,  HDR(CHDR.sptr.fidx).sseg.rec_id);
 			return false;
 		}
 
@@ -199,7 +193,8 @@ cf__rbuffer_sanity(cf_rbuffer * rbuf_des)
 //		count		: number of segments it seek
 // 
 // Synchronization:
-//		Caller needs to have context mutex
+//		Caller hold read context lock
+//		Acquires meta lock.
 int
 cf__rbuffer_rseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_seg, bool forward)
 {
@@ -211,18 +206,26 @@ cf__rbuffer_rseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_seg, bool f
 	fidx = ctx->ptr.fidx;
 	segid = seg_id = ctx->ptr.seg_id; 
 
+	pthread_mutex_lock(&RDES->mlock);
 	if ( forward )
 	{
 		// At write cannot seek forward
 		if ((fidx == RDES->wctx.ptr.fidx)		
 			&& (segid == RDES->wctx.ptr.seg_id)) 
 		{
-		    return 0;
+			goto rseek_err; 
 		}
 
 		while(count < num_seg) 
 		{
 			segid = RBUFFER_NEXT_SEG(segid, fidx);
+
+			// Hit the start of the file 
+			if (segid == HDR(ctx->ptr.fidx).sseg.seg_id) 
+			{
+				segid = HDR(ctx->ptr.fidx).nseg.seg_id;
+				fidx = HDR(ctx->ptr.fidx).nseg.fidx;
+			}
 
 			// Hit write
 			if ((fidx == RDES->wctx.ptr.fidx)		
@@ -231,13 +234,6 @@ cf__rbuffer_rseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_seg, bool f
 				seg_id = segid;
 				count++;
 				break;
-			}
-
-			// Hit the start of the file 
-			if (segid == HDR(ctx->ptr.fidx).sseg.seg_id) 
-			{
-				segid = HDR(ctx->ptr.fidx).nseg.seg_id;
-				fidx = HDR(ctx->ptr.fidx).nseg.seg_id;
 			}
 
 			// Hit the buffer header
@@ -256,9 +252,8 @@ cf__rbuffer_rseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_seg, bool f
 		if ((fidx == RDES->chdr.sptr.fidx)		
 			&& (segid == RDES->chdr.sptr.seg_id)) 
 		{
-		    return 0;
+			goto rseek_err;
 		}
-
 
 		while(count < num_seg) 
 		{
@@ -301,8 +296,8 @@ cf__rbuffer_rseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_seg, bool f
 	{
 		goto rseek_err;
 	}
-	RBTRACE(RDES, debug, "Read seek from [%d:%ld:%ld] to [%d:%ld:0] [%d:%ld] [%d:%ld]", 
-					ctx->ptr.fidx, ctx->ptr.seg_id, ctx->ptr.rec_id, fidx, seg_id,
+	RBTRACE(RDES, debug, "Read seek from [%d:%ld] to [%d:%ld] sptr [%d:%ld] wctx [%d:%ld]", 
+					ctx->ptr.fidx, ctx->ptr.seg_id, fidx, seg_id,
 					CHDR.sptr.fidx, CHDR.sptr.seg_id, RDES->wctx.ptr.fidx, RDES->wctx.ptr.seg_id);
 	ctx->ptr.fidx = fidx;
 	ctx->ptr.seg_id = seg_id; 
@@ -314,11 +309,12 @@ cf__rbuffer_rseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_seg, bool f
 		//bump the version if you reach the start
 		ctx->version = CHDR.version;
 	}
-
+	pthread_mutex_unlock(&RDES->mlock);
 	return ( count );
 rseek_err:
 	// In case of error do not seek
 	cf__rbuffer_sanity(rbuf_des);
+	pthread_mutex_unlock(&RDES->mlock);
 	return (0);
 }
 
@@ -360,9 +356,8 @@ cf__rbuffer_startseek(cf_rbuffer *rbuf_des, int mode)
 		}
 	}
 	
-	pthread_mutex_lock(&RDES->rctx.lock);
 	segid = CHDR.sptr.seg_id;
-	fidx = CHDR.sptr.rec_id;
+	fidx = CHDR.sptr.fidx;
 		
 	cf__rbuffer_sanity(rbuf_des);
 
@@ -370,22 +365,22 @@ cf__rbuffer_startseek(cf_rbuffer *rbuf_des, int mode)
 	{
 		segid = RBUFFER_NEXT_SEG(segid, fidx);
 
+		// Hit the start of the file. 
+		if (segid == HDR(fidx).sseg.seg_id)
+		{
+			segid = HDR(fidx).nseg.seg_id;
+			fidx = HDR(fidx).nseg.fidx;
+		}
+
 		// Hit read
 		if ((fidx == RDES->rctx.ptr.fidx)		
 			&& (segid == RDES->rctx.ptr.seg_id)) 
 		{
 			if (!(CHDR.flag & RBUFFER_FLAG_OVERWRITE)) 
 			{
-				goto end;
+				cf__rbuffer_sanity(rbuf_des);
+				return false;
 			}
-		}
-
-		// Hit the start of the file. 
-		if (segid == HDR(fidx).sseg.seg_id)
-		{
-			// else move to nseg perform the checks again
-			segid = HDR(fidx).nseg.seg_id;
-			fidx = HDR(fidx).nseg.fidx;
 		}
 
 		// Hit the rbuffer header; is a bug should not 
@@ -394,7 +389,6 @@ cf__rbuffer_startseek(cf_rbuffer *rbuf_des, int mode)
 			&& (segid == CHDR.sptr.seg_id)) 
 		{
 			cf__rbuffer_sanity(rbuf_des);
-			pthread_mutex_unlock(&RDES->rctx.lock);
 			return false;
 		}
 		num_seg++;
@@ -415,14 +409,15 @@ cf__rbuffer_startseek(cf_rbuffer *rbuf_des, int mode)
 		RDES->rctx.ptr.seg_id = segid;
 	}
 
-	RBTRACE(RDES, debug, "[%d:%ld::%d:%ld::%d:%ld] mode:%d", CHDR.sptr.fidx, CHDR.sptr.seg_id, 
-					CHDR.rptr.fidx, CHDR.rptr.seg_id, RDES->wctx.ptr.fidx, 
-					RDES->wctx.ptr.seg_id, mode);
-
 	cf_rbuffer_persist(rbuf_des);
-end:
+	RBTRACE(RDES, debug, "%d:%ld rptr [%d:%ld] wctx [%d:%ld] rctx [%d:%ld] mode:%d ", 
+					CHDR.sptr.fidx, CHDR.sptr.seg_id, 
+					CHDR.rptr.fidx, CHDR.rptr.seg_id, 
+					RDES->wctx.ptr.fidx, RDES->wctx.ptr.seg_id, 
+					RDES->rctx.ptr.fidx, RDES->rctx.ptr.seg_id, 
+					mode);
+
 	cf__rbuffer_sanity(rbuf_des);
-	pthread_mutex_unlock(&RDES->rctx.lock);
 	return true;
 }
 
@@ -437,7 +432,8 @@ end:
 //		False otherwise
 //
 // Synchronization:
-//		Caller has a write context mutex
+//		Caller has a write context lock. 
+//		Acquires meta lock
 //
 bool
 cf__rbuffer_wseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
@@ -445,20 +441,38 @@ cf__rbuffer_wseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 	uint64_t	segid;
 	uint64_t	fidx;
 	int			check = 0;
+	bool		changeversion = false;
 
-	RBTRACE(RDES, debug, "Write seek from [%d:%ld:%ld]", ctx->ptr.fidx, ctx->ptr.seg_id,ctx->ptr.rec_id);
+	pthread_mutex_lock(&RDES->mlock);
 	do 
 	{
 		segid = ctx->ptr.seg_id;
 		fidx = ctx->ptr.fidx;	
 		segid = RBUFFER_NEXT_SEG(segid, fidx);
+		
+		// Hit the start of the file. skip this check if we just
+		// jumped to the start of the file while seeking 
+		if (segid == HDR(fidx).sseg.seg_id)
+		{
+			// if wrapping around bump version count
+			if ((fidx == HDR(fidx).nseg.fidx)	
+				|| (fidx > HDR(fidx).nseg.fidx))
+			{
+				changeversion = true;
+			}
 			
-		// Hit read
+			// Move to nseg perform the checks again
+			segid = HDR(fidx).nseg.seg_id;
+			fidx = HDR(fidx).nseg.fidx;
+		}
+
+		// Hit read 
 		if ((fidx == RDES->rctx.ptr.fidx)		
 			&& (segid == RDES->rctx.ptr.seg_id)) 
 		{
 			if (!cf__rbuffer_startseek(RDES, RBUFFER_FLAG_OVERWRITE_READ))
 			{
+				pthread_mutex_unlock(&RDES->mlock);
 				return false;
 			}
 			continue;
@@ -470,26 +484,10 @@ cf__rbuffer_wseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 		{
 			if (!cf__rbuffer_startseek(RDES, RBUFFER_FLAG_OVERWRITE_BUFHEAD))
 			{
+				pthread_mutex_unlock(&RDES->mlock);
 				return false;
 			}
 			continue;
-		}
-	
-		// Hit the start of the file. skip this check if we just
-		// jumped to the start of the file while seeking 
-		if (segid == HDR(fidx).sseg.seg_id)
-		{
-			// if wrapping around bump version count
-			if ((fidx == HDR(fidx).nseg.fidx)	
-				|| (fidx > HDR(fidx).nseg.fidx))
-			{
-				CHDR.version++;
-				RBTRACE(RDES, debug, "Increment version %ld %ld to %d",segid, HDR(fidx).sseg.seg_id,CHDR.version);
-			}
-			
-			// Move to nseg perform the checks again
-			segid = HDR(fidx).nseg.seg_id;
-			fidx = HDR(fidx).nseg.fidx;
 		}
 		// Somehow in single check it fails for some cases ... do this
 		// check twice
@@ -500,10 +498,20 @@ cf__rbuffer_wseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 	ctx->ptr.fidx = fidx;
 	ctx->ptr.seg_id = segid; 
 	ctx->ptr.rec_id	= 0;
-	RBTRACE(RDES, debug, " to %d:%ld:%ld @ %d:%ld %d:%ld:%ld", ctx->ptr.fidx, ctx->ptr.seg_id, ctx->ptr.rec_id, CHDR.sptr.fidx, CHDR.sptr.seg_id, 
-					rbuf_des->rctx.ptr.fidx, rbuf_des->rctx.ptr.seg_id, rbuf_des->rctx.ptr.rec_id);
+	RBTRACE(RDES, info, " to %d:%ld @ sptr [%d:%ld] rctx [%d:%ld:%ld]", 
+					ctx->ptr.fidx, ctx->ptr.seg_id, 
+					CHDR.sptr.fidx, CHDR.sptr.seg_id, 
+					RDES->rctx.ptr.fidx, RDES->rctx.ptr.seg_id, 
+					RDES->rctx.ptr.rec_id);
 	cf__rbuffer_sanity(rbuf_des);
 
+	if (changeversion)
+	{
+		CHDR.version++;
+		RBTRACE(RDES, debug, "Increment version %ld %ld to %d",segid, HDR(fidx).sseg.seg_id,CHDR.version);
+	}
+
+	pthread_mutex_unlock(&RDES->mlock);
 	return true;
 }
 
@@ -521,12 +529,12 @@ cf__rbuffer_fseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 {
 	uint64_t to_offset = RBUFFER_FILE_HEADER_SIZE +
 							(ctx->ptr.seg_id * RBUFFER_SEG_SIZE);
-	uint64_t cur_offset = ftell(ctx->fd);
+	uint64_t cur_offset = ftell(ctx->fd[ctx->ptr.fidx]);
 
 
-	RBUFFER_ASSERT((cur_offset != to_offset), cf_warning, "Offset did not match cur=%d, to=%d", cur_offset, to_offset);
+	RBUFFER_ASSERT((cur_offset != to_offset), cf_debug, "Offset did not match cur=%d, to=%d", cur_offset, to_offset);
 	if (to_offset != cur_offset) {
-		fseek(ctx->fd, to_offset, SEEK_SET);
+		fseek(ctx->fd[ctx->ptr.fidx], to_offset, SEEK_SET);
 	}
 	return to_offset;
 }
@@ -538,6 +546,7 @@ cf__rbuffer_fseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 //
 // Synchronization:
 //		Caller holds the write context mutex
+//		Acquires meta lock
 bool
 cf_rbuffer_fflush(cf_rbuffer *rbuf_des)
 {
@@ -553,12 +562,12 @@ cf_rbuffer_fflush(cf_rbuffer *rbuf_des)
 	ctx->buf.magic 		= RBUFFER_SEG_MAGIC;
 
 	offset = cf__rbuffer_fseek(rbuf_des, ctx);
-	if (1 != fwrite(&ctx->buf, RBUFFER_SEG_SIZE, 1, ctx->fd)) 
+	if (1 != fwrite(&ctx->buf, RBUFFER_SEG_SIZE, 1, ctx->fd[ctx->ptr.fidx])) 
 	{
 		pthread_mutex_unlock(&RDES->mlock);
 		return false;		
 	}
-	fflush(ctx->fd);
+	fflush(ctx->fd[ctx->ptr.fidx]);
 	
 	RBTRACE(RDES, debug, "Write [file:%d offset:%d seg_id:%ld rec_id:%d size:%d:version:%d] %d", 
 						ctx->ptr.fidx, offset, ctx->ptr.seg_id, ctx->buf.num_recs, RBUFFER_SEG_SIZE,
@@ -585,6 +594,7 @@ cf_rbuffer_fflush(cf_rbuffer *rbuf_des)
 //
 // Synchronization:
 //		Caller holds the write context mutex
+//		Acquires meta lock
 bool
 cf__rbuffer_fwrite(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 {
@@ -602,13 +612,13 @@ cf__rbuffer_fwrite(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 #endif
 
 	offset = cf__rbuffer_fseek(rbuf_des, ctx);
-	if (1 != fwrite(&ctx->buf, RBUFFER_SEG_SIZE, 1, ctx->fd)) 
+	if (1 != fwrite(&ctx->buf, RBUFFER_SEG_SIZE, 1, ctx->fd[ctx->ptr.fidx])) 
 	{
 		pthread_mutex_unlock(&RDES->mlock);
 		return false;		
 	}
 		
-	fflush(ctx->fd);
+	fflush(ctx->fd[ctx->ptr.fidx]);
 	
 	RBTRACE(RDES, debug, "Write [file:%d offset:%d seg_id:%ld max_recs:%d, num_recs:%d, rec_id:%ld size:%d:version:%d] %d", 
 						ctx->ptr.fidx, offset, ctx->ptr.seg_id, MAX_RECS, ctx->buf.num_recs, ctx->ptr.rec_id, RBUFFER_SEG_SIZE,
@@ -660,11 +670,11 @@ cf__rbuffer_fread(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 
 	// seek on the file  
 	offset = cf__rbuffer_fseek(rbuf_des, ctx);
-	ret = fread(&ctx->buf, RBUFFER_SEG_SIZE, 1, ctx->fd);
+	ret = fread(&ctx->buf, RBUFFER_SEG_SIZE, 1, ctx->fd[ctx->ptr.fidx]);
 	if (ret != 1)
 	{
 		pthread_mutex_unlock(&RDES->mlock);
-		RBTRACE(RDES, warning, "Fread failed with error %d %d", ferror(ctx->fd), feof(ctx->fd));
+		RBTRACE(RDES, warning, "Fread failed with error %d %d", ferror(ctx->fd[ctx->ptr.fidx]), feof(ctx->fd[ctx->ptr.fidx]));
 		return 0;
 	}
 
@@ -734,7 +744,6 @@ cf__rbuffer_setup(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 		}
 		CHDR.nfiles = rcfg->nfiles;
 		numfilechanged = true;
-		
 	}
 	
 	// Setup the linkages sseg / pseg / nseg.
@@ -783,14 +792,20 @@ cf__rbuffer_setup(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 	RDES->wctx.ptr.seg_id = CHDR.wptr.seg_id;
 	RDES->wctx.ptr.rec_id = 0; //write always starts from zero
 	RDES->wctx.ptr.fidx = CHDR.wptr.fidx;
-	RDES->wctx.fd = RDES->wfd[RDES->wctx.ptr.fidx];
+	for (i = 0; i < RBUFFER_MAX_FILES; i++)
+	{
+		RDES->wctx.fd[i] = RDES->wfd[i];
+	}
 	RDES->wctx.flag = 0;
 	RDES->wctx.version = 1;
 
 	RDES->rctx.ptr.seg_id = CHDR.rptr.seg_id;
 	RDES->rctx.ptr.rec_id = CHDR.rptr.rec_id;
 	RDES->rctx.ptr.fidx = CHDR.rptr.fidx;
-	RDES->rctx.fd = RDES->rfd[RDES->rctx.ptr.fidx];
+	for (i = 0; i < RBUFFER_MAX_FILES; i++)
+	{
+		RDES->rctx.fd[i] = RDES->rfd[i];
+	}
 	RDES->rctx.flag = 0;
 	RDES->rctx.version = 1;
 	
@@ -863,7 +878,7 @@ cf__rbuffer_bootstrap(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg, int fidx)
 		HDR(i).fsize = rcfg->fsize[i];	
 		if ((CHDR.seg_size * 2) >= rcfg->fsize[i])
 		{
-			printf("Too small file size %s\n",rcfg->fname[i]);
+			cf_warning(CF_RBUFFER, CF_GLOBAL, "Too small file size %s cannot init ring buffer\n",rcfg->fname[i]);
 			return false;
 		}
 	}		
@@ -1018,7 +1033,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 			goto backout;
 		}
 	}
-	for (i = 0; i < CHDR.nfiles; i++) 
+	for (i = 0; i < rcfg->nfiles; i++) 
 	{
 		if ((RDES->rfd[i] = fopen(rcfg->fname[i], "r+b")) == NULL) 
 		{
@@ -1127,7 +1142,7 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 	}	
 	else
 	{
-		cf_rbuffer_getsetctx(rbuf_des, ctx, SEEK_SET);
+		cf_rbuffer_getsetctx(rbuf_des, ctx, whence);
 			
 		// invalid version return -1 seek position is invalid
 		if (cf__rbuffer_fread(RDES, ctx) == -1)
@@ -1365,11 +1380,13 @@ cf_rbuffer_write(cf_rbuffer *rbuf_des, char *buf, int numrecs)
 			if (!cf__rbuffer_wseek(RDES, ctx)) 
 			{
 				ctx->flag |= RBUFFER_CTX_FLAG_NEEDSEEK;
-				goto err;
+				// only seek failed .. write is successful
+				// if return count of number of records written
+				break;
 			}
 
 			// Persist the data and meta data on to disk
-			//cf_rbuffer_persist(rbuf_des);
+			cf_rbuffer_persist(rbuf_des);
 		}
 		else if (RDES->batch_pos == RDES->batch_size) 
 		{
@@ -1378,7 +1395,7 @@ cf_rbuffer_write(cf_rbuffer *rbuf_des, char *buf, int numrecs)
 				goto err;
 			}
 			// Persist the data and meta data on to disk
-			//cf_rbuffer_persist(rbuf_des);
+			cf_rbuffer_persist(rbuf_des);
 		}
 		else if (numrecs == 0)
 		{
@@ -1386,8 +1403,7 @@ cf_rbuffer_write(cf_rbuffer *rbuf_des, char *buf, int numrecs)
 			{
 				goto err;
 			}
-			// Persist the data and meta data on to disk
-			//cf_rbuffer_persist(rbuf_des);
+			cf_rbuffer_persist(rbuf_des);
 		}
 		start = total;
 	}			
@@ -1418,28 +1434,39 @@ err:
 cf_rbuffer_ctx *
 cf_rbuffer_getsetctx(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx, int whence)
 {
-	// RAJ TODO won't work for the multiple files
 	cf_rbuffer_ptr *ptr;
+	int i;
+	
+	if (whence == SEEK_CUR)		
+	{
+		return ctx;
+	}
+
 	pthread_mutex_lock(&RDES->mlock);
 	if (whence == SEEK_END)
 		ptr = &RDES->wctx.ptr;
-	else
+	else 
 		ptr = &CHDR.sptr;
 
 	if (ctx == NULL)
 	{
 		cf_rbuffer_ctx *new_ctx = malloc(sizeof(cf_rbuffer_ctx));
+		memset(new_ctx, 0, sizeof(cf_rbuffer_ctx));
 		new_ctx->ptr.fidx = ptr->fidx;
 		new_ctx->ptr.seg_id = ptr->seg_id;
 		new_ctx->ptr.rec_id = ptr->rec_id;
 	
 		pthread_mutex_init(&new_ctx->lock, NULL);
 
-		if ((new_ctx->fd = fopen(HDR(ptr->fidx).fname, "rb")) == NULL) 
+		for (i = 0; i<RBUFFER_MAX_FILES; i++)
 		{
-			cf_warning(CF_RBUFFER, CF_GLOBAL, "Failed to open the digest log file %s for caching context", HDR(new_ctx->ptr.fidx).fname);
-			free(new_ctx);
-			return ( NULL );
+			if ((new_ctx->fd[ptr->fidx] = fopen(HDR(ptr->fidx).fname, "rb")) == NULL) 
+			{
+				cf_warning(CF_RBUFFER, CF_GLOBAL, "Failed to open the digest log file %s for caching context", HDR(new_ctx->ptr.fidx).fname);
+				cf_rbuffer_closectx(new_ctx);
+				pthread_mutex_unlock(&RDES->mlock);
+				return ( NULL );
+			}
 		}
 		memset(new_ctx->buf.data, 0, CHDR.seg_size);
 		new_ctx->buf.num_recs = 0;	
@@ -1483,7 +1510,15 @@ void
 cf_rbuffer_closectx(cf_rbuffer_ctx *ctx)
 {
 	pthread_mutex_destroy(&ctx->lock);
-	fclose(ctx->fd);
+	
+	for (int i=0; i<RBUFFER_MAX_FILES;i++)
+	{
+		if (ctx->fd[i])
+		{
+			fclose(ctx->fd[i]);
+		}
+		ctx->fd[i] = NULL;
+	}
 	free(ctx);
 }
 
@@ -1598,7 +1633,7 @@ int rbuffer_writes(void *arg, int start, uint64_t total, int size)
 }
 void *rbuffer_writer_1(void *arg)
 {
-	rbuffer_writes(arg, 0, 1000000, 1);
+	rbuffer_writes(arg, 0, 10000, 1);
 	pthread_exit(NULL);
 }
 
@@ -1706,59 +1741,76 @@ cf_rbuffer_test1(uint64_t recs)
 {
 	pthread_t	rbuffer_writer_th;
 	pthread_t	rbuffer_reader_th;
-
-	cf_rbuffer_config cfg;
-	cfg.nfiles = 1;
-	cfg.rec_size = 50;
-	cfg.batch_size = 50;
-	cfg.trace = true;
-	cfg.fname[0] = strdup("/tmp/digestr_logtest1");
-	cfg.fsize[0] = 1000000;
+	int 		type = 0;
+	while (type < 2)
+	{
+		cf_rbuffer_config cfg;
+		cfg.rec_size = 50;
+		cfg.batch_size = 50;
+		cfg.trace = true;
+		if (type == 0)
+		{
+			cfg.nfiles = 1;
+			cfg.fname[0] = strdup("/tmp/digestr_logtest1");
+			cfg.fsize[0] = 1000000;
+		}
+		else
+		{
+			cfg.nfiles = 3;
+			cfg.fname[0] = strdup("/tmp/digestr_logtest1_0");
+			cfg.fsize[0] = 100000;
+			cfg.fname[1] = strdup("/tmp/digestr_logtest1_1");
+			cfg.fsize[1] = 100000;
+			cfg.fname[2] = strdup("/tmp/digestr_logtest1_2");
+			cfg.fsize[2] = 100000;
+		}
 
 	
-	// Nooverwrite / Nopersist
-	cfg.overwrite = false;
-	cfg.persist = false;
-	cf_rbuffer *rb = cf_rbuffer_init(&cfg);	
+		// Nooverwrite / Nopersist
+		cfg.overwrite = false;
+		cfg.persist = false;
+		cf_rbuffer *rb = cf_rbuffer_init(&cfg);	
 
-	if (!rb)
-	{
-		fprintf(stderr, "Ring Buffer Init Failed\n");
-		return -1;
-	}
-
-	pthread_create(&rbuffer_writer_th, 0, rbuffer_writer_1, rb);	
-	pthread_create(&rbuffer_reader_th, 0, rbuffer_reader_1, rb);	
-
-	void *retval;
-	if (0 != pthread_join(rbuffer_writer_th, &retval))
-	{
-		fprintf(stderr, "rbuffer test 1: write could not join %d\n",errno);
-		return (-1);
+		if (!rb)
+		{
+			fprintf(stderr, "Ring Buffer Init Failed\n");
+			return -1;
+		}
+	
+		pthread_create(&rbuffer_writer_th, 0, rbuffer_writer_1, rb);	
+		pthread_create(&rbuffer_reader_th, 0, rbuffer_reader_1, rb);	
+	
+		void *retval;
+		if (0 != pthread_join(rbuffer_writer_th, &retval))
+		{
+			fprintf(stderr, "rbuffer test 1: write could not join %d\n",errno);
+			return (-1);
+		}
+		
+		if (0 != retval)
+		{
+			fprintf(stderr, "rbuffer test 1: returned error %p\n",retval);
+			return (-1);	
+		}
+	
+		if (0 != pthread_join(rbuffer_reader_th, &retval))
+		{
+			fprintf(stderr, "rbuffer test 1: read could not join %d\n",errno);
+			return (-1);
+		}
+	
+		if (0 != retval)
+		{
+			fprintf(stderr, "rbuffer test 1: returned error %p\n",retval);
+			return (-1);	
+		}
+	
+		fprintf(stderr, "Stats [Total file:%d Total Reads:%ld: Total Writes:%ld: Total Fwrites:%ld: Total Freads:%ld]\n", 
+					(type==0)?1:3, rb->read_stat, rb->write_stat, rb->fwstat, rb->frstat);
+		cf_rbuffer_close(rb);
+		type++;
 	}
 	
-	if (0 != retval)
-	{
-		fprintf(stderr, "rbuffer test 1: returned error %p\n",retval);
-		return (-1);	
-	}
-
-	if (0 != pthread_join(rbuffer_reader_th, &retval))
-	{
-		fprintf(stderr, "rbuffer test 1: read could not join %d\n",errno);
-		return (-1);
-	}
-
-	if (0 != retval)
-	{
-		fprintf(stderr, "rbuffer test 1: returned error %p\n",retval);
-		return (-1);	
-	}
-
-	fprintf(stderr, "Stats [Total Reads:%ld: Total Writes:%ld: Total Fwrites:%ld: Total Freads:%ld]\n", 
-					rb->read_stat, rb->write_stat, rb->fwstat, rb->frstat);
-	cf_rbuffer_close(rb);
-
 	return 0;
 }
 
@@ -1772,68 +1824,87 @@ cf_rbuffer_test2(uint64_t recs)
 	pthread_t	rbuffer_writer_th;
 	pthread_t	rbuffer_writer_th1;
 	pthread_t	rbuffer_reader_th;
+	int			type = 0;
 	cf_rbuffer_config cfg;
 
-	cfg.nfiles = 1;
-	cfg.rec_size = 50;
-	cfg.batch_size = 50;
-	cfg.trace = true;
-	cfg.fname[0] = strdup("/tmp/digestr_logtest2");
-	cfg.fsize[0] = 1000000;
+	while (type < 2)
+	{
+		cfg.rec_size = 50;
+		cfg.batch_size = 50;
+		cfg.trace = true;
 
-	// Nooverwrite / Nopersist
-	cfg.overwrite = false;
-	cfg.persist = false;
-	cf_rbuffer *rb = cf_rbuffer_init(&cfg);	
+		if (type == 0)
+		{
+			cfg.nfiles = 1;
+			cfg.fname[0] = strdup("/tmp/digestr_logtest2");
+			cfg.fsize[0] = 1000000;
+		}
+		else
+		{
+			cfg.nfiles = 3;
+			cfg.fname[0] = strdup("/tmp/digestr_logtest2_0");
+			cfg.fsize[0] = 100000;
+			cfg.fname[1] = strdup("/tmp/digestr_logtest2_1");
+			cfg.fsize[1] = 100000;
+			cfg.fname[2] = strdup("/tmp/digestr_logtest2_2");
+			cfg.fsize[2] = 100000;
+		}
 
-	if (!rb)
-	{
-		fprintf(stderr, "Ring Buffer Init Failed\n");
-		return -1;
-	}
-	pthread_create(&rbuffer_writer_th, 0, rbuffer_writer_1, rb);	
-	pthread_create(&rbuffer_writer_th1, 0, rbuffer_writer_2, rb);	
-	pthread_create(&rbuffer_reader_th, 0, rbuffer_reader_2, rb);	
+		// Nooverwrite / Nopersist
+		cfg.overwrite = false;
+		cfg.persist = false;
+		cf_rbuffer *rb = cf_rbuffer_init(&cfg);	
 
-	void *retval;
-	if (0 != pthread_join(rbuffer_writer_th, &retval))
-	{
-		fprintf(stderr, "rbuffer test 2: write 1 could not join %d\n",errno);
-		return (-1);
-	}
-	
-	if (0 != retval)
-	{
-		fprintf(stderr, "rbuffer test 2: returned error %p\n",retval);
-		return (-1);	
-	}
+		if (!rb)
+		{
+			fprintf(stderr, "Ring Buffer Init Failed\n");
+			return -1;
+		}
+		pthread_create(&rbuffer_writer_th, 0, rbuffer_writer_1, rb);	
+		pthread_create(&rbuffer_writer_th1, 0, rbuffer_writer_2, rb);	
+		pthread_create(&rbuffer_reader_th, 0, rbuffer_reader_2, rb);	
 
-	if (0 != pthread_join(rbuffer_writer_th1, &retval))
-	{
-		fprintf(stderr, "rbuffer test 2: write 2 could not join %d\n",errno);
-		return (-1);
-	}
-	
-	if (0 != retval)
-	{
-		fprintf(stderr, "rbuffer test 2: returned error %p\n",retval);
-		return (-1);	
-	}
+		void *retval;
+		if (0 != pthread_join(rbuffer_writer_th, &retval))
+		{
+			fprintf(stderr, "rbuffer test 2: write 1 could not join %d\n",errno);
+			return (-1);
+		}
 
-	if (0 != pthread_join(rbuffer_reader_th, &retval))
-	{
-		fprintf(stderr, "rbuffer test 2: read could not join %d\n",errno);
-		return (-1);
-	}
+		if (0 != retval)
+		{
+			fprintf(stderr, "rbuffer test 2: returned error %p\n",retval);
+			return (-1);	
+		}
 
-	if (0 != retval)
-	{
-		fprintf(stderr, "rbuffer test 2: returned error %p\n",retval);
-		return (-1);	
+		if (0 != pthread_join(rbuffer_writer_th1, &retval))
+		{
+			fprintf(stderr, "rbuffer test 2: write 2 could not join %d\n",errno);
+			return (-1);
+		}
+
+		if (0 != retval)
+		{
+			fprintf(stderr, "rbuffer test 2: returned error %p\n",retval);
+			return (-1);	
+		}
+
+		if (0 != pthread_join(rbuffer_reader_th, &retval))
+		{
+			fprintf(stderr, "rbuffer test 2: read could not join %d\n",errno);
+			return (-1);
+		}
+
+		if (0 != retval)
+		{
+			fprintf(stderr, "rbuffer test 2: returned error %p\n",retval);
+			return (-1);	
+		}
+		fprintf(stderr, "Stats [Total file:%d Total Reads:%ld: Total Writes:%ld: Total Fwrites:%ld: Total Freads:%ld]\n", 
+					(type==0)?1:3, rb->read_stat, rb->write_stat, rb->fwstat, rb->frstat);
+		cf_rbuffer_close(rb);
+		type++;
 	}
-	fprintf(stderr, "Stats [Total Reads:%ld: Total Writes:%ld: Total Fwrites:%ld: Total Freads:%ld]\n", 
-					rb->read_stat, rb->write_stat, rb->fwstat, rb->frstat);
-	cf_rbuffer_close(rb);
 
 	return 0;
 }
@@ -2147,8 +2218,6 @@ cf_rbuffer_test7(uint64_t recs)
 	}
 #endif
 		
-	while(1)
-	{
 	// Manipulation with read pointer
 	cf_rbuffer_ctx *myctx = cf_rbuffer_getsetctx(rb, NULL, SEEK_SET);
 	rbuffer_reads(rb, 10, 1, myctx);
@@ -2182,10 +2251,76 @@ cf_rbuffer_test7(uint64_t recs)
 	else
 		fprintf(stderr, "Assertion 4: Passed \n");
 	cf_rbuffer_closectx(myctx);
-}
-
 	
 	cf_rbuffer_close(rb);
+	return 0;
+}
+
+//  Test Case 8:
+//
+//  Multipe file
+//	Thread1 : Writes to the file single record
+//  Thread2 : Reads from the file single record
+int
+cf_rbuffer_test8(uint64_t recs)
+{
+	pthread_t	rbuffer_writer_th;
+	pthread_t	rbuffer_reader_th;
+
+	cf_rbuffer_config cfg;
+	cfg.nfiles = 2;
+	cfg.rec_size = 50;
+	cfg.batch_size = 50;
+	cfg.trace = true;
+	cfg.fname[0] = strdup("/tmp/digestr_logtest1_0");
+	cfg.fname[1] = strdup("/tmp/digestr_logtest1_1");
+	cfg.fsize[0] = 100000;
+	cfg.fsize[1] = 100000;
+
+	
+	// Nooverwrite / Nopersist
+	cfg.overwrite = false;
+	cfg.persist = false;
+	cf_rbuffer *rb = cf_rbuffer_init(&cfg);	
+
+	if (!rb)
+	{
+		fprintf(stderr, "Ring Buffer Init Failed\n");
+		return -1;
+	}
+
+	pthread_create(&rbuffer_writer_th, 0, rbuffer_writer_1, rb);	
+	pthread_create(&rbuffer_reader_th, 0, rbuffer_reader_1, rb);	
+
+	void *retval;
+	if (0 != pthread_join(rbuffer_writer_th, &retval))
+	{
+		fprintf(stderr, "rbuffer test 1: write could not join %d\n",errno);
+		return (-1);
+	}
+	
+	if (0 != retval)
+	{
+		fprintf(stderr, "rbuffer test 1: returned error %p\n",retval);
+		return (-1);	
+	}
+
+	if (0 != pthread_join(rbuffer_reader_th, &retval))
+	{
+		fprintf(stderr, "rbuffer test 1: read could not join %d\n",errno);
+		return (-1);
+	}
+
+	if (0 != retval)
+	{
+		fprintf(stderr, "rbuffer test 1: returned error %p\n",retval);
+		return (-1);	
+	}
+
+	fprintf(stderr, "Stats [Total Reads:%ld: Total Writes:%ld: Total Fwrites:%ld: Total Freads:%ld]\n", 
+					rb->read_stat, rb->write_stat, rb->fwstat, rb->frstat);
+	cf_rbuffer_close(rb);
+
 	return 0;
 }
 
