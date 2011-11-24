@@ -57,8 +57,8 @@ do{										\
 	((seg_id + 1) % (HDR(f_idx).fsize / RBUFFER_SEG_SIZE));
 
 #define RBUFFER_PREV_SEG(seg_id, f_idx) 	\
-	(((seg_id) + (HDR((f_idx)).fsize / CHDR.seg_size) - 1)  \
-                     % (HDR((f_idx)).fsize / CHDR.seg_size))
+	(((seg_id) + (HDR((f_idx)).fsize / RBUFFER_SEG_SIZE) - 1)  \
+                     % (HDR((f_idx)).fsize / RBUFFER_SEG_SIZE))
 
 
 
@@ -75,7 +75,7 @@ bool  cf__rbuffer_fwrite(cf_rbuffer *, cf_rbuffer_ctx *);
 //
 //	Return:
 //		0: On success
-//		otherwise failure
+//		-1: On failure
 //
 // Synchronization:
 //		Caller needs to have read or write context lock.
@@ -257,13 +257,15 @@ cf__rbuffer_rseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_seg, bool f
 
 		while(count < num_seg) 
 		{
-			segid = RBUFFER_PREV_SEG(segid, fidx);
-
 			// Hit the start of the file; goto pseg 
 			if (segid == HDR(fidx).sseg.seg_id) 
 			{
 				segid = HDR(fidx).pseg.seg_id;
-				fidx = HDR(fidx).nseg.fidx;
+				fidx = HDR(fidx).pseg.fidx;
+			}
+			else
+			{
+				segid = RBUFFER_PREV_SEG(segid, fidx);
 			}
 
 			// Hit the buffer header
@@ -758,7 +760,7 @@ cf__rbuffer_setup(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 		HDR(i).nseg.fidx = next;	
 		HDR(i).nseg.seg_id = HDR(next).sseg.seg_id;
 		HDR(i).pseg.fidx = prev;	
-		HDR(i).pseg.seg_id = HDR(prev).sseg.seg_id;
+		HDR(i).pseg.seg_id = HDR(prev).fsize / RBUFFER_SEG_SIZE;
 	}
 
 	pthread_mutexattr_init(&attr);	
@@ -1128,6 +1130,7 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 	uint64_t	num_seg=0;
 	bool		forward;
 
+	pthread_mutex_lock(&RDES->mlock);
 	if (num_recs > 0)
 		forward = true;
 	else
@@ -1146,7 +1149,10 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 			
 		// invalid version return -1 seek position is invalid
 		if (cf__rbuffer_fread(RDES, ctx) == -1)
+		{
+			pthread_mutex_unlock(&RDES->mlock);
 			return -1;
+		}
 	}
 
 	RBTRACE(RDES, debug, "%d move %d with max(%d) from %ld:%ld ",forward, num_recs, MAX_RECS, ctx->ptr.seg_id, ctx->ptr.rec_id);
@@ -1162,6 +1168,7 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 			if (!num_seg || (num_seg != cf__rbuffer_rseek(rbuf_des, ctx, num_seg, forward)))
 			{
 				RBTRACE(RDES, debug, " gives %ld and reaches nowhere", num_seg);
+				pthread_mutex_unlock(&RDES->mlock);
 				return 0;
 			}
 			ctx->ptr.rec_id = temp_recid;
@@ -1183,6 +1190,7 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 			if (!num_seg || (num_seg != cf__rbuffer_rseek(rbuf_des, ctx, num_seg, forward))) 
 			{
 				RBTRACE(RDES, debug, "gives %ld and reaches nowhere", num_seg);
+				pthread_mutex_unlock(&RDES->mlock);
 				return 0;
 			}
 			ctx->ptr.rec_id = temp_recid;
@@ -1197,6 +1205,7 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 
 	// need to force the read if seek happened
 	ctx->buf.magic = 0;
+	pthread_mutex_unlock(&RDES->mlock);
 	return num_recs;
 }
 
@@ -1264,7 +1273,7 @@ cf_rbuffer_read(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, char *buf, int numrec
 			{
 				break;
 			}
-			if (ctx->buf.magic == RBUFFER_SEG_MAGIC)
+			if (ctx->buf.magic != RBUFFER_SEG_MAGIC)
 			{
 				break;
 			}
