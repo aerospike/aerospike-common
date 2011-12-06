@@ -31,12 +31,14 @@
 // count[25] is a second
 
 
+#define HISTOGRAM_NAME_SIZE 128
+
 typedef struct histogram_counts_s {
 	uint64_t count[N_COUNTS];
 } histogram_counts;
 
 typedef struct histogram_s {
-	char name[64];
+	char name[HISTOGRAM_NAME_SIZE];
 	cf_atomic_int n_counts;
 	cf_atomic_int count[N_COUNTS];
 } histogram;
@@ -79,8 +81,6 @@ hist_getcycles()
 /* SYNOPSIS
  * Linear histogram partitions the values into 20 buckets, < 5%, < 10%, < 15%, ..., < 95%, rest
  */
-
-#define HISTOGRAM_NAME_SIZE 512
 
 #define LINEAR_N_COUNTS 20
 
