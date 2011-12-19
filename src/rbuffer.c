@@ -62,6 +62,21 @@ do{										\
 
 
 
+// Client API To log ring buffer data in xds log. This done when debug is enabled.
+int
+cf_rbuffer_log(cf_rbuffer *rbuf_des)
+{
+	RBTRACE(RDES, debug, 
+			"Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwstat, RDES->frstat);
+
+	RBTRACE(RDES, debug, "At rptr [%d:%ld] | rctx [%d:%ld] | wptr [%d:%ld] | wctx [%d:%ld]", 
+					CHDR.rptr.seg_id, CHDR.rptr.rec_id,
+					RDES->rctx.ptr.seg_id, RDES->rctx.ptr.rec_id,
+					CHDR.wptr.seg_id, CHDR.wptr.rec_id,
+					RDES->wctx.ptr.seg_id, RDES->wctx.ptr.rec_id);
+	return 0;
+}
+
 bool  cf__rbuffer_fwrite(cf_rbuffer *, cf_rbuffer_ctx *);
 
 // Client API to persist read/write pointer 
@@ -140,8 +155,8 @@ cf__rbuffer_sanity(cf_rbuffer * rbuf_des)
 
 		// sseg == pseg
 		if ((HDR(0).pseg.fidx != HDR(0).sseg.fidx) 
-			|| (HDR(0).pseg.seg_id != HDR(0).sseg.seg_id)
-			|| (HDR(0).pseg.rec_id != HDR(0).sseg.rec_id))	
+		        || (HDR(0).pseg.seg_id != HDR(0).fsize / RBUFFER_SEG_SIZE)
+       			|| (HDR(0).pseg.rec_id != 0))  
 		{
 			RBTRACE(RDES, warning, "Sanity Check 3 Failed");
 			return false;
@@ -500,7 +515,7 @@ cf__rbuffer_wseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 	ctx->ptr.fidx = fidx;
 	ctx->ptr.seg_id = segid; 
 	ctx->ptr.rec_id	= 0;
-	RBTRACE(RDES, info, " to %d:%ld @ sptr [%d:%ld] rctx [%d:%ld:%ld]", 
+	RBTRACE(RDES, debug, " to %d:%ld @ sptr [%d:%ld] rctx [%d:%ld:%ld]", 
 					ctx->ptr.fidx, ctx->ptr.seg_id, 
 					CHDR.sptr.fidx, CHDR.sptr.seg_id, 
 					RDES->rctx.ptr.fidx, RDES->rctx.ptr.seg_id, 
@@ -533,9 +548,14 @@ cf__rbuffer_fseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 							(ctx->ptr.seg_id * RBUFFER_SEG_SIZE);
 	uint64_t cur_offset = ftell(ctx->fd[ctx->ptr.fidx]);
 
-
-	RBUFFER_ASSERT((cur_offset != to_offset), cf_debug, "Offset did not match cur=%d, to=%d", cur_offset, to_offset);
-	if (to_offset != cur_offset) {
+	// Because of the partial writes to the disk caused by the batch size
+	// the offset for the write pointer may not match.
+	if (ctx == &RDES->rctx)
+	{
+		RBUFFER_ASSERT((cur_offset != to_offset), cf_info, "Offset did not match cur=%d, to=%d", cur_offset, to_offset);
+	}
+	if (to_offset != cur_offset)
+	{
 		fseek(ctx->fd[ctx->ptr.fidx], to_offset, SEEK_SET);
 	}
 	return to_offset;
@@ -703,7 +723,7 @@ cf__rbuffer_fread(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 		}
 	}
 
-	RBTRACE(RDES, debug, "Read [file:%d offset:%d seg_id:%ld max_recs:%d num_recs:%d rec_id:%ld size:%d] %d",
+	RBTRACE(RDES, detail, "Read [file:%d offset:%d seg_id:%ld max_recs:%d num_recs:%d rec_id:%ld size:%d] %d",
 					ctx->ptr.fidx, offset, ctx->ptr.seg_id, MAX_RECS, ctx->buf.num_recs, ctx->ptr.rec_id, RBUFFER_SEG_SIZE, ctx->buf.magic);
 
 	RDES->frstat++;
@@ -792,7 +812,7 @@ cf__rbuffer_setup(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 
 	// Init read and write context and populate values
 	RDES->wctx.ptr.seg_id = CHDR.wptr.seg_id;
-	RDES->wctx.ptr.rec_id = 0; //write always starts from zero
+	RDES->wctx.ptr.rec_id = CHDR.wptr.rec_id;
 	RDES->wctx.ptr.fidx = CHDR.wptr.fidx;
 	for (i = 0; i < RBUFFER_MAX_FILES; i++)
 	{
@@ -867,7 +887,7 @@ cf__rbuffer_bootstrap(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg, int fidx)
 	CHDR.signature = random; 	
 	CHDR.seg_size = 5000;
 	CHDR.version = 1;
-	if (CHDR.seg_size > 10000) {
+	if (CHDR.seg_size > 5000) {
 		return false;		
 	}
 	RDES->wctx.flag &= ~RBUFFER_CTX_FLAG_NEEDSEEK;
@@ -1074,6 +1094,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 	
 	// Persist the header
 	cf_rbuffer_persist(RDES);
+	cf_rbuffer_log(RDES);
 	RDES->strapped = true;
 	
 	return RDES;
@@ -1452,6 +1473,8 @@ cf_rbuffer_getsetctx(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx, int whence)
 	}
 
 	pthread_mutex_lock(&RDES->mlock);
+	if (whence == SEEK_CUR)
+		ptr = &RDES->rctx.ptr;
 	if (whence == SEEK_END)
 		ptr = &RDES->wctx.ptr;
 	else 
@@ -1490,6 +1513,8 @@ cf_rbuffer_getsetctx(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx, int whence)
 	}
 	else
 	{
+		if (whence == SEEK_CUR)
+			return ctx;
 		pthread_mutex_lock(&ctx->lock);
 		ctx->ptr.fidx = ptr->fidx;
 		ctx->ptr.seg_id = ptr->seg_id;
@@ -1530,6 +1555,54 @@ cf_rbuffer_closectx(cf_rbuffer_ctx *ctx)
 	}
 	free(ctx);
 }
+
+//  Client API to find outstanding records between read and write pointer.
+// 
+//  Parameter:
+//		rbuf_des	: Ring buffer Descriptor
+//
+//  Caller:
+//		XDS for resuming shipping after node restarts
+//
+// 	Synchronization:
+//		Either caller needs to have sync or should be single threaded.
+//
+// Returns:
+//		Number of records
+uint64_t
+cf_rbuffer_outstanding(cf_rbuffer *rbuf_des)
+{
+	uint64_t fsize = 0;
+	uint64_t i;
+	cf_rbuffer_ctx ctx;
+
+	// memcpy can be used ctx has no buffer changes are done to the
+	memcpy(&ctx, &RDES->rctx, sizeof(cf_rbuffer_ctx));
+	for (i = 0; i < CHDR.nfiles; i++)
+		fsize += HDR(i).fsize;
+
+	uint64_t num_segs = fsize / RBUFFER_SEG_SIZE;
+
+	// Seek as much as possible pretty dump but works and is in-memory
+	// and is only done once	
+	for (i = 0; i < num_segs; i++)
+		if (cf__rbuffer_rseek(rbuf_des, &ctx, 1, true) != 1)
+			break;	
+
+	if (i)
+	{
+		return ((MAX_RECS - RDES->rctx.ptr.rec_id)
+				+ (i - 1)*MAX_RECS
+				+ RDES->wctx.ptr.rec_id);
+	}
+	else
+	{
+			return (RDES->wctx.ptr.rec_id - RDES->rctx.ptr.rec_id);
+	}
+}
+
+
+
 
 //  Client API to close the ring buffer interface.
 // 
