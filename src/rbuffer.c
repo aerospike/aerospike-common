@@ -40,10 +40,10 @@
 
 // Macro
 #define RBUFFER_ASSERT(cond, func, ...)	\
-do{										\
-	if((cond)) {							\
-		func(CF_RBUFFER, __VA_ARGS__); \
-	}									\
+do{						\
+	if((cond)) {				\
+		func(CF_RBUFFER, __VA_ARGS__);  \
+	}					\
 } while(0);
 
 #define RBTRACE(rb, type, ...)					\
@@ -69,12 +69,26 @@ cf_rbuffer_log(cf_rbuffer *rbuf_des)
 	RBTRACE(RDES, debug, 
 			"Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwstat, RDES->frstat);
 
-	RBTRACE(RDES, debug, "At rptr [%d:%ld] | rctx [%d:%ld] | wptr [%d:%ld] | wctx [%d:%ld]", 
+	RBTRACE(RDES, debug, "Current sptr [%d:%ld] rptr [%d:%ld] | rctx [%d:%ld] | wptr [%d:%ld] | wctx [%d:%ld]", 
+					CHDR.sptr.seg_id, CHDR.sptr.rec_id,
 					CHDR.rptr.seg_id, CHDR.rptr.rec_id,
 					RDES->rctx.ptr.seg_id, RDES->rctx.ptr.rec_id,
 					CHDR.wptr.seg_id, CHDR.wptr.rec_id,
 					RDES->wctx.ptr.seg_id, RDES->wctx.ptr.rec_id);
 	return 0;
+}
+
+// Client API to setup context in ring buffer for no resume case
+void 
+cf_rbuffer_setnoresume(cf_rbuffer *rbuf_des)
+{
+	// Reset the read and start pointer to write pointer.
+	CHDR.sptr.fidx = RDES->rctx.ptr.fidx = RDES->wctx.ptr.fidx;
+	CHDR.sptr.seg_id = RDES->rctx.ptr.seg_id = RDES->wctx.ptr.seg_id;
+
+	// We set up rec_id to 0 we may loose write on the current segment once
+	// noresume is set in ring buffer
+	CHDR.sptr.rec_id = RDES->rctx.ptr.rec_id = RDES->wctx.ptr.rec_id = 0;
 }
 
 bool  cf__rbuffer_fwrite(cf_rbuffer *, cf_rbuffer_ctx *);
@@ -552,7 +566,7 @@ cf__rbuffer_fseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 	// the offset for the write pointer may not match.
 	if (ctx == &RDES->rctx)
 	{
-		RBUFFER_ASSERT((cur_offset != to_offset), cf_info, "Offset did not match cur=%d, to=%d", cur_offset, to_offset);
+		RBUFFER_ASSERT((cur_offset != to_offset), cf_debug, "Offset did not match cur=%d, to=%d", cur_offset, to_offset);
 	}
 	if (to_offset != cur_offset)
 	{
@@ -703,7 +717,7 @@ cf__rbuffer_fread(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 	if (ctx->buf.magic != RBUFFER_SEG_MAGIC)
 	{
 		pthread_mutex_unlock(&RDES->mlock);
-		RBTRACE(RDES, warning, "Read Buffer with Bad Magic");
+		RBTRACE(RDES, debug, "Read Buffer with Bad Magic");
 		return 0;
 	}
 	
@@ -930,7 +944,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 {
 	cf_rbuffer *rbuf_des = NULL;
 	int 	i;
-    int stamped_fileidx = -1;
+	int stamped_fileidx = -1;
 	
 	if (rcfg == NULL ) 
 	{
@@ -975,6 +989,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 
 	// Step 2: Open and Setup file Header 
 	RDES = malloc(sizeof(cf_rbuffer));
+	memset(RDES, 0, sizeof(cf_rbuffer));
 	RDES->strapped = false;
 	
 	if (rcfg->persist) 
@@ -1140,7 +1155,7 @@ cf_rbuffer_reinit(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 //  
 //  Parameter:
 //		rbuf_des	: Ring buffer Desriptor
-//		ctx			: context pointer
+//		ctx		: context pointer
 //		num_recs	: Number of records to seek
 //
 //  Synchronization:
@@ -1467,16 +1482,15 @@ cf_rbuffer_getsetctx(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx, int whence)
 	cf_rbuffer_ptr *ptr;
 	int i;
 	
-	if (whence == SEEK_CUR)		
-	{
-		return ctx;
-	}
-
 	pthread_mutex_lock(&RDES->mlock);
+
+	// SEEK_CUR is seek to read pointer
 	if (whence == SEEK_CUR)
 		ptr = &RDES->rctx.ptr;
+	// SEEK_END is seek to write pointer
 	if (whence == SEEK_END)
 		ptr = &RDES->wctx.ptr;
+	// SEEK_SET is seek to start pointer
 	else 
 		ptr = &CHDR.sptr;
 
@@ -1514,7 +1528,10 @@ cf_rbuffer_getsetctx(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx, int whence)
 	else
 	{
 		if (whence == SEEK_CUR)
+		{
+			pthread_mutex_unlock(&RDES->mlock);
 			return ctx;
+		}
 		pthread_mutex_lock(&ctx->lock);
 		ctx->ptr.fidx = ptr->fidx;
 		ctx->ptr.seg_id = ptr->seg_id;
