@@ -16,24 +16,23 @@
 #define CHDR 		(RDES->chdr)
 #define MAX_RECS	(CHDR.seg_size / CHDR.rec_size)
 
-#define RBUFFER_SEG_DATASIZE			8000
-#define RBUFFER_FILE_HEADER_SIZE		512
-#define RBUFFER_SEG_HEADER_SIZE			4
-#define RBUFFER_FILE_MAGIC				0xd19e56109f11e000L
-#define RBUFFER_SEG_MAGIC				0xcf
-#define RBUFFER_SEG_SIZE				(RBUFFER_SEG_HEADER_SIZE + CHDR.seg_size)
+#define RBUFFER_FILE_HEADER_SIZE	512
+#define RBUFFER_SEG_HEADER_SIZE		4
+#define RBUFFER_FILE_MAGIC		0xd19e56109f11e000L
+#define RBUFFER_SEG_MAGIC		0xcf
+#define RBUFFER_SEG_SIZE		(RBUFFER_SEG_HEADER_SIZE + CHDR.seg_size)
 
 // Number of Segments Freed when overwrite happens
-#define RBUFFER_FLAG_OVERWRITE_CHUNK			5
+#define RBUFFER_FLAG_OVERWRITE_CHUNK	5
 
 // Ring Buffer Flags
-#define RBUFFER_FLAG_OVERWRITE	0x01
+#define RBUFFER_FLAG_OVERWRITE		0x01
 #define RBUFFER_FLAG_PERSIST		0x02
 #define RBUFFER_FLAG_TRACE		0x04
 
 // Reason for wrap around
 #define RBUFFER_FLAG_OVERWRITE_BUFHEAD 	1
-#define RBUFFER_FLAG_OVERWRITE_READ		2
+#define RBUFFER_FLAG_OVERWRITE_READ	2
 
 // Flag for read context
 #define RBUFFER_CTX_FLAG_NEEDSEEK	0x01
@@ -70,7 +69,7 @@ cf_rbuffer_log(cf_rbuffer *rbuf_des)
 	RBTRACE(RDES, debug, 
 			"Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwstat, RDES->frstat);
 
-	RBTRACE(RDES, debug, "Current sptr [%d:%ld] rptr [%d:%ld] | rctx [%d:%ld] | wptr [%d:%ld] | wctx [%d:%ld]", 
+	RBTRACE(RDES, debug, "Current sptr [%ld:%ld] rptr [%ld:%ld] | rctx [%ld:%ld] | wptr [%ld:%ld] | wctx [%ld:%ld]", 
 					CHDR.sptr.seg_id, CHDR.sptr.rec_id,
 					CHDR.rptr.seg_id, CHDR.rptr.rec_id,
 					RDES->rctx.ptr.seg_id, RDES->rctx.ptr.rec_id,
@@ -115,7 +114,6 @@ cf_rbuffer_persist(cf_rbuffer *rbuf_des)
 {
 	int i;
 
-	RBUFFER_ASSERT((CHDR.nfiles > 1), cf_warning, "More than one file configured, illegal conf");
 	
 	RBTRACE(RDES, debug, 
 			"Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwstat, RDES->frstat);
@@ -336,7 +334,7 @@ cf__rbuffer_rseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_seg, bool f
 	ctx->ptr.rec_id	= 0;
 	cf__rbuffer_sanity(rbuf_des);
 
-	if (seg_id == HDR(ctx->ptr.fidx).sseg.seg_id) 
+	if ((seg_id == 0) && (fidx == 0))
 	{
 		//bump the version if you reach the start
 		ctx->version = CHDR.version;
@@ -473,7 +471,6 @@ cf__rbuffer_wseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 	uint64_t	segid;
 	uint64_t	fidx;
 	int			check = 0;
-	bool		changeversion = false;
 
 	pthread_mutex_lock(&RDES->mlock);
 	do 
@@ -486,13 +483,6 @@ cf__rbuffer_wseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 		// jumped to the start of the file while seeking 
 		if (segid == HDR(fidx).sseg.seg_id)
 		{
-			// if wrapping around bump version count
-			if ((fidx == HDR(fidx).nseg.fidx)	
-				|| (fidx > HDR(fidx).nseg.fidx))
-			{
-				changeversion = true;
-			}
-			
 			// Move to nseg perform the checks again
 			segid = HDR(fidx).nseg.seg_id;
 			fidx = HDR(fidx).nseg.fidx;
@@ -537,7 +527,7 @@ cf__rbuffer_wseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 					RDES->rctx.ptr.rec_id);
 	cf__rbuffer_sanity(rbuf_des);
 
-	if (changeversion)
+	if ((fidx == 0) && (segid == 0))
 	{
 		CHDR.version++;
 		RBTRACE(RDES, debug, "Increment version %ld %ld to %d",segid, HDR(fidx).sseg.seg_id,CHDR.version);
@@ -909,7 +899,8 @@ cf__rbuffer_bootstrap(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg, int fidx)
 	CHDR.rec_size = rcfg->rec_size;
 	CHDR.nfiles = rcfg->nfiles;
 	
-	for (i=0; i<CHDR.nfiles; i++) {
+	for (i=0; i<CHDR.nfiles; i++) 
+	{
 		memset(&HDR(i), 0, sizeof(cf_rbuffer_hdr));
 		HDR(i).fidx = i;
 		HDR(i).fsize = rcfg->fsize[i];	
@@ -969,23 +960,22 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
     // Step1: Re-size all files to the passed in size
 	for (i=0; i<rcfg->nfiles; i++) 
 	{
-        int fd = open(rcfg->fname[i], O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+		int fd = open(rcfg->fname[i], O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+		if (-1 == fd) 
+		{
+			cf_warning(CF_RBUFFER, "unable to open digest log file %s ",rcfg->fname[i]);
+			return( NULL );
+		}
 
-        if (-1 == fd) 
-		{
-            cf_warning(CF_RBUFFER, "unable to open digest log file %s ",rcfg->fname[i]);
-            return( NULL );
-        }
-        
-        // RESOLVE if file already exist then truncate should check to makes sure the
+		// RESOLVE if file already exist then truncate should check to makes sure the
 		// persist is not set
-        if (0 != ftruncate(fd, (off_t)rcfg->fsize[i])) 
+		if (0 != ftruncate(fd, (off_t)rcfg->fsize[i])) 
 		{
-            cf_info(CF_RBUFFER, "unable to truncate file: errno %d", errno);
+			cf_info(CF_RBUFFER, "unable to truncate file: errno %d", errno);
 			close(fd);
-            return( NULL );
-        }
-        close(fd);
+			return( NULL );
+		}
+		close(fd);
 	}
 
 	// Step 2: Open and Setup file Header 
@@ -1615,7 +1605,7 @@ cf_rbuffer_outstanding(cf_rbuffer *rbuf_des)
 	}
 	else
 	{
-			return (RDES->wctx.ptr.rec_id - RDES->rctx.ptr.rec_id);
+		return (RDES->wctx.ptr.rec_id - RDES->rctx.ptr.rec_id);
 	}
 }
 
@@ -1751,7 +1741,7 @@ void *rbuffer_writer_3(void *arg)
 
 void *rbuffer_writer_4(void *arg)
 {
-	rbuffer_writes(arg, 0, 50000, 1);
+	rbuffer_writes(arg, 0, 30000, 1);
 	pthread_exit(NULL);
 }
 
@@ -1837,7 +1827,7 @@ void *rbuffer_reader_3(void *arg)
 //	Thread1 : Writes to the file single record
 //  Thread2 : Reads from the file single record
 int
-cf_rbuffer_test1(uint64_t recs)
+cf_rbuffer_test1()
 {
 	pthread_t	rbuffer_writer_th;
 	pthread_t	rbuffer_reader_th;
@@ -1919,7 +1909,7 @@ cf_rbuffer_test1(uint64_t recs)
 //	Thread2 : Write to the file multiple record
 //  Thread3 : Read from the file multiple record
 int
-cf_rbuffer_test2(uint64_t recs)
+cf_rbuffer_test2()
 {
 	pthread_t	rbuffer_writer_th;
 	pthread_t	rbuffer_writer_th1;
@@ -2015,7 +2005,7 @@ cf_rbuffer_test2(uint64_t recs)
 //  Thread1 : Write to the file multiple record
 //	Thread2 : Read from the file multiple record
 int
-cf_rbuffer_test3(uint64_t recs)
+cf_rbuffer_test3()
 {
 	pthread_t	rbuffer_writer_th;
 	pthread_t	rbuffer_reader_th;
@@ -2081,7 +2071,7 @@ cf_rbuffer_test3(uint64_t recs)
 //  Thread2 : Reads from the file single record
 //  with wrapping of writes
 int
-cf_rbuffer_test4(uint64_t recs)
+cf_rbuffer_test4()
 {
 	pthread_t	rbuffer_writer_th;
 	pthread_t	rbuffer_reader_th;
@@ -2147,7 +2137,7 @@ cf_rbuffer_test4(uint64_t recs)
 //  Thread3 : Read from the file multiple record
 //	with write wrapping
 int
-cf_rbuffer_test5(uint64_t recs)
+cf_rbuffer_test5()
 {
 	pthread_t	rbuffer_writer_th;
 	pthread_t	rbuffer_writer_th1;
@@ -2225,23 +2215,27 @@ cf_rbuffer_test5(uint64_t recs)
 //	Thread2 : Read from the file multiple record
 //  Persist test 
 int
-cf_rbuffer_test6(uint64_t recs)
+cf_rbuffer_test6()
 {
-	pthread_t	rbuffer_writer_th;
-
 	cf_rbuffer_config cfg;
 	cfg.nfiles = 1;
 	cfg.rec_size = 50;
 	cfg.batch_size = 100;
 	cfg.trace = true;
 	cfg.fname[0] = strdup("/tmp/digestr_logtest6");
-	cfg.fsize[0] = 10000000;
+	cfg.fsize[0] = 1000000000;
 
 	
 	// Nooverwrite / Nopersist
 	cfg.overwrite = false;
-	cfg.persist = true;
+
+	// open dummy so the file gets truncated
+	cfg.persist = false;
 	cf_rbuffer *rb = cf_rbuffer_init(&cfg);	
+	cf_rbuffer_close(rb);
+
+	cfg.persist = true;
+	rb = cf_rbuffer_init(&cfg);	
 
 	if (!rb)
 	{
@@ -2249,18 +2243,11 @@ cf_rbuffer_test6(uint64_t recs)
 		return -1;
 	}
 
-	pthread_create(&rbuffer_writer_th, 0, rbuffer_writer_4, rb);	
-
-	void *retval;
-	if (0 != pthread_join(rbuffer_writer_th, &retval))
-	{
-		fprintf(stderr, "rbuffer test 1: write could not join %d\n",errno);
-		return (-1);
-	}
+	int retval = rbuffer_writes(rb, 0, 50000, 1);
 	
-	if (0 != retval)
+	if (50000 != retval)
 	{
-		fprintf(stderr, "rbuffer test 1: returned error %p\n",retval);
+		fprintf(stderr, "rbuffer test 1: returned error %d\n",retval);
 		return (-1);	
 	}
 	rbuffer_reads(rb, 10000, 20, NULL);
@@ -2278,7 +2265,7 @@ cf_rbuffer_test6(uint64_t recs)
 //	Thread2 : Read from the file multiple record
 //  main thread doing seeks
 int
-cf_rbuffer_test7(uint64_t recs)
+cf_rbuffer_test7()
 {
 	pthread_t	rbuffer_writer_th;
 
@@ -2362,7 +2349,7 @@ cf_rbuffer_test7(uint64_t recs)
 //	Thread1 : Writes to the file single record
 //  Thread2 : Reads from the file single record
 int
-cf_rbuffer_test8(uint64_t recs)
+cf_rbuffer_test8()
 {
 	pthread_t	rbuffer_writer_th;
 	pthread_t	rbuffer_reader_th;
@@ -2372,8 +2359,8 @@ cf_rbuffer_test8(uint64_t recs)
 	cfg.rec_size = 50;
 	cfg.batch_size = 50;
 	cfg.trace = true;
-	cfg.fname[0] = strdup("/tmp/digestr_logtest1_0");
-	cfg.fname[1] = strdup("/tmp/digestr_logtest1_1");
+	cfg.fname[0] = strdup("/tmp/digestr_logtest8_0");
+	cfg.fname[1] = strdup("/tmp/digestr_logtest8_1");
 	cfg.fsize[0] = 100000;
 	cfg.fsize[1] = 100000;
 
@@ -2424,32 +2411,90 @@ cf_rbuffer_test8(uint64_t recs)
 	return 0;
 }
 
-/*  
-file:rbuffertest.c
-#include <rbuffer.h>
-int main()
+
+int 
+cf_rbuffer_testall()
 {
-	if (0 != cf_rbuffer_test1(100000))
+	int passcount = 0;
+	
+	if (0 != cf_rbuffer_test1())
 		fprintf(stderr, "Test 1: FAIL\n"); 
 	else
+	{
+		passcount++;
 		fprintf(stderr, "Test 1: PASS\n"); 
-		
-	if (0 != cf_rbuffer_test2(100000))
+	}
+	fprintf(stderr, "\n"); 
+	
+	if (0 != cf_rbuffer_test2())
 		fprintf(stderr, "Test 2: FAIL\n"); 
 	else
+	{
+		passcount++;
 		fprintf(stderr, "Test 2: PASS\n"); 
-		
-	if (0 != cf_rbuffer_test3(100000))
+	}
+
+	fprintf(stderr, "\n"); 
+	if (0 != cf_rbuffer_test3())
 		fprintf(stderr, "Test 3: FAIL\n"); 
 	else
+	{
+		passcount++;
 		fprintf(stderr, "Test 3: PASS\n"); 
+	}
 
-	if (0 != cf_rbuffer_test4(100000))
+	fprintf(stderr, "\n"); 
+	if (0 != cf_rbuffer_test4())
 		fprintf(stderr, "Test 4: FAIL\n"); 
 	else
+	{
+		passcount++;
 		fprintf(stderr, "Test 4: PASS\n"); 
-}
+	}
+	
+	
+	fprintf(stderr, "\n"); 
+	if (0 != cf_rbuffer_test5())
+		fprintf(stderr, "Test 5: FAIL\n"); 
+	else
+	{
+		passcount++;
+		fprintf(stderr, "Test 5: PASS\n"); 
+	}
 
+	fprintf(stderr, "\n"); 
+
+	if (0 != cf_rbuffer_test6())
+		fprintf(stderr, "Test 6: FAIL\n"); 
+	else
+	{
+		passcount++;
+		fprintf(stderr, "Test 6: PASS\n"); 
+	}
+
+
+	if (0 != cf_rbuffer_test7())
+		fprintf(stderr, "Test 7: FAIL\n"); 
+	else
+	{
+		passcount++;
+		fprintf(stderr, "Test 7: PASS\n"); 
+	}
+
+	if (0 != cf_rbuffer_test8())
+		fprintf(stderr, "Test 8: FAIL\n"); 
+	else
+	{
+		passcount++;
+		fprintf(stderr, "Test 8: PASS\n"); 
+	}
+	
+	if (passcount != 8)
+		return ( -1 );
+
+	return 0;
+}
+/*  
 gcc -g -fno-common -fno-strict-aliasing -rdynamic  -Wall -D_FILE_OFFSET_BITS=64 -std=gnu99 -D_REENTRANT -D_GNU_SOURCE  -D MARCH_x86_64 -march=native -msse4 -MMD -o ../obj/rbuffertest.o  -c -I../include -I../../cf/include -I../../xds/include rbuffertest.c 
 gcc -L../lib/ $1 -lpthread -lcf -lcrypto ../obj/rbuffertest.o ../obj/rbuffer.o ../obj/fault.o ../obj/cf_random.o ../obj/dynbuf.o ../obj/cf_str.o ../obj/vector.o -o rbuffertest
 */

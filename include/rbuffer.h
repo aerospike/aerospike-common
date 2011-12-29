@@ -23,6 +23,7 @@
 
 #define RBUFFER_MAX_FILES 				4
 #define RBUFFER_MAX_FILENAME			256
+#define RBUFFER_SEG_DATASIZE			8000
 
 // Pointers in Ring Buffer
 typedef struct cf_rbuffer_pointer_s {
@@ -33,7 +34,7 @@ typedef struct cf_rbuffer_pointer_s {
 
 // Data Segment 
 typedef struct cf_rbuffer_seg_s {
-	char					data[5000];
+	char					data[RBUFFER_SEG_DATASIZE];
 	int16_t					version;
 	uint8_t					num_recs;	// Number of records	
 	uint8_t					magic;		// Stamp the block magic in the end
@@ -127,13 +128,14 @@ extern uint64_t		cf_rbuffer_outstanding(cf_rbuffer *);
 extern void		cf_rbuffer_setnoresume(cf_rbuffer *);
 
 // Test
-extern int cf_rbuffer_test1(uint64_t);
-extern int cf_rbuffer_test2(uint64_t);
-extern int cf_rbuffer_test3(uint64_t);
-extern int cf_rbuffer_test4(uint64_t);
-extern int cf_rbuffer_test5(uint64_t);
-extern int cf_rbuffer_test6(uint64_t);
-extern int cf_rbuffer_test7(uint64_t);
-extern int cf_rbuffer_test8(uint64_t);
+extern int cf_rbuffer_test1();
+extern int cf_rbuffer_test2();
+extern int cf_rbuffer_test3();
+extern int cf_rbuffer_test4();
+extern int cf_rbuffer_test5();
+extern int cf_rbuffer_test6();
+extern int cf_rbuffer_test7();
+extern int cf_rbuffer_test8();
+extern int cf_rbuffer_testall();
 
 
