@@ -16,6 +16,7 @@
 #define CHDR 		(RDES->chdr)
 #define MAX_RECS	(CHDR.seg_size / CHDR.rec_size)
 
+#define RBUFFER_SEG_DATASIZE			8000
 #define RBUFFER_FILE_HEADER_SIZE		512
 #define RBUFFER_SEG_HEADER_SIZE			4
 #define RBUFFER_FILE_MAGIC				0xd19e56109f11e000L
@@ -131,12 +132,12 @@ cf_rbuffer_persist(cf_rbuffer *rbuf_des)
 			rewind(RDES->mfd[i]);
 			if (1 != fwrite(&CHDR, sizeof(cf_rbuffer_chdr), 1, RDES->mfd[i])) 
 			{ 
-				cf_warning(CF_RBUFFER, CF_GLOBAL, "Common Header Persist failed");
+				cf_warning(CF_RBUFFER, "Common Header Persist failed");
 				goto err;
 			}
 			if (1 != fwrite(&HDR(i), sizeof(cf_rbuffer_hdr), 1, RDES->mfd[i])) 
 			{ 
-				cf_warning(CF_RBUFFER, CF_GLOBAL, "File Header Persist failed");
+				cf_warning(CF_RBUFFER, "File Header Persist failed");
 				goto err; 
 			}
 			fflush(RDES->mfd[i]);
@@ -773,7 +774,7 @@ cf__rbuffer_setup(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 	// Order the files in proper order set up fidx
 	if (CHDR.nfiles != rcfg->nfiles) 
 	{
-		cf_info(CF_RBUFFER, CF_GLOBAL, "Number of log file changed from %d to %d", CHDR.nfiles, rcfg->nfiles);
+		cf_info(CF_RBUFFER, "Number of log file changed from %d to %d", CHDR.nfiles, rcfg->nfiles);
 		if (CHDR.nfiles == 0)
 		{
 			isbootstrap = true;
@@ -899,9 +900,9 @@ cf__rbuffer_bootstrap(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg, int fidx)
 	memset(&CHDR, 0, sizeof(cf_rbuffer_chdr));
 	CHDR.magic = RBUFFER_FILE_MAGIC;
 	CHDR.signature = random; 	
-	CHDR.seg_size = 5000;
+	CHDR.seg_size = RBUFFER_SEG_DATASIZE;
 	CHDR.version = 1;
-	if (CHDR.seg_size > 5000) {
+	if (CHDR.seg_size > RBUFFER_SEG_DATASIZE) {
 		return false;		
 	}
 	RDES->wctx.flag &= ~RBUFFER_CTX_FLAG_NEEDSEEK;
@@ -914,7 +915,7 @@ cf__rbuffer_bootstrap(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg, int fidx)
 		HDR(i).fsize = rcfg->fsize[i];	
 		if ((CHDR.seg_size * 2) >= rcfg->fsize[i])
 		{
-			cf_warning(CF_RBUFFER, CF_GLOBAL, "Too small file size %s cannot init ring buffer\n",rcfg->fname[i]);
+			cf_warning(CF_RBUFFER, "Too small file size %s cannot init ring buffer\n",rcfg->fname[i]);
 			return false;
 		}
 	}		
@@ -999,7 +1000,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 		{
 			if ((RDES->mfd[i] = fopen(rcfg->fname[i], "r+b")) == NULL) 
 			{
-				cf_warning(CF_RBUFFER, CF_GLOBAL, "Failed to open the digest log file %s for metadata", rcfg->fname[i]);
+				cf_warning(CF_RBUFFER, "Failed to open the digest log file %s for metadata", rcfg->fname[i]);
 				goto backout;
 			}
 
@@ -1008,7 +1009,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 				rewind(RDES->mfd[i]);
 				if (1 != fread(&CHDR, sizeof(cf_rbuffer_chdr), 1, RDES->mfd[i])) 
 				{
-					cf_warning(CF_RBUFFER, CF_GLOBAL, "Failed to read digest log file %s", rcfg->fname[i]);
+					cf_warning(CF_RBUFFER, "Failed to read digest log file %s", rcfg->fname[i]);
 					goto backout;
 				}
 
@@ -1017,7 +1018,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 					stamped_fileidx = i;
 					if (1 != fread(&HDR(i), sizeof(cf_rbuffer_hdr), 1, RDES->mfd[i])) 
 					{
-						cf_warning(CF_RBUFFER, CF_GLOBAL, "Failed to read digest log file %s", rcfg->fname[i]);
+						cf_warning(CF_RBUFFER, "Failed to read digest log file %s", rcfg->fname[i]);
 						goto backout;
 					}
 				}
@@ -1029,7 +1030,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 		{
 			if (!cf__rbuffer_bootstrap(RDES, rcfg, -1)) 
 			{
-				cf_warning(CF_RBUFFER, CF_GLOBAL, "Boot strap failed for digest log file %s", rcfg->fname[i]);
+				cf_warning(CF_RBUFFER, "Boot strap failed for digest log file %s", rcfg->fname[i]);
 				goto backout;
 			}
 		}	
@@ -1045,7 +1046,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 				fseek(RDES->mfd[i], sizeof(cf_rbuffer_chdr), SEEK_SET);
 				if (1 != fread(&HDR(i), sizeof(cf_rbuffer_hdr), 1, RDES->mfd[i])) 
 				{
-					cf_warning(CF_RBUFFER, CF_GLOBAL, "Failed to read digest log file %s", rcfg->fname[i]);
+					cf_warning(CF_RBUFFER, "Failed to read digest log file %s", rcfg->fname[i]);
 					goto backout;
 				}
 		
@@ -1055,7 +1056,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 				}
 				else if (HDR(i).fsize != rcfg->fsize[i])
 				{
-					cf_warning(CF_RBUFFER, CF_GLOBAL, "Passed in file size does not match already stamped file size %s", rcfg->fname[i]);
+					cf_warning(CF_RBUFFER, "Passed in file size does not match already stamped file size %s", rcfg->fname[i]);
 					goto backout;
 				}
 			}
@@ -1066,7 +1067,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 		stamped_fileidx = -1;	
 		if (!cf__rbuffer_bootstrap(RDES, rcfg, -1)) 
 		{
-			cf_warning(CF_RBUFFER, CF_GLOBAL, "Boot strap failed for digest log file %s", rcfg->fname[i]);
+			cf_warning(CF_RBUFFER, "Boot strap failed for digest log file %s", rcfg->fname[i]);
 			goto backout;
 		}
 	}
@@ -1074,7 +1075,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 	{
 		if ((RDES->rfd[i] = fopen(rcfg->fname[i], "r+b")) == NULL) 
 		{
-			cf_warning(CF_RBUFFER, CF_GLOBAL, "Failed to open the digest log file %s for reading", rcfg->fname[i]);
+			cf_warning(CF_RBUFFER, "Failed to open the digest log file %s for reading", rcfg->fname[i]);
 			goto backout;
 		}
 		setvbuf(RDES->rfd[i], NULL, _IONBF, 0);
@@ -1084,7 +1085,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 		{
 			if ((RDES->wfd[i] = fopen(rcfg->fname[i], "w+b")) == NULL) 
 			{	
-				cf_warning(CF_RBUFFER, CF_GLOBAL, "Failed to open the digest log file %s for writing", rcfg->fname[i]);
+				cf_warning(CF_RBUFFER, "Failed to open the digest log file %s for writing", rcfg->fname[i]);
 				goto backout;
 			}
 		}
@@ -1092,7 +1093,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 		{
 			if ((RDES->wfd[i] = fopen(rcfg->fname[i], "r+b")) == NULL) 
 			{	
-				cf_warning(CF_RBUFFER, CF_GLOBAL, "Failed to open the digest log file %s for writing", rcfg->fname[i]);
+				cf_warning(CF_RBUFFER, "Failed to open the digest log file %s for writing", rcfg->fname[i]);
 				goto backout;
 			}
 		}
@@ -1504,11 +1505,11 @@ cf_rbuffer_getsetctx(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx, int whence)
 	
 		pthread_mutex_init(&new_ctx->lock, NULL);
 
-		for (i = 0; i<RBUFFER_MAX_FILES; i++)
+		for (i = 0; i<CHDR.nfiles; i++)
 		{
 			if ((new_ctx->fd[ptr->fidx] = fopen(HDR(ptr->fidx).fname, "rb")) == NULL) 
 			{
-				cf_warning(CF_RBUFFER, CF_GLOBAL, "Failed to open the digest log file %s for caching context", HDR(new_ctx->ptr.fidx).fname);
+				cf_warning(CF_RBUFFER, "Failed to open the digest log file %s for caching context", HDR(new_ctx->ptr.fidx).fname);
 				cf_rbuffer_closectx(new_ctx);
 				pthread_mutex_unlock(&RDES->mlock);
 				return ( NULL );
