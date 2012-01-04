@@ -470,7 +470,6 @@ cf_fault_sink_strlist(cf_dyn_buf *db)
 extern void
 cf_fault_sink_logroll(void)
 {
-	int rv;
 	fprintf(stderr, "cf_fault: rolling log files\n");
 	for (int i = 0; i < cf_fault_sinks_inuse; i++) {
 		cf_fault_sink *s = &cf_fault_sinks[i];
@@ -480,32 +479,12 @@ cf_fault_sink_logroll(void)
 			s->fd = -1;
 			usleep(1);
 
-			umask(0);
-			if(0 != (rv = access(s->path, R_OK))) {
-				printf("sunil:return value of access(R_OK) is %d. errno=%d\n", rv, errno);
-			}
-			if(0 != (rv = access(s->path, W_OK))) {
-				printf("sunil:return value of access(W_OK) is %d. errno=%d\n", rv, errno);
-			}
-			if(0 != (rv = access(s->path, X_OK))) {
-				printf("sunil:return value of access(X_OK) is %d. errno=%d\n", rv, errno);
-			}
-
 			// hopefully, the file has been relinked elsewhere - or you're OK losing it
-			rv = unlink(s->path);
-			printf("sunil:return value of unlink() is %d. errno=%d\n", rv, errno);
-			
-			rv = close(fd);
-			printf("sunil:return value of close() is %d. errno=%d\n", rv, errno);
+			unlink(s->path);
+			close(fd);
 			
 			fd = open(s->path, O_WRONLY|O_CREAT|O_NONBLOCK|O_APPEND, S_IRUSR|S_IWUSR);
 			s->fd = fd;
-			if (fd == -1) {
-				printf("sunil:Unable to open new file for fault sink %d after rolling the log\n. errno=%d", i, errno);
-			} else {
-				printf("sunil:Opened fault sink %d\n", i);
-			}
-			
 		}
 
 	}
