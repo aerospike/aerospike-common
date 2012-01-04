@@ -49,7 +49,7 @@ msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 	size_t m_sz = sizeof(msg_field) * max_id;
 	msg *m;
 	size_t a_sz = sizeof(msg) + m_sz;
-	a_sz = (a_sz / 512) + 512;
+	a_sz = ((a_sz / 512) + 1) * 512;
 	m = cf_rc_alloc(a_sz);
 	cf_assert(m, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
 	m->len = max_id;
