@@ -9,6 +9,8 @@
 #pragma once
 #include "atomic.h"
 
+//#define TRACK_MEM_ALLOCED
+
 
 /* SYNOPSIS
  * Reference counting allocation
@@ -36,33 +38,193 @@ extern void cf_rc_init();
 
 #include <stdlib.h>
 
-static inline void *cf_malloc(size_t s) {
-	return(malloc(s));
+//#define TRACK_MEM_ALLOC
+
+#ifndef TRACK_MEM_ALLOC
+
+static inline void *cf_malloc(size_t sz) {
+	return(malloc(sz));
 }
+
 static inline void cf_free(void *p) {
 	free(p);
 }
+
 static inline void *cf_calloc(size_t nmemb, size_t sz) {
 	return(calloc(nmemb, sz));
 }
+
 static inline void *cf_realloc(void *ptr, size_t sz) {
 	return(realloc(ptr, sz));
 }
+
 static inline void *cf_strdup(const char *s) {
 	return(strdup(s));
 }
+
 static inline void *cf_strndup(const char *s, size_t n) {
 	return(strndup(s, n));
 }
+
 static inline void *cf_valloc(size_t sz) {
-	void *r = 0;
-	if (0 == posix_memalign( &r, 4096, sz)) return(r);
+	void *p = 0;
+	if (0 == posix_memalign( &p, 4096, sz)) {
+		return(p);
+	}
+	return(0);
+}
+
+#else
+
+typedef struct mem_alloc_track_s {
+	int sz;
+	char file[100];
+	int line;
+} mem_alloc_track;
+
+extern struct shash_s *mem_alloced;
+extern cf_atomic64 mem_alloced_sum;
+
+static inline uint32_t ptr_hash_fn(void *key) {
+	return((uint32_t)(*(uint64_t *)key));
+}
+
+static inline int mem_alloced_reduce_fn(void *key, void *data, void *udata) {
+	mem_alloc_track *p_mat = (mem_alloc_track *)data;
+	cf_info(AS_INFO, "%p | %d (%s:%d)", *(void **)key, p_mat->sz, p_mat->file, p_mat->line);
+	return(0);
+}
+
+#define cf_malloc(s) (cf_malloc_track(s, __FILE__, __LINE__))
+
+static inline void *cf_malloc_track(size_t sz, char *file, int line) {
+	void *p = malloc(sz);
+
+	mem_alloc_track mat;
+	mat.sz = sz;
+	strcpy(mat.file, file);
+	mat.line = line;
+	shash_put(mem_alloced, &p, &mat);
+	cf_atomic64_add(&mem_alloced_sum, sz);
+
+	return(p);
+}
+
+#define cf_free(p) (cf_free_track(p, __FILE__, __LINE__))
+
+static inline void cf_free_track(void *p, char *file, int line) {
+	mem_alloc_track mat;
+	shash_get_and_delete(mem_alloced, &p, &mat);
+	cf_atomic64_sub(&mem_alloced_sum, mat.sz);
+
+	free(p);
+}
+
+#define cf_calloc(nmemb, sz) (cf_calloc_track(nmemb, sz, __FILE__, __LINE__))
+
+static inline void *cf_calloc_track(size_t nmemb, size_t sz, char *file, int line) {
+	void *p = calloc(nmemb, sz);
+
+	mem_alloc_track mat;
+	mat.sz = sz;
+	strcpy(mat.file, file);
+	mat.line = line;
+	shash_put(mem_alloced, &p, &mat);
+	cf_atomic64_add(&mem_alloced_sum, sz);
+
+	return(p);
+}
+
+#define cf_realloc(ptr, sz) (cf_realloc_track(ptr, sz, __FILE__, __LINE__))
+
+static inline void *cf_realloc_track(void *ptr, size_t sz, char *file, int line) {
+	void *p = realloc(ptr, sz);
+
+	if (p != ptr) {
+		mem_alloc_track mat;
+		shash_get_and_delete(mem_alloced, &p, &mat);
+		int64_t memory_delta = sz - mat.sz;
+
+		mat.sz = sz;
+		strcpy(mat.file, file);
+		mat.line = line;
+		shash_put(mem_alloced, &p, &mat);
+
+		if (memory_delta) {
+			cf_atomic64_add(&mem_alloced_sum, memory_delta);
+		}
+	} else {
+		mem_alloc_track *p_mat;
+		pthread_mutex_t *mem_alloced_lock;
+		shash_get_vlock(mem_alloced, &p, (void **)&p_mat, &mem_alloced_lock);
+		int64_t memory_delta = sz - p_mat->sz;
+
+		p_mat->sz = sz;
+		strcpy(p_mat->file, file);
+		p_mat->line = line;
+
+		pthread_mutex_unlock(mem_alloced_lock);
+
+		if (memory_delta) {
+			cf_atomic64_add(&mem_alloced_sum, memory_delta);
+		}
+	}
+
+	return(p);
+}
+
+#define cf_strdup(s) (cf_strdup_track(s, __FILE__, __LINE__))
+
+static inline void *cf_strdup_track(const char *s, char *file, int line) {
+	void *p = strdup(s);
+
+	mem_alloc_track mat;
+	mat.sz = strlen(p) + 1;
+	strcpy(mat.file, file);
+	mat.line = line;
+	shash_put(mem_alloced, &p, &mat);
+	cf_atomic64_add(&mem_alloced_sum, mat.sz);
+
+	return(p);
+}
+
+#define cf_strndup(s, n) (cf_strndup_track(s, n, __FILE__, __LINE__))
+
+static inline void *cf_strndup_track(const char *s, size_t n, char *file, int line) {
+	void *p = strndup(s, n);
+
+	mem_alloc_track mat;
+	mat.sz = strlen(p) + 1;
+	strcpy(mat.file, file);
+	mat.line = line;
+	shash_put(mem_alloced, &p, &mat);
+	cf_atomic64_add(&mem_alloced_sum, mat.sz);
+
+	return(p);
+}
+
+#define cf_valloc(sz) (cf_valloc_track(sz, __FILE__, __LINE__))
+
+static inline void *cf_valloc_track(size_t sz, char *file, int line) {
+	void *p = 0;
+	if (0 == posix_memalign( &p, 4096, sz)) {
+		mem_alloc_track mat;
+		mat.sz = sz;
+		strcpy(mat.file, file);
+		mat.line = line;
+		shash_put(mem_alloced, &p, &mat);
+		cf_atomic64_add(&mem_alloced_sum, sz);
+
+		return(p);
+	}
 	return(0);
 }
 #endif
 
+#endif
+
 //
-// A COMPLCIATED WAY
+// A COMPLICATED WAY
 //
 
 #if 0

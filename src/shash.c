@@ -9,10 +9,12 @@
 #include <string.h>
 #include <stdlib.h>
 
-
 #include "shash.h"
 
-
+#ifdef TRACK_MEM_ALLOC
+struct shash_s *mem_alloced;
+cf_atomic64 mem_alloced_sum;
+#endif
 
 int
 shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_len, uint32_t sz, uint flags)

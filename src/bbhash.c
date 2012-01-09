@@ -237,7 +237,7 @@ bbhash_delete(bbhash *h, void *key, uint32_t key_len)
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
-				free (e);
+				cf_free (e);
 			}
 			// am at head - more complicated
 			else {
@@ -314,7 +314,7 @@ bbhash_get_and_delete(bbhash *h, void *key, uint32_t key_len, void *value, uint3
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
-				free (e);
+				cf_free (e);
 			}
 			// am at head - more complicated
 			else {
@@ -424,7 +424,7 @@ bbhash_reduce_delete(bbhash *h, bbhash_reduce_fn reduce_fn, void *udata)
 				// patchup pointers & free element if not head
 				if (prev_he) {
 					prev_he->next = list_he->next;
-					free (list_he);
+					cf_free (list_he);
 					list_he = prev_he->next;
 				}
 				// am at head - more complicated
