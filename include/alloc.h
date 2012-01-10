@@ -9,8 +9,6 @@
 #pragma once
 #include "atomic.h"
 
-//#define TRACK_MEM_ALLOCED
-
 
 /* SYNOPSIS
  * Reference counting allocation
