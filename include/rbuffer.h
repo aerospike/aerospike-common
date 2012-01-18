@@ -90,15 +90,17 @@ typedef struct cf_rbuffer_s {
 	// Internal Read/Write Contexts
 	cf_rbuffer_ctx 		rctx;
 	cf_rbuffer_ctx  	wctx;
-	
-	// Statistics
-	uint64_t			read_stat;
-	uint64_t			write_stat;
-	uint64_t			fwstat;
-	uint64_t			frstat;
-	uint64_t			batch_size;
 	uint64_t			batch_pos;
 	bool 				strapped;
+	
+	// Statistics
+	cf_atomic64			read_stat;
+	cf_atomic64			write_stat;
+	cf_atomic64			fwrite_stat;
+	cf_atomic64			fwmeta_stat;
+	cf_atomic64			fread_stat;
+	cf_atomic64			batch_size;
+	cf_atomic64			max_slots;
 } cf_rbuffer;
 
 // Config 

@@ -67,7 +67,7 @@ int
 cf_rbuffer_log(cf_rbuffer *rbuf_des)
 {
 	RBTRACE(RDES, debug, 
-			"Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwstat, RDES->frstat);
+			"Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwrite_stat, RDES->fread_stat);
 
 	RBTRACE(RDES, debug, "Current sptr [%ld:%ld] rptr [%ld:%ld] | rctx [%ld:%ld] | wptr [%ld:%ld] | wctx [%ld:%ld]", 
 					CHDR.sptr.seg_id, CHDR.sptr.rec_id,
@@ -116,7 +116,7 @@ cf_rbuffer_persist(cf_rbuffer *rbuf_des)
 
 	
 	RBTRACE(RDES, debug, 
-			"Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwstat, RDES->frstat);
+			"Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwrite_stat, RDES->fread_stat);
 
 	pthread_mutex_lock(&RDES->mlock);
 	memcpy (&CHDR.rptr, &RDES->rctx.ptr, sizeof(cf_rbuffer_ptr));
@@ -130,16 +130,16 @@ cf_rbuffer_persist(cf_rbuffer *rbuf_des)
 			rewind(RDES->mfd[i]);
 			if (1 != fwrite(&CHDR, sizeof(cf_rbuffer_chdr), 1, RDES->mfd[i])) 
 			{ 
-				cf_warning(CF_RBUFFER, "Common Header Persist failed");
+				cf_warning(CF_RBUFFER, "Ring buffer Common Header Persist failed");
 				goto err;
 			}
 			if (1 != fwrite(&HDR(i), sizeof(cf_rbuffer_hdr), 1, RDES->mfd[i])) 
 			{ 
-				cf_warning(CF_RBUFFER, "File Header Persist failed");
+				cf_warning(CF_RBUFFER, "Ring buffer File Header Persist failed");
 				goto err; 
 			}
 			fflush(RDES->mfd[i]);
-			RDES->fwstat += 2;
+			cf_atomic64_add(&RDES->fwmeta_stat , 2);
 		}			
 	}
 
@@ -162,7 +162,7 @@ cf__rbuffer_sanity(cf_rbuffer * rbuf_des)
 			|| (HDR(0).nseg.seg_id != HDR(0).sseg.seg_id)
 			|| (HDR(0).nseg.rec_id != HDR(0).sseg.rec_id))	
 		{
-			RBTRACE(RDES, warning, "Sanity Check 2 Failed");
+			RBTRACE(RDES, warning, "Ring Buffer Sanity Check - 2: Failed");
 			return false;
 		}
 
@@ -171,7 +171,7 @@ cf__rbuffer_sanity(cf_rbuffer * rbuf_des)
 		        || (HDR(0).pseg.seg_id != HDR(0).fsize / RBUFFER_SEG_SIZE)
        			|| (HDR(0).pseg.rec_id != 0))  
 		{
-			RBTRACE(RDES, warning, "Sanity Check 3 Failed");
+			RBTRACE(RDES, warning, "Ring Buffer Sanity Check - 3: Failed");
 			return false;
 		}
 	}
@@ -184,7 +184,7 @@ cf__rbuffer_sanity(cf_rbuffer * rbuf_des)
 		if ((CHDR.sptr.fidx != HDR(CHDR.sptr.fidx).sseg.fidx) 
 			|| (CHDR.sptr.rec_id != HDR(CHDR.sptr.fidx).sseg.rec_id))	
 		{
-			RBTRACE(RDES, warning, "Sanity Check 4 Failed");
+			RBTRACE(RDES, warning, "Ring Buffer Sanity Check - 4: Failed");
 		
 			RBTRACE(RDES, warning, "%d!=%d || %ld != %ld || %ld != %ld",
 					CHDR.sptr.fidx, HDR(CHDR.sptr.fidx).sseg.fidx, CHDR.sptr.seg_id, HDR(CHDR.sptr.fidx).sseg.seg_id,
@@ -200,7 +200,7 @@ cf__rbuffer_sanity(cf_rbuffer * rbuf_des)
 			if ((HDR(i).fidx != HDR(i).sseg.fidx) 
 				|| (HDR(i).nseg.fidx != HDR(next).sseg.fidx))
 			{
-				RBTRACE(RDES, warning, "Sanity Check 5 Failed");
+				RBTRACE(RDES, warning, "Ring Buffer Sanity Check - 5: Failed");
 				return false;
 			}
 			i++;
@@ -607,7 +607,7 @@ cf_rbuffer_fflush(cf_rbuffer *rbuf_des)
 		memset(ctx->buf.data, 0, CHDR.seg_size);
 	}
 
-	RDES->fwstat++;
+	cf_atomic64_add(&RDES->fwrite_stat, 1);
 	RDES->batch_pos = 0;
 
 	return true;
@@ -660,7 +660,7 @@ cf__rbuffer_fwrite(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 		ctx->buf.magic = 0;
 	}
 
-	RDES->fwstat++;
+	cf_atomic64_add(&RDES->fwrite_stat, 1);
 	RDES->batch_pos = 0;
 
 	pthread_mutex_unlock(&RDES->mlock);
@@ -731,12 +731,10 @@ cf__rbuffer_fread(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 	RBTRACE(RDES, detail, "Read [file:%d offset:%d seg_id:%ld max_recs:%d num_recs:%d rec_id:%ld size:%d] %d",
 					ctx->ptr.fidx, offset, ctx->ptr.seg_id, MAX_RECS, ctx->buf.num_recs, ctx->ptr.rec_id, RBUFFER_SEG_SIZE, ctx->buf.magic);
 
-	RDES->frstat++;
+	cf_atomic64_add(&RDES->fread_stat, 1);
 	pthread_mutex_unlock(&RDES->mlock);
 	return 1;
 }
-
-
 
 
 // Function to Setup inmemory structure based on passed in file headers 
@@ -793,7 +791,7 @@ cf__rbuffer_setup(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 	if (pthread_mutex_init(&RDES->wctx.lock, &attr) != 0)
 	{
 		pthread_mutexattr_destroy(&attr);
-		printf("Could not init mutex \n");
+		cf_warning(CF_RBUFFER, "Ring buffer Could not init mutex.. aborting \n");
 		return false;
 	}
 		
@@ -801,7 +799,7 @@ cf__rbuffer_setup(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 	{
 		pthread_mutex_destroy(&RDES->wctx.lock);
 		pthread_mutexattr_destroy(&attr);
-		printf("Could not init mutex \n");
+		cf_warning(CF_RBUFFER, "Ring buffer Could not init mutex.. aborting \n");
 		return false;
 	}
 	
@@ -810,7 +808,7 @@ cf__rbuffer_setup(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 		pthread_mutex_destroy(&RDES->wctx.lock);
 		pthread_mutex_destroy(&RDES->rctx.lock);
 		pthread_mutexattr_destroy(&attr);
-		printf("Could not init mutex \n");
+		cf_warning(CF_RBUFFER, "Ring buffer Could not init mutex.. aborting \n");
 		return false;
 	}
 
@@ -847,8 +845,10 @@ cf__rbuffer_setup(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 
 	RDES->read_stat = 0;
 	RDES->write_stat = 0;
-	RDES->fwstat = 0;
-	RDES->frstat = 0;
+	RDES->fwrite_stat = 0;
+	RDES->fwmeta_stat = 0;
+	RDES->fread_stat = 0;
+	RDES->max_slots = (HDR(0).fsize / RBUFFER_SEG_SIZE) * MAX_RECS;
 	RDES->batch_size = rcfg->batch_size;
 	RDES->batch_pos = 0;
 
@@ -1339,7 +1339,7 @@ cf_rbuffer_read(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, char *buf, int numrec
 		start = total;
 	}
 	pthread_mutex_unlock(&ctx->lock);
-	RDES->read_stat += total;
+	cf_atomic64_add(&RDES->read_stat, total);
 	return total;	
 }
 
@@ -1443,7 +1443,7 @@ cf_rbuffer_write(cf_rbuffer *rbuf_des, char *buf, int numrecs)
 		}
 		start = total;
 	}			
-	RDES->write_stat += total;
+	cf_atomic64_add(&RDES->write_stat, total);
 	pthread_mutex_unlock(&ctx->lock);
 	return total;
 err:
@@ -1583,6 +1583,7 @@ cf_rbuffer_outstanding(cf_rbuffer *rbuf_des)
 	uint64_t fsize = 0;
 	uint64_t i;
 	cf_rbuffer_ctx ctx;
+	uint64_t num_recs = 0;
 
 	// memcpy can be used ctx has no buffer changes are done to the
 	memcpy(&ctx, &RDES->rctx, sizeof(cf_rbuffer_ctx));
@@ -1599,14 +1600,15 @@ cf_rbuffer_outstanding(cf_rbuffer *rbuf_des)
 
 	if (i)
 	{
-		return ((MAX_RECS - RDES->rctx.ptr.rec_id)
+		num_recs = ((MAX_RECS - RDES->rctx.ptr.rec_id)
 				+ (i - 1)*MAX_RECS
 				+ RDES->wctx.ptr.rec_id);
 	}
 	else
 	{
-		return (RDES->wctx.ptr.rec_id - RDES->rctx.ptr.rec_id);
+		num_recs = (RDES->wctx.ptr.rec_id - RDES->rctx.ptr.rec_id);
 	}
+	return num_recs;
 }
 
 
@@ -1896,7 +1898,7 @@ cf_rbuffer_test1()
 		}
 	
 		fprintf(stderr, "Stats [Total file:%d Total Reads:%ld: Total Writes:%ld: Total Fwrites:%ld: Total Freads:%ld]\n", 
-					(type==0)?1:3, rb->read_stat, rb->write_stat, rb->fwstat, rb->frstat);
+					(type==0)?1:3, rb->read_stat, rb->write_stat, rb->fwrite_stat, rb->fread_stat);
 		cf_rbuffer_close(rb);
 		type++;
 	}
@@ -1991,7 +1993,7 @@ cf_rbuffer_test2()
 			return (-1);	
 		}
 		fprintf(stderr, "Stats [Total file:%d Total Reads:%ld: Total Writes:%ld: Total Fwrites:%ld: Total Freads:%ld]\n", 
-					(type==0)?1:3, rb->read_stat, rb->write_stat, rb->fwstat, rb->frstat);
+					(type==0)?1:3, rb->read_stat, rb->write_stat, rb->fwrite_stat, rb->fread_stat);
 		cf_rbuffer_close(rb);
 		type++;
 	}
@@ -2059,7 +2061,7 @@ cf_rbuffer_test3()
 	}
 
 	fprintf(stderr, "Stats [Total Reads:%ld: Total Writes:%ld: Total Fwrites:%ld: Total Freads:%ld]\n", 
-					rb->read_stat, rb->write_stat, rb->fwstat, rb->frstat);
+					rb->read_stat, rb->write_stat, rb->fwrite_stat, rb->fread_stat);
 	cf_rbuffer_close(rb);
 
 	return 0;
@@ -2125,7 +2127,7 @@ cf_rbuffer_test4()
 	}
 
 	fprintf(stderr, "Stats [Total Reads:%ld: Total Writes:%ld: Total Fwrites:%ld: Total Freads:%ld]\n", 
-					rb->read_stat, rb->write_stat, rb->fwstat, rb->frstat);
+					rb->read_stat, rb->write_stat, rb->fwrite_stat, rb->fread_stat);
 	cf_rbuffer_close(rb);
 
 	return 0;
@@ -2202,7 +2204,7 @@ cf_rbuffer_test5()
 		return (-1);	
 	}
 	fprintf(stderr, "Stats [Total Reads:%ld: Total Writes:%ld: Total Fwrites:%ld: Total Freads:%ld]\n", 
-					rb->read_stat, rb->write_stat, rb->fwstat, rb->frstat);
+					rb->read_stat, rb->write_stat, rb->fwrite_stat, rb->fread_stat);
 	cf_rbuffer_close(rb);
 
 	return 0;
@@ -2405,7 +2407,7 @@ cf_rbuffer_test8()
 	}
 
 	fprintf(stderr, "Stats [Total Reads:%ld: Total Writes:%ld: Total Fwrites:%ld: Total Freads:%ld]\n", 
-					rb->read_stat, rb->write_stat, rb->fwstat, rb->frstat);
+					rb->read_stat, rb->write_stat, rb->fwrite_stat, rb->fread_stat);
 	cf_rbuffer_close(rb);
 
 	return 0;
