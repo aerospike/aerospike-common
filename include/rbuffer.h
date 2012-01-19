@@ -117,6 +117,7 @@ typedef struct cf_rbuffer_config_s {
 
 extern cf_rbuffer*		cf_rbuffer_init(cf_rbuffer_config *);
 extern bool 			cf_rbuffer_reinit(cf_rbuffer *, cf_rbuffer_config *);
+extern void 			cf_rbuffer_trace(cf_rbuffer *, bool);
 extern bool 		cf_rbuffer_close(cf_rbuffer *);
 extern int 		cf_rbuffer_read(cf_rbuffer *, cf_rbuffer_ctx*, char *, int);
 extern int 		cf_rbuffer_write(cf_rbuffer *, char *, int);

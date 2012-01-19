@@ -557,7 +557,8 @@ cf__rbuffer_fseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 	// the offset for the write pointer may not match.
 	if (ctx == &RDES->rctx)
 	{
-		RBUFFER_ASSERT((cur_offset != to_offset), cf_debug, "Offset did not match cur=%d, to=%d", cur_offset, to_offset);
+		if (cur_offset != to_offset)
+			RBTRACE(RDES, debug, "Offset did not match cur=%d, to=%d", cur_offset, to_offset);
 	}
 	if (to_offset != cur_offset)
 	{
@@ -1136,6 +1137,23 @@ cf_rbuffer_reinit(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 	if (new_rbuf_des == new_rbuf_des) {}	
 	return true;
 }
+
+// Client API to enable disable ring buffer tracing
+// 
+// Parameter:
+//		rbuf_des	: Ring buffer descriptor
+//		val			: true to enable false to disable
+//
+// Synchronization:
+//		None required
+void cf_rbuffer_trace(cf_rbuffer *rbuf_des, bool val)
+{
+    if (val == true)
+        CHDR.flag |= RBUFFER_FLAG_TRACE;
+    else
+        CHDR.flag &= ~RBUFFER_FLAG_TRACE;
+}
+
 
 //  Client API to seek the passed in context pointer.
 // 
