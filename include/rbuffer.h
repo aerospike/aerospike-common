@@ -129,6 +129,7 @@ extern void 		cf_rbuffer_closectx(cf_rbuffer_ctx*);
 extern int		cf_rbuffer_log(cf_rbuffer *);
 extern uint64_t		cf_rbuffer_outstanding(cf_rbuffer *);
 extern void		cf_rbuffer_setnoresume(cf_rbuffer *);
+extern uint64_t		cf_rbuffer_setstart(cf_rbuffer *, cf_rbuffer_ctx *);
 
 // Test
 extern int cf_rbuffer_test1();

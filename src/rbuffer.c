@@ -713,14 +713,14 @@ cf__rbuffer_fread(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 		return 0;
 	}
 	
-	// if it is not internal context then return false if read version differs
-	// from the context version
+	// Return -1 if the current version is greater than the version read
+	// from the disk.
 	if (ctx->version != ctx->buf.version)
 	{
 		if (ctx->version > ctx->buf.version)
 		{
 			pthread_mutex_unlock(&RDES->mlock);
-			RBTRACE(RDES, warning, "Read context at the invalid verstion");
+			RBTRACE(RDES, warning, "Read context at the invalid version");
 			return -1;
 		}
 		else
@@ -838,7 +838,7 @@ cf__rbuffer_setup(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 	memset(&RDES->wctx.buf, 0, sizeof(cf_rbuffer_seg));
 	ret = cf__rbuffer_fread(RDES, &RDES->wctx);
 
-	if (!ret)
+	if (ret != 1)
 	{
 		RBTRACE(RDES, debug, "Setting up write buffer failed");
 	}
@@ -1265,6 +1265,7 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 //
 // Returns
 //		number of records read
+//		if number of records read is 0 then -1 in case of version mismatch
 //
 // Synchronization:
 //		Acquires the context mutex when reading
@@ -1274,10 +1275,17 @@ cf_rbuffer_read(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, char *buf, int numrec
 	int start = 0;
 	int count = -1;
 	int total = 0;
+	int ret = 0;
+	char type[11];
 
 	if (ctx == NULL) 
 	{
+		sprintf(type, "Internal");
 		ctx = &RDES->rctx;
+	}
+	else
+	{
+		sprintf(type, "Contextual");
 	}
 	
 	pthread_mutex_lock(&ctx->lock);	
@@ -1296,14 +1304,17 @@ cf_rbuffer_read(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, char *buf, int numrec
 	
 			ctx->flag &= ~RBUFFER_CTX_FLAG_NEEDSEEK;
 
-			if (cf__rbuffer_fread(RDES, ctx) != 1)
+			ret = cf__rbuffer_fread(RDES, ctx);
+			if (1 != ret)
 			{
 				break;
 			}
 		}
 		else if (ctx->ptr.rec_id >= ctx->buf.num_recs)
 		{
-			if (1 != cf__rbuffer_fread(RDES, ctx))
+			ret = cf__rbuffer_fread(RDES, ctx);
+
+			if (1 != ret)
 			{
 				break;
 			}
@@ -1314,7 +1325,9 @@ cf_rbuffer_read(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, char *buf, int numrec
 		} 
 		else if (ctx->buf.magic != RBUFFER_SEG_MAGIC) 
 		{
-			if (1 != cf__rbuffer_fread(RDES, ctx))
+			ret = cf__rbuffer_fread(RDES, ctx);
+
+			if (1 != ret)
 			{
 				break;
 			}
@@ -1350,14 +1363,16 @@ cf_rbuffer_read(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, char *buf, int numrec
 				count * CHDR.rec_size);
 		total = total + count;
 
-		RBTRACE(RDES, debug, "Read [%d:%ld:%ld] max_recs:%d total:%d count:%d",
-					ctx->ptr.fidx, ctx->ptr.seg_id, ctx->ptr.rec_id, MAX_RECS, numrecs, count);
+		RBTRACE(RDES, debug, "%s Read [%d:%ld:%ld] max_recs:%d total:%d count:%d",
+					type, ctx->ptr.fidx, ctx->ptr.seg_id, ctx->ptr.rec_id, MAX_RECS, numrecs, count);
 
 		ctx->ptr.rec_id += count;
 		start = total;
 	}
 	pthread_mutex_unlock(&ctx->lock);
 	cf_atomic64_add(&RDES->read_stat, total);
+	if ((ret == -1) && (total == 0))
+		return -1;
 	return total;	
 }
 
@@ -1467,6 +1482,85 @@ cf_rbuffer_write(cf_rbuffer *rbuf_des, char *buf, int numrecs)
 err:
 	pthread_mutex_unlock(&ctx->lock);
 	return -1;
+}
+
+// Client API to seek the start to the passed in context. This is used
+// for the reclaim.
+//
+//  Parameter:	
+//		rbuf_des	: Ring buffer Descriptor
+//		rbctx		: point to which start seeks.
+//
+//	Caller:
+//		XDS
+//
+//	Synchronization:
+//		Acquires meta lock while reading.
+//
+//	Returns:
+//		Number of records reclaimed
+uint64_t 
+cf_rbuffer_setstart(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx)
+{
+	uint64_t segid, tsegid;
+	int	 fidx, tfidx;
+	uint64_t num_seg = 0;
+	pthread_mutex_lock(&RDES->mlock);
+
+	segid = CHDR.sptr.seg_id;
+	fidx = CHDR.sptr.fidx;
+
+	tsegid = ctx->ptr.seg_id;
+	tfidx = ctx->ptr.fidx;
+		
+	cf__rbuffer_sanity(rbuf_des);
+
+	while (1)
+	{
+		segid = RBUFFER_NEXT_SEG(segid, fidx);
+
+		// Hit the start of the file. 
+		if (segid == HDR(fidx).sseg.seg_id)
+		{
+			segid = HDR(fidx).nseg.seg_id;
+			fidx = HDR(fidx).nseg.fidx;
+		}
+
+		// Hit read
+		if ((fidx == RDES->rctx.ptr.fidx)		
+			&& (segid == RDES->rctx.ptr.seg_id)) 
+		{
+			// cannot seek beyond read
+			break;
+		}
+
+		// Hit the rbuffer header; is a bug should not 
+		// hit self
+		if ((fidx == CHDR.sptr.fidx)
+			&& (segid == CHDR.sptr.seg_id)) 
+		{
+			// is error do not seek
+			goto end;
+		}
+		num_seg++;
+		if ((segid == tsegid)
+			&& (fidx = tfidx))
+		{
+			break;
+		}
+	}
+
+	RBTRACE(RDES, debug, "Start Reclaimed from [%d:%ld] to [%d:%ld]",
+				CHDR.sptr.fidx, CHDR.sptr.seg_id,
+				ctx->ptr.fidx, ctx->ptr.seg_id);
+
+	memcpy(&CHDR.sptr, &ctx->ptr, sizeof(cf_rbuffer_ptr)); 
+	CHDR.sptr.rec_id = 0;
+	pthread_mutex_unlock(&RDES->mlock);
+	return num_seg*MAX_RECS;
+end:
+	pthread_mutex_unlock(&RDES->mlock);
+	return 0;
 }
 
 //  Client API to request and cache read nad write context
