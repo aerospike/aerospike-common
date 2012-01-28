@@ -720,7 +720,7 @@ cf__rbuffer_fread(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 		if (ctx->version > ctx->buf.version)
 		{
 			pthread_mutex_unlock(&RDES->mlock);
-			RBTRACE(RDES, warning, "Read context at the invalid version");
+			RBTRACE(RDES, debug, "Read context at the invalid version");
 			return -1;
 		}
 		else
@@ -1512,7 +1512,18 @@ cf_rbuffer_setstart(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx)
 
 	tsegid = ctx->ptr.seg_id;
 	tfidx = ctx->ptr.fidx;
-		
+
+	if ((segid == tsegid)
+		&& (fidx == tfidx))
+	{
+		//Nothing to seek
+		pthread_mutex_unlock(&RDES->mlock);
+		return 0;
+	}
+	
+	RBTRACE(RDES, debug, "Start: Start Reclaimed from [%d:%ld] to [%d:%ld]",
+				fidx, segid, tfidx, tsegid);
+	
 	cf__rbuffer_sanity(rbuf_des);
 
 	while (1)
@@ -1544,17 +1555,18 @@ cf_rbuffer_setstart(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx)
 		}
 		num_seg++;
 		if ((segid == tsegid)
-			&& (fidx = tfidx))
+			&& (fidx == tfidx))
 		{
 			break;
 		}
 	}
 
-	RBTRACE(RDES, debug, "Start Reclaimed from [%d:%ld] to [%d:%ld]",
+	RBTRACE(RDES, debug, "End: Start Reclaimed from [%d:%ld] to [%d:%ld]",
 				CHDR.sptr.fidx, CHDR.sptr.seg_id,
 				ctx->ptr.fidx, ctx->ptr.seg_id);
 
-	memcpy(&CHDR.sptr, &ctx->ptr, sizeof(cf_rbuffer_ptr)); 
+	CHDR.sptr.fidx = ctx->ptr.fidx;
+	CHDR.sptr.seg_id = ctx->ptr.seg_id;
 	CHDR.sptr.rec_id = 0;
 	pthread_mutex_unlock(&RDES->mlock);
 	return num_seg*MAX_RECS;
