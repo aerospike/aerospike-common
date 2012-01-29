@@ -78,10 +78,27 @@ cf_rbuffer_log(cf_rbuffer *rbuf_des)
 	return 0;
 }
 
+// Client API to setup context in ring buffer for failover case.
+void 
+cf_rbuffer_setfailover(cf_rbuffer *rbuf_des)
+{
+	pthread_mutex_lock(&RDES->mlock);
+	// Reset the read context to start; we need to process the failover
+	// node also.
+	RDES->rctx.ptr.fidx = CHDR.sptr.fidx;
+	RDES->rctx.ptr.seg_id = CHDR.sptr.seg_id;
+
+	// We set up rec_id to 0 we may loose write on the current segment once
+	// noresume is set in ring buffer
+	CHDR.sptr.rec_id = RDES->rctx.ptr.rec_id = 0;
+	pthread_mutex_unlock(&RDES->mlock);
+}
+
 // Client API to setup context in ring buffer for no resume case
 void 
 cf_rbuffer_setnoresume(cf_rbuffer *rbuf_des)
 {
+	pthread_mutex_lock(&RDES->mlock);
 	// Reset the read and start pointer to write pointer.
 	CHDR.sptr.fidx = RDES->rctx.ptr.fidx = RDES->wctx.ptr.fidx;
 	CHDR.sptr.seg_id = RDES->rctx.ptr.seg_id = RDES->wctx.ptr.seg_id;
@@ -89,6 +106,7 @@ cf_rbuffer_setnoresume(cf_rbuffer *rbuf_des)
 	// We set up rec_id to 0 we may loose write on the current segment once
 	// noresume is set in ring buffer
 	CHDR.sptr.rec_id = RDES->rctx.ptr.rec_id = RDES->wctx.ptr.rec_id = 0;
+	pthread_mutex_unlock(&RDES->mlock);
 }
 
 bool  cf__rbuffer_fwrite(cf_rbuffer *, cf_rbuffer_ctx *);
