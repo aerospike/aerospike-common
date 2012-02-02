@@ -1494,6 +1494,8 @@ cf_rbuffer_write(cf_rbuffer *rbuf_des, char *buf, int numrecs)
 		}
 		start = total;
 	}			
+	RBTRACE(RDES, debug, "Wrote upto %d:%ld:%ld total %ld",ctx->ptr.fidx, ctx->ptr.seg_id, 	
+					ctx->ptr.rec_id, total);
 	cf_atomic64_add(&RDES->write_stat, total);
 	pthread_mutex_unlock(&ctx->lock);
 	return total;

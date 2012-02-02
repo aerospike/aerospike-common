@@ -56,7 +56,7 @@ typedef struct cf_rbuffer_chdr_s {
 
 // File Header
 typedef struct cf_rbuffer_hdr_s {
-	uint64_t			fsize;	// Size
+	off_t				fsize;	// Size
 	uint8_t				fidx;	// Index [in case of multiple files]
 	char 				fname[RBUFFER_MAX_FILENAME];
 	cf_rbuffer_ptr		sseg;	// Start  
@@ -106,7 +106,7 @@ typedef struct cf_rbuffer_s {
 // Config 
 typedef struct cf_rbuffer_config_s {
 	char		*fname[RBUFFER_MAX_FILES];
-	uint64_t	fsize[RBUFFER_MAX_FILES];
+	off_t		fsize[RBUFFER_MAX_FILES];
 	uint8_t 	nfiles;
 	uint64_t	rec_size;
 	uint64_t	batch_size;
