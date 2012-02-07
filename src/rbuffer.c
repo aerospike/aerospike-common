@@ -1087,7 +1087,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 			cf_warning(CF_RBUFFER, "Failed to open the digest log file %s for reading", rcfg->fname[i]);
 			goto backout;
 		}
-		setvbuf(RDES->rfd[i], NULL, _IONBF, 0);
+		//setvbuf(RDES->rfd[i], NULL, _IONBF, 0);
 		fseek(RDES->rfd[i], RBUFFER_FILE_HEADER_SIZE, SEEK_SET);
 	
 		if (!rcfg->persist)
@@ -1107,7 +1107,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 			}
 		}
 
-		setvbuf(RDES->wfd[i], NULL, _IONBF, 0);
+		//setvbuf(RDES->wfd[i], NULL, _IONBF, 0);
 		fseek(RDES->wfd[i], RBUFFER_FILE_HEADER_SIZE, SEEK_SET);
 	}
 
@@ -1365,14 +1365,16 @@ cf_rbuffer_read(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, char *buf, int numrec
 		}
 
 		// Read data from in-memory buffer into passed in buffer
-		if (numrecs <= (MAX_RECS - ctx->ptr.rec_id)) 
+		// Only can read upto max records on the buffer which is
+		// read.
+		if (numrecs <= (ctx->buf.num_recs - ctx->ptr.rec_id)) 
 		{
 			count = numrecs;
 			numrecs = 0;	
 		}	
 		else 
 		{
-			count = MAX_RECS - ctx->ptr.rec_id;
+			count = ctx->buf.num_recs - ctx->ptr.rec_id;
 			numrecs -= count;
 		}
 
@@ -1573,6 +1575,15 @@ cf_rbuffer_setstart(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx)
 			// is error do not seek
 			goto end;
 		}
+
+		// Hit the write pointer; is a bug 
+		if ((fidx == RDES->wctx.ptr.fidx)
+			&& (segid == RDES->wctx.ptr.seg_id)) 
+		{
+			// is error do not seek
+			goto end;
+		}
+
 		num_seg++;
 		if ((segid == tsegid)
 			&& (fidx == tfidx))
@@ -1585,8 +1596,8 @@ cf_rbuffer_setstart(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx)
 				CHDR.sptr.fidx, CHDR.sptr.seg_id,
 				ctx->ptr.fidx, ctx->ptr.seg_id);
 
-	CHDR.sptr.fidx = ctx->ptr.fidx;
-	CHDR.sptr.seg_id = ctx->ptr.seg_id;
+	CHDR.sptr.fidx = fidx;
+	CHDR.sptr.seg_id = segid;
 	CHDR.sptr.rec_id = 0;
 	pthread_mutex_unlock(&RDES->mlock);
 	return num_seg*MAX_RECS;
