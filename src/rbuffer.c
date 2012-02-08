@@ -1012,6 +1012,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 				cf_warning(CF_RBUFFER, "Failed to open the digest log file %s for metadata", rcfg->fname[i]);
 				goto backout;
 			}
+			setvbuf(RDES->mfd[i], NULL, _IONBF, 0);
 
 			if (stamped_fileidx == -1)
 			{
@@ -1087,7 +1088,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 			cf_warning(CF_RBUFFER, "Failed to open the digest log file %s for reading", rcfg->fname[i]);
 			goto backout;
 		}
-		//setvbuf(RDES->rfd[i], NULL, _IONBF, 0);
+		setvbuf(RDES->rfd[i], NULL, _IONBF, 0);
 		fseek(RDES->rfd[i], RBUFFER_FILE_HEADER_SIZE, SEEK_SET);
 	
 		if (!rcfg->persist)
@@ -1107,7 +1108,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 			}
 		}
 
-		//setvbuf(RDES->wfd[i], NULL, _IONBF, 0);
+		setvbuf(RDES->wfd[i], NULL, _IONBF, 0);
 		fseek(RDES->wfd[i], RBUFFER_FILE_HEADER_SIZE, SEEK_SET);
 	}
 
