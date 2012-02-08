@@ -130,6 +130,7 @@ extern int		cf_rbuffer_log(cf_rbuffer *);
 extern uint64_t		cf_rbuffer_outstanding(cf_rbuffer *);
 extern void		cf_rbuffer_setnoresume(cf_rbuffer *);
 extern void		cf_rbuffer_setfailover(cf_rbuffer *);
+extern void		cf_rbuffer_setnofailover(cf_rbuffer *);
 extern uint64_t		cf_rbuffer_setstart(cf_rbuffer *, cf_rbuffer_ctx *);
 
 // Test

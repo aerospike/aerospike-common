@@ -94,6 +94,21 @@ cf_rbuffer_setfailover(cf_rbuffer *rbuf_des)
 	pthread_mutex_unlock(&RDES->mlock);
 }
 
+// Client API to setup context in ring buffer for nofailover case.
+void 
+cf_rbuffer_setnofailover(cf_rbuffer *rbuf_des)
+{
+	pthread_mutex_lock(&RDES->mlock);
+	// Reset the start to the read context; we need not process anything before
+	// read on the current node.
+
+	CHDR.sptr.fidx = RDES->rctx.ptr.fidx;
+	CHDR.sptr.seg_id = RDES->rctx.ptr.seg_id;
+
+	CHDR.sptr.rec_id = RDES->rctx.ptr.rec_id = 0;
+	pthread_mutex_unlock(&RDES->mlock);
+}
+
 // Client API to setup context in ring buffer for no resume case
 void 
 cf_rbuffer_setnoresume(cf_rbuffer *rbuf_des)
