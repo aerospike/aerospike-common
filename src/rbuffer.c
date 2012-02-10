@@ -421,6 +421,17 @@ cf__rbuffer_startseek(cf_rbuffer *rbuf_des, int mode)
 	
 	segid = CHDR.sptr.seg_id;
 	fidx = CHDR.sptr.fidx;
+
+	// If start is already at the read do not seek unless overwrite is allowed.
+	if ((fidx == RDES->rctx.ptr.fidx)		
+		&& (segid == RDES->rctx.ptr.seg_id)) 
+	{
+		if (!(CHDR.flag & RBUFFER_FLAG_OVERWRITE)) 
+		{
+			cf__rbuffer_sanity(rbuf_des);
+			return false;
+		}
+	}
 		
 	cf__rbuffer_sanity(rbuf_des);
 
@@ -1555,8 +1566,28 @@ cf_rbuffer_setstart(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx)
 		&& (fidx == tfidx))
 	{
 		//Nothing to seek
-		pthread_mutex_unlock(&RDES->mlock);
-		return 0;
+		goto end;
+	}
+	
+	// In case of resume-(failover nofailover) start and read point are at the 
+	// same location do not seek start other wise we cause start to move ahead
+	// of read (say read in the disk is behind the actually shipped min time 
+	// then the reclaimer would go move start to the min time spot which could
+	// be ahead of read. Do the check before incrementing)
+	if ((fidx == RDES->rctx.ptr.fidx)		
+		&& (segid == RDES->rctx.ptr.seg_id)) 
+	{
+		//Nothing to seek
+		goto end;
+	}
+
+	// Not a possibility but if start points at the write do not
+	// seek further. Defensive code
+	if ((fidx == RDES->wctx.ptr.fidx)		
+			&& (segid == RDES-wctx.ptr.seg_id)) 
+	{
+		//Nothing to seek
+		goto end;
 	}
 	
 	RBTRACE(RDES, debug, "Start: Start Reclaimed from [%d:%ld] to [%d:%ld]",
