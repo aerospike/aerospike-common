@@ -1584,7 +1584,7 @@ cf_rbuffer_setstart(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx)
 	// Not a possibility but if start points at the write do not
 	// seek further. Defensive code
 	if ((fidx == RDES->wctx.ptr.fidx)		
-			&& (segid == RDES-wctx.ptr.seg_id)) 
+			&& (segid == RDES->wctx.ptr.seg_id)) 
 	{
 		//Nothing to seek
 		goto end;
