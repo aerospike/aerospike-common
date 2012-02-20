@@ -347,6 +347,33 @@ cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity)
 	return(0);
 }
 
+int
+cf_fault_sink_setcontext(cf_fault_sink *s, char *context, char *severity)
+{
+	if (s == 0) 		return(cf_fault_sink_addcontext_all(context, severity));
+
+	cf_fault_context ctx = CF_FAULT_CONTEXT_UNDEF;
+	cf_fault_severity sev = CF_FAULT_SEVERITY_UNDEF;
+
+	for (int i = 0; i < CF_FAULT_SEVERITY_UNDEF; i++) {
+		if (0 == strncasecmp(cf_fault_severity_strings[i], severity, strlen(severity)))
+			sev = (cf_fault_severity)i;
+	}
+	if (CF_FAULT_SEVERITY_UNDEF == sev)
+		return(-1);
+
+	for (int i = 0; i < CF_FAULT_CONTEXT_UNDEF; i++) {
+		if (0 == strncasecmp(cf_fault_context_strings[i], context, strlen(context)))
+			ctx = (cf_fault_context)i;
+	}
+	if (CF_FAULT_CONTEXT_UNDEF == ctx)
+		return(-1);
+
+	s->limit[ctx] = sev;
+	cf_fault_filter[ctx] = s->limit[ctx];
+	return(0);
+}
+
 
 /* cf_fault_event
  * Respond to a fault */

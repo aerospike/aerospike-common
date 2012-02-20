@@ -129,6 +129,7 @@ typedef struct cf_fault_recovery_stack_t cf_fault_recovery_stack;
 /* Function declarations */
 			// note: passing a null sink sets for all currently known sinks
 extern int cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity);
+extern int cf_fault_sink_setcontext(cf_fault_sink *s, char *context, char *severity);
 extern cf_fault_sink *cf_fault_sink_add(char *path);
 
 extern int cf_fault_sink_strlist(cf_dyn_buf *db); // pack all contexts into a string - using ids

@@ -2,7 +2,28 @@
  *  Citrusleaf RBUFFER
  *  rbuffer.c - ring buffer wrapper
  *
- *  Implements ring buffer wrapper over file[s]/device[s]
+ *  Implements general purpose fixed record size ring buffer wrapper over file[s]/device[s]. File is 
+ *  split up into segments which store record, these segments are managed as a ring. The write wraps 
+ *  to the beggining of the ring when it hits the end. Multiple files could be configured to part of 
+ *  the single ring buffer. Anything can be stored as record in this. 
+ *
+ *  Any read or write into ring buffer is done through ring buffer context. Any number of read or write 
+ *  context can be setup to do multiple scans. There are two internally maintained default context 
+ *  wctx : write context 
+ *  rctx  : read context
+ *  Context maintain pointer to the location where write or read under the context is happening,
+ *  these pointers are persisted on to the disk periodically so ring buffer has resume capability from 
+ *  last persisted point.  One more special pointer sptr which define the start of the ring buffer is
+ *  persisted
+ *
+ *  Lay out of the file looks
+ *
+ *  -----------------------------------------------------------------
+ *  Common | File   | S1 | S2 | ....     | Sn |
+ *  header | header |    |    |          |    |
+ *  -----------------------------------------------------------------
+ *                    /|\                  | 
+ *                     ---------------------
  *
  *  Copyright 2011 by Citrusleaf.  All rights reserved.
  *  THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE.  THE COPYRIGHT NOTICE
@@ -21,9 +42,7 @@
 #define RBUFFER_FILE_MAGIC		0xd19e56109f11e000L
 #define RBUFFER_SEG_MAGIC		0xcf
 #define RBUFFER_SEG_SIZE		(RBUFFER_SEG_HEADER_SIZE + CHDR.seg_size)
-
-// Number of Segments Freed when overwrite happens
-#define RBUFFER_FLAG_OVERWRITE_CHUNK	5
+#define RBUFFER_FLAG_OVERWRITE_CHUNK	5           // Number of Segments Freed when overwrite happens
 
 // Ring Buffer Flags
 #define RBUFFER_FLAG_OVERWRITE		0x01
@@ -60,41 +79,66 @@ do{						\
 	(((seg_id) + (HDR((f_idx)).fsize / RBUFFER_SEG_SIZE) - 1)  \
                      % (HDR((f_idx)).fsize / RBUFFER_SEG_SIZE))
 
+// Internal functions
+bool cf__rbuffer_setup(cf_rbuffer *, cf_rbuffer_config *);
+bool cf__rbuffer_bootstrap(cf_rbuffer *, cf_rbuffer_config *, int);
+int  cf__rbuffer_rseek(cf_rbuffer *, cf_rbuffer_ctx *, int, bool);
+bool cf__rbuffer_wseek(cf_rbuffer *, cf_rbuffer_ctx *);
+int  cf__rbuffer_fseek(cf_rbuffer *, cf_rbuffer_ctx *);
+int  cf__rbuffer_fread(cf_rbuffer *, cf_rbuffer_ctx *);
+bool cf__rbuffer_fwrite(cf_rbuffer *, cf_rbuffer_ctx *);
+bool cf__rbuffer_sanity(cf_rbuffer *);
+bool cf__rbuffer_startseek(cf_rbuffer *, int);
 
 
-// Client API To log ring buffer data in xds log. This done when debug is enabled.
-int
+// Client API To log ring buffer data in info sink. This is for he debugging purposes.
+//
+// Caller:
+//		XDS 
+//
+// Synchronization:
+//		Acquires the meta lock.
+void
 cf_rbuffer_log(cf_rbuffer *rbuf_des)
 {
-	RBTRACE(RDES, debug, 
-			"Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwrite_stat, RDES->fread_stat);
+	pthread_mutex_lock(&RDES->mlock);
+	cf_info(CF_RBUFFER, "Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwrite_stat, RDES->fread_stat);
 
-	RBTRACE(RDES, debug, "Current sptr [%ld:%ld] rptr [%ld:%ld] | rctx [%ld:%ld] | wptr [%ld:%ld] | wctx [%ld:%ld]", 
+	cf_info(CF_RBUFFER, "Current sptr [%ld:%ld] rptr [%ld:%ld] | rctx [%ld:%ld] | wptr [%ld:%ld] | wctx [%ld:%ld]", 
 					CHDR.sptr.seg_id, CHDR.sptr.rec_id,
 					CHDR.rptr.seg_id, CHDR.rptr.rec_id,
 					RDES->rctx.ptr.seg_id, RDES->rctx.ptr.rec_id,
 					CHDR.wptr.seg_id, CHDR.wptr.rec_id,
 					RDES->wctx.ptr.seg_id, RDES->wctx.ptr.rec_id);
-	return 0;
+	pthread_mutex_unlock(&RDES->mlock);
 }
 
-// Client API to setup context in ring buffer for failover case.
+// Client API to setup context in ring buffer for failover case (XDS).
+//
+// Caller:
+//		XDS 
+//
+// Synchronization:
+//		Acquires the meta lock.
 void 
 cf_rbuffer_setfailover(cf_rbuffer *rbuf_des)
 {
 	pthread_mutex_lock(&RDES->mlock);
-	// Reset the read context to start; we need to process the failover
-	// node also.
+	// Reset the read context to start; we need to process the failed
+	// node log record also if any.
 	RDES->rctx.ptr.fidx = CHDR.sptr.fidx;
 	RDES->rctx.ptr.seg_id = CHDR.sptr.seg_id;
-
-	// We set up rec_id to 0 we may loose write on the current segment once
-	// noresume is set in ring buffer
 	CHDR.sptr.rec_id = RDES->rctx.ptr.rec_id = 0;
 	pthread_mutex_unlock(&RDES->mlock);
 }
 
-// Client API to setup context in ring buffer for nofailover case.
+// Client API to setup context in ring buffer for nofailover case (XDS).
+//
+// Caller:
+//		XDS 
+//
+// Synchronization:
+//		Acquires the meta lock.
 void 
 cf_rbuffer_setnofailover(cf_rbuffer *rbuf_des)
 {
@@ -109,7 +153,13 @@ cf_rbuffer_setnofailover(cf_rbuffer *rbuf_des)
 	pthread_mutex_unlock(&RDES->mlock);
 }
 
-// Client API to setup context in ring buffer for no resume case
+// Client API to setup context in ring buffer for no resume case. (XDS)
+//
+// Caller:
+//		XDS 
+//
+// Synchronization:
+//		Acquires the meta lock.
 void 
 cf_rbuffer_setnoresume(cf_rbuffer *rbuf_des)
 {
@@ -117,14 +167,9 @@ cf_rbuffer_setnoresume(cf_rbuffer *rbuf_des)
 	// Reset the read and start pointer to write pointer.
 	CHDR.sptr.fidx = RDES->rctx.ptr.fidx = RDES->wctx.ptr.fidx;
 	CHDR.sptr.seg_id = RDES->rctx.ptr.seg_id = RDES->wctx.ptr.seg_id;
-
-	// We set up rec_id to 0 we may loose write on the current segment once
-	// noresume is set in ring buffer
 	CHDR.sptr.rec_id = RDES->rctx.ptr.rec_id = RDES->wctx.ptr.rec_id = 0;
 	pthread_mutex_unlock(&RDES->mlock);
 }
-
-bool  cf__rbuffer_fwrite(cf_rbuffer *, cf_rbuffer_ctx *);
 
 // Client API to persist read/write pointer 
 //
@@ -329,17 +374,14 @@ cf__rbuffer_rseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_seg, bool f
 				segid = RBUFFER_PREV_SEG(segid, fidx);
 			}
 
+			seg_id = segid;
+			count++;
+
 			// Hit the buffer header
 			if ((fidx == CHDR.sptr.fidx) 
 				&& (segid == CHDR.sptr.seg_id)) 
 			{
-				if ((count + 1) == num_seg) 
-				{
-					seg_id = segid;
-					count++;
-					break;
-				}
-				goto rseek_err;
+				break;
 			}	
 
 			// Hit write
@@ -349,9 +391,6 @@ cf__rbuffer_rseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_seg, bool f
 				// is a bug; should hit buffer head first
 				goto rseek_err;
 			}
-			
-			seg_id = segid;
-			count++;	
 		}
 	}
 
@@ -484,7 +523,7 @@ cf__rbuffer_startseek(cf_rbuffer *rbuf_des, int mode)
 	}
 
 	cf_rbuffer_persist(rbuf_des);
-	RBTRACE(RDES, debug, "%d:%ld rptr [%d:%ld] wctx [%d:%ld] rctx [%d:%ld] mode:%d ", 
+	RBTRACE(RDES, debug, "[%d:%ld] rptr [%d:%ld] wctx [%d:%ld] rctx [%d:%ld] mode:%d ", 
 					CHDR.sptr.fidx, CHDR.sptr.seg_id, 
 					CHDR.rptr.fidx, CHDR.rptr.seg_id, 
 					RDES->wctx.ptr.fidx, RDES->wctx.ptr.seg_id, 
@@ -564,7 +603,7 @@ cf__rbuffer_wseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 	ctx->ptr.fidx = fidx;
 	ctx->ptr.seg_id = segid; 
 	ctx->ptr.rec_id	= 0;
-	RBTRACE(RDES, debug, " to %d:%ld @ sptr [%d:%ld] rctx [%d:%ld:%ld]", 
+	RBTRACE(RDES, debug, " to [%d:%ld] @ sptr [%d:%ld] rctx [%d:%ld:%ld]", 
 					ctx->ptr.fidx, ctx->ptr.seg_id, 
 					CHDR.sptr.fidx, CHDR.sptr.seg_id, 
 					RDES->rctx.ptr.fidx, RDES->rctx.ptr.seg_id, 
@@ -1146,7 +1185,6 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 	
 	// Persist the header
 	cf_rbuffer_persist(RDES);
-	cf_rbuffer_log(RDES);
 	RDES->strapped = true;
 	
 	return RDES;
@@ -2617,7 +2655,7 @@ cf_rbuffer_test8()
 
 
 int 
-cf_rbuffer_testall()
+cf_rbuffer_test()
 {
 	int passcount = 0;
 	
@@ -2698,7 +2736,3 @@ cf_rbuffer_testall()
 
 	return 0;
 }
-/*  
-gcc -g -fno-common -fno-strict-aliasing -rdynamic  -Wall -D_FILE_OFFSET_BITS=64 -std=gnu99 -D_REENTRANT -D_GNU_SOURCE  -D MARCH_x86_64 -march=native -msse4 -MMD -o ../obj/rbuffertest.o  -c -I../include -I../../cf/include -I../../xds/include rbuffertest.c 
-gcc -L../lib/ $1 -lpthread -lcf -lcrypto ../obj/rbuffertest.o ../obj/rbuffer.o ../obj/fault.o ../obj/cf_random.o ../obj/dynbuf.o ../obj/cf_str.o ../obj/vector.o -o rbuffertest
-*/

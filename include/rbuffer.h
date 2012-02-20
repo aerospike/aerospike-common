@@ -126,7 +126,7 @@ extern int 		cf_rbuffer_seek(cf_rbuffer *, cf_rbuffer_ctx *, int, int);
 extern int		cf_rbuffer_persist(cf_rbuffer *);
 extern bool 		cf_rbuffer_fflush(cf_rbuffer *);
 extern void 		cf_rbuffer_closectx(cf_rbuffer_ctx*);
-extern int		cf_rbuffer_log(cf_rbuffer *);
+extern void				cf_rbuffer_log(cf_rbuffer *);
 extern uint64_t		cf_rbuffer_outstanding(cf_rbuffer *);
 extern void		cf_rbuffer_setnoresume(cf_rbuffer *);
 extern void		cf_rbuffer_setfailover(cf_rbuffer *);
@@ -134,14 +134,6 @@ extern void		cf_rbuffer_setnofailover(cf_rbuffer *);
 extern uint64_t		cf_rbuffer_setstart(cf_rbuffer *, cf_rbuffer_ctx *);
 
 // Test
-extern int cf_rbuffer_test1();
-extern int cf_rbuffer_test2();
-extern int cf_rbuffer_test3();
-extern int cf_rbuffer_test4();
-extern int cf_rbuffer_test5();
-extern int cf_rbuffer_test6();
-extern int cf_rbuffer_test7();
-extern int cf_rbuffer_test8();
-extern int cf_rbuffer_testall();
+extern int cf_rbuffer_test();
 
 
