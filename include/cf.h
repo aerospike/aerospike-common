@@ -20,6 +20,7 @@
 #define FALSE 0
 #define TRUE 1
 
+#define CITRUSLEAF_EPOCH 1262304000
 
 /* This one just looks better to me */
 typedef uint8_t byte;
@@ -217,6 +218,7 @@ extern cf_clock cf_getms();
 extern cf_clock cf_getus();
 extern cf_clock cf_clock_getabsolute();
 extern cf_clock cf_get_seconds();
+extern cf_clock cf_secs_since_clepoch();
 
 /* daemon.c */
 extern void cf_process_privsep(uid_t uid, gid_t gid);

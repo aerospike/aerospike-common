@@ -38,3 +38,11 @@ cf_get_seconds() {
 	clock_gettime( CLOCK_MONOTONIC, &ts);
 	return ( ts.tv_sec );
 }
+
+cf_clock
+cf_secs_since_clepoch() {
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	return (ts.tv_sec - CITRUSLEAF_EPOCH);
+}
+
