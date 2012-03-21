@@ -81,7 +81,7 @@ char *cf_fault_context_strings[] = {
 	"index",		// 40
 	"batch",		// 41	
 	"trial",        // 42
-	"xds",			// 43
+	"xdr",			// 43
 	"cf:rbuffer", 	// 44
 	"fb_health",	// 45
 	NULL			// 46

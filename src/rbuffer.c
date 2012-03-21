@@ -90,6 +90,8 @@ bool cf__rbuffer_fwrite(cf_rbuffer *, cf_rbuffer_ctx *);
 bool cf__rbuffer_sanity(cf_rbuffer *);
 bool cf__rbuffer_startseek(cf_rbuffer *, int);
 
+// Hack to track reclaim performed by runtime. Pretty ugly !!
+cf_atomic64 	runtime_reclaim = 0;
 
 // Client API To log ring buffer data in info sink. This is for he debugging purposes.
 //
@@ -102,7 +104,7 @@ void
 cf_rbuffer_log(cf_rbuffer *rbuf_des)
 {
 	pthread_mutex_lock(&RDES->mlock);
-	cf_info(CF_RBUFFER, "Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwrite_stat, RDES->fread_stat);
+	cf_info(CF_RBUFFER, "Stats [%ld:%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwrite_stat, RDES->fread_stat, RDES->fseek_stat);
 
 	cf_info(CF_RBUFFER, "Current sptr [%ld:%ld] rptr [%ld:%ld] | rctx [%ld:%ld] | wptr [%ld:%ld] | wctx [%ld:%ld]", 
 					CHDR.sptr.seg_id, CHDR.sptr.rec_id,
@@ -194,7 +196,7 @@ cf_rbuffer_persist(cf_rbuffer *rbuf_des)
 
 	
 	RBTRACE(RDES, debug, 
-			"Stats [%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwrite_stat, RDES->fread_stat);
+			"Stats [%ld:%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwrite_stat, RDES->fread_stat, RDES->fseek_stat);
 
 	pthread_mutex_lock(&RDES->mlock);
 	memcpy (&CHDR.rptr, &RDES->rctx.ptr, sizeof(cf_rbuffer_ptr));
@@ -531,6 +533,7 @@ cf__rbuffer_startseek(cf_rbuffer *rbuf_des, int mode)
 					mode);
 
 	cf__rbuffer_sanity(rbuf_des);
+	cf_atomic64_add(&runtime_reclaim, num_seg*MAX_RECS);
 	return true;
 }
 
@@ -638,13 +641,12 @@ cf__rbuffer_fseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 
 	// Because of the partial writes to the disk caused by the batch size
 	// the offset for the write pointer may not match.
-	if (ctx == &RDES->rctx)
-	{
-		if (cur_offset != to_offset)
-			RBTRACE(RDES, debug, "Offset did not match cur=%d, to=%d", cur_offset, to_offset);
-	}
 	if (to_offset != cur_offset)
 	{
+		if (ctx == &RDES->wctx) {
+			RBTRACE(RDES, debug, "Offset did not match cur=%d, to=%d", cur_offset, to_offset);
+			cf_atomic64_add(&RDES->fseek_stat, 1);
+		}
 		fseek(ctx->fd[ctx->ptr.fidx], to_offset, SEEK_SET);
 	}
 	return to_offset;
@@ -930,6 +932,7 @@ cf__rbuffer_setup(cf_rbuffer *rbuf_des, cf_rbuffer_config *rcfg)
 	RDES->read_stat = 0;
 	RDES->write_stat = 0;
 	RDES->fwrite_stat = 0;
+	RDES->fseek_stat = 0;
 	RDES->fwmeta_stat = 0;
 	RDES->fread_stat = 0;
 	RDES->max_slots = (HDR(0).fsize / RBUFFER_SEG_SIZE) * MAX_RECS;

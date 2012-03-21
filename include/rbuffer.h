@@ -101,6 +101,7 @@ typedef struct cf_rbuffer_s {
 	cf_atomic64			fread_stat;
 	cf_atomic64			batch_size;
 	cf_atomic64			max_slots;
+	cf_atomic64			fseek_stat;
 } cf_rbuffer;
 
 // Config 
