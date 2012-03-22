@@ -212,8 +212,11 @@ shash_put_unique(shash *h, void *key, void *value)
 
 	while (e) {
 		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
-			if (h->flags & SHASH_CR_MT_BIGLOCK)
-				pthread_mutex_unlock(&h->biglock);
+			if (l){
+//			if (h->flags & SHASH_CR_MT_BIGLOCK)
+//				pthread_mutex_unlock(&h->biglock);
+				pthread_mutex_unlock(l);
+			}
 			return(SHASH_ERR_FOUND);
 		}
 		e = e->next;
