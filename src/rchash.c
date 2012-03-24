@@ -206,6 +206,7 @@ rchash_put(rchash *h, void *key, uint32_t key_len, void *object)
 	}
 
 	e = (rchash_elem_f *) cf_malloc(sizeof(rchash_elem_f) + key_len);
+	if (!e) return (RCHASH_ERR);
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -280,6 +281,7 @@ rchash_put_unique(rchash *h, void *key, uint32_t key_len, void *object)
 	}
 
 	e = (rchash_elem_f *) cf_malloc(sizeof(rchash_elem_f) + key_len);
+	if (!e) return (RCHASH_ERR);
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -712,11 +714,13 @@ rchash_put_v(rchash *h, void *key, uint32_t key_len, void *object)
 	}
 
 	e = (rchash_elem_v *) cf_malloc(sizeof(rchash_elem_v));
+	if (!e)	return (RCHASH_ERR);
 	e->next = e_head->next;
 	e_head->next = e;
 	
 Copy:
 	e->key = cf_malloc(key_len);
+	if (!e->key) return (RCHASH_ERR);
 	memcpy(e->key, key, key_len);
 	e->key_len = key_len;
 
@@ -784,11 +788,13 @@ rchash_put_unique_v(rchash *h, void *key, uint32_t key_len, void *object)
 	}
 
 	e = (rchash_elem_v *) cf_malloc(sizeof(rchash_elem_v));
+	if (!e)	return (RCHASH_ERR);
 	e->next = e_head->next;
 	e_head->next = e;
 	
 Copy:
 	e->key = cf_malloc(key_len);
+	if (!e->key) return (RCHASH_ERR);
 	memcpy(e->key, key, key_len);
 	e->key_len = key_len;
 

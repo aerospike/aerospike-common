@@ -30,7 +30,10 @@ cf_vector_create( uint32_t value_len, uint32_t init_sz, uint flags)
 	v->stack_vector = false;
 	if (init_sz) {
 		v->vector = cf_malloc(init_sz * value_len);
-		if (!v->vector)	return(0);
+		if (!v->vector)	{
+			cf_free(v);
+			return(0);
+		}
 	}
 	else
 		v->vector = 0;
@@ -100,6 +103,7 @@ cf_vector_resize(cf_vector *v, uint32_t new_sz)
 	uint8_t *_t;
 	if (v->vector == 0 || v->stack_vector) {
 		_t = cf_malloc(new_sz * v->value_len);
+		if (!_t)	return(-1);
 		if (v->stack_vector) {
 			memcpy(_t, v->vector, v->alloc_len * v->value_len); 
 			v->stack_vector = false;

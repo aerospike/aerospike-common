@@ -1067,6 +1067,9 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 
 	// Step 2: Open and Setup file Header 
 	RDES = malloc(sizeof(cf_rbuffer));
+	if (RDES == NULL) {
+		return ( NULL );
+	}
 	memset(RDES, 0, sizeof(cf_rbuffer));
 	RDES->strapped = false;
 	
@@ -1731,6 +1734,9 @@ cf_rbuffer_getsetctx(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx, int whence)
 	if (ctx == NULL)
 	{
 		cf_rbuffer_ctx *new_ctx = malloc(sizeof(cf_rbuffer_ctx));
+		if (new_ctx == NULL) {
+			return ( NULL );
+		}
 		memset(new_ctx, 0, sizeof(cf_rbuffer_ctx));
 		new_ctx->ptr.fidx = ptr->fidx;
 		new_ctx->ptr.seg_id = ptr->seg_id;
