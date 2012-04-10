@@ -69,6 +69,9 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "meminfo.h"
 #include "b64.h"
 #include "rbuffer.h"
+#include "cf_index.h"
+#include "slist.h"
+#include "ttree.h"
 
 
 
