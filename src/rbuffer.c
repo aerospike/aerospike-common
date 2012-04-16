@@ -104,9 +104,9 @@ void
 cf_rbuffer_log(cf_rbuffer *rbuf_des)
 {
 	pthread_mutex_lock(&RDES->mlock);
-	cf_info(CF_RBUFFER, "Stats [%ld:%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwrite_stat, RDES->fread_stat, RDES->fseek_stat);
+	cf_detail(CF_RBUFFER, "Stats [%ld:%ld:%ld:%ld:%ld]\n", RDES->read_stat, RDES->write_stat, RDES->fwrite_stat, RDES->fread_stat, RDES->fseek_stat);
 
-	cf_info(CF_RBUFFER, "Current sptr [%ld:%ld] rptr [%ld:%ld] | rctx [%ld:%ld] | wptr [%ld:%ld] | wctx [%ld:%ld]", 
+	cf_detail(CF_RBUFFER, "Current sptr [%ld:%ld] rptr [%ld:%ld] | rctx [%ld:%ld] | wptr [%ld:%ld] | wctx [%ld:%ld]\n", 
 					CHDR.sptr.seg_id, CHDR.sptr.rec_id,
 					CHDR.rptr.seg_id, CHDR.rptr.rec_id,
 					RDES->rctx.ptr.seg_id, RDES->rctx.ptr.rec_id,
@@ -169,7 +169,14 @@ cf_rbuffer_setnoresume(cf_rbuffer *rbuf_des)
 	// Reset the read and start pointer to write pointer.
 	CHDR.sptr.fidx = RDES->rctx.ptr.fidx = RDES->wctx.ptr.fidx;
 	CHDR.sptr.seg_id = RDES->rctx.ptr.seg_id = RDES->wctx.ptr.seg_id;
-	CHDR.sptr.rec_id = RDES->rctx.ptr.rec_id = RDES->wctx.ptr.rec_id = 0;
+
+	// Position read ptr at the write pointer for no resume case.
+	// Do not set rec_id to zero because read could end up racing with write
+	// flushing to disk and read the old page in case of noresume.
+	// If it is stale page [previous incarnation] and if write has not 
+	// written anything then the page would have older version. If there 
+	// were no records on the page it will have bad magic.
+	CHDR.sptr.rec_id = RDES->rctx.ptr.rec_id = RDES->wctx.ptr.rec_id;
 	pthread_mutex_unlock(&RDES->mlock);
 }
 
@@ -1695,6 +1702,28 @@ cf_rbuffer_setstart(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx)
 end:
 	pthread_mutex_unlock(&RDES->mlock);
 	return 0;
+}
+
+//  Client API to print passed in read/write context
+//
+//  Parameter:	
+//		ctxs	: Passed in context
+//
+//	Caller:
+//		XDS
+//
+//	Synchronization:
+//		Acquires meta lock
+//
+//	Returns:
+//		Nothing
+void
+cf_rbuffer_prctx(cf_rbuffer_ctx* ctx)
+{
+	if (!ctx) return;
+	pthread_mutex_lock(&ctx->lock);
+	cf_detail(CF_RBUFFER, "%d %d [%d %ld %ld] ", ctx->flag, ctx->version, ctx->ptr.fidx, ctx->ptr.seg_id, ctx->ptr.rec_id); 
+	pthread_mutex_unlock(&ctx->lock);
 }
 
 //  Client API to request and cache read nad write context
