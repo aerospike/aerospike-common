@@ -117,22 +117,23 @@ typedef struct cf_rbuffer_config_s {
 } cf_rbuffer_config;
 
 extern cf_rbuffer*		cf_rbuffer_init(cf_rbuffer_config *);
-extern bool 			cf_rbuffer_reinit(cf_rbuffer *, cf_rbuffer_config *);
-extern void 			cf_rbuffer_trace(cf_rbuffer *, bool);
-extern bool 		cf_rbuffer_close(cf_rbuffer *);
+extern bool 	cf_rbuffer_reinit(cf_rbuffer *, cf_rbuffer_config *);
+extern void 	cf_rbuffer_trace(cf_rbuffer *, bool);
+extern bool 	cf_rbuffer_close(cf_rbuffer *);
 extern int 		cf_rbuffer_read(cf_rbuffer *, cf_rbuffer_ctx*, char *, int);
 extern int 		cf_rbuffer_write(cf_rbuffer *, char *, int);
 extern cf_rbuffer_ctx*	cf_rbuffer_getsetctx(cf_rbuffer *, cf_rbuffer_ctx *, int);
 extern int 		cf_rbuffer_seek(cf_rbuffer *, cf_rbuffer_ctx *, int, int);
 extern int		cf_rbuffer_persist(cf_rbuffer *);
-extern bool 		cf_rbuffer_fflush(cf_rbuffer *);
-extern void 		cf_rbuffer_closectx(cf_rbuffer_ctx*);
-extern void				cf_rbuffer_log(cf_rbuffer *);
-extern uint64_t		cf_rbuffer_outstanding(cf_rbuffer *);
+extern bool 	cf_rbuffer_fflush(cf_rbuffer *);
+extern void 	cf_rbuffer_closectx(cf_rbuffer_ctx*);
+extern void		cf_rbuffer_log(cf_rbuffer *);
+extern uint64_t	cf_rbuffer_outstanding(cf_rbuffer *);
 extern void		cf_rbuffer_setnoresume(cf_rbuffer *);
 extern void		cf_rbuffer_setfailover(cf_rbuffer *);
 extern void		cf_rbuffer_setnofailover(cf_rbuffer *);
-extern uint64_t		cf_rbuffer_setstart(cf_rbuffer *, cf_rbuffer_ctx *);
+extern uint64_t	cf_rbuffer_setstart(cf_rbuffer *, cf_rbuffer_ctx *);
+extern void 	cf_rbuffer_prctx(cf_rbuffer_ctx *);
 
 // Test
 extern int cf_rbuffer_test();
