@@ -49,18 +49,18 @@ char *cf_fault_context_strings[] = {
 	"cf:socket",   // 08
 	"cf:timer",    // 09
 	"cf:ll",       // 10
-	"cf:arenah",       // 11
-	"cf:arena",       // 12
+	"cf:arenah",   // 11
+	"cf:arena",    // 12
 	"config",      // 13
 	"namespace",   // 14
-	"as", 		   // 15
+	"as",          // 15
 	"bin",         // 16
 	"record",      // 17
 	"proto",       // 18
 	"particle",    // 19
 	"demarshal",   // 20
 	"write",       // 21
-	"rw",       	// 22
+	"rw",          // 22
 	"tsvc",        // 23
 	"test",        // 24
 	"nsup",        // 25
@@ -71,20 +71,21 @@ char *cf_fault_context_strings[] = {
 	"paxos",       // 30
 	"migrate",     // 31
 	"info",        // 32
-	"info-port",        // 33
+	"info-port",   // 33
 	"storage",     // 34
 	"drv_mem",     // 35
 	"drv_fs",      // 36
-	"drv_files",      // 37
-	"drv_ssd",      // 38
-	"scan",			// 39
-	"index",		// 40
-	"batch",		// 41	
-	"trial",        // 42
-	"xdr",			// 43
-	"cf:rbuffer", 	// 44
-	"fb_health",	// 45
-	NULL			// 46
+	"drv_files",   // 37
+	"drv_ssd",     // 38
+	"drv_kv",      // 39
+	"scan",        // 40
+	"index",       // 41
+	"batch",       // 42
+	"trial",       // 43
+	"xdr",         // 44
+	"cf:rbuffer",  // 45
+	"fb_health",   // 46
+	NULL           // 47
 };
 
 static const char *cf_fault_severity_strings[] = { "CRITICAL", "WARNING", "INFO", "DEBUG", "DETAIL", NULL };
