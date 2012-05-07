@@ -70,6 +70,9 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "b64.h"
 #include "rbuffer.h"
 #include "vmap.h"
+#include "cf_index.h"
+#include "slist.h"
+#include "ttree.h"
 
 
 
