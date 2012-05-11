@@ -96,6 +96,7 @@ cf_vmap_create(uint32_t value_size, uint32_t max_count, uint32_t hash_size,
 	this->value_size = value_size;
 	this->max_count = max_count;
 	this->capacity = max_count > INIT_CAPACITY ? INIT_CAPACITY : max_count;
+	this->count = 0; // for valgrind
 
 	if ((this->values = cf_malloc(this->value_size * this->capacity)) == NULL) {
 		cf_vmap_destroy(this);
