@@ -271,7 +271,7 @@ get_index(cf_vmap* this, const char* name, uint32_t* p_index)
 	// Pad with nulls to achieve consistent key.
 	strncpy(key, name, this->key_size);
 
-	return shash_get(this->p_hash, key, &p_index) == SHASH_OK;
+	return shash_get(this->p_hash, key, p_index) == SHASH_OK;
 }
 
 //------------------------------------------------
