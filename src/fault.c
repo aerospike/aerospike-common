@@ -296,8 +296,6 @@ cf_fault_sink_get(char *path)
     return(s);
 }
 
-int cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity);
-
 
 int
 cf_fault_sink_addcontext_all(char *context, char *severity)
