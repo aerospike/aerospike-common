@@ -334,7 +334,7 @@ uint32_t slist_get_size(void *v_this) {
 	return (uint32_t)((*(slist **)v_this)->n_elements);
 }
 
-
+#if 0
 static int delete_odds(void *key, void *value, void *udata) {
 	int v = *(int *)value;
 	if (v % 2) {
@@ -351,7 +351,6 @@ static int delete_evens(void *key, void *value,  void *udata) {
 
 	return TTREE_REDUCE_DELETE;
 }
-
 
 void slist_test() {
 	slist_tdata tdata;
@@ -416,3 +415,4 @@ void slist_test() {
 
 	_exit(0);
 }
+#endif
