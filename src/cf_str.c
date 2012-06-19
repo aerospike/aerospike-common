@@ -25,9 +25,11 @@ cf_str_itoa(int _value, char *_s, int _radix)
 	}
 	
 	// Account for negatives
+	unsigned int sign_len = 0;
 	if (_value < 0) {
 		*_s++ = '-';
 		_value = - _value;
+		sign_len = 1;
 	}
 	int _v = _value;
 	unsigned int _nd = 0;
@@ -36,7 +38,7 @@ cf_str_itoa(int _value, char *_s, int _radix)
 		_v /= _radix;
 	}
 
-	unsigned int rv = _nd; 	
+	unsigned int rv = sign_len + _nd;
 	_s[_nd] = 0;
 	while (_nd) {
 		_nd --;
