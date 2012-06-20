@@ -151,7 +151,7 @@ cf_socket_sendto(int sock, void *buf, size_t buflen, int flags, cf_sockaddr to)
     flags |= MSG_NOSIGNAL;
     
 	if (0 >= (i = sendto(sock, buf, buflen, flags, (struct sockaddr *)sp, sizeof(const struct sockaddr))))
-		cf_info(CF_SOCKET, "send() failed: %s", cf_strerror(errno));
+		cf_info(CF_SOCKET, "sendto() failed: %s", cf_strerror(errno));
 
 	return(i);
 }

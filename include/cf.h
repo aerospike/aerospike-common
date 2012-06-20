@@ -207,7 +207,10 @@ cf_digest_compare( cf_digest *d1, cf_digest *d2 )
 typedef uint64_t cf_node;
 extern uint32_t cf_nodeid_shash_fn(void *value);
 extern uint32_t cf_nodeid_rchash_fn(void *value, uint32_t value_len);
-typedef	enum hb_mode_enum { AS_HB_MODE_UNDEF, AS_HB_MODE_MCAST, AS_HB_MODE_MESH } hb_mode_enum;
+typedef enum hb_mode_enum { AS_HB_MODE_UNDEF, AS_HB_MODE_MCAST, AS_HB_MODE_MESH } hb_mode_enum;
+typedef enum hb_protocol_enum { AS_HB_PROTOCOL_UNDEF, AS_HB_PROTOCOL_NONE, AS_HB_PROTOCOL_V1, AS_HB_PROTOCOL_V2 } hb_protocol_enum;
+typedef enum paxos_protocol_enum { AS_PAXOS_PROTOCOL_UNDEF, AS_PAXOS_PROTOCOL_NONE, AS_PAXOS_PROTOCOL_V1, AS_PAXOS_PROTOCOL_V2 } paxos_protocol_enum;
+typedef enum paxos_recovery_policy_enum { AS_PAXOS_RECOVERY_POLICY_UNDEF, AS_PAXOS_RECOVERY_POLICY_MANUAL, AS_PAXOS_RECOVERY_POLICY_AUTO_DUN_MASTER } paxos_recovery_policy_enum;
 extern int cf_nodeid_get( unsigned short port, cf_node *id, char **node_ipp, hb_mode_enum hb_mode, char **hb_addrp, char **interface_names);
 extern unsigned short cf_nodeid_get_port(cf_node id);
 

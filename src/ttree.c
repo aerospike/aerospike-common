@@ -1832,6 +1832,7 @@ int ttree_dump(void *key, void *value, void *udata) {
 	return 0;
 }
 
+#if 0
 static int delete_odds(void *key, void *value, void *udata) {
 	int v = *(int *)value;
 	if (v % 2) {
@@ -1928,3 +1929,4 @@ void ttree_test() {
 
 	_exit(0);
 }
+#endif
