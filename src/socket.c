@@ -322,7 +322,23 @@ Success:	;
 	return(0);
 }
 
-/* cf_socket_init_client
+/* cf_socket_close
+ * Close a socket originally opened listening
+ */
+void
+cf_socket_close(cf_socket_cfg *s)
+{
+	if (!s) {
+		cf_warning(CF_SOCKET, "not closing null socket!");
+		return;
+	}
+	
+	shutdown(s->sock, SHUT_RDWR);
+	close(s->sock);
+	s->sock = -1;
+}
+
+/* cf_socket_connect_nb
  * Connect a socket to a remote endpoint
  * In the nonblocking fashion
  * returns the file descriptor
