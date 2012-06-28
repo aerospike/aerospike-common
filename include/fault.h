@@ -78,7 +78,8 @@ typedef enum {
 	CF_RBUFFER = 45,
 	AS_FB_HEALTH = 46,
 	AS_SINDEX = 47,
-	CF_FAULT_CONTEXT_UNDEF = 48
+	AS_SPROC = 48,
+	CF_FAULT_CONTEXT_UNDEF = 49
 } cf_fault_context;
 
 extern char *cf_fault_context_strings[];
