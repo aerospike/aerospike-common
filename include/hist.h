@@ -33,14 +33,28 @@
 
 #define HISTOGRAM_NAME_SIZE 128
 
+#define N_SECS 60
+#define N_MINS 59
+#define N_HOURS 23
+#define N_PCT 6
+
 typedef struct histogram_counts_s {
 	uint64_t count[N_COUNTS];
 } histogram_counts;
 
+// Define histogram structure, refer hist.c to see usage
+ 
 typedef struct histogram_s {
 	char name[HISTOGRAM_NAME_SIZE];
 	cf_atomic_int n_counts;
 	cf_atomic_int count[N_COUNTS];
+	cf_atomic_int n_counts_pct;
+	cf_atomic_int count_pct[N_COUNTS];
+	float secs[N_SECS][N_PCT];
+	float mins[N_MINS][N_PCT];
+	float hours[N_HOURS][N_PCT];
+	float latency[N_PCT];
+	
 } histogram;
 
 typedef struct histogram_measure_s {
@@ -54,7 +68,9 @@ typedef struct histogram_measure_s {
 
 
 extern histogram * histogram_create(char *name);
+extern histogram * histogram_create_pct(char *name);
 extern void histogram_clear(histogram *h);
+extern void histogram_clear_pct(histogram *h);
 extern void histogram_dump( histogram *h );  // for debugging, dumps to stderr
 extern void histogram_start( histogram *h, histogram_measure *hm);
 extern void histogram_stop(histogram *h, histogram_measure *hm);
@@ -62,6 +78,7 @@ extern void histogram_get_counts(histogram *h, histogram_counts *hc);
 
 #ifdef USE_GETCYCLES
 extern void histogram_insert_data_point(histogram *h, uint64_t start);
+extern void histogram_insert_data_point_pct(histogram *h, uint64_t start);
 #endif
 
 // this is probably the same as the processor specific call, see if it works the same...

@@ -31,12 +31,48 @@ histogram_create(char *name)
 	return(h);
 }
 
+/*
+	Histogram structure for saving/calculating Latency/throughput
+*/
+
+histogram * 
+histogram_create_pct(char *name)
+{
+	histogram * h = cf_malloc(sizeof(histogram));
+	if (!h)	return(0);
+	if (strlen(name) >= sizeof(h->name)-1) { cf_free(h); return(0); }
+	strcpy(h->name, name);
+	h->n_counts = 0;
+	h->n_counts_pct = 0;
+	memset(&h->count, 0, sizeof(h->count)); //keeping old behaviour of histogram
+	memset(&h->count_pct, 0, sizeof(h->count_pct)); //new counter which is reset everytime ticker is called
+	memset(&h->secs, 0, sizeof(h->secs)); //data structure to save max 60 seconds of latency.
+	memset(&h->mins, 0, sizeof(h->mins)); //data structure for saving last 60 minutes of latency information
+	memset(&h->hours, 0, sizeof(h->hours)); //data structure for saving last 24 hours of latency information
+	memset(&h->latency, 0, sizeof(h->latency)); //latency information for the current histogram. -do i really need this ?
+	return(h);
+}
+
+
 void histogram_clear(histogram *h)
 {
 	cf_atomic_int_set(&h->n_counts, 0);
 
 	for (int i = 0; i < N_COUNTS; i++) {
 		cf_atomic_int_set(&h->count[i], 0);
+	}
+}
+
+/*
+	Reset transactions and bucket information.	
+*/
+
+void histogram_clear_pct(histogram *h)
+{
+	cf_atomic_int_set(&h->n_counts_pct, 0);
+
+	for (int i = 0; i < N_COUNTS; i++) {
+		cf_atomic_int_set(&h->count_pct[i], 0);
 	}
 }
 
@@ -70,6 +106,133 @@ void histogram_dump( histogram *h )
 	}
 	if (pos > 0) 
 	    cf_info(AS_INFO, "%s", (char *) printbuf);
+}
+
+/*
+	Specialized histogram dump function : It calculates the latency and saves latency infomation for the 60 seconds, depending on ticker interval
+	Averages the Latency for seconds to save 59 minutes of latency information.
+	Averages the Latency for minutes to save 24 hours of latency information.
+	
+*/
+void histogram_dump_pct( histogram *h )
+{
+	char printbuf[100];
+	int pos = 0; // location to print from
+	printbuf[0] = '\0';
+    	struct tm *ptr;
+    	time_t ltime;
+	float sum=0.0;
+
+    	ltime = time(NULL); /* get current calendar time */
+    	ptr = gmtime(&ltime);  // return time in the form of tm structure
+
+	float percentages[N_COUNTS];
+	float percentage;	
+	
+	cf_info(AS_INFO, "histogram dump: %s (%zu total)",h->name, h->n_counts);
+	
+	int i, j;
+	int k = 0;
+	for (j=N_COUNTS-1 ; j >= 0 ; j-- ) if (h->count[j]) break;
+	for (i=0;i<N_COUNTS;i++) if (h->count[i]) break;
+	for (; i<=j;i++) {
+		if (h->count[i] > 0) { // print only non zero columns
+			int bytes = sprintf((char *) (printbuf + pos), " (%02d: %010zu) ", i, h->count[i]);
+			if (bytes <= 0) 
+			{
+				cf_info(AS_INFO, "histogram printing error. Bailing ...");
+				return;
+			}
+			pos += bytes;
+		    if (k % 4 == 3){
+		    	 cf_info(AS_INFO, "%s", (char *) printbuf);
+		    	 pos = 0;
+		    	 printbuf[0] = '\0';
+		    }
+		    k++;
+		}
+	}
+
+
+/*
+	Calculate percentage for each bucket in the histogram, h->n_counts_pct is total number of transactions from the last ticker interval.
+	h->count_pct[i] is the number of transactions in each bucket.
+	"i" is basically used below for counting buckets of min/secs/hours/percentages.
+
+	
+*/
+
+	for (j=N_COUNTS-1 ; j >= 0 ; j-- ) if (h->count_pct[j]) break;
+	for (i=0;i<N_COUNTS;i++) if (h->count_pct[i]) break;
+	for (; i<=j;i++) {
+		if (h->count_pct[i] > 0) { 
+			percentages[i]=((float)h->count_pct[i]/(float)h->n_counts_pct)*100.0;
+		}
+	}
+
+/*
+	Calculate latency over 1,2,4,8,16,32,64 
+	"k" is used for keeping track of latency over the 1,2..64 ms buckets
+	Add percentages for all buckets over k and subtract 100.
+
+*/	
+
+	for (k=0;k<N_PCT;k++) {
+		percentage=0.0;
+		for (i=0;i<=j;i++) {
+			if (k < i ) continue;
+			percentage=percentage+percentages[i];	
+		} 
+		if (percentage > 0.0) h->latency[k]=100.0-percentage;
+	
+	}
+
+
+/*
+	Save the latency in the histogram struct for the current second when the ticker/hist was triggered, so we can save max 60 seconds of data or based on ticker.
+	so if ticker interval is 10 , then there will 6 buckets of seconds data.
+
+*/
+
+	for (k=0;k<N_PCT;k++) {
+		h->secs[ptr -> tm_sec][k]=h->latency[k];	
+	}
+
+/*
+	Average the h->secs data structure, and save it into the minutes data structure. This will always try to average data , 
+	so whatever ticker interval is, the data for the last minute will always be accurate (hopefully!).
+
+*/
+	
+	for (k=0;k<N_PCT;k++) {
+		sum=0.0;
+		j=0;
+		for(i=0;(i<=N_SECS) ;i++) {
+			sum += h->secs[i][k];
+			if (h->secs[i][k] > 0.0)    j++;	
+		}
+
+		if (sum >0.0)  h->mins[ptr->tm_min][k]=sum/j;
+
+	}
+	
+/*
+	Average the h->mins data structure and save it into the hours data structure.
+	
+*/
+	for (k=0;k<N_PCT;k++) {
+		sum=0.0;
+		for(i=0;(i<N_MINS);i++) {
+			sum += h->mins[i][k];
+		}
+
+		if (sum > 0.0)  h->hours[ptr -> tm_hour][k]=sum/N_MINS;
+
+	}
+
+	if (pos > 0) 
+	    cf_info(AS_INFO, "%s", (char *) printbuf);
+	
 }
 
 #ifdef USE_CLOCK
@@ -141,6 +304,32 @@ void histogram_insert_data_point( histogram *h, uint64_t start)
 	
 }
 
+/*
+	Duplicate of histogram_insert_data_point only additional function is to increment n_counts_pct and count_pct[index]
+*/
+
+void histogram_insert_data_point_pct( histogram *h, uint64_t start)
+{
+	cf_atomic_int_incr(&h->n_counts);
+	cf_atomic_int_incr(&h->n_counts_pct);
+	
+    uint64_t end = cf_getms(); 
+    uint64_t delta = end - start;
+	
+	int index = bits_find_last_set_64(delta);
+	if (index < 0) index = 0;   
+	if (start > end)
+	{
+	    // Need to investigate why in some cases start is a couple of ms greater than end
+		// Could it be rounding error (usually the difference is 1 but sometimes I have seen 2
+	    // cf_info(AS_INFO, "start = %"PRIu64" > end = %"PRIu64"", start, end);
+		index = 0;
+	}   
+       
+	cf_atomic_int_incr( &h->count[ index ] );
+	cf_atomic_int_incr( &h->count_pct[ index ] );
+	
+}
 #endif // USE_GETCYCLES
 
 
