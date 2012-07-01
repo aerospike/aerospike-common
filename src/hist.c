@@ -31,9 +31,9 @@ histogram_create(char *name)
 	return(h);
 }
 
-/*
-	Histogram structure for saving/calculating Latency/throughput
-*/
+
+//	Histogram structure for saving/calculating Latency/throughput
+
 
 histogram * 
 histogram_create_pct(char *name)
@@ -49,7 +49,6 @@ histogram_create_pct(char *name)
 	memset(&h->secs, 0, sizeof(h->secs)); //data structure to save max 60 seconds of latency.
 	memset(&h->mins, 0, sizeof(h->mins)); //data structure for saving last 60 minutes of latency information
 	memset(&h->hours, 0, sizeof(h->hours)); //data structure for saving last 24 hours of latency information
-	memset(&h->latency, 0, sizeof(h->latency)); //latency information for the current histogram. -do i really need this ?
 	return(h);
 }
 
@@ -63,9 +62,9 @@ void histogram_clear(histogram *h)
 	}
 }
 
-/*
-	Reset transactions and bucket information.	
-*/
+
+//	Reset transactions and bucket information.	
+
 
 void histogram_clear_pct(histogram *h)
 {
@@ -108,26 +107,18 @@ void histogram_dump( histogram *h )
 	    cf_info(AS_INFO, "%s", (char *) printbuf);
 }
 
-/*
-	Specialized histogram dump function : It calculates the latency and saves latency infomation for the 60 seconds, depending on ticker interval
-	Averages the Latency for seconds to save 59 minutes of latency information.
-	Averages the Latency for minutes to save 24 hours of latency information.
+
+//	Specialized histogram dump function : It calculates the latency and saves latency infomation for the 60 seconds, depending on ticker interval
+//	Averages the Latency for seconds to save 59 minutes of latency information.
+//	Averages the Latency for minutes to save 24 hours of latency information.
 	
-*/
+
 void histogram_dump_pct( histogram *h )
 {
 	char printbuf[100];
 	int pos = 0; // location to print from
 	printbuf[0] = '\0';
-    	struct tm *ptr;
-    	time_t ltime;
-	float sum=0.0;
-
-    	ltime = time(NULL); /* get current calendar time */
-    	ptr = gmtime(&ltime);  // return time in the form of tm structure
-
-	float percentages[N_COUNTS];
-	float percentage;	
+    		
 	
 	cf_info(AS_INFO, "histogram dump: %s (%zu total)",h->name, h->n_counts);
 	
@@ -153,81 +144,45 @@ void histogram_dump_pct( histogram *h )
 		}
 	}
 
+	struct tm *ptr;
+    	time_t ltime;
+    	ltime = time(NULL); /* get current calendar time */
+    	ptr = gmtime(&ltime);  // return time in the form of tm structure
+	static cf_atomic_int cur_count;
 
-/*
-	Calculate percentage for each bucket in the histogram, h->n_counts_pct is total number of transactions from the last ticker interval.
-	h->count_pct[i] is the number of transactions in each bucket.
-	"i" is basically used below for counting buckets of min/secs/hours/percentages.
-
-	
-*/
+	// 1st element [0] is always the total number of transaction for the period.
+	cf_atomic_int_set(&h->secs[ptr->tm_sec][0], h->n_counts_pct); 
 
 	for (j=N_COUNTS-1 ; j >= 0 ; j-- ) if (h->count_pct[j]) break;
-	for (i=0;i<N_COUNTS;i++) if (h->count_pct[i]) break;
-	for (; i<=j;i++) {
-		if (h->count_pct[i] > 0) { 
-			percentages[i]=((float)h->count_pct[i]/(float)h->n_counts_pct)*100.0;
-		}
-	}
-
-/*
-	Calculate latency over 1,2,4,8,16,32,64 
-	"k" is used for keeping track of latency over the 1,2..64 ms buckets
-	Add percentages for all buckets over k and subtract 100.
-
-*/	
-
 	for (k=0;k<N_PCT;k++) {
-		percentage=0.0;
-		for (i=0;i<=j;i++) {
-			if (k < i ) continue;
-			percentage=percentage+percentages[i];	
-		} 
-		if (percentage > 0.0) h->latency[k]=100.0-percentage;
-	
-	}
+		cf_atomic_int_set(&cur_count,0);
 
-
-/*
-	Save the latency in the histogram struct for the current second when the ticker/hist was triggered, so we can save max 60 seconds of data or based on ticker.
-	so if ticker interval is 10 , then there will 6 buckets of seconds data.
-
-*/
-
-	for (k=0;k<N_PCT;k++) {
-		h->secs[ptr -> tm_sec][k]=h->latency[k];	
-	}
-
-/*
-	Average the h->secs data structure, and save it into the minutes data structure. This will always try to average data , 
-	so whatever ticker interval is, the data for the last minute will always be accurate (hopefully!).
-
-*/
-	
-	for (k=0;k<N_PCT;k++) {
-		sum=0.0;
-		j=0;
-		for(i=0;(i<=N_SECS) ;i++) {
-			sum += h->secs[i][k];
-			if (h->secs[i][k] > 0.0)    j++;	
+		// calculate the number of transactions over k period
+		// where k=1 is trans over 1 ms, k=2 is trans over 2 ms, 
+		// k=3 is trans over 4 ms bucket 
+		
+		for (i = 0; i <= j; i++) {
+			if (h->count_pct[i] > 0) {
+				if (k < i ) continue; //v. imp  for calc.
+				cf_atomic_int_add(&cur_count, h->count_pct[i]);
+			}
 		}
 
-		if (sum >0.0)  h->mins[ptr->tm_min][k]=sum/j;
+		// As the value in cur_count is total trans from 0 to 1ms,2ms,4 ms
+		// we subtract total transactions from cur_count to get trans over.
 
-	}
-	
-/*
-	Average the h->mins data structure and save it into the hours data structure.
-	
-*/
-	for (k=0;k<N_PCT;k++) {
-		sum=0.0;
-		for(i=0;(i<N_MINS);i++) {
-			sum += h->mins[i][k];
-		}
+		cf_atomic_int_sub(&cur_count, h->n_counts_pct);
 
-		if (sum > 0.0)  h->hours[ptr -> tm_hour][k]=sum/N_MINS;
+		// note: saving the cur_count as positive and saving it at k+1
+		//       because, k=0 is reserved for n_counts_pct for the period.
 
+		cf_atomic_int_set(&h->secs[ptr->tm_sec][k+1], -cur_count);
+
+		// As we already have seconds data we can keep adding it to min
+		// and hour data structure, so we will always have uptodate stats.
+
+		cf_atomic_int_add(&h->mins[ptr->tm_min][k], h->secs[ptr->tm_sec][k]);
+		cf_atomic_int_add(&h->hours[ptr->tm_hour][k], h->secs[ptr->tm_sec][k]);
 	}
 
 	if (pos > 0) 
@@ -304,14 +259,18 @@ void histogram_insert_data_point( histogram *h, uint64_t start)
 	
 }
 
-/*
-	Duplicate of histogram_insert_data_point only additional function is to increment n_counts_pct and count_pct[index]
-*/
+
+//	Duplicate of histogram_insert_data_point only additional function is to 
+//	increment n_counts_pct and count_pct[index]
+//	n_counts_pct is total number of transaction from the last nsup period.
+//	count_pct[index] is the total number of transaction in each bucket from
+//	the last nsup period
+
 
 void histogram_insert_data_point_pct( histogram *h, uint64_t start)
 {
 	cf_atomic_int_incr(&h->n_counts);
-	cf_atomic_int_incr(&h->n_counts_pct);
+	cf_atomic_int_incr(&h->n_counts_pct); 
 	
     uint64_t end = cf_getms(); 
     uint64_t delta = end - start;

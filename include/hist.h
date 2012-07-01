@@ -35,14 +35,20 @@
 
 #define N_SECS 60
 #define N_MINS 59
-#define N_HOURS 23
-#define N_PCT 6
+#define N_HOURS 24
+#define N_PCT 7
 
 typedef struct histogram_counts_s {
 	uint64_t count[N_COUNTS];
 } histogram_counts;
 
 // Define histogram structure, refer hist.c to see usage
+// secs[N_SECS][0] is always the total number of transactions for that ticker/second i.e n_counts_pct 
+// secs[N_SECS][1] is the number of transactions over 1 ms bucket
+// secs[N_SECS][2] is the number of transactions over 2 ms bucket
+// secs[N_SECS][3] is the number of transactions over 4 ms bucket 
+// and so on....
+// mins[N_MINS][N_PCT] and hours[N_HOURS][N_PCT] also follow the same structure.
  
 typedef struct histogram_s {
 	char name[HISTOGRAM_NAME_SIZE];
@@ -50,10 +56,9 @@ typedef struct histogram_s {
 	cf_atomic_int count[N_COUNTS];
 	cf_atomic_int n_counts_pct;
 	cf_atomic_int count_pct[N_COUNTS];
-	float secs[N_SECS][N_PCT];
-	float mins[N_MINS][N_PCT];
-	float hours[N_HOURS][N_PCT];
-	float latency[N_PCT];
+	cf_atomic_int secs[N_SECS][N_PCT];
+	cf_atomic_int mins[N_MINS][N_PCT];
+	cf_atomic_int hours[N_HOURS][N_PCT];
 	
 } histogram;
 
