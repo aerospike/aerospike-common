@@ -154,7 +154,7 @@ void histogram_dump_pct( histogram *h )
 	cf_atomic_int_set(&h->secs[ptr->tm_sec][0], h->n_counts_pct); 
 
 	for (j=N_COUNTS-1 ; j >= 0 ; j-- ) if (h->count_pct[j]) break;
-	for (k=0;k<N_PCT;k++) {
+	for (k = 0; k < N_PCT-1; k++) {
 		cf_atomic_int_set(&cur_count,0);
 
 		// calculate the number of transactions over k period
@@ -178,6 +178,9 @@ void histogram_dump_pct( histogram *h )
 
 		cf_atomic_int_set(&h->secs[ptr->tm_sec][k+1], -cur_count);
 
+	}
+
+	for (k = 0; k < N_PCT; k++) {
 		// As we already have seconds data we can keep adding it to min
 		// and hour data structure, so we will always have uptodate stats.
 
