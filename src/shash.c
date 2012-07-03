@@ -11,17 +11,19 @@
 
 #include "shash.h"
 
-#ifdef TRACK_MEM_ALLOC
-struct shash_s *mem_alloced;
-cf_atomic64 mem_alloced_sum;
-#endif
-
+/* shash_create
+ * Create a simple hash table.
+ * (Note:  To support memory tracking, we need to be able to create a single hash table
+ *          that is untracked to avoid circularity.  In this special case only the
+ *          non-"cf_" versions of memory allocation / freeing functions may be used.
+ *          Also note that the elements in the hash table are tracked, just not the hash table itself. */
 int
 shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_len, uint32_t sz, uint flags)
 {
 	shash *h;
+	bool mem_tracked = !(flags & SHASH_CR_UNTRACKED);
 
-	h = cf_malloc(sizeof(shash));
+	h = (mem_tracked ? cf_malloc(sizeof(shash)) : malloc(sizeof(shash)));
 	if (!h)	return(SHASH_ERR);
 
 	h->elements = 0;
@@ -36,9 +38,13 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 		return(SHASH_ERR);
 	}
 	
-	h->table = cf_malloc(sz * SHASH_ELEM_SZ(h));
+	h->table = (mem_tracked ? cf_malloc(sz * SHASH_ELEM_SZ(h)) : malloc(sz * SHASH_ELEM_SZ(h)));
+
 	if (!h->table) {
-		cf_free(h);
+		if (mem_tracked) 
+		  cf_free(h);
+		else
+		  free(h);
 		*h_r = 0;
 		return(SHASH_ERR);
 	}
@@ -53,7 +59,13 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 	
 	if (flags & SHASH_CR_MT_BIGLOCK) {
 		if (0 != pthread_mutex_init ( &h->biglock, 0) ) {
-			cf_free(h->table); cf_free(h);
+			if (mem_tracked) {
+				cf_free(h->table);
+				cf_free(h);
+			} else {
+				free(h->table);
+				free(h);
+			}
 			return(SHASH_ERR);
 		}
 	}
@@ -61,9 +73,12 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 		memset( &h->biglock, 0, sizeof( h->biglock ) );
 	
 	if (flags & SHASH_CR_MT_MANYLOCK) {
-		h->lock_table = cf_malloc( sizeof(pthread_mutex_t) * sz);
+		h->lock_table = (mem_tracked ? cf_malloc( sizeof(pthread_mutex_t) * sz) : malloc( sizeof(pthread_mutex_t) * sz));
 		if (! h->lock_table) {
-			cf_free(h);
+			if (mem_tracked)
+			  cf_free(h);
+			else
+			  free(h);
 			*h_r = 0;
 			return(SHASH_ERR);
 		}
@@ -73,7 +88,6 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 	}
 	else
 		h->lock_table = 0;
-	
 
 	*h_r = h;
 
@@ -87,16 +101,12 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 // running the list and make get_size slow.
 // Choose making get_size slow in the case, but retaining parallelism
 
-
 uint32_t
 shash_get_size(shash *h)
 {
-
     uint32_t elements = 0;
 	
 	if (h->flags & SHASH_CR_MT_MANYLOCK) {
-
-
         
         for (uint i=0; i<h->table_len ; i++) {
             
@@ -136,6 +146,8 @@ shash_get_size(shash *h)
 int
 shash_put(shash *h, void *key, void *value)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
 	// Calculate hash
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
@@ -169,7 +181,7 @@ shash_put(shash *h, void *key, void *value)
 		e = e->next;
 	}
 
-	e = (shash_elem *) cf_malloc( SHASH_ELEM_SZ(h) );
+	e = (shash_elem *) (mem_tracked ? cf_malloc(SHASH_ELEM_SZ(h)) : malloc(SHASH_ELEM_SZ(h)));
 	if (!e) return (SHASH_ERR);
 	e->next = e_head->next;
 	e_head->next = e;
@@ -188,6 +200,8 @@ Copy:
 int
 shash_put_unique(shash *h, void *key, void *value)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
 	// Calculate hash
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
@@ -222,7 +236,7 @@ shash_put_unique(shash *h, void *key, void *value)
 		e = e->next;
 	}
 
-	e = (shash_elem *) cf_malloc( SHASH_ELEM_SZ(h) );
+	e = (shash_elem *) (mem_tracked ? cf_malloc(SHASH_ELEM_SZ(h)) : malloc(SHASH_ELEM_SZ(h)));
 	if (!e) return (SHASH_ERR);
 	e->next = e_head->next;
 	e_head->next = e;
@@ -236,8 +250,6 @@ Copy:
 	return(SHASH_OK);	
 
 }
-
-
 
 int
 shash_get(shash *h, void *key, void *value)
@@ -340,10 +352,10 @@ Out:
 					
 }
 
-
 int
 shash_delete(shash *h, void *key)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash
 	uint hash = h->h_fn(key);
@@ -376,7 +388,10 @@ shash_delete(shash *h, void *key)
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
-				cf_free(e);
+				if (mem_tracked)
+				  cf_free(e);
+				else
+				  free(e);				
 			}
 			// am at head - more complicated
 			else {
@@ -388,7 +403,10 @@ shash_delete(shash *h, void *key)
 				else {
 					shash_elem *_t = e->next;
 					memcpy(e, e->next, SHASH_ELEM_SZ(h) );
-					cf_free(_t);
+					if (mem_tracked)
+					  cf_free(_t);
+					else
+					  free(_t);
 				}
 			}
 			h->elements--;
@@ -417,6 +435,8 @@ Out:
 int
 shash_delete_lockfree(shash *h, void *key)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
 	// Calculate hash
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
@@ -436,7 +456,10 @@ shash_delete_lockfree(shash *h, void *key)
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
-				cf_free(e);
+				if (mem_tracked)
+				  cf_free(e);
+				else
+				  free(e);
 			}
 			// am at head - more complicated
 			else {
@@ -448,7 +471,10 @@ shash_delete_lockfree(shash *h, void *key)
 				else {
 					shash_elem *_t = e->next;
 					memcpy(e, e->next, SHASH_ELEM_SZ(h) );
-					cf_free(_t);
+					if (mem_tracked)
+					  cf_free(_t);
+					else
+					  free(_t);
 				}
 			}
 			h->elements--;
@@ -466,6 +492,8 @@ shash_delete_lockfree(shash *h, void *key)
 int
 shash_get_and_delete(shash *h, void *key, void *value)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
 	// Calculate hash
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
@@ -501,7 +529,10 @@ shash_get_and_delete(shash *h, void *key, void *value)
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
-				cf_free(e);
+				if (mem_tracked)
+				  cf_free(e);
+				else
+				  free(e);
 			}
 			// am at head - more complicated
 			else {
@@ -513,7 +544,10 @@ shash_get_and_delete(shash *h, void *key, void *value)
 				else {
 					shash_elem *_t = e->next;
 					memcpy(e, e->next, SHASH_ELEM_SZ(h) );
-					cf_free(_t);
+					if (mem_tracked)
+					  cf_free(_t);
+					else
+					  free(_t);
 				}
 			}
 			h->elements--;
@@ -534,8 +568,6 @@ Out:
 	
 
 }
-
-
 
 // Call the function over every node in the tree
 // Can be lock-expensive at the moment, until we improve the lockfree code
@@ -592,6 +624,7 @@ Out:
 int
 shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 	int rv = 0;
 	
 	if (h->flags & SHASH_CR_MT_BIGLOCK) {
@@ -626,7 +659,10 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 				// patchup pointers & free element if not head
 				if (prev_he) {
 					prev_he->next = list_he->next;
-					cf_free(list_he);
+					if (mem_tracked)
+					  cf_free(list_he);
+					else
+					  free(list_he);					
 					list_he = prev_he->next;
 				}
 				// am at head - more complicated
@@ -645,7 +681,10 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 					else {
 						shash_elem *_t = list_he->next;
 						memcpy(list_he, list_he->next, SHASH_ELEM_SZ(h) );
-						cf_free(_t);
+						if (mem_tracked)
+						  cf_free(_t);
+						else
+						  free(_t);
 					}
 				}
 				rv = 0;
@@ -671,10 +710,17 @@ Out:
 	return(rv);
 }
 
-
+/* shash_destroy
+ * Destroy a simple hash table.
+ * (Note:  To support memory tracking, we need to be able to create a single hash table
+ *          that is untracked to avoid circularity.  In this special case only the
+ *          non-"cf_" versions of memory allocation / freeing functions may be used.)
+ *          Also note that the elements in the hash table are tracked, just not the hash table itself. */
 void
 shash_destroy(shash *h)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
 	shash_elem *e_table = h->table;
 	for (uint i=0;i<h->table_len;i++) {
 		if (e_table->next) {
@@ -682,6 +728,7 @@ shash_destroy(shash *h)
 			shash_elem *t;
 			while (e) {
 				t = e->next;
+				// Note:  The elements in the hash table *ARE* tracked, so use "cf_free()" here!
 				cf_free(e);
 				e = t;
 			}
@@ -696,9 +743,17 @@ shash_destroy(shash *h)
 		for (uint i=0;i<h->table_len;i++) {
 			pthread_mutex_destroy(&(h->lock_table[i]));
 		}
-		cf_free(h->lock_table);
+		if (mem_tracked)
+		  cf_free(h->lock_table);
+		else
+		  free(h->lock_table);
 	}
 
-	cf_free(h->table);
-	cf_free(h);	
+	if (mem_tracked) {
+		cf_free(h->table);
+		cf_free(h);
+	} else {
+		free(h->table);
+		free(h);
+	}
 }	

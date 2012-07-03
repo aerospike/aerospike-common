@@ -22,6 +22,15 @@ TARGET = libcf.a
 
 INCLUDES = -I$(DIR_CF_INCLUDE)
 
+ifeq ($(MEM_COUNT),1)
+  LIBRARIES += -lm
+  CFLAGS_NATIVE += -DMEM_COUNT_ALLOC
+endif
+
+ifeq ($(MEM_TRACK),1)
+  CFLAGS_NATIVE += -DMEM_TRACK_ALLOC
+endif
+
 OBJECTS = $(SOURCES:%.c=$(DIR_OBJECT)/%.o)
 DEPENDENCIES = $(OBJECTS:%.o=%.d)
 

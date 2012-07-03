@@ -78,6 +78,8 @@ typedef struct shash_s {
 #define SHASH_CR_GRAB   0x02   // support 'grab' call (requires more memory)
 #define SHASH_CR_MT_BIGLOCK 0x04 // support multithreaded access with a single big lock
 #define SHASH_CR_MT_MANYLOCK 0x08 // support multithreaded access with a pool of object loccks
+#define SHASH_CR_UNTRACKED 0x10 // Do not track memory allocations in this hash table.
+                                // (Used only when creating the hash table tracking memory allocations....)
 
 #define SHASH_REDUCE_DELETE (1) // indicate that a delete should be done during the reduction
 
