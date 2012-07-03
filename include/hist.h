@@ -34,9 +34,9 @@
 #define HISTOGRAM_NAME_SIZE 128
 
 #define N_SECS 60
-#define N_MINS 59
+#define N_MINS 60
 #define N_HOURS 24
-#define N_PCT 7
+#define N_PCT 8
 
 typedef struct histogram_counts_s {
 	uint64_t count[N_COUNTS];
@@ -77,6 +77,7 @@ extern histogram * histogram_create_pct(char *name);
 extern void histogram_clear(histogram *h);
 extern void histogram_clear_pct(histogram *h);
 extern void histogram_dump( histogram *h );  // for debugging, dumps to stderr
+extern void histogram_dump_pct( histogram *h );
 extern void histogram_start( histogram *h, histogram_measure *hm);
 extern void histogram_stop(histogram *h, histogram_measure *hm);
 extern void histogram_get_counts(histogram *h, histogram_counts *hc);
