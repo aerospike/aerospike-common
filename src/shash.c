@@ -171,7 +171,7 @@ shash_put(shash *h, void *key, void *value)
 
 	e = (shash_elem *) cf_malloc( SHASH_ELEM_SZ(h) );
 	if (!e) {
-		if (l)     pthread_mutex_lock( l );
+		if (l)     pthread_mutex_unlock( l );
 		return (SHASH_ERR);
 	}
 	e->next = e_head->next;
@@ -227,7 +227,7 @@ shash_put_unique(shash *h, void *key, void *value)
 
 	e = (shash_elem *) cf_malloc( SHASH_ELEM_SZ(h) );
 	if (!e) {
-		if (l)     pthread_mutex_lock( l );
+		if (l)     pthread_mutex_unlock( l );
 		return (SHASH_ERR);
 	}
 	e->next = e_head->next;
@@ -270,7 +270,7 @@ shash_put_duplicate(shash *h, void *key, void *value)
 
 	e = (shash_elem *) cf_malloc( SHASH_ELEM_SZ(h) );
 	if (!e) {
-		if (l)     pthread_mutex_lock( l );
+		if (l)     pthread_mutex_unlock( l );
 		return (SHASH_ERR);
 	}
 
