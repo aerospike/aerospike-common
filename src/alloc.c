@@ -152,8 +152,14 @@ cf_malloc_count(size_t sz)
 void
 cf_free_count(void *p)
 {
+	/* Apparently freeing 0 is both being done by our code and permitted in the GLIBC implementation. */
+	if (!p) {
+		cf_info(CF_ALLOC, "[Ignoring cf_free(0)!]");
+		return;
+	}
+
 	size_t sz = 0;
-	
+
 	cf_atomic64_incr(&mem_count_frees);
 
 	if (SHASH_OK == shash_get_and_delete(mem_count_shash, &p, &sz)) {

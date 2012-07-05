@@ -174,8 +174,9 @@ shash_put(shash *h, void *key, void *value)
 	while (e) {
 		if ( memcmp( SHASH_ELEM_KEY_PTR(h, e) , key, h->key_len) == 0) {
 			memcpy( SHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
-			if (h->flags & SHASH_CR_MT_BIGLOCK)
-				pthread_mutex_unlock(&h->biglock);
+//			if (h->flags & SHASH_CR_MT_BIGLOCK)
+//				pthread_mutex_unlock(&h->biglock);
+				pthread_mutex_unlock(l);
 			return(SHASH_OK);
 		}
 		e = e->next;
