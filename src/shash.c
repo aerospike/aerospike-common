@@ -13,10 +13,11 @@
 
 /* shash_create
  * Create a simple hash table.
- * (Note:  To support memory tracking, we need to be able to create a single hash table
- *          that is untracked to avoid circularity.  In this special case only the
- *          non-"cf_" versions of memory allocation / freeing functions may be used.
- *          Also note that the elements in the hash table are tracked, just not the hash table itself. */
+ * (Note:  For supporting memory allocation counting / tracking, we need to be able to create a single
+ *          hash table that is untracked, in order to avoid circularity.  In this special case only,
+ *          the native (i.e., non-"cf_") versions of memory allocation / freeing functions *must* be used.)
+ * (Also note:  Memory for the elements in a tracked hash table is tracked, along with memory for
+ *               the hash table itself.) */
 int
 shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_len, uint32_t sz, uint flags)
 {
@@ -183,7 +184,11 @@ shash_put(shash *h, void *key, void *value)
 	}
 
 	e = (shash_elem *) (mem_tracked ? cf_malloc(SHASH_ELEM_SZ(h)) : malloc(SHASH_ELEM_SZ(h)));
-	if (!e) return (SHASH_ERR);
+	if (!e) {
+		if (l)     pthread_mutex_unlock( l );
+		return (SHASH_ERR);
+	}
+
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -238,7 +243,11 @@ shash_put_unique(shash *h, void *key, void *value)
 	}
 
 	e = (shash_elem *) (mem_tracked ? cf_malloc(SHASH_ELEM_SZ(h)) : malloc(SHASH_ELEM_SZ(h)));
-	if (!e) return (SHASH_ERR);
+	if (!e) {
+		if (l)     pthread_mutex_unlock( l );
+		return (SHASH_ERR);
+	}
+
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -250,6 +259,51 @@ Copy:
 	if (l)	pthread_mutex_unlock( l );
 	return(SHASH_OK);	
 
+}
+
+// Put duplicate elements, Use case currently is hash/search/delete
+// i.e Once the element is found it is deleted. Only changes is the 
+// presence of the key is not searched for.
+int
+shash_put_duplicate(shash *h, void *key, void *value)
+{
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
+	// Calculate hash
+	uint hash = h->h_fn(key);
+	hash %= h->table_len;
+
+	pthread_mutex_t		*l = 0;
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
+		l = &h->biglock;
+	}
+	else if (h->flags & SHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
+		
+	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
+	shash_elem *e_head = e;
+	// most common case should be insert into empty bucket, special case
+	if ( e->in_use == false )
+		goto Copy;
+
+	e = (shash_elem *) (mem_tracked ? cf_malloc(SHASH_ELEM_SZ(h)) : malloc(SHASH_ELEM_SZ(h)));
+	if (!e) {
+		if (l)     pthread_mutex_unlock( l );
+		return (SHASH_ERR);
+	}
+
+	e->next = e_head->next;
+	e_head->next = e;
+	
+Copy:
+	memcpy(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len);
+	memcpy(SHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
+	e->in_use = true;
+	h->elements++;
+	if (l)	pthread_mutex_unlock( l );
+	return(SHASH_OK);	
 }
 
 int
@@ -382,7 +436,7 @@ shash_delete(shash *h, void *key)
 
 	shash_elem *e_prev = 0;
 
-	// Look for teh element and destroy if found
+	// Look for the element and destroy if found
 	while (e) {
 		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
 			// Found it
@@ -450,7 +504,7 @@ shash_delete_lockfree(shash *h, void *key)
 
 	shash_elem *e_prev = 0;
 
-	// Look for teh element and destroy if found
+	// Look for the element and destroy if found
 	while (e) {
 		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
 			// Found it
@@ -519,7 +573,7 @@ shash_get_and_delete(shash *h, void *key, void *value)
 
 	shash_elem *e_prev = 0;
 
-	// Look for teh element and destroy if found
+	// Look for the element and destroy if found
 	while (e) {
 		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
 		
@@ -711,12 +765,33 @@ Out:
 	return(rv);
 }
 
+// Remove all the hashed keys from the hash bucket if the caller 
+// knows this is going to be single threaded
+void
+shash_deleteall_lockfree(shash *h)
+{
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
+	shash_elem *e_table = h->table;
+	for (uint i=0;i<h->table_len;i++) {
+		if (e_table->next) {
+			shash_elem *e = e_table->next;
+			shash_elem *t;
+			while (e) {
+				t = e->next;
+				if (mem_tracked)
+				  cf_free(e);
+				else
+				  free(e);
+				e = t;
+			}
+		}
+		e_table = (shash_elem *) (((uint8_t *)e_table) + SHASH_ELEM_SZ(h));
+	}
+}	
+
 /* shash_destroy
- * Destroy a simple hash table.
- * (Note:  To support memory tracking, we need to be able to create a single hash table
- *          that is untracked to avoid circularity.  In this special case only the
- *          non-"cf_" versions of memory allocation / freeing functions may be used.)
- *          Also note that the elements in the hash table are tracked, just not the hash table itself. */
+ * Destroy a simple hash table. */
 void
 shash_destroy(shash *h)
 {

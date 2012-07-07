@@ -231,7 +231,7 @@ cf_vector_delete(cf_vector *v, uint32_t index)
 		return (-1);
 	// check for last - no copy
 	if (index != v->len - 1) {
-		memcpy(v->vector + (index * v->value_len), 
+		memmove(v->vector + (index * v->value_len), 
 				v->vector + ((index+1) * v->value_len),
 				(v->len - (index+1)) * v->value_len );
 	}

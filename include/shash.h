@@ -102,6 +102,8 @@ int
 shash_put(shash *h, void *key, void *value);
 int
 shash_put_unique(shash *h, void *key, void *value);
+int
+shash_put_duplicate(shash *h, void *key, void *value);
 
 /* call with the buffer you want filled; if you just want to check for
  * existence, call with value set to NULL
@@ -180,6 +182,12 @@ shash_reduce(shash *h, shash_reduce_fn reduce_fn, void *udata);
 
 int
 shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata);
+
+/*
+ * Delete all the data from the entire hash - complete cleanup
+ */
+void
+shash_deleteall_lockfree(shash *h);
 
 
 /*
