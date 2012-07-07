@@ -334,7 +334,9 @@ cf_fault_sink_addcontext(cf_fault_sink *s, char *context, char *severity)
 		}
 	} else {
 		for (int i = 0; i < CF_FAULT_CONTEXT_UNDEF; i++) {
-			if (0 == strncasecmp(cf_fault_context_strings[i], context, strlen(context)))
+		//strncasecmp only compared the length of context passed in the 3 rd argument and as cf_fault_context_strings has info and info port,
+		//So when you try to set info to debug it will set info-port to debug . Just forcing it to check the length from cf_fault_context_strings
+			if (0 == strncasecmp(cf_fault_context_strings[i], context, strlen(cf_fault_context_strings[i])))
 				ctx = (cf_fault_context)i;
 		}
 		if (CF_FAULT_CONTEXT_UNDEF == ctx)
@@ -364,7 +366,7 @@ cf_fault_sink_setcontext(cf_fault_sink *s, char *context, char *severity)
 		return(-1);
 
 	for (int i = 0; i < CF_FAULT_CONTEXT_UNDEF; i++) {
-		if (0 == strncasecmp(cf_fault_context_strings[i], context, strlen(context)))
+		if (0 == strncasecmp(cf_fault_context_strings[i], context, strlen(cf_fault_context_strings[i])))
 			ctx = (cf_fault_context)i;
 	}
 	if (CF_FAULT_CONTEXT_UNDEF == ctx)

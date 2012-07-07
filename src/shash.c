@@ -170,7 +170,10 @@ shash_put(shash *h, void *key, void *value)
 	}
 
 	e = (shash_elem *) cf_malloc( SHASH_ELEM_SZ(h) );
-	if (!e) return (SHASH_ERR);
+	if (!e) {
+		if (l)     pthread_mutex_unlock( l );
+		return (SHASH_ERR);
+	}
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -223,7 +226,10 @@ shash_put_unique(shash *h, void *key, void *value)
 	}
 
 	e = (shash_elem *) cf_malloc( SHASH_ELEM_SZ(h) );
-	if (!e) return (SHASH_ERR);
+	if (!e) {
+		if (l)     pthread_mutex_unlock( l );
+		return (SHASH_ERR);
+	}
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -235,6 +241,49 @@ Copy:
 	if (l)	pthread_mutex_unlock( l );
 	return(SHASH_OK);	
 
+}
+
+// Put duplicate elements, Use case currently is hash/search/delete
+// i.e Once the element is found it is deleted. Only changes is the 
+// presence of the key is not searched for.
+int
+shash_put_duplicate(shash *h, void *key, void *value)
+{
+	// Calculate hash
+	uint hash = h->h_fn(key);
+	hash %= h->table_len;
+
+	pthread_mutex_t		*l = 0;
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
+		l = &h->biglock;
+	}
+	else if (h->flags & SHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
+		
+	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
+	shash_elem *e_head = e;
+	// most common case should be insert into empty bucket, special case
+	if ( e->in_use == false )
+		goto Copy;
+
+	e = (shash_elem *) cf_malloc( SHASH_ELEM_SZ(h) );
+	if (!e) {
+		if (l)     pthread_mutex_unlock( l );
+		return (SHASH_ERR);
+	}
+
+	e->next = e_head->next;
+	e_head->next = e;
+	
+Copy:
+	memcpy(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len);
+	memcpy(SHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
+	e->in_use = true;
+	h->elements++;
+	if (l)	pthread_mutex_unlock( l );
+	return(SHASH_OK);	
 }
 
 
@@ -671,7 +720,25 @@ Out:
 	return(rv);
 }
 
-
+// Remove all the hashed keys from the hash bucket if  the caller 
+// knows this is going to be single threaded
+void
+shash_deleteall_lockfree(shash *h)
+{
+	shash_elem *e_table = h->table;
+	for (uint i=0;i<h->table_len;i++) {
+		if (e_table->next) {
+			shash_elem *e = e_table->next;
+			shash_elem *t;
+			while (e) {
+				t = e->next;
+				cf_free(e);
+				e = t;
+			}
+		}
+		e_table = (shash_elem *) (((uint8_t *)e_table) + SHASH_ELEM_SZ(h));
+	}
+}	
 void
 shash_destroy(shash *h)
 {
