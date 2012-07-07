@@ -804,8 +804,10 @@ shash_destroy(shash *h)
 			shash_elem *t;
 			while (e) {
 				t = e->next;
-				// Note:  The elements in the hash table *ARE* tracked, so use "cf_free()" here!
-				cf_free(e);
+				if (mem_tracked)
+				  cf_free(e);
+				else
+				  free(e);
 				e = t;
 			}
 		}
