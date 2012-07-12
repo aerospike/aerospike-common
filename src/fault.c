@@ -413,9 +413,16 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 
 	/* Append the message */
 	va_start(argp, msg);
-	pos += vsnprintf(mbuf + pos, sizeof(mbuf) - pos, msg, argp);
+	int mlen = vsnprintf(mbuf + pos, sizeof(mbuf) - pos, msg, argp);
 	va_end(argp);
-	pos += snprintf(mbuf + pos, sizeof(mbuf) - pos, "\n");
+	if (mlen >= sizeof(mbuf) - pos) 
+		pos = sizeof(mbuf) - 2;
+	else
+		pos += mlen;
+	mbuf[pos] = '\n';
+	pos++;
+	mbuf[pos] = 0;
+	
 
 	/* Route the message to the correct destinations */
 	if (0 == cf_fault_sinks_inuse) {
