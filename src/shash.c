@@ -310,11 +310,11 @@ int
 shash_get(shash *h, void *key, void *value)
 {
 	int rv = SHASH_ERR;
-	
+
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
 
-	pthread_mutex_t		*l = 0;
+	pthread_mutex_t *l = 0;
 	if (h->flags & SHASH_CR_MT_BIGLOCK) {
 		l = &h->biglock;
 	}
@@ -322,17 +322,17 @@ shash_get(shash *h, void *key, void *value)
 		l = & (h->lock_table[hash]);
 	}
 	if (l)     pthread_mutex_lock( l );
-	
-	shash_elem *e = (shash_elem *) ( ((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
+
+	shash_elem *e = (shash_elem *) (((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));
 
 	if (e->in_use == false) {
 		rv = SHASH_ERR_NOTFOUND;
 		goto Out;
 	}
-	
+
 	do {
-		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
-            if (NULL != value)
+		if (memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+			if (NULL != value)
 			    memcpy(value, SHASH_ELEM_VALUE_PTR(h, e), h->value_len);
 			rv = SHASH_OK; 
 			goto Out;
@@ -340,12 +340,11 @@ shash_get(shash *h, void *key, void *value)
 		e = e->next;
 	} while (e);
 	rv = SHASH_ERR_NOTFOUND;
-	
+
 Out:
 	if (l) pthread_mutex_unlock(l);
 
 	return(rv);
-					
 }
 
 //
@@ -405,6 +404,81 @@ Out:
 
 	return(rv);
 					
+}
+
+/*
+ * Atomically update an entry in the hash table using a user-supplied update function and user data.
+ * The old and new values must be allocated by the caller.
+ * The user data can be anything.
+ */
+int
+shash_update(shash *h, void *key, void *value_old, void *value_new, shash_update_fn update_fn, void *udata)
+{
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
+	uint hash = h->h_fn(key);
+	hash %= h->table_len;
+	int rv = SHASH_OK;
+
+	pthread_mutex_t *l = 0;
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
+		l = &h->biglock;
+	}
+	else if (h->flags & SHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
+
+	shash_elem *e = (shash_elem *) (((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));
+
+	if (e->in_use == false) {
+		value_old = NULL;
+		goto Update;
+	}
+
+	shash_elem *e_head = e;
+
+	do {
+//		cf_info(CF_SHASH, "su1: h: %p ; e: %p ; k: %p", h, e, key);
+//		cf_info(CF_SHASH, "su2: sekp: %p ; kl: %zu", SHASH_ELEM_KEY_PTR(h, e), h->key_len);
+
+		if (memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+			if (NULL != value_old)
+			    memcpy(value_old, SHASH_ELEM_VALUE_PTR(h, e), h->value_len);
+			goto Update;
+		}
+		e = e->next;
+	} while (e);
+	value_old = NULL;
+
+Update:
+	// Invoke the caller's update function.
+	(update_fn)(key, value_old, value_new, udata);
+
+	// Write the new value into the hash table.
+
+	if (!value_old && !e) {
+		e = (shash_elem *) (mem_tracked ? cf_malloc(SHASH_ELEM_SZ(h)) : malloc(SHASH_ELEM_SZ(h)));
+		if (!e) {
+			if (l)     pthread_mutex_unlock( l );
+			return (SHASH_ERR);
+		}
+
+		e->next = e_head->next;
+		e_head->next = e;
+	}
+
+	if (!value_old)
+	  memcpy(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len);
+	memcpy(SHASH_ELEM_VALUE_PTR(h, e), value_new, h->value_len);
+	e->in_use = true;
+
+	if (!value_old)
+	  h->elements++;
+
+	if (l) pthread_mutex_unlock(l);
+
+	return(rv);
 }
 
 int

@@ -40,6 +40,14 @@ typedef uint8_t byte;
 typedef uint32_t (*shash_hash_fn) (void *key);
 
 /*
+ * Type for a function to be called under the hash table locks to atomically update a hash table entry.
+ * The old value is the current value of the key, or NULL if non-existent.
+ * The new value is allocated by the caller.
+ * User data can be anything.
+ */
+typedef void (*shash_update_fn) (void *key, void *value_old, void *value_new, void *udata);
+
+/*
 ** Typedef for a "reduce" fuction that is called on every node
 ** (Note about return value: some kinds of reduces can manipulate the hash table,
 **  allowing deletion. See the particulars of the reduce call.)
@@ -128,6 +136,13 @@ shash_get_vlock(shash *h, void *key, void **value,pthread_mutex_t **vlock);
 int
 shash_get_and_delete(shash *h, void *key, void *value);
 
+/*
+ * Atomically update an entry in the hash table using a user-supplied update function and user data.
+ * The update function performs the merge of the old and new values, with respect to the user data
+ * and returns the new value.
+ */
+int
+shash_update(shash *h, void *key, void *value_old, void *value_new, shash_update_fn update_fn, void *udata);
 
 /*
 ** Got a key you want removed - this is the function to call
