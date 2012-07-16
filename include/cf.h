@@ -14,7 +14,8 @@
 // We have lots of use of basic types like uint8_t
 #include <inttypes.h>
 // Some people use ssize_t (signed size), which is in unistd.h
-#include <unistd.h>                                          
+#include <unistd.h>   
+#include <asm/byteorder.h>
 
 /* Truth and falsehood !!! use C99 bool types instead, dude !!! */
 #define FALSE 0
