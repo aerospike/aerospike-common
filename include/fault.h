@@ -8,7 +8,7 @@
  */
 #pragma once
 #include <pthread.h>
-
+#include "dynbuf.h"
 
 
 

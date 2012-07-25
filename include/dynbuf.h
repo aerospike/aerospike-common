@@ -19,8 +19,6 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "cf.h"
-
 
 typedef struct cf_dyn_buf_s {
 	uint8_t		*buf;
