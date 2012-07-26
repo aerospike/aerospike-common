@@ -93,7 +93,8 @@ typedef struct alloc_loc_s {
 typedef struct alloc_info_s {
 	size_t net_sz;                // Net allocation in bytes at this program location.
 	ssize_t delta_sz;             // Last change in net allocation in bytes at this program location.
-	size_t alloc_count;           // Number of allocations at this program location.
+	size_t net_alloc_count;       // Net number of allocations at this program location.
+	size_t total_alloc_count;     // Total number of allocations at this program location.
 	time_t time_last_modified;    // Time of last net allcation change at this program location.
 	// XXX -- Including this field here is a total hack, since it's only used for report generation!  ***PSI***  13-Jul-2012
 	//         (Wasting the space in the accounting records could be avoided if a different record type was used for reporting.)
@@ -234,7 +235,8 @@ mem_count_alloc_info(char *file, int line, cf_dyn_buf *db)
 		cf_info(CF_ALLOC, "\tnet_sz: %zu (%.3f %s)", alloc_info.net_sz, quantity, scale);
 		get_human_readable_memory_size(alloc_info.delta_sz, &quantity, &scale);
 		cf_info(CF_ALLOC, "\tdelta_sz: %ld (%.3f %s)", alloc_info.delta_sz, quantity, scale);
-		cf_info(CF_ALLOC, "\talloc_count: %zu", alloc_info.alloc_count);
+		cf_info(CF_ALLOC, "\tnet_alloc_count: %zu", alloc_info.net_alloc_count);
+		cf_info(CF_ALLOC, "\ttotal_alloc_count: %zu", alloc_info.total_alloc_count);
 		struct tm *mod_time_tm = gmtime(&(alloc_info.time_last_modified));
 		char time_str[50];
 		strftime(time_str, sizeof(time_str), "%b %d %Y %T %Z", mod_time_tm);
@@ -303,7 +305,8 @@ copy_alloc_info(alloc_info_t *to, alloc_info_t *from)
 {
 	to->net_sz = from->net_sz;
 	to->delta_sz = from->delta_sz;
-	to->alloc_count = from->alloc_count;
+	to->net_alloc_count = from->net_alloc_count;
+	to->total_alloc_count = from->total_alloc_count;
 	to->time_last_modified = from->time_last_modified;
 }
 
@@ -355,11 +358,29 @@ mem_count_report_l2a_reduce_fn(void *key, void *data, void *udata)
 		  }
 		  break;
 
-	  case CF_ALLOC_SORT_ALLOC_COUNT:
-		  if (alloc_info->alloc_count > rec[report->top_n - 1].alloc_count) {
+	  case CF_ALLOC_SORT_NET_ALLOC_COUNT:
+		  if (alloc_info->net_alloc_count > rec[report->top_n - 1].net_alloc_count) {
 			  int i = 0;
 			  while (i < report->num_records) {
-				  if (alloc_info->alloc_count > rec[i].alloc_count) {
+				  if (alloc_info->net_alloc_count > rec[i].net_alloc_count) {
+					  memmove(&(rec[i + 1]), &(rec[i]), (report->num_records - i - 1) * sizeof(alloc_info_t));
+					  break;
+				  }
+				  i++;
+			  }
+			  copy_location(&(rec[i].loc), loc);
+			  copy_alloc_info(&(rec[i]), alloc_info);
+			  if (report->num_records < report->top_n) {
+				  report->num_records++;
+			  }
+		  }
+		  break;
+
+	  case CF_ALLOC_SORT_TOTAL_ALLOC_COUNT:
+		  if (alloc_info->total_alloc_count > rec[report->top_n - 1].total_alloc_count) {
+			  int i = 0;
+			  while (i < report->num_records) {
+				  if (alloc_info->total_alloc_count > rec[i].total_alloc_count) {
 					  memmove(&(rec[i + 1]), &(rec[i]), (report->num_records - i - 1) * sizeof(alloc_info_t));
 					  break;
 				  }
@@ -438,12 +459,13 @@ mem_count_report(sort_field_t sort_field, int top_n, cf_dyn_buf *db)
 
 	cf_info(CF_ALLOC, "Mem Loc Count Report: (sorted by %s):", (CF_ALLOC_SORT_NET_SZ == sort_field ? "space" :
 																(CF_ALLOC_SORT_DELTA_SZ == sort_field ? "change" :
-																 (CF_ALLOC_SORT_ALLOC_COUNT == sort_field ? "count" :
-																  (CF_ALLOC_SORT_TIME_LAST_MODIFIED == sort_field ? "time" : "???")))));
+																 (CF_ALLOC_SORT_NET_ALLOC_COUNT == sort_field ? "net_count" :
+																  (CF_ALLOC_SORT_TOTAL_ALLOC_COUNT == sort_field ? "total_count" :
+																   (CF_ALLOC_SORT_TIME_LAST_MODIFIED == sort_field ? "time" : "???"))))));
 	cf_info(CF_ALLOC, "---------------------");
 	for (int i = 0; i < MIN(report.num_records, report.top_n); i++) {
 		alloc_info_t *rec = &(report.u.l2a_output[i]);
-		cf_info(CF_ALLOC, " Top %2d: Location: %-25s sz: %10zu  dsz: %10ld  ac: %6zu  tlm: %ld", i, rec->loc, rec->net_sz, rec->delta_sz, rec->alloc_count, rec->time_last_modified);
+		cf_info(CF_ALLOC, " Top %2d: Location: %-25s sz: %10zu  dsz: %10ld  na: %6zu  ta: %6zu  tlm: %ld", i, rec->loc, rec->net_sz, rec->delta_sz, rec->net_alloc_count, rec->total_alloc_count, rec->time_last_modified);
 	}
 	cf_info(CF_ALLOC, "---------------------");
 }
@@ -488,12 +510,13 @@ update_alloc_info(void *key, void *value_old, void *value_new, void *udata)
 	alloc_info_t *alloc_info_new = (alloc_info_t *) value_new;
 
 	alloc_info_new->net_sz += (alloc_info_old ? alloc_info_old->net_sz : 0);
-	alloc_info_new->alloc_count += (alloc_info_old ? alloc_info_old->alloc_count : 0);
+	alloc_info_new->net_alloc_count += (alloc_info_old ? alloc_info_old->net_alloc_count : 0);
+	alloc_info_new->total_alloc_count += (alloc_info_old ? alloc_info_old->total_alloc_count : 0);
 	alloc_info_new->time_last_modified = time(NULL);
 	// XXX -- Clear out the hack field only used for report generation.  ***PSI***  13-Jul-2012
 	make_location(&(alloc_info_new->loc), "(unused)", 0);
 
-	if (0 > alloc_info_new->alloc_count) {
+	if (0 > alloc_info_new->net_alloc_count) {
 		cf_crash(CF_ALLOC, CF_PROCESS, "allocation count for location \"%s\" just went negative!", loc);
 	}
 }
@@ -527,9 +550,8 @@ update_alloc_at_location(void *p, size_t sz, alloc_type type, char *file, int li
 	alloc_info_t alloc_info_new;
 
 	alloc_info_new.net_sz = alloc_info_new.delta_sz = (CF_ALLOC_TYPE_FREE != type ? sz : -sz);
-	// XXX -- Let's only increment allocation counts, since that's more interesting.  ***PSI***  13-Jul-2012
-//	alloc_info_new.alloc_count = (CF_ALLOC_TYPE_FREE != type ? 1 : -1);
-	alloc_info_new.alloc_count = 1;
+	alloc_info_new.net_alloc_count = (CF_ALLOC_TYPE_FREE != type ? 1 : -1);
+	alloc_info_new.total_alloc_count = 1;
 
 	if (SHASH_OK != shash_update(loc2alloc_shash, loc, &alloc_info_old, &alloc_info_new, update_alloc_info, 0)) {
 		cf_crash(CF_ALLOC, CF_PROCESS, "Could not update loc2alloc_shash with sz: %zu loc: \"%s\"", sz, loc);
@@ -1115,7 +1137,7 @@ _cf_rc_free(void *addr, char *file, int line)
 	cf_rc_hdr *hdr = (cf_rc_hdr *) ( ((uint8_t *)addr) - sizeof(cf_rc_hdr));
 
 #if 0
-	if (hdr->count == 0) {
+	if (hdr->count != 0) {
 		cf_warning(CF_ALLOC, "rcfree: freeing an object that still has a refcount %p",addr);
 #ifdef USE_CIRCUS
 		cf_alloc_print_history(addr, file, line);
