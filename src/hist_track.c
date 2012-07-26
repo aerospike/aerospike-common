@@ -42,17 +42,17 @@ const uint32_t MAX_NUM_ROWS = (24 * 60 * 60) / 10;
 // Caching this few is legal but silly.
 const uint32_t MIN_NUM_ROWS = 2;
 
-// Don't track/report thresholds with a larger index than this.
+// Don't track/report thresholds with a larger bucket index than this.
 // This corresponds to the 32 second threshold - that should be big enough.
-#define MAX_COL_INDEX 15
+#define MAX_BUCKET 15
 
 // Don't track/report more than this many thresholds.
-// This could in principle be less than (MAX_COL_INDEX + 1), e.g. it could be 4,
-// and we could track thresholds 0, 5, 10, 15.
-#define MAX_NUM_COLS (MAX_COL_INDEX + 1)
+// This could in principle be less than (MAX_BUCKET + 1), e.g. it could be
+// 4, and we could track buckets 0, 5, 10, 15.
+#define MAX_NUM_COLS (MAX_BUCKET + 1)
 
-#define NUM_DEFAULT_COLS 3
-const uint32_t default_col_indexes[NUM_DEFAULT_COLS] = { 0, 3, 6 };
+#define DEFAULT_NUM_COLS 3
+const uint32_t default_buckets[DEFAULT_NUM_COLS] = { 0, 3, 6 };
 // For our standard latency histograms, 0: >1ms, 3: >8ms, 6: >64ms.
 
 // No output line can be longer than this.
@@ -64,7 +64,7 @@ const uint32_t default_col_indexes[NUM_DEFAULT_COLS] = { 0, 3, 6 };
 //
 
 typedef struct row_s {
-	time_t			timestamp;
+	uint32_t		timestamp;
 	uint64_t		total;
 	uint64_t		overs[];
 } row;
@@ -81,7 +81,7 @@ struct cf_hist_track_s {
 	uint32_t		oldest_row_n;
 	pthread_mutex_t	rows_lock;
 	uint32_t		slice_sec;
-	uint32_t		col_indexes[MAX_NUM_COLS];
+	uint32_t		buckets[MAX_NUM_COLS];
 	uint32_t		num_cols;
 };
 
@@ -97,8 +97,8 @@ static void output_header(cf_hist_track* this, uint32_t start_ts,
 static void output_slice(cf_hist_track* this, row* prev_row_p, row* row_p,
 		uint32_t diff_sec, uint32_t num_cols,
 		cf_hist_track_info_format info_fmt, cf_dyn_buf* db_p);
-static int threshold_to_col_index(int threshold);
-static int thresholds_to_cols(const char* thresholds, uint32_t col_indexes[]);
+static int threshold_to_bucket(int threshold);
+static int thresholds_to_buckets(const char* thresholds, uint32_t buckets[]);
 
 
 //==========================================================
@@ -170,12 +170,20 @@ cf_hist_track_start(cf_hist_track* this, uint32_t back_sec, uint32_t slice_sec,
 		return false;
 	}
 
-	// Parse thresholds and check resulting column indexes.
-	uint32_t col_indexes[MAX_NUM_COLS];
-	int n_cols = thresholds_to_cols(thresholds, col_indexes);
+	// If thresholds aren't specified, use defaults.
+	uint32_t* buckets = (uint32_t*)default_buckets;
+	int num_cols = DEFAULT_NUM_COLS;
 
-	if (n_cols < 0) {
-		return false;
+	// Parse non-default thresholds and check resulting buckets.
+	uint32_t parsed_buckets[MAX_NUM_COLS];
+
+	if (thresholds) {
+		buckets = parsed_buckets;
+		num_cols = thresholds_to_buckets(thresholds, buckets);
+
+		if (num_cols < 0) {
+			return false;
+		}
 	}
 
 	pthread_mutex_lock(&this->rows_lock);
@@ -184,7 +192,7 @@ cf_hist_track_start(cf_hist_track* this, uint32_t back_sec, uint32_t slice_sec,
 		cf_free(this->rows);
 	}
 
-	this->row_size = sizeof(row) + (n_cols * sizeof(uint64_t));
+	this->row_size = sizeof(row) + (num_cols * sizeof(uint64_t));
 	this->rows = (row*)cf_malloc(num_rows * this->row_size);
 
 	if (! this->rows) {
@@ -197,11 +205,11 @@ cf_hist_track_start(cf_hist_track* this, uint32_t back_sec, uint32_t slice_sec,
 	this->oldest_row_n = 0;
 	this->slice_sec = slice_sec;
 
-	for (int i = 0; i < n_cols; i++) {
-		this->col_indexes[i] = col_indexes[i];
+	for (int i = 0; i < num_cols; i++) {
+		this->buckets[i] = buckets[i];
 	}
 
-	this->num_cols = (uint32_t)n_cols;
+	this->num_cols = (uint32_t)num_cols;
 
 	pthread_mutex_unlock(&this->rows_lock);
 
@@ -255,7 +263,7 @@ cf_hist_track_dump(cf_hist_track* this)
 		return;
 	}
 
-	time_t now_ts = time(NULL);
+	uint32_t now_ts = (uint32_t)time(NULL);
 
 	// But don't save row if slice_sec hasn't elapsed since last saved row.
 	if (this->write_row_n != 0 &&
@@ -269,6 +277,7 @@ cf_hist_track_dump(cf_hist_track* this)
 	uint64_t subtotal = 0;
 	row* row_p = get_row(this, this->write_row_n);
 
+	// b's "over" is total minus sum of values in all buckets 0 thru b.
 	for (int i = 0, b = 0; i < this->num_cols; b++) {
 		uint64_t count_b = cf_atomic_int_get(this->hist.count[b]);
 
@@ -276,7 +285,7 @@ cf_hist_track_dump(cf_hist_track* this)
 			subtotal += count_b;
 		}
 
-		if (this->col_indexes[i] == b) {
+		if (this->buckets[i] == b) {
 			row_p->overs[i++] = total_counts > subtotal ?
 					total_counts - subtotal : 0;
 		}
@@ -344,7 +353,7 @@ cf_hist_track_get_info(cf_hist_track* this, uint32_t back_sec,
 		return;
 	}
 
-	time_t start_ts = prev_row_p->timestamp;
+	uint32_t start_ts = prev_row_p->timestamp;
 	bool no_slices = true;
 
 	for (uint32_t row_n = start_row_n + 1; row_n < this->write_row_n; row_n++) {
@@ -405,7 +414,7 @@ cf_hist_track_get_settings(cf_hist_track* this, cf_dyn_buf* db_p)
 
 	for (int i = 0; i < this->num_cols; i++) {
 		write_p += snprintf(write_p, end_p - write_p, "%u,",
-				1 << this->col_indexes[i]);
+				1 << this->buckets[i]);
 	}
 
 	if (this->num_cols > 0) {
@@ -448,7 +457,7 @@ get_start_row_n(cf_hist_track* this, uint32_t back_sec)
 		return -1;
 	}
 
-	time_t now_ts = time(NULL);
+	uint32_t now_ts = (uint32_t)time(NULL);
 
 	// In case we call this with default back_sec (0) or back_sec more than UTC
 	// epoch to now - start from the beginning.
@@ -456,7 +465,7 @@ get_start_row_n(cf_hist_track* this, uint32_t back_sec)
 		return this->oldest_row_n;
 	}
 
-	time_t start_ts = now_ts - back_sec;
+	uint32_t start_ts = now_ts - back_sec;
 
 	// Find the most recent slice interval.
 	uint32_t last_row_n = this->write_row_n - 1;
@@ -473,7 +482,7 @@ get_start_row_n(cf_hist_track* this, uint32_t back_sec)
 	}
 
 	// Begin at guessed row, and iterate to find exact row to start at.
-	time_t guess_ts = get_row(this, guess_row_n)->timestamp;
+	uint32_t guess_ts = get_row(this, guess_row_n)->timestamp;
 	uint32_t start_row_n;
 
 	if (guess_ts < start_ts) {
@@ -523,7 +532,7 @@ output_header(cf_hist_track* this, uint32_t start_ts, uint32_t num_cols,
 		line_sep = ';';
 		break;
 	case CF_HIST_TRACK_FMT_TABLE:
-		time_fmt = ":\n%T GMT";
+		time_fmt = ":\n%T GMT       % > (ms)";
 		rate_fmt = "\n   to      ops/sec";
 		pcts_fmt = " %6u";
 		line_sep = '\n';
@@ -533,15 +542,16 @@ output_header(cf_hist_track* this, uint32_t start_ts, uint32_t num_cols,
 	char output[MAX_FORMATTED_ROW_SIZE];
 	char* write_p = output;
 	char* end_p = output + MAX_FORMATTED_ROW_SIZE - 2;
+	time_t start_ts_time_t = (time_t)start_ts;
 	struct tm start_tm;
 
-	gmtime_r(&start_ts, &start_tm);
+	gmtime_r(&start_ts_time_t, &start_tm);
 	write_p += strftime(output, MAX_FORMATTED_ROW_SIZE - 2, time_fmt, &start_tm);
 	write_p += snprintf(write_p, end_p - write_p, rate_fmt);
 
 	for (int i = 0; i < num_cols; i++) {
 		write_p += snprintf(write_p, end_p - write_p, pcts_fmt,
-				1 << this->col_indexes[i]);
+				1 << this->buckets[i]);
 	}
 
 	*write_p++ = line_sep;
@@ -583,13 +593,15 @@ output_slice(cf_hist_track* this, row* prev_row_p, row* row_p,
 	char output[MAX_FORMATTED_ROW_SIZE];
 	char* write_p = output;
 	char* end_p = output + MAX_FORMATTED_ROW_SIZE - 2;
+	time_t row_ts_time_t = (time_t)row_p->timestamp;
+	struct tm row_tm;
+
+	gmtime_r(&row_ts_time_t, &row_tm);
+	write_p += strftime(output, MAX_FORMATTED_ROW_SIZE - 2, time_fmt, &row_tm);
 
 	uint64_t diff_total = row_p->total - prev_row_p->total;
 	double ops_per_sec = (double)(diff_total) / diff_sec;
-	struct tm row_tm;
 
-	gmtime_r(&row_p->timestamp, &row_tm);
-	write_p += strftime(output, MAX_FORMATTED_ROW_SIZE - 2, time_fmt, &row_tm);
 	write_p += snprintf(write_p, end_p - write_p, rate_fmt, ops_per_sec);
 
 	for (int i = 0; i < num_cols; i++) {
@@ -607,10 +619,10 @@ output_slice(cf_hist_track* this, row* prev_row_p, row* row_p,
 }
 
 //------------------------------------------------
-// Convert threshold milliseconds to column index.
+// Convert threshold milliseconds to bucket index.
 //
 static int
-threshold_to_col_index(int threshold)
+threshold_to_bucket(int threshold)
 {
 	if (threshold < 1) {
 		return -1;
@@ -629,18 +641,11 @@ threshold_to_col_index(int threshold)
 }
 
 //------------------------------------------------
-// Convert thresholds string to column indexes.
+// Convert thresholds string to buckets array.
 //
 static int
-thresholds_to_cols(const char* thresholds, uint32_t col_indexes[])
+thresholds_to_buckets(const char* thresholds, uint32_t buckets[])
 {
-	// If thresholds aren't specified, use defaults.
-	if (! thresholds) {
-		memcpy(col_indexes, default_col_indexes, sizeof(default_col_indexes));
-
-		return NUM_DEFAULT_COLS;
-	}
-
 	// Copy since strtok() is destructive.
 	char toks[strlen(thresholds) + 1];
 
@@ -654,14 +659,14 @@ thresholds_to_cols(const char* thresholds, uint32_t col_indexes[])
 			return -1;
 		}
 
-		int b = threshold_to_col_index(atoi(tok));
+		int b = threshold_to_bucket(atoi(tok));
 
-		// Make sure col_indexes contains a rising sequence of legal thresholds.
-		if (b < 0 || b > MAX_COL_INDEX || (i > 0 && b <= col_indexes[i - 1])) {
+		// Make sure it's a rising sequence of valid bucket indexes.
+		if (b < 0 || b > MAX_BUCKET || (i > 0 && b <= buckets[i - 1])) {
 			return -1;
 		}
 
-		col_indexes[i++] = (uint32_t)b;
+		buckets[i++] = (uint32_t)b;
 
 		tok = strtok(NULL, ",");
 	}
