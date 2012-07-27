@@ -859,6 +859,12 @@ shash_deleteall_lockfree(shash *h)
 				  free(e);
 				e = t;
 			}
+			// The head element of each hash bucket overflow chain also
+			// contains data. But we should not free it as it is 
+			// allocated as part of the overall hash table. So, just mark
+			// it so that it is re-used.
+			e_table->next = NULL;
+			e_table->in_use = false;
 		}
 		e_table = (shash_elem *) (((uint8_t *)e_table) + SHASH_ELEM_SZ(h));
 	}
