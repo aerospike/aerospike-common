@@ -273,19 +273,18 @@ cf_hist_track_dump(cf_hist_track* this)
 		return;
 	}
 
-	uint64_t total_counts = cf_atomic_int_get(this->hist.n_counts);
-	uint64_t subtotal = 0;
 	row* row_p = get_row(this, this->write_row_n);
+	uint64_t subtotal = 0;
+	uint64_t total_counts = cf_atomic_int_get(this->hist.n_counts);
 
 	// b's "over" is total minus sum of values in all buckets 0 thru b.
 	for (int i = 0, b = 0; i < this->num_cols; b++) {
-		uint64_t count_b = cf_atomic_int_get(this->hist.count[b]);
-
-		if (count_b > 0) {
-			subtotal += count_b;
-		}
+		subtotal += cf_atomic_int_get(this->hist.count[b]);
 
 		if (this->buckets[i] == b) {
+			// Bucket counts may increment during this loop, so their sum can
+			// exceed total_counts. (This also means a bucket's "over" can be
+			// smaller than at previous dump, so we have to check that too.)
 			row_p->overs[i++] = total_counts > subtotal ?
 					total_counts - subtotal : 0;
 		}
@@ -605,7 +604,10 @@ output_slice(cf_hist_track* this, row* prev_row_p, row* row_p,
 	write_p += snprintf(write_p, end_p - write_p, rate_fmt, ops_per_sec);
 
 	for (int i = 0; i < num_cols; i++) {
-		uint64_t diff_overs = row_p->overs[i] - prev_row_p->overs[i];
+		// It's possible for an "over" to be smaller than the one in the
+		// previous row - see comment in cf_hist_track_dump().
+		uint64_t diff_overs = row_p->overs[i] > prev_row_p->overs[i] ?
+				row_p->overs[i] - prev_row_p->overs[i] : 0;
 		double pcts_over_i = diff_total > 0 ?
 				(double)(diff_overs * 100) / diff_total : 0;
 
