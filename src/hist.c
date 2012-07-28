@@ -31,47 +31,12 @@ histogram_create(char *name)
 	return(h);
 }
 
-
-//	Histogram structure for saving/calculating Latency/throughput
-
-
-histogram * 
-histogram_create_pct(char *name)
-{
-	histogram * h = cf_malloc(sizeof(histogram));
-	if (!h)	return(0);
-	if (strlen(name) >= sizeof(h->name)-1) { cf_free(h); return(0); }
-	strcpy(h->name, name);
-	h->n_counts = 0;
-	h->n_counts_pct = 0;
-	memset(&h->count, 0, sizeof(h->count)); //keeping old behaviour of histogram
-	memset(&h->count_pct, 0, sizeof(h->count_pct)); //new counter which is reset everytime ticker is called
-	memset(&h->secs, 0, sizeof(h->secs)); //data structure to save max 60 seconds of latency.
-	memset(&h->mins, 0, sizeof(h->mins)); //data structure for saving last 60 minutes of latency information
-	memset(&h->hours, 0, sizeof(h->hours)); //data structure for saving last 24 hours of latency information
-	return(h);
-}
-
-
 void histogram_clear(histogram *h)
 {
 	cf_atomic_int_set(&h->n_counts, 0);
 
 	for (int i = 0; i < N_COUNTS; i++) {
 		cf_atomic_int_set(&h->count[i], 0);
-	}
-}
-
-
-//	Reset transactions and bucket information.	
-
-
-void histogram_clear_pct(histogram *h)
-{
-	cf_atomic_int_set(&h->n_counts_pct, 0);
-
-	for (int i = 0; i < N_COUNTS; i++) {
-		cf_atomic_int_set(&h->count_pct[i], 0);
 	}
 }
 
@@ -105,92 +70,6 @@ void histogram_dump( histogram *h )
 	}
 	if (pos > 0) 
 	    cf_info(AS_INFO, "%s", (char *) printbuf);
-}
-
-
-//	Specialized histogram dump function : It calculates the latency and saves latency infomation for the 60 seconds, depending on ticker interval
-//	Averages the Latency for seconds to save 59 minutes of latency information.
-//	Averages the Latency for minutes to save 24 hours of latency information.
-	
-
-void histogram_dump_pct( histogram *h )
-{
-	char printbuf[100];
-	int pos = 0; // location to print from
-	printbuf[0] = '\0';
-    		
-	
-	cf_info(AS_INFO, "histogram dump: %s (%zu total)",h->name, h->n_counts);
-	
-	int i, j;
-	int k = 0;
-	for (j=N_COUNTS-1 ; j >= 0 ; j-- ) if (h->count[j]) break;
-	for (i=0;i<N_COUNTS;i++) if (h->count[i]) break;
-	for (; i<=j;i++) {
-		if (h->count[i] > 0) { // print only non zero columns
-			int bytes = sprintf((char *) (printbuf + pos), " (%02d: %010zu) ", i, h->count[i]);
-			if (bytes <= 0) 
-			{
-				cf_info(AS_INFO, "histogram printing error. Bailing ...");
-				return;
-			}
-			pos += bytes;
-		    if (k % 4 == 3){
-		    	 cf_info(AS_INFO, "%s", (char *) printbuf);
-		    	 pos = 0;
-		    	 printbuf[0] = '\0';
-		    }
-		    k++;
-		}
-	}
-
-	struct tm *ptr;
-    	time_t ltime;
-    	ltime = time(NULL); /* get current calendar time */
-    	ptr = gmtime(&ltime);  // return time in the form of tm structure
-	static cf_atomic_int cur_count;
-
-	// 1st element [0] is always the total number of transaction for the period.
-	cf_atomic_int_set(&h->secs[ptr->tm_sec][0], h->n_counts_pct); 
-
-	for (j=N_COUNTS-1 ; j >= 0 ; j-- ) if (h->count_pct[j]) break;
-	for (k = 0; k < N_PCT-1; k++) {
-		cf_atomic_int_set(&cur_count,0);
-
-		// calculate the number of transactions over k period
-		// where k=1 is trans over 1 ms, k=2 is trans over 2 ms, 
-		// k=3 is trans over 4 ms bucket 
-		
-		for (i = 0; i <= j; i++) {
-			if (h->count_pct[i] > 0) {
-				if (k < i ) continue; //v. imp  for calc.
-				cf_atomic_int_add(&cur_count, h->count_pct[i]);
-			}
-		}
-
-		// As the value in cur_count is total trans from 0 to 1ms,2ms,4 ms
-		// we subtract total transactions from cur_count to get trans over.
-
-		cf_atomic_int_sub(&cur_count, h->n_counts_pct);
-
-		// note: saving the cur_count as positive and saving it at k+1
-		//       because, k=0 is reserved for n_counts_pct for the period.
-
-		cf_atomic_int_set(&h->secs[ptr->tm_sec][k+1], -cur_count);
-
-	}
-
-	for (k = 0; k < N_PCT; k++) {
-		// As we already have seconds data we can keep adding it to min
-		// and hour data structure, so we will always have uptodate stats.
-
-		cf_atomic_int_add(&h->mins[ptr->tm_min][k], h->secs[ptr->tm_sec][k]);
-		cf_atomic_int_add(&h->hours[ptr->tm_hour][k], h->secs[ptr->tm_sec][k]);
-	}
-
-	if (pos > 0) 
-	    cf_info(AS_INFO, "%s", (char *) printbuf);
-	
 }
 
 #ifdef USE_CLOCK
@@ -262,36 +141,6 @@ void histogram_insert_data_point( histogram *h, uint64_t start)
 	
 }
 
-
-//	Duplicate of histogram_insert_data_point only additional function is to 
-//	increment n_counts_pct and count_pct[index]
-//	n_counts_pct is total number of transaction from the last nsup period.
-//	count_pct[index] is the total number of transaction in each bucket from
-//	the last nsup period
-
-
-void histogram_insert_data_point_pct( histogram *h, uint64_t start)
-{
-	cf_atomic_int_incr(&h->n_counts);
-	cf_atomic_int_incr(&h->n_counts_pct); 
-	
-    uint64_t end = cf_getms(); 
-    uint64_t delta = end - start;
-	
-	int index = bits_find_last_set_64(delta);
-	if (index < 0) index = 0;   
-	if (start > end)
-	{
-	    // Need to investigate why in some cases start is a couple of ms greater than end
-		// Could it be rounding error (usually the difference is 1 but sometimes I have seen 2
-	    // cf_info(AS_INFO, "start = %"PRIu64" > end = %"PRIu64"", start, end);
-		index = 0;
-	}   
-       
-	cf_atomic_int_incr( &h->count[ index ] );
-	cf_atomic_int_incr( &h->count_pct[ index ] );
-	
-}
 #endif // USE_GETCYCLES
 
 
@@ -303,19 +152,35 @@ void histogram_get_counts(histogram *h, histogram_counts *hc)
 }
 
 linear_histogram * 
-linear_histogram_create(char *name, uint64_t start, uint64_t max_offset)
+linear_histogram_create(char *name, uint64_t start, uint64_t max_offset, int num_buckets)
 {
+	if (num_buckets > MAX_LINEAR_BUCKETS) {
+		cf_crash(AS_INFO, CF_GLOBAL, "linear histogram num_buckets %u > max %u", num_buckets, MAX_LINEAR_BUCKETS);
+	}
+
 	linear_histogram * h = cf_malloc(sizeof(linear_histogram));
 	if (!h)	return(0);
 	if (strlen(name) >= sizeof(h->name)-1) { cf_free(h); return(0); }
 	strcpy(h->name, name);
 	h->n_counts = 0;
+	h->num_buckets = num_buckets;
 	h->start = start;
-    h->offset20 = max_offset / 20;
-	if (h->offset20 == 0) // avoid divide by zero while inserting data point
-		h->offset20 = 1;
+    h->bucket_offset = max_offset / h->num_buckets;
+	if (h->bucket_offset == 0) // avoid divide by zero while inserting data point
+		h->bucket_offset = 1;
 	memset(&h->count, 0, sizeof(h->count));
 	return(h);
+}
+
+// Note: not thread safe!
+void linear_histogram_clear(linear_histogram *h, uint64_t start, uint64_t max_offset)
+{
+	h->n_counts = 0;
+	h->start = start;
+    h->bucket_offset = max_offset / h->num_buckets;
+	if (h->bucket_offset == 0) // avoid divide by zero while inserting data point
+		h->bucket_offset = 1;
+	memset(&h->count, 0, sizeof(h->count));
 }
 
 void linear_histogram_insert_data_point( linear_histogram *h, uint64_t point)
@@ -325,20 +190,47 @@ void linear_histogram_insert_data_point( linear_histogram *h, uint64_t point)
     int64_t offset = point - h->start;
 	int index = 0;
 	if (offset > 0) {
-		index = offset / h->offset20;
-		if (index > 19)
-			index = 19;
+		index = offset / h->bucket_offset;
+		if (index > h->num_buckets - 1)
+			index = h->num_buckets - 1;
 	}
 
 	cf_atomic_int_incr( &h->count[ index ]);
 	
 }
 
+void linear_histogram_insert_data_point_val( linear_histogram *h, uint64_t point, int64_t val)
+{
+	cf_atomic_int_add(&h->n_counts, val);
+
+    int64_t offset = point - h->start;
+	int index = 0;
+	if (offset > 0) {
+		index = offset / h->bucket_offset;
+		if (index > h->num_buckets - 1)
+			index = h->num_buckets - 1;
+	}
+
+	cf_atomic_int_add(&h->count[ index ], val);
+
+}
+
 void linear_histogram_get_counts(linear_histogram *h, linear_histogram_counts *hc)
 {
-	for (int i=0;i<LINEAR_N_COUNTS;i++)
+	for (int i = 0; i < h->num_buckets; i++) {
 		hc->count[i] = h->count[i];
-	return;
+	}
+}
+
+uint64_t linear_histogram_get_total(linear_histogram *h)
+{
+	int64_t total = 0;
+
+	for (int i = 0; i < h->num_buckets; i++) {
+		total += cf_atomic_int_get(h->count[i]);
+	}
+
+	return (uint64_t)total;
 }
 
 // This routine is not thread safe and should be called from a single threaded routine
@@ -348,14 +240,28 @@ size_t linear_histogram_get_index_for_pct(linear_histogram *h, size_t pct)
 		return 1;
 	int min_limit = (h->n_counts * pct) / 100;
 	if (min_limit >= h->n_counts)
-		return LINEAR_N_COUNTS;
+		return h->num_buckets;
 	int count = 0;
-	for (int i=0;i<LINEAR_N_COUNTS;i++) {
+	for (int i = 0; i < h->num_buckets; i++) {
 		count += h->count[i];
 		if (count >= min_limit)
 			return (i+1);
 	}
-	return LINEAR_N_COUNTS;
+	return h->num_buckets;
+}
+
+// Note: not thread safe!
+uint64_t linear_histogram_get_offset_for_subtotal(linear_histogram *h, int64_t subtotal)
+{
+	if (h->n_counts == 0)
+		return 0;
+	int count = 0;
+	for (int i = 0; i < h->num_buckets; i++) {
+		count += h->count[i];
+		if (count >= subtotal)
+			return h->start + ((i+1) * h->bucket_offset);
+	}
+	return h->start + (h->num_buckets * h->bucket_offset);
 }
 
 void linear_histogram_dump( linear_histogram *h )
@@ -364,22 +270,22 @@ void linear_histogram_dump( linear_histogram *h )
 	int pos = 0; // location to print from
 	printbuf[0] = '\0';
 	
-	cf_debug(AS_NSUP, "linear histogram dump: %s (%zu total)",h->name, h->n_counts);
+	cf_info(AS_INFO, "linear histogram dump: %s (%zu total)",h->name, h->n_counts);
 	int i, j;
 	int k = 0;
-	for (j=LINEAR_N_COUNTS-1 ; j >= 0 ; j-- ) if (h->count[j]) break;
-	for (i=0;i<LINEAR_N_COUNTS;i++) if (h->count[i]) break;
+	for (j = h->num_buckets - 1; j >= 0; j--) if (h->count[j]) break;
+	for (i = 0; i < h->num_buckets; i++) if (h->count[i]) break;
 	for (; i<=j;i++) {
 		if (h->count[i] > 0) { // print only non zero columns
 			int bytes = sprintf((char *) (printbuf + pos), " (%02d: %010zu) ", i, h->count[i]);
 			if (bytes <= 0) 
 			{
-				cf_debug(AS_NSUP, "linear histogram printing error. Bailing ...");
+				cf_info(AS_INFO, "linear histogram printing error. Bailing ...");
 				return;
 			}
 			pos += bytes;
 		    if (k % 4 == 3){
-		    	 cf_debug(AS_NSUP, "%s", (char *) printbuf);
+		    	 cf_info(AS_INFO, "%s", (char *) printbuf);
 		    	 pos = 0;
 		    	 printbuf[0] = '\0';
 		    }
@@ -387,5 +293,5 @@ void linear_histogram_dump( linear_histogram *h )
 		}
 	}
 	if (pos > 0) 
-	    cf_debug(AS_NSUP, "%s", (char *) printbuf);
+	    cf_info(AS_INFO, "%s", (char *) printbuf);
 }
