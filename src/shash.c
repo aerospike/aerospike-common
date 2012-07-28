@@ -11,17 +11,20 @@
 
 #include "shash.h"
 
-#ifdef TRACK_MEM_ALLOC
-struct shash_s *mem_alloced;
-cf_atomic64 mem_alloced_sum;
-#endif
-
+/* shash_create
+ * Create a simple hash table.
+ * (Note:  For supporting memory allocation counting / tracking, we need to be able to create a single
+ *          hash table that is untracked, in order to avoid circularity.  In this special case only,
+ *          the native (i.e., non-"cf_") versions of memory allocation / freeing functions *must* be used.)
+ * (Also note:  Memory for the elements in a tracked hash table is tracked, along with memory for
+ *               the hash table itself.) */
 int
 shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_len, uint32_t sz, uint flags)
 {
 	shash *h;
+	bool mem_tracked = !(flags & SHASH_CR_UNTRACKED);
 
-	h = cf_malloc(sizeof(shash));
+	h = (mem_tracked ? cf_malloc(sizeof(shash)) : malloc(sizeof(shash)));
 	if (!h)	return(SHASH_ERR);
 
 	h->elements = 0;
@@ -36,9 +39,13 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 		return(SHASH_ERR);
 	}
 	
-	h->table = cf_malloc(sz * SHASH_ELEM_SZ(h));
+	h->table = (mem_tracked ? cf_malloc(sz * SHASH_ELEM_SZ(h)) : malloc(sz * SHASH_ELEM_SZ(h)));
+
 	if (!h->table) {
-		cf_free(h);
+		if (mem_tracked) 
+		  cf_free(h);
+		else
+		  free(h);
 		*h_r = 0;
 		return(SHASH_ERR);
 	}
@@ -53,7 +60,13 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 	
 	if (flags & SHASH_CR_MT_BIGLOCK) {
 		if (0 != pthread_mutex_init ( &h->biglock, 0) ) {
-			cf_free(h->table); cf_free(h);
+			if (mem_tracked) {
+				cf_free(h->table);
+				cf_free(h);
+			} else {
+				free(h->table);
+				free(h);
+			}
 			return(SHASH_ERR);
 		}
 	}
@@ -61,9 +74,12 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 		memset( &h->biglock, 0, sizeof( h->biglock ) );
 	
 	if (flags & SHASH_CR_MT_MANYLOCK) {
-		h->lock_table = cf_malloc( sizeof(pthread_mutex_t) * sz);
+		h->lock_table = (mem_tracked ? cf_malloc( sizeof(pthread_mutex_t) * sz) : malloc( sizeof(pthread_mutex_t) * sz));
 		if (! h->lock_table) {
-			cf_free(h);
+			if (mem_tracked)
+			  cf_free(h);
+			else
+			  free(h);
 			*h_r = 0;
 			return(SHASH_ERR);
 		}
@@ -73,7 +89,6 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 	}
 	else
 		h->lock_table = 0;
-	
 
 	*h_r = h;
 
@@ -87,16 +102,12 @@ shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_l
 // running the list and make get_size slow.
 // Choose making get_size slow in the case, but retaining parallelism
 
-
 uint32_t
 shash_get_size(shash *h)
 {
-
     uint32_t elements = 0;
 	
 	if (h->flags & SHASH_CR_MT_MANYLOCK) {
-
-
         
         for (uint i=0; i<h->table_len ; i++) {
             
@@ -136,6 +147,8 @@ shash_get_size(shash *h)
 int
 shash_put(shash *h, void *key, void *value)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
 	// Calculate hash
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
@@ -162,15 +175,20 @@ shash_put(shash *h, void *key, void *value)
 	while (e) {
 		if ( memcmp( SHASH_ELEM_KEY_PTR(h, e) , key, h->key_len) == 0) {
 			memcpy( SHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
-			if (h->flags & SHASH_CR_MT_BIGLOCK)
-				pthread_mutex_unlock(&h->biglock);
+//			if (h->flags & SHASH_CR_MT_BIGLOCK)
+//				pthread_mutex_unlock(&h->biglock);
+				pthread_mutex_unlock(l);
 			return(SHASH_OK);
 		}
 		e = e->next;
 	}
 
-	e = (shash_elem *) cf_malloc( SHASH_ELEM_SZ(h) );
-	if (!e) return (SHASH_ERR);
+	e = (shash_elem *) (mem_tracked ? cf_malloc(SHASH_ELEM_SZ(h)) : malloc(SHASH_ELEM_SZ(h)));
+	if (!e) {
+		if (l)     pthread_mutex_unlock( l );
+		return (SHASH_ERR);
+	}
+
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -188,6 +206,8 @@ Copy:
 int
 shash_put_unique(shash *h, void *key, void *value)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
 	// Calculate hash
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
@@ -222,8 +242,12 @@ shash_put_unique(shash *h, void *key, void *value)
 		e = e->next;
 	}
 
-	e = (shash_elem *) cf_malloc( SHASH_ELEM_SZ(h) );
-	if (!e) return (SHASH_ERR);
+	e = (shash_elem *) (mem_tracked ? cf_malloc(SHASH_ELEM_SZ(h)) : malloc(SHASH_ELEM_SZ(h)));
+	if (!e) {
+		if (l)     pthread_mutex_unlock( l );
+		return (SHASH_ERR);
+	}
+
 	e->next = e_head->next;
 	e_head->next = e;
 	
@@ -237,13 +261,15 @@ Copy:
 
 }
 
-
-
+// Put duplicate elements, Use case currently is hash/search/delete
+// i.e Once the element is found it is deleted. Only changes is the 
+// presence of the key is not searched for.
 int
-shash_get(shash *h, void *key, void *value)
+shash_put_duplicate(shash *h, void *key, void *value)
 {
-	int rv = SHASH_ERR;
-	
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
+	// Calculate hash
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
 
@@ -255,17 +281,58 @@ shash_get(shash *h, void *key, void *value)
 		l = & (h->lock_table[hash]);
 	}
 	if (l)     pthread_mutex_lock( l );
+		
+	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
+	shash_elem *e_head = e;
+	// most common case should be insert into empty bucket, special case
+	if ( e->in_use == false )
+		goto Copy;
+
+	e = (shash_elem *) (mem_tracked ? cf_malloc(SHASH_ELEM_SZ(h)) : malloc(SHASH_ELEM_SZ(h)));
+	if (!e) {
+		if (l)     pthread_mutex_unlock( l );
+		return (SHASH_ERR);
+	}
+
+	e->next = e_head->next;
+	e_head->next = e;
 	
-	shash_elem *e = (shash_elem *) ( ((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
+Copy:
+	memcpy(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len);
+	memcpy(SHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
+	e->in_use = true;
+	h->elements++;
+	if (l)	pthread_mutex_unlock( l );
+	return(SHASH_OK);	
+}
+
+int
+shash_get(shash *h, void *key, void *value)
+{
+	int rv = SHASH_ERR;
+
+	uint hash = h->h_fn(key);
+	hash %= h->table_len;
+
+	pthread_mutex_t *l = 0;
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
+		l = &h->biglock;
+	}
+	else if (h->flags & SHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
+
+	shash_elem *e = (shash_elem *) (((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));
 
 	if (e->in_use == false) {
 		rv = SHASH_ERR_NOTFOUND;
 		goto Out;
 	}
-	
+
 	do {
-		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
-            if (NULL != value)
+		if (memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+			if (NULL != value)
 			    memcpy(value, SHASH_ELEM_VALUE_PTR(h, e), h->value_len);
 			rv = SHASH_OK; 
 			goto Out;
@@ -273,12 +340,11 @@ shash_get(shash *h, void *key, void *value)
 		e = e->next;
 	} while (e);
 	rv = SHASH_ERR_NOTFOUND;
-	
+
 Out:
 	if (l) pthread_mutex_unlock(l);
 
 	return(rv);
-					
 }
 
 //
@@ -340,10 +406,85 @@ Out:
 					
 }
 
+/*
+ * Atomically update an entry in the hash table using a user-supplied update function and user data.
+ * The old and new values must be allocated by the caller.
+ * The user data can be anything.
+ */
+int
+shash_update(shash *h, void *key, void *value_old, void *value_new, shash_update_fn update_fn, void *udata)
+{
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
+	uint hash = h->h_fn(key);
+	hash %= h->table_len;
+	int rv = SHASH_OK;
+
+	pthread_mutex_t *l = 0;
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
+		l = &h->biglock;
+	}
+	else if (h->flags & SHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
+
+	shash_elem *e = (shash_elem *) (((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));
+
+	if (e->in_use == false) {
+		value_old = NULL;
+		goto Update;
+	}
+
+	shash_elem *e_head = e;
+
+	do {
+//		cf_info(CF_SHASH, "su1: h: %p ; e: %p ; k: %p", h, e, key);
+//		cf_info(CF_SHASH, "su2: sekp: %p ; kl: %zu", SHASH_ELEM_KEY_PTR(h, e), h->key_len);
+
+		if (memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+			if (NULL != value_old)
+			    memcpy(value_old, SHASH_ELEM_VALUE_PTR(h, e), h->value_len);
+			goto Update;
+		}
+		e = e->next;
+	} while (e);
+	value_old = NULL;
+
+Update:
+	// Invoke the caller's update function.
+	(update_fn)(key, value_old, value_new, udata);
+
+	// Write the new value into the hash table.
+
+	if (!value_old && !e) {
+		e = (shash_elem *) (mem_tracked ? cf_malloc(SHASH_ELEM_SZ(h)) : malloc(SHASH_ELEM_SZ(h)));
+		if (!e) {
+			if (l)     pthread_mutex_unlock( l );
+			return (SHASH_ERR);
+		}
+
+		e->next = e_head->next;
+		e_head->next = e;
+	}
+
+	if (!value_old)
+	  memcpy(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len);
+	memcpy(SHASH_ELEM_VALUE_PTR(h, e), value_new, h->value_len);
+	e->in_use = true;
+
+	if (!value_old)
+	  h->elements++;
+
+	if (l) pthread_mutex_unlock(l);
+
+	return(rv);
+}
 
 int
 shash_delete(shash *h, void *key)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash
 	uint hash = h->h_fn(key);
@@ -369,14 +510,17 @@ shash_delete(shash *h, void *key)
 
 	shash_elem *e_prev = 0;
 
-	// Look for teh element and destroy if found
+	// Look for the element and destroy if found
 	while (e) {
 		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
 			// Found it
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
-				cf_free(e);
+				if (mem_tracked)
+				  cf_free(e);
+				else
+				  free(e);				
 			}
 			// am at head - more complicated
 			else {
@@ -388,7 +532,10 @@ shash_delete(shash *h, void *key)
 				else {
 					shash_elem *_t = e->next;
 					memcpy(e, e->next, SHASH_ELEM_SZ(h) );
-					cf_free(_t);
+					if (mem_tracked)
+					  cf_free(_t);
+					else
+					  free(_t);
 				}
 			}
 			h->elements--;
@@ -417,6 +564,8 @@ Out:
 int
 shash_delete_lockfree(shash *h, void *key)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
 	// Calculate hash
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
@@ -429,14 +578,17 @@ shash_delete_lockfree(shash *h, void *key)
 
 	shash_elem *e_prev = 0;
 
-	// Look for teh element and destroy if found
+	// Look for the element and destroy if found
 	while (e) {
 		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
 			// Found it
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
-				cf_free(e);
+				if (mem_tracked)
+				  cf_free(e);
+				else
+				  free(e);
 			}
 			// am at head - more complicated
 			else {
@@ -448,7 +600,10 @@ shash_delete_lockfree(shash *h, void *key)
 				else {
 					shash_elem *_t = e->next;
 					memcpy(e, e->next, SHASH_ELEM_SZ(h) );
-					cf_free(_t);
+					if (mem_tracked)
+					  cf_free(_t);
+					else
+					  free(_t);
 				}
 			}
 			h->elements--;
@@ -466,6 +621,8 @@ shash_delete_lockfree(shash *h, void *key)
 int
 shash_get_and_delete(shash *h, void *key, void *value)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
 	// Calculate hash
 	uint hash = h->h_fn(key);
 	hash %= h->table_len;
@@ -490,7 +647,7 @@ shash_get_and_delete(shash *h, void *key, void *value)
 
 	shash_elem *e_prev = 0;
 
-	// Look for teh element and destroy if found
+	// Look for the element and destroy if found
 	while (e) {
 		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
 		
@@ -501,7 +658,10 @@ shash_get_and_delete(shash *h, void *key, void *value)
 			// patchup pointers & free element if not head
 			if (e_prev) {
 				e_prev->next = e->next;
-				cf_free(e);
+				if (mem_tracked)
+				  cf_free(e);
+				else
+				  free(e);
 			}
 			// am at head - more complicated
 			else {
@@ -513,7 +673,10 @@ shash_get_and_delete(shash *h, void *key, void *value)
 				else {
 					shash_elem *_t = e->next;
 					memcpy(e, e->next, SHASH_ELEM_SZ(h) );
-					cf_free(_t);
+					if (mem_tracked)
+					  cf_free(_t);
+					else
+					  free(_t);
 				}
 			}
 			h->elements--;
@@ -534,8 +697,6 @@ Out:
 	
 
 }
-
-
 
 // Call the function over every node in the tree
 // Can be lock-expensive at the moment, until we improve the lockfree code
@@ -592,6 +753,7 @@ Out:
 int
 shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 	int rv = 0;
 	
 	if (h->flags & SHASH_CR_MT_BIGLOCK) {
@@ -626,7 +788,10 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 				// patchup pointers & free element if not head
 				if (prev_he) {
 					prev_he->next = list_he->next;
-					cf_free(list_he);
+					if (mem_tracked)
+					  cf_free(list_he);
+					else
+					  free(list_he);					
 					list_he = prev_he->next;
 				}
 				// am at head - more complicated
@@ -645,7 +810,10 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 					else {
 						shash_elem *_t = list_he->next;
 						memcpy(list_he, list_he->next, SHASH_ELEM_SZ(h) );
-						cf_free(_t);
+						if (mem_tracked)
+						  cf_free(_t);
+						else
+						  free(_t);
 					}
 				}
 				rv = 0;
@@ -671,10 +839,13 @@ Out:
 	return(rv);
 }
 
-
+// Remove all the hashed keys from the hash bucket if the caller 
+// knows this is going to be single threaded
 void
-shash_destroy(shash *h)
+shash_deleteall_lockfree(shash *h)
 {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
 	shash_elem *e_table = h->table;
 	for (uint i=0;i<h->table_len;i++) {
 		if (e_table->next) {
@@ -682,7 +853,41 @@ shash_destroy(shash *h)
 			shash_elem *t;
 			while (e) {
 				t = e->next;
-				cf_free(e);
+				if (mem_tracked)
+				  cf_free(e);
+				else
+				  free(e);
+				e = t;
+			}
+			// The head element of each hash bucket overflow chain also
+			// contains data. But we should not free it as it is 
+			// allocated as part of the overall hash table. So, just mark
+			// it so that it is re-used.
+			e_table->next = NULL;
+			e_table->in_use = false;
+		}
+		e_table = (shash_elem *) (((uint8_t *)e_table) + SHASH_ELEM_SZ(h));
+	}
+}	
+
+/* shash_destroy
+ * Destroy a simple hash table. */
+void
+shash_destroy(shash *h)
+{
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+
+	shash_elem *e_table = h->table;
+	for (uint i=0;i<h->table_len;i++) {
+		if (e_table->next) {
+			shash_elem *e = e_table->next;
+			shash_elem *t;
+			while (e) {
+				t = e->next;
+				if (mem_tracked)
+				  cf_free(e);
+				else
+				  free(e);
 				e = t;
 			}
 		}
@@ -696,9 +901,17 @@ shash_destroy(shash *h)
 		for (uint i=0;i<h->table_len;i++) {
 			pthread_mutex_destroy(&(h->lock_table[i]));
 		}
-		cf_free(h->lock_table);
+		if (mem_tracked)
+		  cf_free(h->lock_table);
+		else
+		  free(h->lock_table);
 	}
 
-	cf_free(h->table);
-	cf_free(h);	
+	if (mem_tracked) {
+		cf_free(h->table);
+		cf_free(h);
+	} else {
+		free(h->table);
+		free(h);
+	}
 }	

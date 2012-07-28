@@ -38,8 +38,8 @@ char **cf_fault_restart_argv;
 /* MUST BE KEPT IN SYNC WITH FAULT.H */
  
 char *cf_fault_context_strings[] = {
-	"cf:misc",     // 00 
-	"cf:rcalloc",  // 01 
+	"cf:misc",     // 00
+	"cf:alloc",    // 01
 	"cf:hash",     // 02
 	"cf:rchash",   // 03
 	"cf:shash",    // 04
@@ -394,26 +394,47 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	char **btstr;
 	int btn;
 	
+	/* Make sure there's always enough space for the \n\0. */
+	size_t limit = sizeof(mbuf) - 2;
+
 	/* Set the timestamp */
 	now = time(NULL);
 	gmtime_r(&now, &nowtm);
-	size_t pos = strftime(mbuf, sizeof(mbuf), "%b %d %Y %T %Z: ", &nowtm);
+	size_t pos = strftime(mbuf, limit, "%b %d %Y %T %Z: ", &nowtm);
 
 	/* Set the context/scope/severity tag */
 	if (CF_CRITICAL == severity)
-		pos += snprintf(mbuf + pos, sizeof(mbuf) - pos, "%s %s (%s): ", cf_fault_severity_strings[severity], cf_fault_scope_strings[scope], cf_fault_context_strings[context]);
+		pos += snprintf(mbuf + pos, limit - pos, "%s %s (%s): ", cf_fault_severity_strings[severity], cf_fault_scope_strings[scope], cf_fault_context_strings[context]);
 	else
-		pos += snprintf(mbuf + pos, sizeof(mbuf) - pos, "%s (%s): ", cf_fault_severity_strings[severity], cf_fault_context_strings[context]);
+		pos += snprintf(mbuf + pos, limit - pos, "%s (%s): ", cf_fault_severity_strings[severity], cf_fault_context_strings[context]);
+
+	/*
+	 * snprintf() and vsnprintf() will not write more than the size specified,
+	 * but they return the size that would have been written without truncation.
+	 * These checks make sure there's enough space for the final \n\0.
+	 */
+	if (pos > limit) {
+		pos = limit;
+	}
 
 	/* Set the location */
 	if (fn)
-		pos += snprintf(mbuf + pos, sizeof(mbuf) - pos, "(%s:%d) ", fn, line);
+		pos += snprintf(mbuf + pos, limit - pos, "(%s:%d) ", fn, line);
+
+	if (pos > limit) {
+		pos = limit;
+	}
 
 	/* Append the message */
 	va_start(argp, msg);
-	pos += vsnprintf(mbuf + pos, sizeof(mbuf) - pos, msg, argp);
+	pos += vsnprintf(mbuf + pos, limit - pos, msg, argp);
 	va_end(argp);
-	pos += snprintf(mbuf + pos, sizeof(mbuf) - pos, "\n");
+
+	if (pos > limit) {
+		pos = limit;
+	}
+
+	pos += snprintf(mbuf + pos, 2, "\n");
 
 	/* Route the message to the correct destinations */
 	if (0 == cf_fault_sinks_inuse) {
