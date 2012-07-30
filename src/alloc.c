@@ -18,13 +18,13 @@
 #include <signal.h>
 #include <pthread.h>
 
+#include "cf.h"
+
 #ifdef MEM_COUNT
 #include <math.h>       // for exp2().
 #include <time.h>       // For timeval_t & time().
 #include <sys/param.h>  // For MIN().
 #endif
-
-#include "cf.h"
 
 #include <dlfcn.h>
 
