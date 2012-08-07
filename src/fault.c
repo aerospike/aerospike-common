@@ -38,8 +38,8 @@ char **cf_fault_restart_argv;
 /* MUST BE KEPT IN SYNC WITH FAULT.H */
  
 char *cf_fault_context_strings[] = {
-	"cf:misc",     // 00 
-	"cf:rcalloc",  // 01 
+	"cf:misc",     // 00
+	"cf:alloc",    // 01
 	"cf:hash",     // 02
 	"cf:rchash",   // 03
 	"cf:shash",    // 04

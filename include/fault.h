@@ -8,7 +8,7 @@
  */
 #pragma once
 #include <pthread.h>
-
+#include "dynbuf.h"
 
 
 
@@ -31,7 +31,7 @@
  * the corresponding strings structure in fault.c */
 typedef enum {
 	CF_MISC = 0,
-	CF_RCALLOC = 1,
+	CF_ALLOC = 1,
 	CF_HASH = 2,
 	CF_RCHASH = 3,
 	CF_SHASH = 4,

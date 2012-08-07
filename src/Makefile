@@ -11,16 +11,25 @@ DIR_TARGET = ../lib
 HEADERS = alloc.h atomic.h cf.h clock.h digest.h fault.h lock.h queue.h rb.h socket.h msg.h 
 HEADERS += rchash.h shash.h dynbuf.h timer.h ll.h vector.h cf_str.h hist.h bits.h olock.h
 HEADERS += rcrb.h cf_random.h arena.h meminfo.h arenah.h arena.h b64.h rbuffer.h vmap.h
-HEADERS += ttree.h slist.h cf_index.h
+HEADERS += ttree.h slist.h cf_index.h hist_track.h
 
 SOURCES = alloc.c fault.c queue.c rb.c socket.c id.c msg.c clock.c rchash.c sort.c 
 SOURCES += shash.c cf_str.c dynbuf.c timer.c ll.c vector.c daemon.c hist.c bits.c olock.c
 SOURCES += rcrb.c cf_random.c arena.c meminfo.c arenah.c arena.c b64.c rbuffer.c vmap.c
-SOURCES += ttree.c slist.c cf_index.c
+SOURCES += ttree.c slist.c cf_index.c hist_track.c
 
 TARGET = libcf.a
 
 INCLUDES = -I$(DIR_CF_INCLUDE)
+
+ifeq ($(MEM_COUNT),1)
+  LIBRARIES += -lm
+  CFLAGS_NATIVE += -DMEM_COUNT
+endif
+
+ifeq ($(MEM_TRACK),1)
+  CFLAGS_NATIVE += -DMEM_TRACK
+endif
 
 OBJECTS = $(SOURCES:%.c=$(DIR_OBJECT)/%.o)
 DEPENDENCIES = $(OBJECTS:%.o=%.d)

@@ -64,6 +64,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "vector.h"
 #include "cf_str.h"
 #include "hist.h"
+#include "hist_track.h"
 #include "olock.h"
 #include "clock.h"
 #include "cf_random.h"
@@ -78,7 +79,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 
 
 /* cf_hash_fnv
- * The 64-bit Fowler-Noll-Voll hash function (FNV-1a) */
+ * The 64-bit Fowler-Noll-Vo hash function (FNV-1a) */
 static inline uint64_t
 cf_hash_fnv(void *buf, size_t bufsz)
 {

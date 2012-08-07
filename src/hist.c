@@ -20,7 +20,7 @@
 
 
 histogram * 
-histogram_create(char *name)
+histogram_create(const char *name)
 {
 	histogram * h = cf_malloc(sizeof(histogram));
 	if (!h)	return(0);
