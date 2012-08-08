@@ -35,8 +35,10 @@ extern void cf_rc_init();
 #if 1
 
 #include <stdlib.h>
+#include <string.h>
 
 #ifdef MEM_COUNT
+#include "dynbuf.h"
 
 /*
  * Type for selecting the field to be sorted on for memory count reporting.
