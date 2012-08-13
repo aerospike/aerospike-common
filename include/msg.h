@@ -45,7 +45,8 @@ typedef enum msg_type_t {
 	M_TYPE_XDS = 11,
 	M_TYPE_FB_HEALTH_PING = 12,
 	M_TYPE_FB_HEALTH_ACK = 13,
-	M_TYPE_MAX = 14  /* highest + 1 is correct */
+	M_TYPE_TSCAN = 14,	
+	M_TYPE_MAX = 15  /* highest + 1 is correct */
 } msg_type;
 
 
