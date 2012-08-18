@@ -264,6 +264,6 @@ extern int _cf_rc_releaseandfree(void *addr);
 
 #define cf_rc_reserve(__addr) (_cf_rc_reserve(__addr))
 #define cf_rc_release(__a) (_cf_rc_release(__a))
-#define cf_rc_releaseandfree(__a) (_cf_rc_release(__a))
+#define cf_rc_releaseandfree(__a) (_cf_rc_releaseandfree(__a))
 
 #endif // defined(MEM_TRACK)
