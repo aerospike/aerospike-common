@@ -36,6 +36,7 @@ static inline void
 cf_digest_compute(void *data, size_t len, cf_digest *d)
 {
 	RIPEMD160(data, len, (unsigned char *) d->digest);
+    char *x = (char *)d; bzero(x + 16, 4);
 
 #ifdef DEBUG_VERBOSE	
 	fprintf(stderr, "digest computation: len %zu\n",len);
@@ -49,9 +50,6 @@ cf_digest_compute(void *data, size_t len, cf_digest *d)
 	
 	fprintf(stderr, "digest output : %"PRIx64"\n",*(uint64_t *)d);
 #endif	
-
-        char *x = (char *)d;
-        bzero(x + 16, 4);
 }
 
 
@@ -66,9 +64,7 @@ cf_digest_compute2(void *data1, size_t len1, void *data2, size_t len2, cf_digest
 	RIPEMD160_Update(&c, data1, len1);
 	RIPEMD160_Update(&c, data2, len2);
 	RIPEMD160_Final( (unsigned char *)(d->digest), &c);
-
-        char *x = (char *)d;
-        bzero(x + 16, 4);
+    char *x = (char *)d; bzero(x + 16, 4);
 	
 #ifdef DEBUG_VERBOSE	
 	fprintf(stderr, "digest computation2: part1 len %zu\n",len1);
