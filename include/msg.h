@@ -118,6 +118,13 @@ typedef struct msg_t {
 	msg_field   f[];
 } msg;
 
+//
+// "msg" Object Accounting:
+//
+//   Total number of "msg" objects allocated
+extern cf_atomic_int g_num_msgs;
+//   Total number of "msg" objects allocated per type
+extern cf_atomic_int g_num_msgs_by_type[M_TYPE_MAX];
 
 //
 // msg_create - Initialize an empty message. You can pass in a stack buff,
@@ -215,10 +222,12 @@ msg_get_uint32_i(const msg *m, int field_id) {
 // A little routine that's good for testing
 extern int msg_compare(const msg *m1, const msg *m2);
 
+// Free up a "msg" object
+//  Call this function instead of freeing the msg directly in order to keep track of all msgs.
+extern void msg_put(msg *m);
+
 // And, finally, the destruction of a message
 extern void msg_destroy(msg *m);
 
 // a debug funtion for finding out what's in a message
 extern void msg_dump(const msg *m, const char *info);
-
-
