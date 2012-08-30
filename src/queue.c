@@ -198,6 +198,58 @@ cf_queue_push(cf_queue *q, void *ptr)
 	return(0);
 }
 
+// Same as cf_queue_push() except it's a no-op if element is already queued.
+int
+cf_queue_push_unique(cf_queue *q, void *ptr)
+{
+	/* FIXME arg check - and how do you do that, boyo? Magic numbers? */
+
+	/* FIXME error */
+	if (q->threadsafe && (0 != pthread_mutex_lock(&q->LOCK)))
+			return(-1);
+
+	// Check if element is already queued.
+	if (CF_Q_SZ(q)) {
+		for (uint i = q->read_offset; i < q->write_offset; i++) {
+			if (0 == memcmp(CF_Q_ELEM_PTR(q, i), ptr, q->elementsz)) {
+				if (q->threadsafe) {
+					pthread_mutex_unlock(&q->LOCK);
+				}
+
+				// Element is already queued.
+				// TODO - return 0 if all callers regard this as normal?
+				return -2;
+			}
+		}
+	}
+
+	/* Check queue length */
+	if (CF_Q_SZ(q) == q->allocsz) {
+		/* resize is a pain for circular buffers */
+		if (0 != cf_queue_resize(q, q->allocsz * 2)) {
+			if (q->threadsafe)
+				pthread_mutex_unlock(&q->LOCK);
+			cf_warning(CF_QUEUE, "queue resize failure");
+			return(-1);
+		}
+	}
+
+	// todo: if queues are power of 2, this can be a shift
+	memcpy(CF_Q_ELEM_PTR(q,q->write_offset), ptr, q->elementsz);
+	q->write_offset++;
+	// we're at risk of overflow if the write offset is that high
+	if (q->write_offset & 0xC0000000) cf_queue_unwrap(q);
+
+	if (q->threadsafe)
+		pthread_cond_signal(&q->CV);
+
+	/* FIXME blow a gasket */
+	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK)))
+		return(-1);
+
+	return(0);
+}
+
 /* cf_queue_push_head
  * Push head goes to the front, which currently means memcpying the entire queue contents
  * which is suck-licious

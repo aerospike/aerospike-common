@@ -430,18 +430,14 @@ shash_update(shash *h, void *key, void *value_old, void *value_new, shash_update
 	if (l)     pthread_mutex_lock( l );
 
 	shash_elem *e = (shash_elem *) (((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));
+	shash_elem *e_head = e;
 
 	if (e->in_use == false) {
 		value_old = NULL;
 		goto Update;
 	}
 
-	shash_elem *e_head = e;
-
 	do {
-//		cf_info(CF_SHASH, "su1: h: %p ; e: %p ; k: %p", h, e, key);
-//		cf_info(CF_SHASH, "su2: sekp: %p ; kl: %zu", SHASH_ELEM_KEY_PTR(h, e), h->key_len);
-
 		if (memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
 			if (NULL != value_old)
 			    memcpy(value_old, SHASH_ELEM_VALUE_PTR(h, e), h->value_len);

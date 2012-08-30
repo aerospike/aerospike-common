@@ -18,13 +18,13 @@
 #include <signal.h>
 #include <pthread.h>
 
+#include "cf.h"
+
 #ifdef MEM_COUNT
 #include <math.h>       // for exp2().
 #include <time.h>       // For timeval_t & time().
 #include <sys/param.h>  // For MIN().
 #endif
-
-#include "cf.h"
 
 #include <dlfcn.h>
 
@@ -102,6 +102,11 @@ typedef struct alloc_info_s {
 } alloc_info_t;
 
 /*
+ * Is memory accounting enabled?
+ */
+static bool g_memory_accounting_enabled = false;
+
+/*
  * Hash table mapping pointers to the location and size of allocation.
  */
 static shash *ptr2loc_shash = NULL;
@@ -133,8 +138,15 @@ location_hash_fn(void *loc)
 /* mem_count_init
  * This function must be called prior to using the memory counting allocation functions. */
 int
-mem_count_init()
+mem_count_init(int enable)
 {
+	g_memory_accounting_enabled = enable;
+
+	if (!g_memory_accounting_enabled) {
+		cf_debug(CF_ALLOC, "memory accounting not enabled");
+		return(-1);
+	}
+
 	if (SHASH_OK != shash_create(&mem_count_shash, ptr_hash_fn, sizeof(void *), sizeof(size_t *), 100000, SHASH_CR_MT_MANYLOCK | SHASH_CR_UNTRACKED)) {
 		cf_crash(CF_ALLOC, CF_PROCESS, "Failed to allocate mem_count_shash");
 	}
@@ -186,6 +198,11 @@ get_human_readable_memory_size(ssize_t sz, double *quantity, char **scale)
 void
 mem_count_stats()
 {
+	if (!g_memory_accounting_enabled) {
+		cf_debug(CF_ALLOC, "memory accounting not enabled");
+		return;
+	}
+
 	cf_info(CF_ALLOC, "Mem Count Stats:");
 	cf_info(CF_ALLOC, "=============================================");
 
@@ -222,6 +239,11 @@ mem_count_stats()
 int
 mem_count_alloc_info(char *file, int line, cf_dyn_buf *db)
 {
+	if (!g_memory_accounting_enabled) {
+		cf_debug(CF_ALLOC, "memory accounting not enabled");
+		return -1;
+	}
+
 	location_t loc;
 	alloc_info_t alloc_info;
 	make_location(&loc, file, line);
@@ -426,6 +448,11 @@ mem_count_report_l2a_reduce_fn(void *key, void *data, void *udata)
 void
 mem_count_report(sort_field_t sort_field, int top_n, cf_dyn_buf *db)
 {
+	if (!g_memory_accounting_enabled) {
+		cf_debug(CF_ALLOC, "memory accounting not enabled");
+		return;
+	}
+
 	mem_count_report_t report;
 	size_t output_u_sz = top_n * MAX(sizeof(alloc_loc_t), sizeof(alloc_info_t));
 
@@ -475,6 +502,11 @@ mem_count_report(sort_field_t sort_field, int top_n, cf_dyn_buf *db)
 void
 mem_count_shutdown()
 {
+	if (!g_memory_accounting_enabled) {
+		cf_debug(CF_ALLOC, "memory accounting not enabled");
+		return;
+	}
+
 	shash_destroy(loc2alloc_shash);
 	shash_destroy(ptr2loc_shash);
 	shash_destroy(mem_count_shash);
@@ -563,6 +595,10 @@ cf_malloc_count(size_t sz, char *file, int line)
 {
 	void *p = malloc(sz);
 
+	if (!g_memory_accounting_enabled) {
+		return(p);
+	}
+
 	cf_atomic64_incr(&mem_count_mallocs);
 
 	if (p) {
@@ -579,6 +615,11 @@ cf_malloc_count(size_t sz, char *file, int line)
 void
 cf_free_count(void *p, char *file, int line)
 {
+	if (!g_memory_accounting_enabled) {
+		free(p);
+		return;
+	}
+
 	/* Apparently freeing 0 is both being done by our code and permitted in the GLIBC implementation. */
 	if (!p) {
 		cf_info(CF_ALLOC, "[Ignoring cf_free(0)!]");
@@ -602,6 +643,10 @@ cf_calloc_count(size_t nmemb, size_t sz, char *file, int line)
 {
 	void *p = calloc(nmemb, sz);
 
+	if (!g_memory_accounting_enabled) {
+		return(p);
+	}
+
 	cf_atomic64_incr(&mem_count_callocs);
 
 	if (p) {
@@ -619,6 +664,10 @@ void *
 cf_realloc_count(void *ptr, size_t sz, char *file, int line)
 {
 	void *p = realloc(ptr, sz);
+
+	if (!g_memory_accounting_enabled) {
+		return(p);
+	}
 
 	cf_atomic64_incr(&mem_count_reallocs);
 
@@ -665,6 +714,11 @@ void *
 cf_strdup_count(const char *s, char *file, int line)
 {
 	void *p = strdup(s);
+
+	if (!g_memory_accounting_enabled) {
+		return(p);
+	}
+
 	size_t sz = strlen(s) + 1;
 
 	cf_atomic64_incr(&mem_count_strdups);
@@ -684,6 +738,11 @@ void *
 cf_strndup_count(const char *s, size_t n, char *file, int line)
 {
 	void *p = strndup(s, n);
+
+	if (!g_memory_accounting_enabled) {
+		return(p);
+	}
+
 	size_t sz = MIN(n, strlen(s)) + 1;
 
 	cf_atomic64_incr(&mem_count_strndups);
@@ -703,6 +762,14 @@ void *
 cf_valloc_count(size_t sz, char *file, int line)
 {
 	void *p = 0;
+
+	if (!g_memory_accounting_enabled) {
+		if (0 == posix_memalign(&p, 4096, sz)) {
+			return(p);
+		} else {
+			return(0);
+		}
+	}
 
 	cf_atomic64_incr(&mem_count_vallocs);
 

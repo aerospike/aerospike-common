@@ -17,7 +17,10 @@
 #include <stdint.h>
 #include <string.h>
 
-#include "cf.h" // for cf_hash_fnv - yuck (and alloc, atomic & shash)
+#include "alloc.h"
+#include "atomic.h"
+#include "cf.h" // for cf_hash_fnv - yuck
+#include "shash.h"
 
 #include "vmap.h"
 
