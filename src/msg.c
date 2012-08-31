@@ -22,6 +22,14 @@
 // Define this if you want extra sanity checks enabled
 // #define EXTRA_CHECKS 1
 
+//
+// "msg" Object Accounting:
+//
+//   Total number of "msg" objects allocated
+cf_atomic_int g_num_msgs = 0;
+//   Total number of "msg" objects allocated per type
+cf_atomic_int g_num_msgs_by_type[M_TYPE_MAX] = { 0 };
+
 int 
 msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 {
@@ -44,13 +52,15 @@ msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 		cf_debug(CF_MSG, "msg_create: found sparse message, %d ids, only %d rows consider recoding",max_id,mt_rows);
 	}
 	
-	
 	// allocate memory (if necessary)
 	size_t m_sz = sizeof(msg_field) * max_id;
 	msg *m;
 	size_t a_sz = sizeof(msg) + m_sz;
 	a_sz = (a_sz + 511) & ~511UL;
 	m = cf_rc_alloc(a_sz);
+
+	cf_debug(CF_MSG, "msg_create(type: %d): a_sz: %d", type, a_sz);
+
 	cf_assert(m, CF_MSG, CF_PROCESS, CF_CRITICAL, "malloc");
 	m->len = max_id;
 	m->bytes_used = sizeof(msg) + m_sz; 
@@ -75,6 +85,10 @@ msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 	
 	*m_r = m;
 	
+	// Keep track of allocated msgs.
+	cf_atomic_int_incr(&g_num_msgs);
+	cf_atomic_int_incr(&(g_num_msgs_by_type[type]));
+
 	return(0);
 }
 
@@ -1267,6 +1281,17 @@ msg_compare(const msg *m1, const msg *m2) {
 	return(-2);
 }
 
+// Free up a "msg" object
+//  Call this function instead of freeing the msg directly in order to keep track of all msgs.
+void msg_put(msg *m)
+{
+	cf_debug(CF_MSG, "freeing msg %p type %d", m, m->type);
+
+	cf_atomic_int_decr(&g_num_msgs);
+	cf_atomic_int_decr(&(g_num_msgs_by_type[m->type]));
+	cf_rc_free(m);
+}
+
 // And, finally, the destruction of a message
 void msg_destroy(msg *m) 
 {
@@ -1278,8 +1303,7 @@ void msg_destroy(msg *m)
 				if (m->f[i].rc_free) cf_rc_releaseandfree(m->f[i].free);
 			}		
 		}
-			
-		cf_rc_free(m);
+		msg_put(m);
 	}
 	return;
 }
