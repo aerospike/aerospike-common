@@ -624,9 +624,9 @@ cf_malloc_count(size_t sz, char *file, int line)
 			update_alloc_at_location(p, sz, CF_ALLOC_TYPE_MALLOC, file, line);
 		} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
 		}
 	}
@@ -657,9 +657,9 @@ cf_free_count(void *p, char *file, int line)
 		free(p);
 	} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-		cf_crash(CF_ALLOC, CF_PROCESS, "Could not find pointer %p in mem_count_shash", p);
+		cf_crash(CF_ALLOC, CF_PROCESS, "Could not find pointer %p in mem_count_shash @ %s:%d", p, file, line);
 #else
-		cf_warning(CF_ALLOC, "Could not find pointer %p in mem_count_shash [IGNORED]", p);
+		cf_warning(CF_ALLOC, "Could not find pointer %p in mem_count_shash @ %s:%d [IGNORED]", p, file, line);
 #endif
 
 	}
@@ -681,9 +681,9 @@ cf_calloc_count(size_t nmemb, size_t sz, char *file, int line)
 			update_alloc_at_location(p, sz, CF_ALLOC_TYPE_CALLOC, file, line);
 		} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
 		}
 	}
@@ -710,9 +710,9 @@ cf_realloc_count(void *ptr, size_t sz, char *file, int line)
 				update_alloc_at_location(p, sz, CF_ALLOC_TYPE_MALLOC, file, line);
 			} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-				cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+				cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-				cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+				cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
 			}
 		}
@@ -723,9 +723,9 @@ cf_realloc_count(void *ptr, size_t sz, char *file, int line)
 			update_alloc_at_location(ptr, sz, CF_ALLOC_TYPE_FREE, file, line);
 		} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-			cf_crash(CF_ALLOC, CF_PROCESS, "Could not find pointer %p in mem_count_shash", p);
+			cf_crash(CF_ALLOC, CF_PROCESS, "Could not find pointer %p in mem_count_shash @ %s:%d", p, file, line);
 #else
-			cf_warning(CF_ALLOC, "Could not find pointer %p in mem_count_shash [IGNORED]", p);
+			cf_warning(CF_ALLOC, "Could not find pointer %p in mem_count_shash @ %s:%d [IGNORED]", p, file, line);
 #endif
 		}
 	} else {
@@ -739,16 +739,16 @@ cf_realloc_count(void *ptr, size_t sz, char *file, int line)
 					update_alloc_at_location(p, sz, CF_ALLOC_TYPE_REALLOC, file, line);
 				} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-					cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+					cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-					cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+					cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
 				}
 			} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
 				cf_crash(CF_ALLOC, CF_PROCESS, "Could not find pointer %p in mem_count_shash", p);
 #else
-				cf_warning(CF_ALLOC, "Could not find pointer %p in mem_count_shash [IGNORED]", p);
+				cf_warning(CF_ALLOC, "Could not find pointer %p in mem_count_shash @ %s:%d [IGNORED]", p, file, line);
 #endif
 			}
 		}
@@ -775,9 +775,9 @@ cf_strdup_count(const char *s, char *file, int line)
 			update_alloc_at_location(p, sz, CF_ALLOC_TYPE_STRDUP, file, line);
 		} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
 		}
 	}
@@ -803,9 +803,9 @@ cf_strndup_count(const char *s, size_t n, char *file, int line)
 			update_alloc_at_location(p, sz, CF_ALLOC_TYPE_STRNDUP, file, line);
 		} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
 		}
 	}
@@ -833,17 +833,17 @@ cf_valloc_count(size_t sz, char *file, int line)
 			update_alloc_at_location(p, sz, CF_ALLOC_TYPE_VALLOC, file, line);
 		} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
 		}
 		return(p);
 	} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-		cf_crash(CF_ALLOC, CF_PROCESS, "posix_memalign() failed to allocate sz: %zu", sz);
+		cf_crash(CF_ALLOC, CF_PROCESS, "posix_memalign() failed to allocate sz: %zu @ %s:%d", sz, file, line);
 #else
-		cf_warning(CF_ALLOC, "posix_memalign() failed to allocate sz: %zu [IGNORED]", sz);
+		cf_warning(CF_ALLOC, "posix_memalign() failed to allocate sz: %zu @ %s:%d [IGNORED]", sz, file, line);
 #endif
 	}
 
@@ -1383,7 +1383,7 @@ _cf_rc_release(void *addr, bool autofree, char *file, int line)
 	c = cf_atomic32_decr(&hdr->count);
 #ifdef EXTRA_CHECKS
 	if (c & 0xF0000000) {
-		cf_warning(CF_ALLOC, "rcrelease: releasing to a negative reference count: %p",addr);
+		cf_warning(CF_ALLOC, "rcrelease: releasing to a negative reference count: %p @ %s:%d", addr, file, line);
 #ifdef USE_CIRCUS
 		cf_alloc_print_history(addr, file, line);
 #endif
