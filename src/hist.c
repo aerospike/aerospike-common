@@ -270,7 +270,7 @@ void linear_histogram_dump( linear_histogram *h )
 	int pos = 0; // location to print from
 	printbuf[0] = '\0';
 	
-	cf_info(AS_INFO, "linear histogram dump: %s (%zu total)",h->name, h->n_counts);
+	cf_debug(AS_NSUP, "linear histogram dump: %s (%zu total)",h->name, h->n_counts);
 	int i, j;
 	int k = 0;
 	for (j = h->num_buckets - 1; j >= 0; j--) if (h->count[j]) break;
@@ -280,12 +280,12 @@ void linear_histogram_dump( linear_histogram *h )
 			int bytes = sprintf((char *) (printbuf + pos), " (%02d: %010zu) ", i, h->count[i]);
 			if (bytes <= 0) 
 			{
-				cf_info(AS_INFO, "linear histogram printing error. Bailing ...");
+				cf_debug(AS_NSUP, "linear histogram printing error. Bailing ...");
 				return;
 			}
 			pos += bytes;
 		    if (k % 4 == 3){
-		    	 cf_info(AS_INFO, "%s", (char *) printbuf);
+		    	 cf_debug(AS_NSUP, "%s", (char *) printbuf);
 		    	 pos = 0;
 		    	 printbuf[0] = '\0';
 		    }
@@ -293,5 +293,5 @@ void linear_histogram_dump( linear_histogram *h )
 		}
 	}
 	if (pos > 0) 
-	    cf_info(AS_INFO, "%s", (char *) printbuf);
+	    cf_debug(AS_NSUP, "%s", (char *) printbuf);
 }
