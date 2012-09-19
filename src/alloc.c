@@ -660,7 +660,10 @@ cf_malloc_count(size_t sz, char *file, int line)
 		}
 	}
 
-	pthread_mutex_unlock(&mem_count_lock);
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
+	}
+
 	return(p);
 }
 
@@ -695,7 +698,10 @@ cf_free_count(void *p, char *file, int line)
 #endif
 
 	}
-	pthread_mutex_unlock(&mem_count_lock);
+
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
+	}
 }
 
 void *
@@ -725,7 +731,10 @@ cf_calloc_count(size_t nmemb, size_t sz, char *file, int line)
 		}
 	}
 
-	pthread_mutex_unlock(&mem_count_lock);
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
+	}
+
 	return(p);
 }
 
@@ -799,7 +808,10 @@ cf_realloc_count(void *ptr, size_t sz, char *file, int line)
 		}
 	}
 
-	pthread_mutex_unlock(&mem_count_lock);
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
+	}
+
 	return(p);
 }
 
@@ -832,7 +844,10 @@ cf_strdup_count(const char *s, char *file, int line)
 		}
 	}
 
-	pthread_mutex_unlock(&mem_count_lock);
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
+	}
+
 	return(p);
 }
 
@@ -865,7 +880,10 @@ cf_strndup_count(const char *s, size_t n, char *file, int line)
 		}
 	}
 
-	pthread_mutex_unlock(&mem_count_lock);
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
+	}
+
 	return(p);
 }
 
@@ -898,7 +916,9 @@ cf_valloc_count(size_t sz, char *file, int line)
 			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
 		}
-		pthread_mutex_unlock(&mem_count_lock);
+		if (g_memory_accounting_enabled) {
+			pthread_mutex_unlock(&mem_count_lock);
+		}
 		return(p);
 	} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
@@ -908,7 +928,10 @@ cf_valloc_count(size_t sz, char *file, int line)
 #endif
 	}
 
-	pthread_mutex_unlock(&mem_count_lock);
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
+	}
+
 	return(0);
 }
 
