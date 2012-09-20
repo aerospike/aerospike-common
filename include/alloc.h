@@ -37,6 +37,10 @@ extern void cf_rc_init();
 #include <stdlib.h>
 #include <string.h>
 
+static inline uint32_t ptr_hash_fn(void *key) {
+	return((uint32_t)(*(uint64_t *)key));
+}
+
 #ifdef MEM_COUNT
 #include "dynbuf.h"
 
@@ -81,10 +85,6 @@ extern void *cf_realloc_count(void *ptr, size_t sz, char *file, int line);
 extern void *cf_strdup_count(const char *s, char *file, int line);
 extern void *cf_strndup_count(const char *s, size_t n, char *file, int line);
 extern void *cf_valloc_count(size_t sz, char *file, int line);
-
-static inline uint32_t ptr_hash_fn(void *key) {
-	return((uint32_t)(*(uint64_t *)key));
-}
 
 #elif defined(MEM_TRACK)
 
@@ -264,6 +264,6 @@ extern int _cf_rc_releaseandfree(void *addr);
 
 #define cf_rc_reserve(__addr) (_cf_rc_reserve(__addr))
 #define cf_rc_release(__a) (_cf_rc_release(__a))
-#define cf_rc_releaseandfree(__a) (_cf_rc_release(__a))
+#define cf_rc_releaseandfree(__a) (_cf_rc_releaseandfree(__a))
 
 #endif // defined(MEM_TRACK)

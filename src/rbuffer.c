@@ -1073,7 +1073,7 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 	}
 
 	// Step 2: Open and Setup file Header 
-	RDES = malloc(sizeof(cf_rbuffer));
+	RDES = cf_malloc(sizeof(cf_rbuffer));
 	if (RDES == NULL) {
 		return ( NULL );
 	}
@@ -1762,7 +1762,7 @@ cf_rbuffer_getsetctx(cf_rbuffer *rbuf_des, cf_rbuffer_ctx* ctx, int whence)
 
 	if (ctx == NULL)
 	{
-		cf_rbuffer_ctx *new_ctx = malloc(sizeof(cf_rbuffer_ctx));
+		cf_rbuffer_ctx *new_ctx = cf_malloc(sizeof(cf_rbuffer_ctx));
 		if (new_ctx == NULL) {
 			return ( NULL );
 		}
@@ -1839,7 +1839,7 @@ cf_rbuffer_closectx(cf_rbuffer_ctx *ctx)
 		}
 		ctx->fd[i] = NULL;
 	}
-	free(ctx);
+	cf_free(ctx);
 }
 
 //  Client API to find outstanding records between read and write pointer.
@@ -1935,7 +1935,7 @@ cf_rbuffer_close(cf_rbuffer *rbuf_des)
 			fclose(rbuf_des->wfd[i]);
 	}
 	memset(rbuf_des, 0, sizeof(cf_rbuffer));
-	free(RDES);
+	cf_free(RDES);
 	RDES = NULL;
 	return 0;
 }
