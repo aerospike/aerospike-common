@@ -124,7 +124,7 @@ shash_get_size(shash *h)
                 elements++;
                 
                 list_he = list_he->next;
-            };
+            }
     
             pthread_mutex_unlock(l);
     
@@ -173,11 +173,9 @@ shash_put(shash *h, void *key, void *value)
 	// This loop might be skippable if you know the key is not already in the hash
 	// (like, you just searched and it's single-threaded)	
 	while (e) {
-		if ( memcmp( SHASH_ELEM_KEY_PTR(h, e) , key, h->key_len) == 0) {
-			memcpy( SHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
-//			if (h->flags & SHASH_CR_MT_BIGLOCK)
-//				pthread_mutex_unlock(&h->biglock);
-				pthread_mutex_unlock(l);
+		if (memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+			memcpy(SHASH_ELEM_VALUE_PTR(h, e), value, h->value_len);
+			if (l)     pthread_mutex_unlock(l);
 			return(SHASH_OK);
 		}
 		e = e->next;
@@ -231,12 +229,8 @@ shash_put_unique(shash *h, void *key, void *value)
 	shash_elem *e_head = e;
 
 	while (e) {
-		if ( memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
-			if (l){
-//			if (h->flags & SHASH_CR_MT_BIGLOCK)
-//				pthread_mutex_unlock(&h->biglock);
-				pthread_mutex_unlock(l);
-			}
+		if (memcmp(SHASH_ELEM_KEY_PTR(h, e), key, h->key_len) == 0) {
+			if (l)     pthread_mutex_unlock(l);
 			return(SHASH_ERR_FOUND);
 		}
 		e = e->next;
@@ -729,7 +723,7 @@ shash_reduce(shash *h, shash_reduce_fn reduce_fn, void *udata)
 			}
 			
 			list_he = list_he->next;
-		};
+		}
 
 		if (l)	pthread_mutex_unlock(l);
 
@@ -822,7 +816,7 @@ shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata)
 				prev_he = list_he;
 				list_he = list_he->next;
 			}	
-		};
+		}
 		
 		if (l) pthread_mutex_unlock(l);
 	}

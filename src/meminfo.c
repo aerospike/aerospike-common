@@ -63,6 +63,9 @@ cf_meminfo(uint64_t *physmem, uint64_t *freemem, int *freepct, bool *swapping)
 	char *physMemStr = "MemTotal"; uint64_t physMem = 0;
 	char *freeMemStr = "MemFree"; uint64_t freeMem = 0;
 	char *activeMemStr = "Active"; uint64_t activeMem = 0;
+	char *inactiveMemStr = "Inactive"; uint64_t inactiveMem = 0;
+	char *cachedMemStr = "Cached"; uint64_t cachedMem = 0;
+	char *buffersMemStr = "Buffers"; uint64_t buffersMem = 0;
 	char *swapTotalStr = "SwapTotal"; uint64_t swapTotal = 0;
 	char *swapFreeStr = "SwapFree"; uint64_t swapFree = 0;
 	
@@ -87,17 +90,30 @@ cf_meminfo(uint64_t *physmem, uint64_t *freemem, int *freepct, bool *swapping)
 				swapFree = atoi(tok2);
 			else if (strcmp(tok1, activeMemStr) == 0)
 				activeMem = atoi(tok2);
+			else if (strcmp(tok1, inactiveMemStr) == 0)
+				inactiveMem = atoi(tok2);
+			else if (strcmp(tok1, cachedMemStr) == 0)
+				cachedMem = atoi(tok2);
+			else if (strcmp(tok1, buffersMemStr) == 0)
+				buffersMem = atoi(tok2);
 		}
-	
+
 	} while(tok1 && tok2 && tok3);
-	
-	
+
+	//
+	// Calculate available memory:
+	//   Start with the total physical memory in the system.
+	//   Next, subtract out the total of the active and inactive VM.
+	//   Finally, add back in the cached memory and buffers, which are effectively available if & when needed.
+	//
+	uint64_t availableMem = physMem - activeMem - inactiveMem + cachedMem + buffersMem;
+
 	if (physmem) *physmem = physMem * 1024L;
-	if (freemem) *freemem = (physMem - activeMem) * 1024L;
+	if (freemem) *freemem = availableMem * 1024L;
 
 	// just easier to do this kind of thing in one place
-	if (freepct) *freepct = (100L * (physMem - activeMem)) / physMem;
-	
+	if (freepct) *freepct = (100L * availableMem) / physMem;	
+
 	if (swapping) {
 		*swapping = false;
 #if 0		
@@ -112,7 +128,7 @@ cf_meminfo(uint64_t *physmem, uint64_t *freemem, int *freepct, bool *swapping)
 
 //	fprintf(stderr, "%u swapTotal %u swapFree %u swapFreePct ::: swapping %d\n",
 //		(unsigned int) swapTotal,(unsigned int)swapFree,(int)swapUsedPct,(int) *swapping);
-	
+
 	return(0);
 	
 }
