@@ -170,13 +170,13 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 		// find the field in the message
 		msg_field *mf;
 		if (id >= m->len) {
-			cf_info(CF_MSG," received message with id greater than current definition, kind of OK, ignoring field");
+			cf_debug(CF_MSG," received message with id greater than current definition, kind of OK, ignoring field");
 			mf = 0;
 		}
 		else {
 			mf = &(m->f[id]);
 			if (! mf->is_valid ) {
-				cf_info(CF_MSG," received message with id no longer valid, kind of OK, ignoring field");
+				cf_debug(CF_MSG," received message with id no longer valid, kind of OK, ignoring field");
 				mf = 0;
 			}
 		}
@@ -186,7 +186,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 		buf += 4;
 		
 		if (mf && (ft != mf->type)) {
-			cf_info(CF_MSG," received message with incorrect field type from definition, kind of OK, ignoring field");
+			cf_debug(CF_MSG," received message with incorrect field type from definition, kind of OK, ignoring field");
 			mf = 0;
 		}
 		

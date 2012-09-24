@@ -121,6 +121,11 @@ static shash *ptr2loc_shash = NULL;
 static shash *loc2alloc_shash = NULL;
 
 /*
+ * Lock to serialize memory counting.
+ */
+pthread_mutex_t mem_count_lock = PTHREAD_MUTEX_INITIALIZER;
+
+/*
  * Forward references.
  */
 static void make_location(location_t *loc, char *file, int line);
@@ -144,6 +149,8 @@ location_hash_fn(void *loc)
 int
 mem_count_init(int enable)
 {
+	pthread_mutex_lock(&mem_count_lock);
+
 	g_memory_accounting_enabled = enable;
 
 	if (!g_memory_accounting_enabled) {
@@ -171,6 +178,8 @@ mem_count_init(int enable)
 	cf_atomic64_set(&mem_count_strdups, 0);
 	cf_atomic64_set(&mem_count_strndups, 0);
 	cf_atomic64_set(&mem_count_vallocs, 0);
+
+	pthread_mutex_unlock(&mem_count_lock);
 
 	return(0);
 }
@@ -225,7 +234,7 @@ mem_count_stats()
 
 	cf_info(CF_ALLOC, "mem_count: %ld (%.3f %s)", mc, quantity, scale);
 	cf_info(CF_ALLOC, "=============================================");
-	cf_info(CF_ALLOC, "net mallocs: %ld", (mcm + mcc + mcv - mcf));
+	cf_info(CF_ALLOC, "net mallocs: %ld", (mcm + mcc + mcv + mcs + mcsn - mcf));
 	cf_info(CF_ALLOC, "=============================================");
 	cf_info(CF_ALLOC, "mem_count_mallocs: %ld", mcm);
 	cf_info(CF_ALLOC, "mem_count_frees : %ld", mcf); 
@@ -572,11 +581,19 @@ update_alloc_at_location(void *p, size_t sz, alloc_type type, char *file, int li
 	alloc_loc.type = type;
 
 	if (CF_ALLOC_TYPE_FREE != type) {
-		if (SHASH_OK != shash_put_unique(ptr2loc_shash, &p, &alloc_loc)) {
+		int rv;
+		if (SHASH_OK != (rv = shash_put_unique(ptr2loc_shash, &p, &alloc_loc))) {
 #ifdef STRICT_MEMORY_ACCOUNTING
 			cf_crash(CF_ALLOC, CF_PROCESS, "Could not put %p into ptr2loc_shash with sz: %zu loc: \"%s\"", p, sz, loc);
 #else
-			cf_warning(CF_ALLOC, "Could not put %p into ptr2loc_shash with sz: %zu loc: \"%s\" [IGNORED]", p, sz, loc);
+			cf_warning(CF_ALLOC, "Could not put %p into ptr2loc_shash with sz: %zu loc: \"%s\" (rv: %d) [IGNORED]", p, sz, loc, rv);
+			if (SHASH_ERR_FOUND == rv) {
+				if (SHASH_OK != (rv = shash_get(ptr2loc_shash, &p, &alloc_loc))) {
+					cf_warning(CF_ALLOC, "Found existing {loc: \"%s\"; type: %d; sz: %d} @ ptr %p in ptr2loc_shash", alloc_loc.loc, alloc_loc.type, alloc_loc.sz, p);
+				} else {
+					cf_warning(CF_ALLOC, "Could not find existing allocation @ %p in ptr2loc_shash (rv: %d)", p, rv);
+				}
+			}
 			return;
 #endif
 		}
@@ -611,6 +628,10 @@ update_alloc_at_location(void *p, size_t sz, alloc_type type, char *file, int li
 void *
 cf_malloc_count(size_t sz, char *file, int line)
 {
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_lock(&mem_count_lock);
+	}
+
 	void *p = malloc(sz);
 
 	if (!g_memory_accounting_enabled) {
@@ -620,15 +641,27 @@ cf_malloc_count(size_t sz, char *file, int line)
 	cf_atomic64_incr(&mem_count_mallocs);
 
 	if (p) {
-		if (SHASH_OK == shash_put_unique(mem_count_shash, &p, &sz)) {
+		int rv;
+		if (SHASH_OK == (rv = shash_put_unique(mem_count_shash, &p, &sz))) {
 			update_alloc_at_location(p, sz, CF_ALLOC_TYPE_MALLOC, file, line);
 		} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d (rv: %d) [IGNORED]", p, sz, file, line, rv);
+			if (SHASH_ERR_FOUND == rv) {
+				if (SHASH_OK != (rv = shash_get(mem_count_shash, &p, &sz))) {
+					cf_warning(CF_ALLOC, "Found existing allocation with sz: %d @ ptr %p in mem_count_shash", sz, p);
+				} else {
+					cf_warning(CF_ALLOC, "Could not find existing allocation @ %p in mem_count_shash (rv: %d)", p, rv);
+				}
+			}
 #endif
 		}
+	}
+
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
 	}
 
 	return(p);
@@ -642,6 +675,8 @@ cf_free_count(void *p, char *file, int line)
 		return;
 	}
 
+	pthread_mutex_lock(&mem_count_lock);
+	
 	/* Apparently freeing 0 is both being done by our code and permitted in the GLIBC implementation. */
 	if (!p) {
 		cf_info(CF_ALLOC, "[Ignoring cf_free(0) @ %s:%d!]", file, line);
@@ -657,17 +692,25 @@ cf_free_count(void *p, char *file, int line)
 		free(p);
 	} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-		cf_crash(CF_ALLOC, CF_PROCESS, "Could not find pointer %p in mem_count_shash", p);
+		cf_crash(CF_ALLOC, CF_PROCESS, "Could not find pointer %p in mem_count_shash @ %s:%d", p, file, line);
 #else
-		cf_warning(CF_ALLOC, "Could not find pointer %p in mem_count_shash [IGNORED]", p);
+		cf_warning(CF_ALLOC, "Could not find pointer %p in mem_count_shash @ %s:%d [IGNORED]", p, file, line);
 #endif
 
+	}
+
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
 	}
 }
 
 void *
 cf_calloc_count(size_t nmemb, size_t sz, char *file, int line)
 {
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_lock(&mem_count_lock);
+	}
+
 	void *p = calloc(nmemb, sz);
 
 	if (!g_memory_accounting_enabled) {
@@ -681,11 +724,15 @@ cf_calloc_count(size_t nmemb, size_t sz, char *file, int line)
 			update_alloc_at_location(p, sz, CF_ALLOC_TYPE_CALLOC, file, line);
 		} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
 		}
+	}
+
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
 	}
 
 	return(p);
@@ -694,6 +741,10 @@ cf_calloc_count(size_t nmemb, size_t sz, char *file, int line)
 void *
 cf_realloc_count(void *ptr, size_t sz, char *file, int line)
 {
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_lock(&mem_count_lock);
+	}
+
 	void *p = realloc(ptr, sz);
 
 	if (!g_memory_accounting_enabled) {
@@ -710,9 +761,9 @@ cf_realloc_count(void *ptr, size_t sz, char *file, int line)
 				update_alloc_at_location(p, sz, CF_ALLOC_TYPE_MALLOC, file, line);
 			} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-				cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+				cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-				cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+				cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
 			}
 		}
@@ -723,9 +774,9 @@ cf_realloc_count(void *ptr, size_t sz, char *file, int line)
 			update_alloc_at_location(ptr, sz, CF_ALLOC_TYPE_FREE, file, line);
 		} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-			cf_crash(CF_ALLOC, CF_PROCESS, "Could not find pointer %p in mem_count_shash", p);
+			cf_crash(CF_ALLOC, CF_PROCESS, "Could not find pointer %p in mem_count_shash @ %s:%d", p, file, line);
 #else
-			cf_warning(CF_ALLOC, "Could not find pointer %p in mem_count_shash [IGNORED]", p);
+			cf_warning(CF_ALLOC, "Could not find pointer %p in mem_count_shash @ %s:%d [IGNORED]", p, file, line);
 #endif
 		}
 	} else {
@@ -733,25 +784,32 @@ cf_realloc_count(void *ptr, size_t sz, char *file, int line)
 		if (p) {
 			size_t old_sz = 0;
 
+			cf_atomic64_incr(&mem_count_frees);
+			cf_atomic64_incr(&mem_count_mallocs);
+
 			if (SHASH_OK == shash_get_and_delete(mem_count_shash, &ptr, &old_sz)) {
 				update_alloc_at_location(ptr, old_sz, CF_ALLOC_TYPE_FREE, file, line);
 				if (SHASH_OK == shash_put_unique(mem_count_shash, &p, &sz)) {
 					update_alloc_at_location(p, sz, CF_ALLOC_TYPE_REALLOC, file, line);
 				} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-					cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+					cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-					cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+					cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
 				}
 			} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
 				cf_crash(CF_ALLOC, CF_PROCESS, "Could not find pointer %p in mem_count_shash", p);
 #else
-				cf_warning(CF_ALLOC, "Could not find pointer %p in mem_count_shash [IGNORED]", p);
+				cf_warning(CF_ALLOC, "Could not find pointer %p in mem_count_shash @ %s:%d [IGNORED]", p, file, line);
 #endif
 			}
 		}
+	}
+
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
 	}
 
 	return(p);
@@ -760,6 +818,10 @@ cf_realloc_count(void *ptr, size_t sz, char *file, int line)
 void *
 cf_strdup_count(const char *s, char *file, int line)
 {
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_lock(&mem_count_lock);
+	}
+
 	void *p = strdup(s);
 
 	if (!g_memory_accounting_enabled) {
@@ -775,11 +837,15 @@ cf_strdup_count(const char *s, char *file, int line)
 			update_alloc_at_location(p, sz, CF_ALLOC_TYPE_STRDUP, file, line);
 		} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
 		}
+	}
+
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
 	}
 
 	return(p);
@@ -788,6 +854,10 @@ cf_strdup_count(const char *s, char *file, int line)
 void *
 cf_strndup_count(const char *s, size_t n, char *file, int line)
 {
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_lock(&mem_count_lock);
+	}
+
 	void *p = strndup(s, n);
 
 	if (!g_memory_accounting_enabled) {
@@ -803,11 +873,15 @@ cf_strndup_count(const char *s, size_t n, char *file, int line)
 			update_alloc_at_location(p, sz, CF_ALLOC_TYPE_STRNDUP, file, line);
 		} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
 		}
+	}
+
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
 	}
 
 	return(p);
@@ -816,6 +890,10 @@ cf_strndup_count(const char *s, size_t n, char *file, int line)
 void *
 cf_valloc_count(size_t sz, char *file, int line)
 {
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_lock(&mem_count_lock);
+	}
+
 	void *p = 0;
 
 	if (!g_memory_accounting_enabled) {
@@ -833,18 +911,25 @@ cf_valloc_count(size_t sz, char *file, int line)
 			update_alloc_at_location(p, sz, CF_ALLOC_TYPE_VALLOC, file, line);
 		} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash", p, sz);
+			cf_crash(CF_ALLOC, CF_PROCESS, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d", p, sz, file, line);
 #else
-			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash [IGNORED]", p, sz);
+			cf_warning(CF_ALLOC, "Could not add ptr: %p sz: %zu to mem_count_shash @ %s:%d [IGNORED]", p, sz, file, line);
 #endif
+		}
+		if (g_memory_accounting_enabled) {
+			pthread_mutex_unlock(&mem_count_lock);
 		}
 		return(p);
 	} else {
 #ifdef STRICT_MEMORY_ACCOUNTING
-		cf_crash(CF_ALLOC, CF_PROCESS, "posix_memalign() failed to allocate sz: %zu", sz);
+		cf_crash(CF_ALLOC, CF_PROCESS, "posix_memalign() failed to allocate sz: %zu @ %s:%d", sz, file, line);
 #else
-		cf_warning(CF_ALLOC, "posix_memalign() failed to allocate sz: %zu [IGNORED]", sz);
+		cf_warning(CF_ALLOC, "posix_memalign() failed to allocate sz: %zu @ %s:%d [IGNORED]", sz, file, line);
 #endif
+	}
+
+	if (g_memory_accounting_enabled) {
+		pthread_mutex_unlock(&mem_count_lock);
 	}
 
 	return(0);
@@ -1383,7 +1468,7 @@ _cf_rc_release(void *addr, bool autofree, char *file, int line)
 	c = cf_atomic32_decr(&hdr->count);
 #ifdef EXTRA_CHECKS
 	if (c & 0xF0000000) {
-		cf_warning(CF_ALLOC, "rcrelease: releasing to a negative reference count: %p",addr);
+		cf_warning(CF_ALLOC, "rcrelease: releasing to a negative reference count: %p @ %s:%d", addr, file, line);
 #ifdef USE_CIRCUS
 		cf_alloc_print_history(addr, file, line);
 #endif
