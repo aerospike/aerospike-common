@@ -86,41 +86,10 @@ extern void *cf_strdup_count(const char *s, char *file, int line);
 extern void *cf_strndup_count(const char *s, size_t n, char *file, int line);
 extern void *cf_valloc_count(size_t sz, char *file, int line);
 
-#elif defined(MEM_TRACK)
-
-typedef struct mem_track_alloc_s {
-	int sz;
-	char file[100];
-	int line;
-} mem_track_alloc;
-
-extern struct shash_s *mem_alloced;
-extern cf_atomic64 mem_alloced_sum;
-
-static inline uint32_t ptr_hash_fn(void *key) {
-	return((uint32_t)(*(uint64_t *)key));
-}
-
-#define cf_malloc(s) (cf_malloc_track(s, __FILE__, __LINE__))
-#define cf_free(p) (cf_free_track(p, __FILE__, __LINE__))
-#define cf_calloc(nmemb, sz) (cf_calloc_track(nmemb, sz, __FILE__, __LINE__))
-#define cf_realloc(ptr, sz) (cf_realloc_track(ptr, sz, __FILE__, __LINE__))
-#define cf_strdup(s) (cf_strdup_track(s, __FILE__, __LINE__))
-#define cf_strndup(s, n) (cf_strndup_track(s, n, __FILE__, __LINE__))
-#define cf_valloc(sz) (cf_valloc_track(sz, __FILE__, __LINE__))
-
-extern void *cf_malloc_track(size_t sz, char *file, int line);
-extern void cf_free_track(void *p, char *file, int line);
-extern void *cf_calloc_track(size_t nmemb, size_t sz, char *file, int line);
-extern void *cf_realloc_track(void *ptr, size_t sz, char *file, int line);
-extern void *cf_strdup_track(const char *s, char *file, int line);
-extern void *cf_strndup_track(const char *s, size_t n, char *file, int line);
-extern void *cf_valloc_track(size_t sz, char *file, int line);
-
-#else // !defined(MEM_TRACK)
+#else // ! defined(MEM_COUNT)
 
 static inline void *cf_malloc(size_t sz) {
-	return(malloc(sz));
+	return (malloc(sz));
 }
 
 static inline void cf_free(void *p) {
@@ -128,32 +97,32 @@ static inline void cf_free(void *p) {
 }
 
 static inline void *cf_calloc(size_t nmemb, size_t sz) {
-	return(calloc(nmemb, sz));
+	return (calloc(nmemb, sz));
 }
 
 static inline void *cf_realloc(void *ptr, size_t sz) {
-	return(realloc(ptr, sz));
+	return (realloc(ptr, sz));
 }
 
 static inline void *cf_strdup(const char *s) {
-	return(strdup(s));
+	return (strdup(s));
 }
 
 static inline void *cf_strndup(const char *s, size_t n) {
-	return(strndup(s, n));
+	return (strndup(s, n));
 }
 
 static inline void *cf_valloc(size_t sz) {
 	void *p = 0;
 	if (0 == posix_memalign( &p, 4096, sz)) {
-		return(p);
+		return (p);
 	}
-	return(0);
+	return (0);
 }
 
-#endif // defined(MEM_TRACK)
+#endif // ! defined(MEM_COUNT)
 
-#endif
+#endif // SIMPLE WAY
 
 //
 // A COMPLICATED WAY
@@ -244,20 +213,6 @@ extern void *_cf_rc_alloc(size_t sz, char *file, int line);
 extern void _cf_rc_free(void *addr, char *file, int line);
 #define cf_rc_free(__a) (_cf_rc_free((__a), __FILE__, __LINE__ ))
 
-#ifdef MEM_TRACK
-
-// this is for tracking
-extern int _cf_rc_reserve(void *addr, char *file, int line);
-
-// for tracking
-extern int _cf_rc_release(void *addr, bool autofree, char *file, int line);
-
-#define cf_rc_reserve(__addr) (_cf_rc_reserve(__addr, __FILE__, __LINE__))
-#define cf_rc_release(__a) (_cf_rc_release((__a), FALSE, __FILE__, __LINE__ ))
-#define cf_rc_releaseandfree(__a) (_cf_rc_release((__a), TRUE, __FILE__, __LINE__ ))
-
-#else // !defined(MEM_TRACK)
-
 extern int _cf_rc_reserve(void *addr);
 extern int _cf_rc_release(void *addr);
 extern int _cf_rc_releaseandfree(void *addr);
@@ -265,5 +220,3 @@ extern int _cf_rc_releaseandfree(void *addr);
 #define cf_rc_reserve(__addr) (_cf_rc_reserve(__addr))
 #define cf_rc_release(__a) (_cf_rc_release(__a))
 #define cf_rc_releaseandfree(__a) (_cf_rc_releaseandfree(__a))
-
-#endif // defined(MEM_TRACK)
