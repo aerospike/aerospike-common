@@ -1268,7 +1268,7 @@ void cf_rbuffer_trace(cf_rbuffer *rbuf_des, bool val)
 int 
 cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whence)
 {
-	uint64_t	num_seg=0;
+	uint64_t	num_seg = 0;
 	bool		forward;
 
 	pthread_mutex_lock(&RDES->mlock);
@@ -1312,10 +1312,34 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 				pthread_mutex_unlock(&RDES->mlock);
 				return 0;
 			}
+
+			// Fail seek if ctx is going to land beyond write
+			cf__rbuffer_fread(rbuf_des, ctx);
+			if (temp_recid > ctx->buf.num_recs) 
+			{
+				// Seek to the original position where we started as we are returning failure.
+				cf__rbuffer_rseek(rbuf_des, ctx, num_seg, !forward);
+				RBTRACE(RDES, debug, "gives %ld and reaches nowhere", num_seg);
+				pthread_mutex_unlock(&RDES->mlock);
+				return 0;
+			}
 			ctx->ptr.rec_id = temp_recid;
 		}
 		else
 		{
+			// Fail seek if ctx is going to land beyond write. Read buffer
+			// once so that counters are update and re-check
+			if ((ctx->ptr.rec_id + num_recs) > ctx->buf.num_recs) 
+			{
+				cf__rbuffer_fread(rbuf_des, ctx);
+				if ((ctx->ptr.rec_id + num_recs) > ctx->buf.num_recs)
+				{
+					RBTRACE(RDES, debug, "gives %ld and reaches nowhere", num_seg);
+					pthread_mutex_unlock(&RDES->mlock);
+					return 0;
+				} 
+			}
+				
 			ctx->ptr.rec_id += num_recs;
 		}
 	}
