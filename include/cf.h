@@ -222,6 +222,7 @@ extern void cf_process_daemonize(int *fd_ignore_list, int list_size);
 
 /* Timekeeping */
 typedef uint64_t cf_clock;
+typedef cf_atomic64 cf_atomic_clock;
 extern cf_clock cf_getms();
 extern cf_clock cf_getus();
 extern cf_clock cf_clock_getabsolute();

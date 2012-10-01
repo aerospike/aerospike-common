@@ -30,9 +30,29 @@ cf_atomic_int g_num_msgs = 0;
 //   Total number of "msg" objects allocated per type
 cf_atomic_int g_num_msgs_by_type[M_TYPE_MAX] = { 0 };
 
+// Number of "msg" obejcts per type that can be allocated.
+// (Default to -1, meaning there is no limit on allowed number of "msg" objects per type.)
+static int64_t g_max_msgs_per_type = -1;
+
+// Limit the maximum number of "msg" objects per type (-1 means unlimited.)
+void
+msg_set_max_msgs_per_type(int64_t max_msgs)
+{
+	g_max_msgs_per_type = max_msgs;
+}
+
 int 
 msg_create(msg **m_r, msg_type type, const msg_template *mt, size_t mt_sz)
 {
+	// Place a limit on the number of "msg" objects of each type that may be allocated at a given time.
+	// (The default value of -1 means there is no limit.)
+	if (g_max_msgs_per_type > 0) {
+		if (cf_atomic_int_get(g_num_msgs_by_type[type]) >= g_max_msgs_per_type) {
+			cf_warning(CF_MSG, "refusing to allocate more than %d msg of type %d", g_max_msgs_per_type, type);
+			return -1;
+		}
+	}
+
 	// Figure out how many bytes you need
 	int mt_rows = mt_sz / sizeof(msg_template);
 	if (mt_rows <= 0)
