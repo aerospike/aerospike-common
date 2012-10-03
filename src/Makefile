@@ -27,10 +27,6 @@ ifeq ($(MEM_COUNT),1)
   CFLAGS_NATIVE += -DMEM_COUNT
 endif
 
-ifeq ($(MEM_TRACK),1)
-  CFLAGS_NATIVE += -DMEM_TRACK
-endif
-
 OBJECTS = $(SOURCES:%.c=$(DIR_OBJECT)/%.o)
 DEPENDENCIES = $(OBJECTS:%.o=%.d)
 
