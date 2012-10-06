@@ -126,6 +126,9 @@ extern cf_atomic_int g_num_msgs;
 //   Total number of "msg" objects allocated per type
 extern cf_atomic_int g_num_msgs_by_type[M_TYPE_MAX];
 
+// Limit the maximum number of "msg" objects per type (-1 means unlimited.)
+extern void msg_set_max_msgs_per_type(int64_t max_msgs);
+
 //
 // msg_create - Initialize an empty message. You can pass in a stack buff,
 // too. If everything fits, it stays. We use the msg_desc as a hint
