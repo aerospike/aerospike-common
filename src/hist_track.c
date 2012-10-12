@@ -504,6 +504,13 @@ get_start_row_n(cf_hist_track* this, uint32_t back_sec)
 		start_row_n = guess_row_n;
 	}
 
+	// Make sure when default query is run (e.g. latency:), we return at least
+	// valid last data instead of returning an error. This case happens when the
+	// query is timed such that it's right when histogram is being dumped.
+	if (start_row_n == last_row_n) {
+		start_row_n = last_row_n - 1;
+	}
+
 	// Can't get a slice if there isn't at least one row after the start row.
 	return start_row_n < last_row_n ? start_row_n : -1;
 }

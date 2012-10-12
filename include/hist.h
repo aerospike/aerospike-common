@@ -82,7 +82,7 @@ hist_getcycles()
  * Linear histogram partitions the values into 20 buckets, < 5%, < 10%, < 15%, ..., < 95%, rest
  */
 
-#define LINEAR_N_COUNTS 20
+#define MAX_LINEAR_BUCKETS 100
 
 //
 // The counts are linear.
@@ -94,20 +94,24 @@ hist_getcycles()
 
 
 typedef struct linear_histogram_counts_s {
-	uint64_t count[LINEAR_N_COUNTS];
+	uint64_t count[MAX_LINEAR_BUCKETS];
 } linear_histogram_counts;
 
 typedef struct linear_histogram_s {
 	char name[HISTOGRAM_NAME_SIZE];
+	int num_buckets;
 	uint64_t start;
-	uint64_t offset20;
+	uint64_t bucket_offset;
 	cf_atomic_int n_counts;
-	cf_atomic_int count[LINEAR_N_COUNTS];
+	cf_atomic_int count[MAX_LINEAR_BUCKETS];
 } linear_histogram;
 
-extern linear_histogram * linear_histogram_create(char *name, uint64_t start, uint64_t max_offset);
+extern linear_histogram * linear_histogram_create(char *name, uint64_t start, uint64_t max_offset, int num_buckets);
+extern void linear_histogram_clear(linear_histogram *h, uint64_t start, uint64_t max_offset); // Note: not thread-safe!
 extern void linear_histogram_dump( linear_histogram *h );  // for debugging, dumps to stderr
 extern void linear_histogram_get_counts(linear_histogram *h, linear_histogram_counts *hc);
+extern uint64_t linear_histogram_get_total(linear_histogram *h);
 extern void linear_histogram_insert_data_point(linear_histogram *h, uint64_t point);
+extern void linear_histogram_insert_data_point_val( linear_histogram *h, uint64_t point, int64_t val);
 extern size_t linear_histogram_get_index_for_pct(linear_histogram *h, size_t pct);
-
+extern uint64_t linear_histogram_get_offset_for_subtotal(linear_histogram *h, int64_t subtotal); // Note: not thread-safe!
