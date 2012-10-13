@@ -47,6 +47,7 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "fault.h"
 #include "arena.h"
 #include "arenah.h"
+#include "arenax.h"
 #include "alloc.h"
 #include "bits.h"
 #include "digest.h"
@@ -71,9 +72,11 @@ typedef struct cf_bytearray_t cf_bytearray;
 #include "b64.h"
 #include "rbuffer.h"
 #include "vmap.h"
+#include "vmapx.h"
 #include "cf_index.h"
 #include "slist.h"
 #include "ttree.h"
+#include "xmem.h"
 
 
 
