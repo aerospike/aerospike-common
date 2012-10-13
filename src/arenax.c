@@ -114,17 +114,17 @@ cf_arenax_err
 cf_arenax_create(cf_arenax* this, key_t key_base, uint32_t element_size,
 		uint32_t stage_capacity, uint32_t max_stages, uint32_t flags)
 {
-	if (max_stages == 0) {
-		max_stages = CF_ARENAX_MAX_STAGES;
-	}
-	else if (max_stages > CF_ARENAX_MAX_STAGES) {
-		return CF_ARENAX_ERR_BAD_PARAM;
-	}
-
 	if (stage_capacity == 0) {
 		stage_capacity = MAX_STAGE_CAPACITY;
 	}
 	else if (stage_capacity > MAX_STAGE_CAPACITY) {
+		return CF_ARENAX_ERR_BAD_PARAM;
+	}
+
+	if (max_stages == 0) {
+		max_stages = CF_ARENAX_MAX_STAGES;
+	}
+	else if (max_stages > CF_ARENAX_MAX_STAGES) {
 		return CF_ARENAX_ERR_BAD_PARAM;
 	}
 
@@ -183,9 +183,10 @@ cf_arenax_err
 cf_arenax_resume(cf_arenax* this, key_t key_base, uint32_t element_size,
 		uint32_t stage_capacity, uint32_t max_stages, uint32_t flags)
 {
-	if (this->key_base != key_base ||
-		this->element_size != element_size ||
-		this->stage_capacity != stage_capacity) {
+	if (stage_capacity == 0) {
+		stage_capacity = MAX_STAGE_CAPACITY;
+	}
+	else if (stage_capacity > MAX_STAGE_CAPACITY) {
 		return CF_ARENAX_ERR_BAD_PARAM;
 	}
 
@@ -193,6 +194,12 @@ cf_arenax_resume(cf_arenax* this, key_t key_base, uint32_t element_size,
 		max_stages = CF_ARENAX_MAX_STAGES;
 	}
 	else if (max_stages > CF_ARENAX_MAX_STAGES) {
+		return CF_ARENAX_ERR_BAD_PARAM;
+	}
+
+	if (this->key_base != key_base ||
+		this->element_size != element_size ||
+		this->stage_capacity != stage_capacity) {
 		return CF_ARENAX_ERR_BAD_PARAM;
 	}
 
