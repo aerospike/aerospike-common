@@ -22,7 +22,7 @@
 // Typedefs & Constants
 //
 
-// Must be in-sync with internal array ERR_STRINGS[]:
+// Must be in-sync with internal array XMEM_ERR_STRINGS[]:
 typedef enum {
 	CF_XMEM_OK = 0,
 	CF_XMEM_ERR_PERMISSION,
@@ -41,6 +41,11 @@ typedef enum {
 //
 
 //------------------------------------------------
+// Get Error Description
+//
+const char* cf_xmem_errstr(cf_xmem_err err);
+
+//------------------------------------------------
 // Create/Destroy
 //
 cf_xmem_err cf_xmem_create_block(key_t key, size_t size, void** pp_block);
@@ -51,8 +56,3 @@ cf_xmem_err cf_xmem_destroy_block(key_t key);
 //
 cf_xmem_err cf_xmem_attach_block(key_t key, size_t size, void** pp_block);
 cf_xmem_err cf_xmem_detach_block(void* p_block);
-
-//------------------------------------------------
-// Get Error Description
-//
-const char* cf_xmem_errstr(cf_xmem_err err);

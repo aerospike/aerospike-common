@@ -29,7 +29,7 @@ const int SHMGET_FLAGS_CREATE_ONLY = IPC_CREAT | IPC_EXCL | 0666;
 const int SHMGET_FLAGS_EXISTING = 0666;
 
 // Must be in-sync with cf_xmem_err:
-const char* ERR_STRINGS[] = {
+const char* XMEM_ERR_STRINGS[] = {
 	"ok",
 	"permissions error",
 	"block does not exist",
@@ -55,6 +55,19 @@ static inline cf_xmem_err shmget_errno_to_xmem_err();
 //==========================================================
 // Public API
 //
+
+//------------------------------------------------
+// Convert cf_xmem_err value to meaningful string.
+//
+const char*
+cf_xmem_errstr(cf_xmem_err err)
+{
+	if (err < 0 || err > CF_XMEM_ERR_UNKNOWN) {
+		err = CF_XMEM_ERR_UNKNOWN;
+	}
+
+	return XMEM_ERR_STRINGS[err];
+}
 
 //------------------------------------------------
 // Create a new persistent memory block and attach
@@ -165,19 +178,6 @@ cf_xmem_detach_block(void* p_block)
 	}
 
 	return CF_XMEM_OK;
-}
-
-//------------------------------------------------
-// Convert cf_xmem_err value to meaningful string.
-//
-const char*
-cf_xmem_errstr(cf_xmem_err err)
-{
-	if (err < 0 || err > CF_XMEM_ERR_UNKNOWN) {
-		err = CF_XMEM_ERR_UNKNOWN;
-	}
-
-	return ERR_STRINGS[err];
 }
 
 

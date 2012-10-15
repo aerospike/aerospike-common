@@ -228,7 +228,7 @@ cf_vmapx_get_index(cf_vmapx* this, const char* name, uint32_t* p_index)
 // string which is its name. (The hash map is not
 // stored in persistent memory, so names must be
 // in the vector to enable us to rebuild the hash
-// map on fast restart.)
+// map on warm restart.)
 //
 // If name is not found, add new value and return
 // newly assigned index (and CF_VMAPX_OK). If name

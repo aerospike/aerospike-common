@@ -18,6 +18,7 @@
 #include <string.h>
 #include <sys/types.h>
 
+#include "fault.h"
 #include "xmem.h"
 
 #include "arenax.h"
@@ -38,14 +39,24 @@ const uint32_t MAX_STAGE_CAPACITY = 1 << 24; // 16 M
 // (Probably unnecessary - size_t is 64 bits on our systems.)
 const uint64_t MAX_STAGE_SIZE = 0xFFFFffff;
 
+// Must be in-sync with cf_arenax_err:
+const char* ARENAX_ERR_STRINGS[] = {
+	"ok",
+	"bad parameter",
+	"error creating stage",
+	"error attaching stage",
+	"error detaching stage",
+	"unknown error"
+};
+
 //------------------------------------------------
 // Typedefs
 //
 
-typedef struct handle_s {
+typedef struct arenax_handle_s {
 	uint32_t stage_id:8;
  	uint32_t element_id:24;
-} __attribute__ ((__packed__)) handle;
+} __attribute__ ((__packed__)) arenax_handle;
 
 // TODO - should we bother with this wrapper struct?
 typedef struct free_element_s {
@@ -106,6 +117,19 @@ cf_arenax_sizeof()
 }
 
 //------------------------------------------------
+// Convert cf_arenax_err to meaningful string.
+//
+const char*
+cf_arenax_errstr(cf_arenax_err err)
+{
+	if (err < 0 || err > CF_ARENAX_ERR_UNKNOWN) {
+		err = CF_ARENAX_ERR_UNKNOWN;
+	}
+
+	return ARENAX_ERR_STRINGS[err];
+}
+
+//------------------------------------------------
 // Create a cf_arenax object in persistent memory.
 // Also create and attach the first arena stage in
 // persistent memory.
@@ -118,6 +142,7 @@ cf_arenax_create(cf_arenax* this, key_t key_base, uint32_t element_size,
 		stage_capacity = MAX_STAGE_CAPACITY;
 	}
 	else if (stage_capacity > MAX_STAGE_CAPACITY) {
+		cf_warning(CF_ARENAX, "stage capacity %u too large", stage_capacity);
 		return CF_ARENAX_ERR_BAD_PARAM;
 	}
 
@@ -125,12 +150,14 @@ cf_arenax_create(cf_arenax* this, key_t key_base, uint32_t element_size,
 		max_stages = CF_ARENAX_MAX_STAGES;
 	}
 	else if (max_stages > CF_ARENAX_MAX_STAGES) {
+		cf_warning(CF_ARENAX, "max stages %u too large", max_stages);
 		return CF_ARENAX_ERR_BAD_PARAM;
 	}
 
 	uint64_t stage_size = (uint64_t)stage_capacity * (uint64_t)element_size;
 
 	if (stage_size > MAX_STAGE_SIZE) {
+		cf_warning(CF_ARENAX, "stage size %lu too large", stage_size);
 		return CF_ARENAX_ERR_BAD_PARAM;
 	}
 
@@ -187,6 +214,7 @@ cf_arenax_resume(cf_arenax* this, key_t key_base, uint32_t element_size,
 		stage_capacity = MAX_STAGE_CAPACITY;
 	}
 	else if (stage_capacity > MAX_STAGE_CAPACITY) {
+		cf_warning(CF_ARENAX, "stage capacity %u too large", stage_capacity);
 		return CF_ARENAX_ERR_BAD_PARAM;
 	}
 
@@ -194,16 +222,31 @@ cf_arenax_resume(cf_arenax* this, key_t key_base, uint32_t element_size,
 		max_stages = CF_ARENAX_MAX_STAGES;
 	}
 	else if (max_stages > CF_ARENAX_MAX_STAGES) {
+		cf_warning(CF_ARENAX, "max stages %u too large", max_stages);
 		return CF_ARENAX_ERR_BAD_PARAM;
 	}
 
-	if (this->key_base != key_base ||
-		this->element_size != element_size ||
-		this->stage_capacity != stage_capacity) {
+	if (this->key_base != key_base) {
+		cf_warning(CF_ARENAX, "resumed key base %lx != key base %lx",
+				this->key_base, key_base);
+		return CF_ARENAX_ERR_BAD_PARAM;
+	}
+
+	if (this->element_size != element_size) {
+		cf_warning(CF_ARENAX, "resumed element size %u != element size %u",
+				this->element_size, element_size);
+		return CF_ARENAX_ERR_BAD_PARAM;
+	}
+
+	if (this->stage_capacity != stage_capacity) {
+		cf_warning(CF_ARENAX, "resumed stage capacity %u != stage capacity %u",
+				this->stage_capacity, stage_capacity);
 		return CF_ARENAX_ERR_BAD_PARAM;
 	}
 
 	if (this->stage_count > max_stages) {
+		cf_warning(CF_ARENAX, "resumed stage count %u > max stages %u",
+				this->stage_count, max_stages);
 		return CF_ARENAX_ERR_BAD_PARAM;
 	}
 
@@ -256,6 +299,8 @@ cf_arenax_detach(cf_arenax* this)
 		}
 
 		if (cf_xmem_detach_block((void*)p_stage) != CF_XMEM_OK) {
+			cf_warning(CF_ARENAX, "failed detaching arena stage %u", i);
+
 			result = CF_ARENAX_ERR_STAGE_DETACH;
 			// Something really out-of-whack, but keep going...
 		}
@@ -300,8 +345,8 @@ cf_arenax_alloc(cf_arenax* this)
 			this->at_element_id = 0;
 		}
 
-		((handle*)&h)->stage_id = this->at_stage_id;
-		((handle*)&h)->element_id = this->at_element_id;
+		((arenax_handle*)&h)->stage_id = this->at_stage_id;
+		((arenax_handle*)&h)->element_id = this->at_element_id;
 
 		this->at_element_id++;
 	}
@@ -345,8 +390,8 @@ cf_arenax_free(cf_arenax* this, cf_arenax_handle h)
 void*
 cf_arenax_resolve(cf_arenax* this, cf_arenax_handle h)
 {
-	return this->stages[((handle*)&h)->stage_id] +
-			(((handle*)&h)->element_id * this->element_size);
+	return this->stages[((arenax_handle*)&h)->stage_id] +
+			(((arenax_handle*)&h)->element_id * this->element_size);
 }
 
 
@@ -370,7 +415,8 @@ add_stage(cf_arenax* this)
 			(void**)&this->stages[this->stage_count]);
 
 	if (result != CF_XMEM_OK) {
-		// TODO - log cf_xmem_errstr(result)?
+		cf_warning(CF_ARENAX, "failed creating arena stage %u: %s",
+				this->stage_count, cf_xmem_errstr(result));
 		return CF_ARENAX_ERR_STAGE_CREATE;
 	}
 
@@ -391,7 +437,8 @@ attach_existing_stages(cf_arenax* this)
 				this->stage_size, (void**)&this->stages[i]);
 
 		if (result != CF_XMEM_OK) {
-			// TODO - log cf_xmem_errstr(result)?
+			cf_warning(CF_ARENAX, "failed attaching arena stage %u: %s", i,
+					cf_xmem_errstr(result));
 			return CF_ARENAX_ERR_STAGE_ATTACH;
 		}
 	}

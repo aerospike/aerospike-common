@@ -27,6 +27,7 @@ typedef struct cf_arenax_s cf_arenax;
 
 typedef uint32_t cf_arenax_handle;
 
+// Must be in-sync with internal array ARENAX_ERR_STRINGS[]:
 typedef enum {
 	CF_ARENAX_OK = 0,
 	CF_ARENAX_ERR_BAD_PARAM,
@@ -51,6 +52,11 @@ typedef enum {
 // Persisted Size (excluding stages)
 //
 size_t cf_arenax_sizeof();
+
+//------------------------------------------------
+// Get Error Description
+//
+const char* cf_arenax_errstr(cf_arenax_err err);
 
 //------------------------------------------------
 // Constructors

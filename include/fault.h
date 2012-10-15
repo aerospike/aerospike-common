@@ -77,7 +77,8 @@ typedef enum {
 	AS_XDS = 44,
 	CF_RBUFFER = 45,
 	AS_FB_HEALTH = 46,
-	CF_FAULT_CONTEXT_UNDEF = 47
+	CF_ARENAX = 47,
+	CF_FAULT_CONTEXT_UNDEF = 48
 } cf_fault_context;
 
 extern char *cf_fault_context_strings[];
