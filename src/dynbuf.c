@@ -109,8 +109,8 @@ cf_dyn_buf_append_uint64_x (cf_dyn_buf *db, uint64_t i)
 int
 cf_dyn_buf_append_uint64 (cf_dyn_buf *db, uint64_t i)
 {
-	// overreserving isn't a crime
-	DB_RESERVE(12);
+	// underreserving is a crime
+	DB_RESERVE(22);
 	db->used_sz += cf_str_itoa_u64(i, (char *) &db->buf[db->used_sz], 10);
 	return( 0 );
 }
