@@ -11,6 +11,7 @@
 #include <strings.h>
 #include <string.h>
 #include <inttypes.h>
+#include "arch.h"
 
 /* SYNOPSIS
  * Some bithacks are eternal and handy

@@ -9,12 +9,12 @@
 #pragma once
 
 #include <stdint.h>
+#include "arch.h"
 
 /* SYNOPSIS
  * Atomic memory operations
  * Memory barriers
  * > */
-
 
 /* Atomic memory operations */
 
