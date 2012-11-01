@@ -104,9 +104,9 @@ void
 cf_rbuffer_log(cf_rbuffer *rbuf_des)
 {
 	pthread_mutex_lock(&RDES->mlock);
-	cf_detail(CF_RBUFFER, "Stats [%ld:%ld:%ld:%ld:%ld]\n", RDES->read_stat, RDES->write_stat, RDES->fwrite_stat, RDES->fread_stat, RDES->fseek_stat);
+	cf_detail(CF_RBUFFER, "Stats [%ld:%ld:%ld:%ld:%ld]", RDES->read_stat, RDES->write_stat, RDES->fwrite_stat, RDES->fread_stat, RDES->fseek_stat);
 
-	cf_detail(CF_RBUFFER, "Current sptr [%ld:%ld] rptr [%ld:%ld] | rctx [%ld:%ld] | wptr [%ld:%ld] | wctx [%ld:%ld]\n", 
+	cf_detail(CF_RBUFFER, "Current sptr [%ld:%ld] rptr [%ld:%ld] | rctx [%ld:%ld] | wptr [%ld:%ld] | wctx [%ld:%ld]", 
 					CHDR.sptr.seg_id, CHDR.sptr.rec_id,
 					CHDR.rptr.seg_id, CHDR.rptr.rec_id,
 					RDES->rctx.ptr.seg_id, RDES->rctx.ptr.rec_id,
