@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include "cf.h"
 
+#include "arenah.h"
+
 
 // #define EXTRA_CHECKS 1
 
