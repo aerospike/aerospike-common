@@ -98,6 +98,13 @@ cf_fault_sink cf_fault_sinks[CF_FAULT_SINKS_MAX];
 cf_fault_severity cf_fault_filter[CF_FAULT_CONTEXT_UNDEF];
 int cf_fault_sinks_inuse = 0;
 
+/* cf_context_at_severity
+ * Return whether the given context is set to this severity level or higher. */
+bool
+cf_context_at_severity(const cf_fault_context context, const cf_fault_severity severity)
+{
+	return (severity <= cf_fault_filter[context]);
+}
 
 /* cf_strerror
  * Some platforms return the errno in the string if the errno's value is

@@ -154,6 +154,9 @@ extern void cf_fault_event(const cf_fault_context, const cf_fault_scope, const c
 // strerror override. GP claims standard strerror has a rare but existant concurrency hole, this fixes that hole
 extern char *cf_strerror(const int err);
 
+/* cf_context_at_severity
+ * Return whether the given context is set to this severity level or higher. */
+extern bool cf_context_at_severity(const cf_fault_context context, const cf_fault_severity severity);
 
 // fault recovery, which is not used much
 
