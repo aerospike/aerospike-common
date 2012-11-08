@@ -58,7 +58,6 @@ struct cf_digest_s {
  */
 static inline void cf_digest_compute(void *data, size_t len, cf_digest *d) {
 	RIPEMD160(data, len, (unsigned char *) d->digest);
-    char *x = (char *)d; bzero(x + 16, 4);
 
 #ifdef DEBUG_VERBOSE	
 	fprintf(stderr, "digest computation: len %zu\n",len);
@@ -85,7 +84,6 @@ static inline void cf_digest_compute2(void *data1, size_t len1, void *data2, siz
 	RIPEMD160_Update(&c, data1, len1);
 	RIPEMD160_Update(&c, data2, len2);
 	RIPEMD160_Final( (unsigned char *)(d->digest), &c);
-    char *x = (char *)d; bzero(x + 16, 4);
 	
 #ifdef DEBUG_VERBOSE	
 	fprintf(stderr, "digest computation2: part1 len %zu\n",len1);
