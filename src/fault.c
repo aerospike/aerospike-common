@@ -87,7 +87,8 @@ char *cf_fault_context_strings[] = {
 	"fb_health",   // 46
 	"sindex",      // 47
 	"sproc",	   // 48
-	NULL           // 49
+	"query",       // 49
+	NULL           // 50
 };
 
 static const char *cf_fault_severity_strings[] = { "CRITICAL", "WARNING", "INFO", "DEBUG", "DETAIL", NULL };
