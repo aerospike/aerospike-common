@@ -3,7 +3,7 @@
 
 struct as_integer_s {
     as_val _;
-    uint64_t value;
+    int64_t value;
 };
 
 
@@ -16,7 +16,7 @@ int as_integer_free(as_integer * i) {
     return 0;
 }
 
-as_integer * as_integer_new(uint64_t i) {
+as_integer * as_integer_new(int64_t i) {
     as_integer * v = (as_integer *) malloc(sizeof(as_integer));
     v->_ = AS_INTEGER_VAL;
     v->value = i;
@@ -28,7 +28,7 @@ int as_integer_inc(as_integer * i) {
     return 0;
 }
 
-uint64_t as_integer_toint(const as_integer * i) {
+int64_t as_integer_toint(const as_integer * i) {
     return i->value;
 }
 
