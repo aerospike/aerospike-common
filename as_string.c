@@ -4,6 +4,7 @@
 struct as_string_s {
     as_val _;
     const char * value;
+    int len;
 };
 
 
@@ -24,10 +25,19 @@ as_string * as_string_new(const char * s) {
 }
 
 const char * as_string_tostring(const as_string * s) {
+    if ( !s ) return NULL;
     return s->value;
 }
 
+int as_string_len(const as_string * s) {
+    if ( !s ) return -1;
+    if ( !s->value ) return -1;
+    if ( !s->len ) return (s->len = strlen(s->value));
+    return s->len;
+}
+
 as_val * as_string_toval(const as_string * s) {
+    if ( !s ) return NULL;
     return (as_val *) &(s->_);
 }
 
