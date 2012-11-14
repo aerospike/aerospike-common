@@ -1,10 +1,11 @@
 #include "as_string.h"
 #include <stdlib.h>
+#include <string.h>
 
 struct as_string_s {
     as_val _;
     const char * value;
-    int len;
+    size_t len;
 };
 
 
@@ -29,9 +30,9 @@ const char * as_string_tostring(const as_string * s) {
     return s->value;
 }
 
-int as_string_len(const as_string * s) {
-    if ( !s ) return -1;
-    if ( !s->value ) return -1;
+size_t as_string_len(as_string * s) {
+    if ( !s ) return 0;
+    if ( !s->value ) return 0;
     if ( !s->len ) return (s->len = strlen(s->value));
     return s->len;
 }
