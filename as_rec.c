@@ -30,6 +30,7 @@ int as_rec_update(as_rec * r, void * source, const as_rec_hooks * hooks) {
 }
 
 void * as_rec_source(const as_rec * r) {
+    if ( !r ) return NULL;
     return r->source;
 }
 
@@ -43,6 +44,9 @@ void * as_rec_source(const as_rec * r) {
  * @param a as_val containing the value in the bin.
  */
 const as_val * as_rec_get(const as_rec * r, const char * name) {
+    if ( !r ) return NULL;
+    if ( !r->hooks ) return NULL;
+    if ( !r->hooks->get ) return NULL;
     return r->hooks->get(r,name);
 }
 
@@ -56,6 +60,9 @@ const as_val * as_rec_get(const as_rec * r, const char * name) {
  * @param value the value of the bin.
  */
 const int as_rec_set(const as_rec * r, const char * name, const as_val * value) {
+    if ( !r ) return 1;
+    if ( !r->hooks ) return 2;
+    if ( !r->hooks->set ) return 3;
     return r->hooks->set(r,name,value);
 }
 
@@ -68,10 +75,14 @@ const int as_rec_set(const as_rec * r, const char * name, const as_val * value) 
  * @param r the as_rec to be freed.
  */
 const int as_rec_free(as_rec * r) {
+    if ( !r ) return 1;
+    if ( !r->hooks ) return 2;
+    if ( !r->hooks->free ) return 3;
     return r->hooks->free(r);
 }
 
 as_val * as_rec_toval(const as_rec * r) {
+    if ( !r ) return NULL;
     return (as_val *) &(r->_);
 }
 
