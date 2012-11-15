@@ -4,7 +4,7 @@
 
 struct as_string_s {
     as_val _;
-    const char * value;
+    char * value;
     size_t len;
 };
 
@@ -12,20 +12,26 @@ struct as_string_s {
 static const as_val AS_STRING_VAL;
 static int as_string_freeval(as_val *);
 
-
 int as_string_free(as_string * s) {
+    if ( !s ) return 0;
+    if ( s->value ) free(s->value);
     free(s);
     return 0;
 }
 
-as_string * as_string_new(const char * s) {
+/**
+ * The `char *` passed as a parameter will be managed by the as_string going forward.
+ * If you are going to continue to use the `char *`, then you probably should copy it first.
+ */
+as_string * as_string_new(char * s) {
     as_string * v = (as_string *) malloc(sizeof(as_string));
     v->_ = AS_STRING_VAL;
     v->value = s;
+    v->len = 0;
     return v;
 }
 
-const char * as_string_tostring(const as_string * s) {
+char * as_string_tostring(const as_string * s) {
     if ( !s ) return NULL;
     return s->value;
 }
