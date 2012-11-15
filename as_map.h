@@ -1,5 +1,4 @@
-#ifndef _AS_MAP_H
-#define _AS_MAP_H
+#pragma once
 
 #include "as_val.h"
 #include "as_iterator.h"
@@ -20,5 +19,3 @@ as_val * as_map_toval(const as_map *);
 as_map * as_map_fromval(const as_val *);
 
 // as_iterator * as_map_iterator(const as_map *);
-
-#endif // _AS_MAP_H

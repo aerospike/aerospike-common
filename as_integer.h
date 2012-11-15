@@ -1,5 +1,4 @@
-#ifndef _AS_INTEGER_H
-#define _AS_INTEGER_H
+#pragma once
 
 #include "as_val.h"
 #include <inttypes.h>
@@ -17,5 +16,3 @@ int64_t as_integer_toint(const as_integer *);
 as_val * as_integer_toval(const as_integer *);
 
 as_integer * as_integer_fromval(const as_val *);
-
-#endif // _AS_INTEGER_H

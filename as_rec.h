@@ -1,5 +1,4 @@
-#ifndef _AS_RECORD_H
-#define _AS_RECORD_H
+#pragma once
 
 #include "as_val.h"
 
@@ -77,5 +76,3 @@ const int as_rec_free(as_rec *);
 as_val * as_rec_toval(const as_rec *);
 
 as_rec * as_rec_fromval(const as_val *);
-
-#endif // _AS_RECORD_H

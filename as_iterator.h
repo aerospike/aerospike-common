@@ -1,5 +1,4 @@
-#ifndef _AS_ITERATOR_H
-#define _AS_ITERATOR_H
+#pragma once
 
 #include "as_val.h"
 #include <stdbool.h>
@@ -76,6 +75,3 @@ const as_val * as_iterator_next(as_iterator *);
  * @return 0 on success, otherwise 1.
  */
 const int as_iterator_free(as_iterator *);
-
-
-#endif // _AS_ITERATOR_H

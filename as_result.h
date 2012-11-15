@@ -1,5 +1,4 @@
-#ifndef _AS_RESULT_H
-#define _AS_RESULT_H
+#pragma once
 
 #include "as_val.h"
 #include <stdbool.h>
@@ -20,5 +19,3 @@ as_result * as_failure(as_val *);
 int as_result_tosuccess(as_result *, as_val *);
 
 int as_result_tofailure(as_result *, as_val *);
-
-#endif // _AS_RESULT_H

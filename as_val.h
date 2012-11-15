@@ -1,5 +1,4 @@
-#ifndef _AS_VAL_H
-#define _AS_VAL_H
+#pragma once
 
 typedef enum as_val_t as_val_t;
 
@@ -26,5 +25,3 @@ struct as_val_s {
 
 #define as_val_type(v) \
     (v != NULL && ((as_val *)v)->free != NULL ? ((as_val *)v)->type : AS_UNKNOWN)
-
-#endif // _AS_VAL_H

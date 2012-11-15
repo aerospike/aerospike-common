@@ -1,5 +1,4 @@
-#ifndef _AS_LIST_H
-#define _AS_LIST_H
+#pragma once
 
 #include "as_val.h"
 #include "as_iterator.h"
@@ -26,5 +25,3 @@ as_val * as_list_head(const as_list *);
 as_list * as_list_tail(const as_list *);
 
 as_iterator * as_list_iterator(const as_list *);
-
-#endif // _AS_LIST_H

@@ -1,5 +1,4 @@
-#ifndef _AS_STREAM_H
-#define _AS_STREAM_H
+#pragma once
 
 #include "as_iterator.h"
 
@@ -73,6 +72,3 @@ as_iterator * as_stream_iterator(as_stream *);
  * @return 0 on success, otherwise 1.
  */
 const int as_stream_free(as_stream *);
-
-
-#endif // _AS_STREAM_H

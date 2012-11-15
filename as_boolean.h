@@ -1,5 +1,4 @@
-#ifndef _AS_BOOLEAN_H
-#define _AS_BOOLEAN_H
+#pragma once
 
 #include "as_val.h"
 #include <stdbool.h>
@@ -15,5 +14,3 @@ bool as_boolean_tobool(const as_boolean *);
 as_val * as_boolean_toval(const as_boolean *);
 
 as_boolean * as_boolean_fromval(const as_val *);
-
-#endif // _AS_BOOLEAN_H

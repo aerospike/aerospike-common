@@ -1,5 +1,4 @@
-#ifndef _AS_MODULE_H
-#define _AS_MODULE_H
+#pragma once
 
 #include <stdlib.h>
 
@@ -84,5 +83,3 @@ int as_module_apply_record(as_module *, const char *, as_rec *, as_list *, as_re
  * @return 0 on success, otherwise 1
  */
 int as_module_apply_stream(as_module *, const char *, as_stream *, as_list *, as_result *);
-
-#endif // _AS_MODULE_H

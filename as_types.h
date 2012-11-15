@@ -1,3 +1,4 @@
+#pragma once
 
 #include "as_val.h"
 #include "as_boolean.h"
