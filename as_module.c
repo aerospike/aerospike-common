@@ -30,11 +30,11 @@ int as_module_init(as_module * m) {
  * @param m the module being configured.
  * @return 0 on success, otherwhise 1
  */
-int as_module_configure(as_module * m) {
+int as_module_configure(as_module * m, void * c) {
     if ( !m ) return 1;
     if ( !m->hooks ) return 2;
     if ( !m->hooks->configure ) return 3;
-    return m->hooks->configure(m);
+    return m->hooks->configure(m,c);
 }
 
 /**
