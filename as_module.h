@@ -29,7 +29,7 @@ struct as_module_s {
  */
 struct as_module_hooks_s {
     int (*init)(as_module *);
-    int (*configure)(as_module *);
+    int (*configure)(as_module *, void *);
     int (*apply_record)(as_module *, as_aerospike *, const char *, as_rec *, as_list *, as_result *);
     int (*apply_stream)(as_module *, as_aerospike *, const char *, as_stream *, as_list *, as_result *);
 };
@@ -55,7 +55,7 @@ int as_module_init(as_module *);
  * @param m the module being configured.
  * @return 0 on success, otherwhise 1
  */
-int as_module_configure(as_module *);
+int as_module_configure(as_module *, void *);
 
 /**
  * Applies a function to a record and set of arguments.
