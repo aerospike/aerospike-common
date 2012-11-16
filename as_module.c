@@ -50,11 +50,11 @@ int as_module_configure(as_module * m) {
  * @return 0 on success, otherwise 1
  */
 #include <stdio.h>
-int as_module_apply_record(as_module * m, const char * f, as_rec * r, as_list * args, as_result * res) {
+int as_module_apply_record(as_module * m, as_aerospike * as, const char * f, as_rec * r, as_list * args, as_result * res) {
     if ( !m ) return 1;
     if ( !m->hooks ) return 2;
     if ( !m->hooks->apply_record ) return 3;
-    return m->hooks->apply_record(m, f, r, args, res);
+    return m->hooks->apply_record(m, as, f, r, args, res);
 }
 
 /**
@@ -69,9 +69,9 @@ int as_module_apply_record(as_module * m, const char * f, as_rec * r, as_list * 
  * @param result pointer to a val that will be populated with the result.
  * @return 0 on success, otherwise 1
  */
-int as_module_apply_stream(as_module * m, const char * f, as_stream * s, as_list * args, as_result * res) {
+int as_module_apply_stream(as_module * m, as_aerospike * as, const char * f, as_stream * s, as_list * args, as_result * res) {
     if ( !m ) return 1;
     if ( !m->hooks ) return 2;
     if ( !m->hooks->apply_stream ) return 3;
-    return m->hooks->apply_stream(m, f, s, args, res);
+    return m->hooks->apply_stream(m, as, f, s, args, res);
 }
