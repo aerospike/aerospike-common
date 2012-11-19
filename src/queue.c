@@ -205,7 +205,7 @@ bool
 cf_queue_push_limit(cf_queue *q, void *ptr, uint limit)
 {
 	if (q->threadsafe && (0 != pthread_mutex_lock(&q->LOCK)))
-			return(-1);
+			return false;
 
 	uint size = CF_Q_SZ(q);
 
@@ -222,7 +222,7 @@ cf_queue_push_limit(cf_queue *q, void *ptr, uint limit)
 			if (q->threadsafe)
 				pthread_mutex_unlock(&q->LOCK);
 			cf_warning(CF_QUEUE, "queue resize failure");
-			return(-1);
+			return false;
 		}
 	}
 
@@ -237,9 +237,9 @@ cf_queue_push_limit(cf_queue *q, void *ptr, uint limit)
 
 	/* FIXME blow a gasket */
 	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK)))
-		return(-1);
+		return false;
 
-	return(0);
+	return true;
 }
 
 // Same as cf_queue_push() except it's a no-op if element is already queued.
