@@ -1,5 +1,7 @@
 #include "as_module.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <time.h>
 
 #define LOG(m) \
     // printf("%s:%d  -- %s\n",__FILE__,__LINE__, m);
@@ -49,12 +51,32 @@ int as_module_configure(as_module * m, void * c) {
  * @param result pointer to a val that will be populated with the result.
  * @return 0 on success, otherwise 1
  */
-#include <stdio.h>
-int as_module_apply_record(as_module * m, as_aerospike * as, const char * f, as_rec * r, as_list * args, as_result * res) {
+
+int as_module_apply_record(as_module * m, as_aerospike * as, const char * filename, const char * function, as_rec * r, as_list * args, as_result * res) {
     if ( !m ) return 1;
     if ( !m->hooks ) return 2;
     if ( !m->hooks->apply_record ) return 3;
-    return m->hooks->apply_record(m, as, f, r, args, res);
+    return m->hooks->apply_record(m, as, filename, function, r, args, res);
+
+    // int n = 1000000;
+    // time_t start, stop;
+    // double total_time = 0;
+
+    // for (int i = 0; i < n; i++) {
+    //     time(&start);
+    //     m->hooks->apply_record(m, as, filename, function, r, args, res);
+    //     time(&stop);
+    //     double call_time = difftime(stop,start);
+    //     total_time += call_time;
+    //     printf("%s.%s call #%d took %.8lf sec\n",filename,function,i,call_time);
+    // }
+
+    // printf("%s.%s was called %d times took %.8lf seconds\n",filename, function, n, total_time);
+    // printf("%s.%s was about %.8lf call/sec\n", filename, function, (n/total_time));
+    // printf("%s.%s was about %.8lf sec/call\n", filename, function, (total_time/n));
+    // printf("\n");
+    // fflush(NULL);
+    // return 0;
 }
 
 /**
@@ -69,9 +91,10 @@ int as_module_apply_record(as_module * m, as_aerospike * as, const char * f, as_
  * @param result pointer to a val that will be populated with the result.
  * @return 0 on success, otherwise 1
  */
-int as_module_apply_stream(as_module * m, as_aerospike * as, const char * f, as_stream * s, as_list * args, as_result * res) {
+int as_module_apply_stream(as_module * m, as_aerospike * as, const char * filename, const char * function, as_stream * s, as_list * args, as_result * res) {
     if ( !m ) return 1;
     if ( !m->hooks ) return 2;
     if ( !m->hooks->apply_stream ) return 3;
-    return m->hooks->apply_stream(m, as, f, s, args, res);
+
+    return m->hooks->apply_stream(m, as, filename, function, s, args, res);
 }
