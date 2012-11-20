@@ -30,8 +30,8 @@ struct as_module_s {
 struct as_module_hooks_s {
     int (*init)(as_module *);
     int (*configure)(as_module *, void *);
-    int (*apply_record)(as_module *, as_aerospike *, const char *, as_rec *, as_list *, as_result *);
-    int (*apply_stream)(as_module *, as_aerospike *, const char *, as_stream *, as_list *, as_result *);
+    int (*apply_record)(as_module *, as_aerospike *, const char *, const char *, as_rec *, as_list *, as_result *);
+    int (*apply_stream)(as_module *, as_aerospike *, const char *, const char *, as_stream *, as_list *, as_result *);
 };
 
 /**
@@ -69,7 +69,7 @@ int as_module_configure(as_module *, void *);
  * @param result pointer to a val that will be populated with the result.
  * @return 0 on success, otherwise 1
  */
-int as_module_apply_record(as_module *, as_aerospike *, const char *, as_rec *, as_list *, as_result *);
+int as_module_apply_record(as_module *, as_aerospike *, const char *, const char *, as_rec *, as_list *, as_result *);
 
 /**
  * Applies function to a stream and set of arguments.
@@ -83,4 +83,4 @@ int as_module_apply_record(as_module *, as_aerospike *, const char *, as_rec *, 
  * @param result pointer to a val that will be populated with the result.
  * @return 0 on success, otherwise 1
  */
-int as_module_apply_stream(as_module *, as_aerospike *, const char *, as_stream *, as_list *, as_result *);
+int as_module_apply_stream(as_module *, as_aerospike *, const char *, const char *, as_stream *, as_list *, as_result *);
