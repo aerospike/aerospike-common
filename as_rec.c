@@ -67,6 +67,21 @@ const int as_rec_set(const as_rec * r, const char * name, const as_val * value) 
 }
 
 /**
+ * Rmeove a bin from a record.
+ *
+ * Proxies to `r->hooks->set(r, name, value)`
+ *
+ * @param r the record to remove the bin from.
+ * @param name the name of the bin to remove.
+ */
+const int as_rec_remove(const as_rec * r, const char * name) {
+    if ( !r ) return 1;
+    if ( !r->hooks ) return 2;
+    if ( !r->hooks->remove ) return 3;
+    return r->hooks->remove(r,name);
+}
+
+/**
  * Free the as_rec.
  * This will free the as_rec object, the source and hooks.
  *
