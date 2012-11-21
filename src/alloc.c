@@ -680,6 +680,9 @@ cf_free_count(void *p, char *file, int line)
 	/* Apparently freeing 0 is both being done by our code and permitted in the GLIBC implementation. */
 	if (!p) {
 		cf_info(CF_ALLOC, "[Ignoring cf_free(0) @ %s:%d!]", file, line);
+		if (g_memory_accounting_enabled) {
+			pthread_mutex_unlock(&mem_count_lock);
+		}
 		return;
 	}
 
