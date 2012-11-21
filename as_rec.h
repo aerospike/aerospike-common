@@ -26,6 +26,7 @@ struct as_rec_s {
 struct as_rec_hooks_s {
     const as_val * (*get)(const as_rec *, const char *);
     const int (*set)(const as_rec *, const char *, const as_val *);
+    const int (*remove)(const as_rec *, const char *);
     const int (*free)(as_rec *);
 };
 
@@ -42,7 +43,7 @@ int as_rec_update(as_rec *, void *, const as_rec_hooks *);
 void * as_rec_source(const as_rec *);
 
 /**
- * Get a bin value by name.
+ * Get a value of a bin.
  *
  * Proxies to `r->hooks->get(r, name, value)`
  *
@@ -62,6 +63,17 @@ const as_val * as_rec_get(const as_rec *, const char *);
  * @param value the value of the bin.
  */
 const int as_rec_set(const as_rec *, const char *, const as_val *);
+
+
+/**
+ * Rmeove a bin from a record.
+ *
+ * Proxies to `r->hooks->set(r, name, value)`
+ *
+ * @param r the record to remove the bin from.
+ * @param name the name of the bin to remove.
+ */
+const int as_rec_remove(const as_rec *, const char *);
 
 /**
  * Free the record.
