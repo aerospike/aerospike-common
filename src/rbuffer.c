@@ -801,7 +801,8 @@ cf__rbuffer_fread(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 	if (ctx->buf.magic != RBUFFER_SEG_MAGIC)
 	{
 		pthread_mutex_unlock(&RDES->mlock);
-		RBTRACE(RDES, debug, "Read Buffer with Bad Magic");
+		RBTRACE(RDES, warning, "Read Buffer with Bad Magic %d", ctx->buf.magic);
+		cf_rbuffer_log(rbuf_des);
 		return 0;
 	}
 	
