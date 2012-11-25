@@ -85,10 +85,11 @@ char *cf_fault_context_strings[] = {
 	"xdr",         // 44
 	"cf:rbuffer",  // 45
 	"fb_health",   // 46
-	"sindex",      // 47
-	"sproc",	   // 48
-	"query",       // 49
-	NULL           // 50
+	"cf:arenax",   // 47
+	"sindex",      // 48
+	"sproc",	   // 49
+	"query",       // 50
+	NULL           // 51
 };
 
 static const char *cf_fault_severity_strings[] = { "CRITICAL", "WARNING", "INFO", "DEBUG", "DETAIL", NULL };

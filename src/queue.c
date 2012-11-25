@@ -198,6 +198,50 @@ cf_queue_push(cf_queue *q, void *ptr)
 	return(0);
 }
 
+/* cf_queue_push_limit
+ * Push element on the queue only if size < limit.
+ * */
+bool
+cf_queue_push_limit(cf_queue *q, void *ptr, uint limit)
+{
+	if (q->threadsafe && (0 != pthread_mutex_lock(&q->LOCK)))
+			return false;
+
+	uint size = CF_Q_SZ(q);
+
+	if (size >= limit) {
+		if (q->threadsafe)
+			pthread_mutex_unlock(&q->LOCK);
+		return false;
+	}
+
+	/* Check queue length */
+	if (size == q->allocsz) {
+		/* resize is a pain for circular buffers */
+		if (0 != cf_queue_resize(q, q->allocsz * 2)) {
+			if (q->threadsafe)
+				pthread_mutex_unlock(&q->LOCK);
+			cf_warning(CF_QUEUE, "queue resize failure");
+			return false;
+		}
+	}
+
+	// todo: if queues are power of 2, this can be a shift
+	memcpy(CF_Q_ELEM_PTR(q,q->write_offset), ptr, q->elementsz);
+	q->write_offset++;
+	// we're at risk of overflow if the write offset is that high
+	if (q->write_offset & 0xC0000000) cf_queue_unwrap(q);
+
+	if (q->threadsafe)
+		pthread_cond_signal(&q->CV);
+
+	/* FIXME blow a gasket */
+	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK)))
+		return false;
+
+	return true;
+}
+
 // Same as cf_queue_push() except it's a no-op if element is already queued.
 int
 cf_queue_push_unique(cf_queue *q, void *ptr)

@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include "cf.h"
 
+#include "arena.h"
+
 
 // #define EXTRA_CHECKS 1
 
