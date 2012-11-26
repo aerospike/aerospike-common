@@ -9,15 +9,16 @@ static const as_val AS_MAP_VAL;
 static int as_map_freeval(as_val *);
 
 
-int as_map_free(as_map * m) {
-    free(m);
-    return 0;
-}
 
 as_map * as_map_new() {
     as_map * m = (as_map *) malloc(sizeof(as_map));
     m->_ = AS_MAP_VAL;
     return m;
+}
+
+int as_map_free(as_map * m) {
+    free(m);
+    return 0;
 }
 
 as_val * as_map_get(const as_map * m, const as_val * key) {
@@ -29,7 +30,7 @@ int as_map_set(as_map * m, const as_val * key, const as_val * value) {
 }
 
 as_val * as_map_toval(const as_map * m) {
-    return (as_val *) &(m->_);
+    return (as_val *) m;
 }
 
 as_map * as_map_fromval(const as_val * v) {

@@ -11,11 +11,6 @@ static const as_val AS_BOOLEAN_VAL;
 static int as_boolean_freeval(as_val *);
 
 
-int as_boolean_free(as_boolean * b) {
-    free(b);
-    return 0;
-}
-
 as_boolean * as_boolean_new(bool b) {
     as_boolean * v = (as_boolean *) malloc(sizeof(as_boolean));
     v->_ = AS_BOOLEAN_VAL;
@@ -23,12 +18,17 @@ as_boolean * as_boolean_new(bool b) {
     return v;
 }
 
+int as_boolean_free(as_boolean * b) {
+    free(b);
+    return 0;
+}
+
 bool as_boolean_tobool(const as_boolean * b) {
     return b->value;
 }
 
 as_val * as_boolean_toval(const as_boolean * b) {
-    return (as_val *) &(b->_);
+    return (as_val *) b;
 }
 
 as_boolean * as_boolean_fromval(const as_val * v) {

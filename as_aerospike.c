@@ -1,7 +1,7 @@
 #include "as_aerospike.h"
 #include <stdlib.h>
 
-as_aerospike * as_aerospike_create(void * source, const as_aerospike_hooks * hooks) {
+as_aerospike * as_aerospike_new(void * source, const as_aerospike_hooks * hooks) {
     as_aerospike * a = (as_aerospike *) malloc(sizeof(as_aerospike));
     a->source = source;
     a->hooks = hooks;
@@ -20,16 +20,23 @@ void * as_aerospike_source(as_aerospike * a) {
     return a->source;
 }
 
-as_rec * as_aerospike_get(as_aerospike * a, const char * ns, const char * set, const char * key) {
-    if ( !a && !a->hooks && !a->hooks->get ) return NULL;
-    return a->hooks->get(a, ns, set, key);
-}
+// as_rec * as_aerospike_get(as_aerospike * a, const char * ns, const char * set, const char * key) {
+//     if ( !a && !a->hooks && !a->hooks->get ) return NULL;
+//     return a->hooks->get(a, ns, set, key);
+// }
 
-int as_aerospike_put(as_aerospike * a, const char * ns, const char * set, const char * key, as_map * bins) {
+// int as_aerospike_put(as_aerospike * a, const char * ns, const char * set, const char * key, as_map * bins) {
+//     if ( !a ) return 1;
+//     if ( !a->hooks ) return 2;
+//     if ( !a->hooks->put ) return 3;
+//     return a->hooks->put(a, ns, set, key, bins);
+// }
+
+int as_aerospike_create(as_aerospike * a, as_rec * r) {
     if ( !a ) return 1;
     if ( !a->hooks ) return 2;
-    if ( !a->hooks->put ) return 3;
-    return a->hooks->put(a, ns, set, key, bins);
+    if ( !a->hooks->update ) return 3;
+    return a->hooks->create(a, r);
 }
 
 int as_aerospike_update(as_aerospike * a, as_rec * r) {

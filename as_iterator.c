@@ -8,11 +8,23 @@
  * @param source the source feeding the iterator
  * @param hooks the hooks that interface with the source
  */
-as_iterator * as_iterator_create(const void * source, const as_iterator_hooks * hooks) {
+as_iterator * as_iterator_new(const void * source, const as_iterator_hooks * hooks) {
     as_iterator * i = (as_iterator *) malloc(sizeof(as_iterator));
     i->source = source;
     i->hooks = hooks;
     return i;
+}
+
+/**
+ * Frees the iterator and associated data, including the source and hooks.
+ *
+ * Proxies to `i->hooks->free(i)`
+ *
+ * @param i the iterator to free
+ * @return 0 on success, otherwise 1.
+ */
+const int as_iterator_free(as_iterator * i) {
+  return i->hooks->free(i);
 }
 
 /**
@@ -48,16 +60,4 @@ const bool as_iterator_has_next(const as_iterator * i) {
  */
 const as_val * as_iterator_next(as_iterator * i) {
   return i->hooks->next(i);
-}
-
-/**
- * Frees the iterator and associated data, including the source and hooks.
- *
- * Proxies to `i->hooks->free(i)`
- *
- * @param i the iterator to free
- * @return 0 on success, otherwise 1.
- */
-const int as_iterator_free(as_iterator * i) {
-  return i->hooks->free(i);
 }

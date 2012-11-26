@@ -59,7 +59,7 @@ int as_list_free(as_list * l) {
 }
 
 as_val * as_list_toval(const as_list * l) {
-    return (as_val *) &(l->_);
+    return (as_val *) l;
 }
 
 as_list * as_list_fromval(const as_val * v) {
@@ -89,7 +89,7 @@ static int as_list_freeval(as_val * v) {
 as_iterator * as_list_iterator(const as_list * l) {
     as_list_iterator_source * source = (as_list_iterator_source *) malloc(sizeof(as_list_iterator_source));
     source->list = l;
-    return as_iterator_create(source, &as_list_iterator_hooks);
+    return as_iterator_new(source, &as_list_iterator_hooks);
 }
 
 static const bool as_list_iterator_has_next(const as_iterator * i) {

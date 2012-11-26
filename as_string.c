@@ -12,12 +12,6 @@ struct as_string_s {
 static const as_val AS_STRING_VAL;
 static int as_string_freeval(as_val *);
 
-int as_string_free(as_string * s) {
-    if ( !s ) return 0;
-    if ( s->value ) free(s->value);
-    free(s);
-    return 0;
-}
 
 /**
  * The `char *` passed as a parameter will be managed by the as_string going forward.
@@ -29,6 +23,13 @@ as_string * as_string_new(char * s) {
     v->value = s;
     v->len = 0;
     return v;
+}
+
+int as_string_free(as_string * s) {
+    if ( !s ) return 0;
+    if ( s->value ) free(s->value);
+    free(s);
+    return 0;
 }
 
 char * as_string_tostring(const as_string * s) {
@@ -44,8 +45,7 @@ size_t as_string_len(as_string * s) {
 }
 
 as_val * as_string_toval(const as_string * s) {
-    if ( !s ) return NULL;
-    return (as_val *) &(s->_);
+    return (as_val *) s;
 }
 
 as_string * as_string_fromval(const as_val * v) {

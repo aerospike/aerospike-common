@@ -27,11 +27,23 @@ struct as_stream_iterator_source_s {
  * @param source the source feeding the stream
  * @param hooks the hooks that interface with the source
  */
-as_stream * as_stream_create(void * source, const as_stream_hooks * hooks) {
+as_stream * as_stream_new(void * source, const as_stream_hooks * hooks) {
     as_stream * s = (as_stream *) malloc(sizeof(as_stream));
     s->source = source;
     s->hooks = hooks;
     return s;
+}
+
+/**
+ * Frees the stream
+ *
+ * Proxies to `s->hooks->free(s)`
+ *
+ * @param s the stream to free
+ * @return 0 on success, otherwise 1.
+ */
+const int as_stream_free(as_stream * s) {
+    return s->hooks->free(s);
 }
 
 /**
@@ -66,19 +78,7 @@ as_iterator * as_stream_iterator(as_stream * s) {
     source->stream = s;
     source->next = NULL;
     source->done = false;
-    return as_iterator_create(source, &as_stream_iterator_hooks);
-}
-
-/**
- * Frees the stream
- *
- * Proxies to `s->hooks->free(s)`
- *
- * @param s the stream to free
- * @return 0 on success, otherwise 1.
- */
-const int as_stream_free(as_stream * s) {
-    return s->hooks->free(s);
+    return as_iterator_new(source, &as_stream_iterator_hooks);
 }
 
 
