@@ -35,7 +35,7 @@ struct as_stream_hooks_s {
  * @param source the source feeding the stream
  * @param hooks the hooks that interface with the source
  */
-as_stream * as_stream_create(void *, const as_stream_hooks *);
+as_stream * as_stream_new(void *, const as_stream_hooks *);
 
 /**
  * Get the source for the stream

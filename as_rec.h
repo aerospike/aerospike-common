@@ -36,10 +36,24 @@ struct as_rec_hooks_s {
  * @param source the source backing the record.
  * @param hooks the hooks that support the record.
  */
-as_rec * as_rec_create(void *, const as_rec_hooks *);
+as_rec * as_rec_new(void *, const as_rec_hooks *);
+
+/**
+ * Free the record.
+ * This will free the record object, the source and hooks.
+ *
+ * Proxies to `r->hooks->free(r)`
+ *
+ * @param r the record to be freed.
+ */
+const int as_rec_free(as_rec *);
+
 
 int as_rec_update(as_rec *, void *, const as_rec_hooks *);
 
+/**
+ * Get the source of the record
+ */
 void * as_rec_source(const as_rec *);
 
 /**
@@ -75,15 +89,6 @@ const int as_rec_set(const as_rec *, const char *, const as_val *);
  */
 const int as_rec_remove(const as_rec *, const char *);
 
-/**
- * Free the record.
- * This will free the record object, the source and hooks.
- *
- * Proxies to `r->hooks->free(r)`
- *
- * @param r the record to be freed.
- */
-const int as_rec_free(as_rec *);
 
 as_val * as_rec_toval(const as_rec *);
 

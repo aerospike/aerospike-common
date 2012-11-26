@@ -35,7 +35,7 @@ struct as_iterator_hooks_s {
  * @param source the source feeding the iterator
  * @param hooks the hooks that interface with the source
  */
-as_iterator * as_iterator_create(const void *, const as_iterator_hooks *);
+as_iterator * as_iterator_new(const void *, const as_iterator_hooks *);
 
 /**
  * Get the source for the iterator
