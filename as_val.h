@@ -1,5 +1,7 @@
 #pragma once
 
+#include <inttypes.h>
+
 typedef enum as_val_t as_val_t;
 
 typedef struct as_val_s as_val;
@@ -25,3 +27,5 @@ struct as_val_s {
 
 #define as_val_type(v) \
     (v != NULL && ((as_val *)v)->free != NULL ? ((as_val *)v)->type : AS_UNKNOWN)
+
+typedef uint32_t (* as_val_hash_function)(as_val *);
