@@ -20,30 +20,18 @@ SOURCES += ttree.c slist.c cf_index.c hist_track.c xmem.c
 
 TARGET = libcf.a
 
-INCLUDES = -I$(DIR_CF_INCLUDE)
-
 ifeq ($(MEM_COUNT),1)
   LIBRARIES += -lm
-  CFLAGS_NATIVE += -DMEM_COUNT
+  CFLAGS += -DMEM_COUNT
 endif
 
 OBJECTS = $(SOURCES:%.c=$(DIR_OBJECT)/%.o)
 DEPENDENCIES = $(OBJECTS:%.o=%.d)
 
-.PHONY: all
-all: libcf
+all: libcf.a
 
-.PHONY: clean
-clean:
-	/bin/rm -f $(OBJECTS) $(DIR_TARGET)/$(TARGET)
-
-.PHONY: depclean
-depclean: clean
-	/bin/rm -f $(DEPENDENCIES)
-
-.PHONY: libcf
-libcf: $(OBJECTS)
-	ar rs $(DIR_TARGET)/$(TARGET) $(OBJECTS)
+libcf.a: $(call objects, $(OBJECTS)) | $(TARGET_LIB)
+	$(call archive, $(empty), $(empty), $(empty), $(empty))
 
 -include $(DEPENDENCIES)
 
