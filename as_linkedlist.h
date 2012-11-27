@@ -11,4 +11,7 @@
  */
 as_list * as_linkedlist_new(as_val *, as_list *);
 
-as_list * cons(as_val *, as_list *);
+
+#define cons(head,tail) \
+    as_linkedlist_new(head,tail);
+
