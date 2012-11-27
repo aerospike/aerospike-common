@@ -5,17 +5,39 @@
 #include <stdbool.h>
 
 typedef struct as_map_s as_map;
+typedef struct as_map_hooks_s as_map_hooks;
 
-as_map * as_map_new();
+
+struct as_map_s {
+    as_val                  _;
+    void *                  source;
+    const as_map_hooks *    hooks;
+};
+
+struct as_map_hooks_s {
+    int (*free)(as_map *);
+    uint32_t (* size)(const as_map *);
+    int (* set)(as_map *, const as_val *, const as_val *);
+    as_val * (* get)(const as_map *, const as_val *);
+    as_iterator * (* iterator)(const as_map *);
+};
+
+
+
+as_map * as_map_new(void *, const as_map_hooks *);
 
 int as_map_free(as_map *);
+
+
 
 as_val * as_map_get(const as_map *, const as_val *);
 
 int as_map_set(as_map *, const as_val *, const as_val *);
 
+
+
 as_val * as_map_toval(const as_map *);
 
 as_map * as_map_fromval(const as_val *);
 
-// as_iterator * as_map_iterator(const as_map *);
+as_iterator * as_map_iterator(const as_map *);
