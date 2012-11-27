@@ -1,32 +1,40 @@
 #include "as_map.h"
+#include <stdbool.h>
 #include <stdlib.h>
 
-struct as_map_s {
-    as_val _;
-};
-
 static const as_val AS_MAP_VAL;
-static int as_map_freeval(as_val *);
 
 
-
-as_map * as_map_new() {
+as_map * as_map_new(void * source, const as_map_hooks * hooks) {
     as_map * m = (as_map *) malloc(sizeof(as_map));
     m->_ = AS_MAP_VAL;
+    m->source = source;
+    m->hooks = hooks;
     return m;
 }
 
 int as_map_free(as_map * m) {
-    free(m);
-    return 0;
+    if ( m->hooks == NULL ) return 1;
+    if ( m->hooks->free == NULL ) return 2;
+    return m->hooks->free(m);
 }
 
-as_val * as_map_get(const as_map * m, const as_val * key) {
-    return NULL;
+uint32_t as_map_size(const as_map * m) {
+    if ( m->hooks == NULL ) return 1;
+    if ( m->hooks->size == NULL ) return 2;
+    return m->hooks->size(m);
 }
 
-int as_map_set(as_map * m, const as_val * key, const as_val * value) {
-    return 0;
+as_val * as_map_get(const as_map * m, const as_val * k) {
+    if ( m->hooks == NULL ) return NULL;
+    if ( m->hooks->get == NULL ) return NULL;
+    return m->hooks->get(m, k);
+}
+
+int as_map_set(as_map * m, const as_val * k, const as_val * v) {
+    if ( m->hooks == NULL ) return 1;
+    if ( m->hooks->set == NULL ) return 2;
+    return m->hooks->set(m, k, v);
 }
 
 as_val * as_map_toval(const as_map * m) {
