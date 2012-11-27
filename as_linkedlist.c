@@ -30,6 +30,13 @@ struct as_linkedlist_iterator_source_s {
 };
 
 
+as_list * cons(as_val * h, as_list * t) {
+    return as_linkedlist_new(h,t);
+}
+
+
+
+
 as_list * as_linkedlist_new(as_val * head, as_list * tail) {
     as_linkedlist * l = (as_linkedlist *) malloc(sizeof(as_linkedlist));
     l->head = head;
