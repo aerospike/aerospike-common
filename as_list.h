@@ -34,9 +34,6 @@ struct as_list_hooks_s {
 };
 
 
-as_list * cons(as_val *, as_list *);
-
-
 as_list * as_list_new(void *, const as_list_hooks *);
 
 int as_list_free(as_list *);

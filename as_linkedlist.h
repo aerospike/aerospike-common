@@ -10,3 +10,5 @@
  * @return a new as_list
  */
 as_list * as_linkedlist_new(as_val *, as_list *);
+
+as_list * cons(as_val *, as_list *);
