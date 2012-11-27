@@ -6,6 +6,7 @@
 typedef struct as_iterator_s as_iterator;
 typedef struct as_iterator_hooks_s as_iterator_hooks;
 
+
 /**
  * Iterator Structure
  * Contains pointer to the source of the iterator and a pointer to the
