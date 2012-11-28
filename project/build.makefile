@@ -56,12 +56,6 @@ TARGET_LIB = $(TARGET_BASE)/lib
 TARGET_OBJ = $(TARGET_BASE)/obj
 
 #
-# Misc Setup
-#
-
-MEM_COUNT=1
-
-#
 # Builds an object, library, archive or executable using the dependencies specified for the target.
 # 
 # x: [dependencies]
