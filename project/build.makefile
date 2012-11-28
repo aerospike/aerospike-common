@@ -36,8 +36,6 @@ INC_PATH = $(SOURCE_INCL)
 # Setup Target
 #
 
-TARGET = target
-
 ifeq ($(shell test -e $(PROJECT)/target.$(OS)-$(ARCH).makefile && echo 1), 1)
 PLATFORM = $(OS)-$(ARCH)
 include $(PROJECT)/target.$(PLATFORM).makefile
@@ -50,11 +48,18 @@ PLATFORM = $(OS)-$(ARCH)
 endif
 endif
 
+TARGET = target
 TARGET_BASE = $(TARGET)/$(PLATFORM)
 TARGET_BIN = $(TARGET_BASE)/bin
 TARGET_DOC = $(TARGET_BASE)/doc
 TARGET_LIB = $(TARGET_BASE)/lib
 TARGET_OBJ = $(TARGET_BASE)/obj
+
+#
+# Misc Setup
+#
+
+MEM_COUNT=1
 
 #
 # Builds an object, library, archive or executable using the dependencies specified for the target.
