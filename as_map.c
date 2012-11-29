@@ -19,6 +19,12 @@ int as_map_free(as_map * m) {
     return m->hooks->free(m);
 }
 
+static uint32_t as_map_hash(as_map * m) {
+    if ( m->hooks == NULL ) return 1;
+    if ( m->hooks->hash == NULL ) return 2;
+    return m->hooks->hash(m);
+}
+
 uint32_t as_map_size(const as_map * m) {
     if ( m->hooks == NULL ) return 1;
     if ( m->hooks->size == NULL ) return 2;
@@ -49,4 +55,12 @@ static int as_map_freeval(as_val * v) {
     return as_val_type(v) == AS_MAP ? as_map_free((as_map *) v) : 1;
 }
 
-static const as_val AS_MAP_VAL = {AS_MAP, as_map_freeval};
+static int as_map_hashval(as_val * v) {
+    return as_val_type(v) == AS_MAP ? as_map_hash((as_map *) v) : 0;
+}
+
+static const as_val AS_MAP_VAL = {
+    .type   = AS_MAP, 
+    .free   = as_map_freeval, 
+    .hash   = as_map_hashval
+};
