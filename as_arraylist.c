@@ -1,5 +1,7 @@
 #include "as_arraylist.h"
 #include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
 
 typedef struct as_arraylist_s as_arraylist;
 typedef struct as_arraylist_iterator_source_s as_arraylist_iterator_source;
@@ -12,11 +14,10 @@ static int as_arraylist_free(as_list *);
 static uint32_t as_arraylist_size(const as_list *);
 static int as_arraylist_append(as_list *, as_val *);
 static int as_arraylist_prepend(as_list *, as_val *);
-static as_val * as_arraylist_get(const as_list *, uint32_t);
+static as_val * as_arraylist_get(const as_list *, const uint32_t);
+static int as_arraylist_set(as_list *, const uint32_t, as_val *);
 static as_val * as_arraylist_head(const as_list *);
 static as_list * as_arraylist_tail(const as_list *);
-static as_list * as_arraylist_take(const as_list *, uint32_t);
-static as_list * as_arraylist_drop(const as_list *, uint32_t);
 static as_iterator * as_arraylist_iterator(const as_list *);
 
 
@@ -26,6 +27,7 @@ struct as_arraylist_s {
     uint32_t    size;
     uint32_t    capacity;
     uint32_t    block_size;
+    bool        shadow;
 };
 
 struct as_arraylist_iterator_source_s {
@@ -34,18 +36,39 @@ struct as_arraylist_iterator_source_s {
 };
 
 
-
 as_list * as_arraylist_new(uint32_t capacity, uint32_t block_size) {
     as_arraylist * l = (as_arraylist *) malloc(sizeof(as_arraylist));
     l->elements = (as_val **) malloc(sizeof(as_val *) * capacity);
     l->size = 0;
     l->capacity = capacity;
     l->block_size = block_size;
+    l->shadow = false;
     return as_list_new(l, &as_arraylist_hooks);
 }
 
 static int as_arraylist_free(as_list * l) {
-    // as_arraylist * al  = (as_arraylist *) as_list_source(l);
+    as_arraylist * al  = (as_arraylist *) as_list_source(l);
+    
+    if ( !al->shadow ) {
+        for (int i = 0; i < al->size; i++ ) {
+            free(al->elements[i]);
+            al->elements[i] = NULL;
+        }
+    }
+
+    free(l);
+    return 0;
+}
+
+static uint32_t as_arraylist_hash(as_list * l) {
+    return 0;
+}
+
+static int as_arraylist_ensure(as_arraylist * al, uint32_t n) {
+    if ( (al->size + n) >= al->capacity ) {
+        al->elements = realloc(al->elements, sizeof(as_val) * (al->capacity + al->block_size));
+        bzero(al->elements + (sizeof(as_val) * al->capacity), sizeof(as_val) * al->block_size);
+    }
     return 0;
 }
 
@@ -55,18 +78,43 @@ static uint32_t as_arraylist_size(const as_list * l) {
 }
 
 static int as_arraylist_append(as_list * l, as_val * v) {
-    // as_arraylist * al  = (as_arraylist *) as_list_source(l);
+    as_arraylist * al  = (as_arraylist *) as_list_source(l);
+    as_arraylist_ensure(al,1);
+    al->elements[al->size] = v;
+    al->size = al->size + 1;
     return 0;
 }
 
 static int as_arraylist_prepend(as_list * l, as_val * v) {
-    // as_arraylist * al  = (as_arraylist *) as_list_source(l);
+    as_arraylist * al  = (as_arraylist *) as_list_source(l);
+    as_arraylist_ensure(al,1);
+
+    for (int i = al->size; i > 0; i-- ) {
+        al->elements[i] = al->elements[i-1];
+    }
+
+    al->elements[0] = v;
+    al->size = al->size + 1;
+
     return 0;
 }
 
-static as_val * as_arraylist_get(const as_list * l, uint32_t i) {
+static as_val * as_arraylist_get(const as_list * l, const uint32_t i) {
     as_arraylist * al  = (as_arraylist *) as_list_source(l);
     return al->size > i ? al->elements[i] : NULL;
+}
+
+static int as_arraylist_set(as_list * l, const uint32_t i, as_val * v) {
+    as_arraylist * al  = (as_arraylist *) as_list_source(l);
+
+    if ( i > al->capacity ) {
+        as_arraylist_ensure(al, i - al->capacity);
+    }
+
+    free(al->elements[i]);
+    al->elements[i] = v;
+
+    return 0;
 }
 
 static as_val * as_arraylist_head(const as_list * l) {
@@ -74,18 +122,19 @@ static as_val * as_arraylist_head(const as_list * l) {
 }
 
 static as_list * as_arraylist_tail(const as_list * l) {
-    // as_arraylist * al  = (as_arraylist *) as_list_source(l);
-    return (as_list *) l;
-}
 
-static as_list * as_arraylist_take(const as_list * l, uint32_t n) {
-    // as_arraylist * al  = (as_arraylist *) as_list_source(l);
-    return (as_list *) l;
-}
+    as_arraylist * al  = (as_arraylist *) as_list_source(l);
 
-static as_list * as_arraylist_drop(const as_list * l, uint32_t n) {
-    // as_arraylist * al  = (as_arraylist *) as_list_source(l);
-    return 0;
+    if ( al->size == 0 ) return NULL;
+
+    as_arraylist * al2 = (as_arraylist *) malloc(sizeof(as_arraylist));
+    al2->elements = al->elements + 1;
+    al2->size = al->size - 1;
+    al2->capacity = al->capacity - 1;
+    al2->block_size = al->block_size;
+    al2->shadow = true;
+
+    return as_list_new(al2, &as_arraylist_hooks);
 }
 
 static as_iterator * as_arraylist_iterator(const as_list * l) {
@@ -97,7 +146,7 @@ static as_iterator * as_arraylist_iterator(const as_list * l) {
 
 static const bool as_arraylist_iterator_has_next(const as_iterator * i) {
     as_arraylist_iterator_source * source = (as_arraylist_iterator_source *) as_iterator_source(i);
-    return source->pos <= source->list->size;
+    return source->pos < source->list->size;
 }
 
 static const as_val * as_arraylist_iterator_next(as_iterator * i) {
@@ -125,13 +174,13 @@ static const as_iterator_hooks as_arraylist_iterator_hooks = {
 
 static const as_list_hooks as_arraylist_hooks = {
     .free       = as_arraylist_free,
+    .hash       = as_arraylist_hash,
     .size       = as_arraylist_size,
     .append     = as_arraylist_append,
     .prepend    = as_arraylist_prepend,
     .get        = as_arraylist_get,
+    .set        = as_arraylist_set,
     .head       = as_arraylist_head,
     .tail       = as_arraylist_tail,
-    .take       = as_arraylist_take,
-    .drop       = as_arraylist_drop,
     .iterator   = as_arraylist_iterator
 };

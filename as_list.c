@@ -19,8 +19,20 @@ int as_list_free(as_list * l) {
     return l->hooks->free(l);
 }
 
+static uint32_t as_list_hash(as_list * l) {
+    if ( l->hooks == NULL ) return 0;
+    if ( l->hooks->hash == NULL ) return 0;
+    return l->hooks->hash(l);
+}
+
 void * as_list_source(const as_list * l) {
     return l->source;
+}
+
+uint32_t as_list_size(as_list * l) {
+    if ( l->hooks == NULL ) return 0;
+    if ( l->hooks->size == NULL ) return 0;
+    return l->hooks->size(l);
 }
 
 int as_list_append(as_list * l, as_val * v) {
@@ -39,6 +51,12 @@ as_val * as_list_get(const as_list * l, const uint32_t i) {
     if ( l->hooks == NULL ) return NULL;
     if ( l->hooks->get == NULL ) return NULL;
     return l->hooks->get(l, i);
+}
+
+int as_list_set(as_list * l, const uint32_t i, as_val * v) {
+    if ( l->hooks == NULL ) return 1;
+    if ( l->hooks->set == NULL ) return 2;
+    return l->hooks->set(l, i, v);
 }
 
 as_val * as_list_head(const as_list * l) {
@@ -71,4 +89,12 @@ static int as_list_freeval(as_val * v) {
     return as_val_type(v) == AS_LIST ? as_list_free((as_list *) v) : 1;
 }
 
-static const as_val AS_LIST_VAL = {AS_LIST, as_list_freeval};
+static uint32_t as_list_hashval(as_val * v) {
+    return as_val_type(v) == AS_INTEGER ? as_list_hash((as_list *) v) : 0;
+}
+
+static const as_val AS_LIST_VAL = {
+    .type   = AS_LIST, 
+    .free   = as_list_freeval, 
+    .hash   = as_list_hashval
+};
