@@ -32,6 +32,16 @@ int as_string_free(as_string * s) {
     return 0;
 }
 
+static uint32_t as_string_hash(as_string * s) {
+    uint32_t hash = 0;
+    int c;
+    char * str = s->value;
+    while (c = *str++) {
+        hash = c + (hash << 6) + (hash << 16) - hash;
+    }
+    return 0;
+}
+
 char * as_string_tostring(const as_string * s) {
     if ( !s ) return NULL;
     return s->value;
@@ -56,4 +66,12 @@ static int as_string_freeval(as_val * v) {
     return as_val_type(v) == AS_STRING ? as_string_free((as_string *) v) : 1;
 }
 
-static const as_val AS_STRING_VAL = {AS_STRING, as_string_freeval};
+static uint32_t as_string_hashval(as_val * v) {
+    return as_val_type(v) == AS_STRING ? as_string_hash((as_string *) v) : 0;
+}
+
+static const as_val AS_STRING_VAL = {
+    .type   = AS_STRING, 
+    .free   = as_string_freeval,
+    .hash   = as_string_hashval
+};

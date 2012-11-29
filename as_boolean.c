@@ -23,6 +23,10 @@ int as_boolean_free(as_boolean * b) {
     return 0;
 }
 
+uint32_t as_boolean_hash(const as_boolean * b) {
+    return b->value ? 1 : 0;
+}
+
 bool as_boolean_tobool(const as_boolean * b) {
     return b->value;
 }
@@ -39,4 +43,8 @@ static int as_boolean_freeval(as_val * v) {
     return as_val_type(v) == AS_BOOLEAN ? as_boolean_free((as_boolean *) v) : 1;
 }
 
-static const as_val AS_BOOLEAN_VAL = {AS_BOOLEAN, as_boolean_freeval};
+static uint32_t as_boolean_hashval(as_val * v) {
+    return as_val_type(v) == AS_BOOLEAN ? as_boolean_hash((as_boolean *) v) : 0;
+}
+
+static const as_val AS_BOOLEAN_VAL = {AS_BOOLEAN, as_boolean_freeval, as_boolean_hashval};

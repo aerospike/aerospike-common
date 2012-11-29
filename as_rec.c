@@ -30,11 +30,18 @@ as_rec * as_rec_new(void * source, const as_rec_hooks * hooks) {
  *
  * @param r the as_rec to be freed.
  */
-const int as_rec_free(as_rec * r) {
+int as_rec_free(as_rec * r) {
     if ( !r ) return 1;
     if ( !r->hooks ) return 2;
     if ( !r->hooks->free ) return 3;
     return r->hooks->free(r);
+}
+
+uint32_t as_rec_hash(as_rec * r) {
+    if ( !r ) return 0;
+    if ( !r->hooks ) return 0;
+    if ( !r->hooks->hash ) return 0;
+    return r->hooks->hash(r);
 }
 
 int as_rec_update(as_rec * r, void * source, const as_rec_hooks * hooks) {
@@ -58,7 +65,7 @@ void * as_rec_source(const as_rec * r) {
  * @param name the name of the bin.
  * @param a as_val containing the value in the bin.
  */
-const as_val * as_rec_get(const as_rec * r, const char * name) {
+as_val * as_rec_get(const as_rec * r, const char * name) {
     if ( !r ) return NULL;
     if ( !r->hooks ) return NULL;
     if ( !r->hooks->get ) return NULL;
@@ -74,7 +81,7 @@ const as_val * as_rec_get(const as_rec * r, const char * name) {
  * @param name the name of the bin.
  * @param value the value of the bin.
  */
-const int as_rec_set(const as_rec * r, const char * name, const as_val * value) {
+int as_rec_set(const as_rec * r, const char * name, const as_val * value) {
     if ( !r ) return 1;
     if ( !r->hooks ) return 2;
     if ( !r->hooks->set ) return 3;
@@ -89,7 +96,7 @@ const int as_rec_set(const as_rec * r, const char * name, const as_val * value) 
  * @param r the record to remove the bin from.
  * @param name the name of the bin to remove.
  */
-const int as_rec_remove(const as_rec * r, const char * name) {
+int as_rec_remove(const as_rec * r, const char * name) {
     if ( !r ) return 1;
     if ( !r->hooks ) return 2;
     if ( !r->hooks->remove ) return 3;
@@ -108,4 +115,12 @@ static int as_rec_freeval(as_val * v) {
     return as_val_type(v) == AS_REC ? as_rec_free((as_rec *) v) : 1;
 }
 
-static const as_val AS_REC_VAL = {AS_REC, as_rec_freeval};
+static uint32_t as_rec_hashval(as_val * v) {
+    return as_val_type(v) == AS_REC ? as_rec_hash((as_rec *) v) : 0;
+}
+
+static const as_val AS_REC_VAL = {
+    .type   = AS_REC, 
+    .free   = as_rec_freeval, 
+    .hash   = as_rec_hashval
+};

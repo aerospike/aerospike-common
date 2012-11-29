@@ -44,4 +44,12 @@ static int as_integer_freeval(as_val * v) {
     return as_val_type(v) == AS_INTEGER ? as_integer_free((as_integer *) v) : 1;
 }
 
-static const as_val AS_INTEGER_VAL = {AS_INTEGER, as_integer_freeval};
+static uint32_t as_integer_hashval(as_val * v) {
+    return as_val_type(v) == AS_INTEGER ? (uint32_t) ((as_integer *) v)->value : 0;
+}
+
+static const as_val AS_INTEGER_VAL = {
+    .type   = AS_INTEGER, 
+    .free   = as_integer_freeval, 
+    .hash   = as_integer_hashval
+};
