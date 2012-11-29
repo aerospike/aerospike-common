@@ -17,18 +17,18 @@ struct as_list_s {
 
 struct as_list_hooks_s {
     int (*free)(as_list *);
+    uint32_t (*hash)(as_list *);
 
     uint32_t (* size)(const as_list *);
     
     int (* append)(as_list *, as_val *);
     int (* prepend)(as_list *, as_val *);
     
-    as_val * (* get)(const as_list *, uint32_t);
+    as_val * (* get)(const as_list *, const uint32_t);
+    int (* set)(as_list *, const uint32_t, as_val *);
+
     as_val * (* head)(const as_list *);
     as_list * (* tail)(const as_list *);
-    
-    as_list * (* take)(const as_list *, uint32_t);
-    as_list * (* drop)(const as_list *, uint32_t);
     
     as_iterator * (* iterator)(const as_list *);
 };
@@ -41,19 +41,22 @@ int as_list_free(as_list *);
 void * as_list_source(const as_list * l);
 
 
+uint32_t as_list_size(as_list *);
+
 
 int as_list_append(as_list *, as_val *);
 
 int as_list_prepend(as_list *, as_val *);
 
 
-
 as_val * as_list_get(const as_list *, const uint32_t i);
+
+int as_list_set(as_list *, const uint32_t i, as_val * val);
+
 
 as_val * as_list_head(const as_list *);
 
 as_list * as_list_tail(const as_list *);
-
 
 
 as_val * as_list_toval(const as_list *);
