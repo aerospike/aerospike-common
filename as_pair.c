@@ -1,13 +1,7 @@
 
 #include "as_pair.h"
 #include <stdlib.h>
-
-struct as_pair_s {
-    as_val _;
-    as_val * _1;
-    as_val * _2;
-};
-
+#include <string.h>
 
 static const as_val AS_PAIR_VAL;
 static int as_pair_freeval(as_val *);
@@ -18,6 +12,26 @@ int as_pair_free(as_pair * p) {
     if ( p->_2 ) free(p->_2);
     free(p);
     return 0;
+}
+
+static char * as_pair_tostring(as_pair * p) {
+
+    char * a = as_val_tostring(p->_1);
+    size_t al = strlen(a);
+    char * b = as_val_tostring(p->_2);
+    size_t bl = strlen(b);
+    
+    size_t l = al + bl + 5;
+    char * str = (char *) malloc(sizeof(char) * l);
+
+    strcpy(str, "(");
+    strcpy(str+1, a);
+    strcpy(str+1+al,", ");
+    strcpy(str+1+al+2, b);
+    strcpy(str+1+al+2+bl,")");
+    *(str+1+al+2+bl+1) = '\0';
+
+    return str;
 }
 
 static uint32_t as_pair_hash(as_pair * p) {
@@ -49,16 +63,22 @@ as_pair * as_pair_fromval(const as_val * v) {
     return as_val_type(v) == AS_PAIR ? (as_pair *) v : NULL;
 }
 
-static int as_pair_freeval(as_val * v) {
+static int as_pair_val_free(as_val * v) {
     return as_val_type(v) == AS_PAIR ? as_pair_free((as_pair *) v) : 1;
 }
 
-static int as_pair_hashval(as_val * v) {
+static uint32_t as_pair_val_hash(as_val * v) {
     return as_val_type(v) == AS_PAIR ? as_pair_hash((as_pair *) v) : 0;
 }
 
+static char * as_pair_val_tostring(as_val * v) {
+    if ( as_val_type(v) != AS_PAIR ) return NULL;
+    return as_pair_tostring((as_pair *) v);
+}
+
 static const as_val AS_PAIR_VAL = {
-    .type   = AS_PAIR, 
-    .free   = as_pair_freeval,
-    .hash   = as_pair_hashval
+    .type       = AS_PAIR, 
+    .free       = as_pair_val_free,
+    .hash       = as_pair_val_hash,
+    .tostring   = as_pair_val_tostring
 };

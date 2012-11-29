@@ -129,7 +129,7 @@ static as_iterator * as_linkedlist_iterator(const as_list * l) {
 
 static const bool as_linkedlist_iterator_has_next(const as_iterator * i) {
     as_linkedlist_iterator_source * source = (as_linkedlist_iterator_source *) as_iterator_source(i);
-    return source->list != NULL;
+    return source->list != NULL && as_linkedlist_head(source->list) != NULL;
 }
 
 static const as_val * as_linkedlist_iterator_next(as_iterator * i) {

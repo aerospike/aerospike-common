@@ -1,4 +1,5 @@
 #include "as_hashmap.h"
+#include "as_string.h"
 #include "shash.h"
 #include <stdlib.h>
 
@@ -16,14 +17,13 @@ struct as_hashmap_iterator_source_s {
     const as_map * map;
 };
 
-static uint32_t as_hashmap_hashfn(void * x) {
-    as_val ** v = (as_val **) x;
-    return as_val_hash(*v);
+static uint32_t as_hashmap_hashfn(void * k) {
+    return as_val_hash((as_val *) k);
 }
 
 as_map * as_hashmap_new(uint32_t capacity) {
     shash * t = NULL;
-    shash_create(&t, as_hashmap_hashfn, sizeof(as_val *), sizeof(as_val *), capacity, SHASH_CR_MT_BIGLOCK);
+    shash_create(&t, as_hashmap_hashfn, sizeof(as_val), sizeof(as_val *), capacity, SHASH_CR_MT_BIGLOCK);
     return as_map_new(t, &as_hashmap_hooks);
 }
 
@@ -46,14 +46,14 @@ static uint32_t as_hashmap_size(const as_map * m) {
 
 static int as_hashmap_set(as_map * m, const as_val * k, const as_val * v) {
     shash * t = (shash *) m->source;
-    return shash_put(t, (void *) &k, (void *) &v);
+    return shash_put(t, (void *) k, (void *) &v);
 }
 
 static as_val * as_hashmap_get(const as_map * m, const as_val * k) {
     shash *  t = (shash *) m->source;
     as_val * v = NULL;
 
-    if ( shash_get(t, (void *) &k, (void *) &v) != SHASH_OK ) {
+    if ( shash_get(t, (void *) k, (void *) &v) != SHASH_OK ) {
         return NULL;
     }
 

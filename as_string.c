@@ -39,7 +39,7 @@ static uint32_t as_string_hash(as_string * s) {
     while (c = *str++) {
         hash = c + (hash << 6) + (hash << 16) - hash;
     }
-    return 0;
+    return hash;
 }
 
 char * as_string_tostring(const as_string * s) {
@@ -62,16 +62,30 @@ as_string * as_string_fromval(const as_val * v) {
     return as_val_type(v) == AS_STRING ? (as_string *) v : NULL;
 }
 
-static int as_string_freeval(as_val * v) {
+static int as_string_val_free(as_val * v) {
     return as_val_type(v) == AS_STRING ? as_string_free((as_string *) v) : 1;
 }
 
-static uint32_t as_string_hashval(as_val * v) {
+static uint32_t as_string_val_hash(as_val * v) {
     return as_val_type(v) == AS_STRING ? as_string_hash((as_string *) v) : 0;
 }
 
+static char * as_string_val_tostring(as_val * v) {
+    if ( as_val_type(v) != AS_STRING ) return NULL;
+    as_string * s = (as_string *) v;
+    size_t sl = as_string_len(s);
+    size_t st = 2 + sl;
+    char * str = (char *) malloc(sizeof(char) * st);
+    bzero(str,st);
+    strcpy(str, "\"");
+    strcpy(str+1, s->value);
+    strcpy(str+1+sl, "\"");
+    return str;
+}
+
 static const as_val AS_STRING_VAL = {
-    .type   = AS_STRING, 
-    .free   = as_string_freeval,
-    .hash   = as_string_hashval
+    .type       = AS_STRING, 
+    .free       = as_string_val_free,
+    .hash       = as_string_val_hash,
+    .tostring   = as_string_val_tostring,
 };

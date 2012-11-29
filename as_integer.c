@@ -1,5 +1,7 @@
 #include "as_integer.h"
 #include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
 
 struct as_integer_s {
     as_val _;
@@ -40,16 +42,25 @@ as_integer * as_integer_fromval(const as_val * v) {
     return as_val_type(v) == AS_INTEGER ? (as_integer *) v : NULL;
 }
 
-static int as_integer_freeval(as_val * v) {
+static int as_integer_val_free(as_val * v) {
     return as_val_type(v) == AS_INTEGER ? as_integer_free((as_integer *) v) : 1;
 }
 
-static uint32_t as_integer_hashval(as_val * v) {
+static uint32_t as_integer_val_hash(as_val * v) {
     return as_val_type(v) == AS_INTEGER ? (uint32_t) ((as_integer *) v)->value : 0;
 }
 
+static char * as_integer_val_tostring(as_val * v) {
+    if ( as_val_type(v) != AS_INTEGER ) return NULL;
+    as_integer * i = (as_integer *) v;
+    char * str = (char *) malloc(sizeof(char) * 32);
+    sprintf(str,"%ld",i->value);
+    return str;
+}
+
 static const as_val AS_INTEGER_VAL = {
-    .type   = AS_INTEGER, 
-    .free   = as_integer_freeval, 
-    .hash   = as_integer_hashval
+    .type       = AS_INTEGER, 
+    .free       = as_integer_val_free, 
+    .hash       = as_integer_val_hash,
+    .tostring   = as_integer_val_tostring
 };
