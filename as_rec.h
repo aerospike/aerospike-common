@@ -24,10 +24,11 @@ struct as_rec_s {
  * Provided functions that interface with the records.
  */
 struct as_rec_hooks_s {
-    const as_val * (*get)(const as_rec *, const char *);
-    const int (*set)(const as_rec *, const char *, const as_val *);
-    const int (*remove)(const as_rec *, const char *);
-    const int (*free)(as_rec *);
+    as_val * (*get)(const as_rec *, const char *);
+    int (*set)(const as_rec *, const char *, const as_val *);
+    int (*remove)(const as_rec *, const char *);
+    int (*free)(as_rec *);
+    uint32_t (*hash)(as_rec *);
 };
 
 /**
@@ -46,8 +47,7 @@ as_rec * as_rec_new(void *, const as_rec_hooks *);
  *
  * @param r the record to be freed.
  */
-const int as_rec_free(as_rec *);
-
+int as_rec_free(as_rec *);
 
 int as_rec_update(as_rec *, void *, const as_rec_hooks *);
 
@@ -65,7 +65,7 @@ void * as_rec_source(const as_rec *);
  * @param name the name of the bin.
  * @param a val containing the value in the bin.
  */
-const as_val * as_rec_get(const as_rec *, const char *);
+as_val * as_rec_get(const as_rec *, const char *);
 
 /**
  * Set the value of a bin.
@@ -76,7 +76,7 @@ const as_val * as_rec_get(const as_rec *, const char *);
  * @param name the name of the bin.
  * @param value the value of the bin.
  */
-const int as_rec_set(const as_rec *, const char *, const as_val *);
+int as_rec_set(const as_rec *, const char *, const as_val *);
 
 
 /**
@@ -87,7 +87,7 @@ const int as_rec_set(const as_rec *, const char *, const as_val *);
  * @param r the record to remove the bin from.
  * @param name the name of the bin to remove.
  */
-const int as_rec_remove(const as_rec *, const char *);
+int as_rec_remove(const as_rec *, const char *);
 
 
 as_val * as_rec_toval(const as_rec *);
