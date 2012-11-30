@@ -5,6 +5,12 @@
 
 typedef struct as_string_s as_string;
 
+struct as_string_s {
+    as_val _;
+    char * value;
+    size_t len;
+};
+
 int as_string_free(as_string *);
 
 as_string * as_string_new(char *);

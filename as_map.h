@@ -27,6 +27,7 @@ struct as_map_hooks_s {
     uint32_t (* size)(const as_map *);
     int (* set)(as_map *, const as_val *, const as_val *);
     as_val * (* get)(const as_map *, const as_val *);
+    as_iterator * (*iterator)(const as_map *);
 };
 
 
@@ -35,6 +36,7 @@ as_map * as_map_new(void *, const as_map_hooks *);
 
 int as_map_free(as_map *);
 
+void * as_map_source(const as_map *);
 
 uint32_t as_map_size(const as_map *);
 
@@ -45,3 +47,5 @@ as_val * as_map_get(const as_map *, const as_val *);
 as_val * as_map_toval(const as_map *);
 
 as_map * as_map_fromval(const as_val *);
+
+as_iterator * as_map_iterator(const as_map *);
