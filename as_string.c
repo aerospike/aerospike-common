@@ -2,12 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-struct as_string_s {
-    as_val _;
-    char * value;
-    size_t len;
-};
-
 
 static const as_val AS_STRING_VAL;
 static int as_string_freeval(as_val *);

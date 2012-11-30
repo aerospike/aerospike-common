@@ -1,5 +1,6 @@
 #include "as_map.h"
 #include <stdbool.h>
+#include <string.h>
 #include <stdlib.h>
 
 static const as_val AS_MAP_VAL;
@@ -17,6 +18,11 @@ int as_map_free(as_map * m) {
     if ( m->hooks == NULL ) return 1;
     if ( m->hooks->free == NULL ) return 2;
     return m->hooks->free(m);
+}
+
+
+void * as_map_source(const as_map * m) {
+    return m->source;
 }
 
 static uint32_t as_map_hash(as_map * m) {
@@ -41,6 +47,12 @@ int as_map_set(as_map * m, const as_val * k, const as_val * v) {
     if ( m->hooks == NULL ) return 1;
     if ( m->hooks->set == NULL ) return 2;
     return m->hooks->set(m, k, v);
+}
+
+as_iterator * as_map_iterator(const as_map * m) {
+    if ( m->hooks == NULL ) return NULL;
+    if ( m->hooks->iterator == NULL ) return NULL;
+    return m->hooks->iterator(m);
 }
 
 as_val * as_map_toval(const as_map * m) {
