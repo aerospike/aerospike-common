@@ -3,6 +3,12 @@
 #include "as_list.h"
 #include "as_val.h"
 
+/******************************************************************************
+ *
+ * FUNCTION DECLARATIONS
+ * 
+ ******************************************************************************/
+
 /**
  * Create a linked-list backed list
  * @param the head of the list
@@ -11,6 +17,12 @@
  */
 as_list * as_linkedlist_new(as_val *, as_list *);
 
+
+/******************************************************************************
+ *
+ * MACROS
+ * 
+ ******************************************************************************/
 
 #define cons(head,tail) \
     as_linkedlist_new((as_val *) head, (as_list *) tail)

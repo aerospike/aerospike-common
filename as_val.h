@@ -3,9 +3,21 @@
 #include <stdlib.h>
 #include <inttypes.h>
 
+/******************************************************************************
+ *
+ * TYPE DECLARATIONS
+ * 
+ ******************************************************************************/
+
 typedef enum as_val_t as_val_t;
 
 typedef struct as_val_s as_val;
+
+/******************************************************************************
+ *
+ * TYPE DEFINITIONS
+ * 
+ ******************************************************************************/
 
 enum as_val_t {
     AS_UNKNOWN = 0,
@@ -21,19 +33,29 @@ enum as_val_t {
 
 struct as_val_s {
     as_val_t type;
+    size_t size;
     int (*free)(as_val * v);
     uint32_t (*hash)(as_val * v);
     char * (*tostring)(as_val * v);
 };
 
+/******************************************************************************
+ *
+ * MACROS
+ * 
+ ******************************************************************************/
+
 #define as_val_free(v) \
-    (v != NULL && ((as_val *)v)->free != NULL ? ((as_val *)v)->free((as_val *)v) : 1)
+    (v && ((as_val *)v)->free ? ((as_val *)v)->free((as_val *)v) : 1)
 
 #define as_val_type(v) \
-    (v != NULL && ((as_val *)v)->free != NULL ? ((as_val *)v)->type : AS_UNKNOWN)
+    (v && ((as_val *)v)->free ? ((as_val *)v)->type : AS_UNKNOWN)
 
 #define as_val_hash(v) \
-    (v != NULL && ((as_val *)v)->hash != NULL ? ((as_val *)v)->hash((as_val *)v) : 0)
+    (v && ((as_val *)v)->hash ? ((as_val *)v)->hash((as_val *)v) : 0)
 
 #define as_val_tostring(v) \
-    (v != NULL && ((as_val *)v)->tostring != NULL ? ((as_val *)v)->tostring((as_val *)v) : NULL)
+    (v && ((as_val *)v)->tostring ? ((as_val *)v)->tostring((as_val *)v) : NULL)
+
+#define as_val_size(v) \
+    (v ? ((as_val *)v)->size : sizeof(as_val))

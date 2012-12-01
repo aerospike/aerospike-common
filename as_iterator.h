@@ -1,11 +1,23 @@
 #pragma once
 
+#include "as_util.h"
 #include "as_val.h"
 #include <stdbool.h>
+
+/******************************************************************************
+ *
+ * TYPE DECLARATIONS
+ * 
+ ******************************************************************************/
 
 typedef struct as_iterator_s as_iterator;
 typedef struct as_iterator_hooks_s as_iterator_hooks;
 
+/******************************************************************************
+ *
+ * TYPE DEFINITIONS
+ * 
+ ******************************************************************************/
 
 /**
  * Iterator Structure
@@ -30,6 +42,12 @@ struct as_iterator_hooks_s {
     const int (*free)(as_iterator *);
 };
 
+/******************************************************************************
+ *
+ * FUNCTION DECLARATIONS
+ * 
+ ******************************************************************************/
+
 /**
  * Creates a new iterator for a given source and hooks.
  *
@@ -38,13 +56,39 @@ struct as_iterator_hooks_s {
  */
 as_iterator * as_iterator_new(const void *, const as_iterator_hooks *);
 
+/******************************************************************************
+ *
+ * INLINE FUNCTION DEFINITIONS – VALUES
+ * 
+ ******************************************************************************/
+
 /**
  * Get the source for the iterator
  *
  * @param iterator to get the source from
  * @return pointer to the source of the iterator
  */
-const void * as_iterator_source(const as_iterator *);
+inline const void * as_iterator_source(const as_iterator * i) {
+    return i->source;
+}
+
+/******************************************************************************
+ *
+ * INLINE FUNCTION DEFINITIONS – HOOKS
+ * 
+ ******************************************************************************/
+
+/**
+ * Frees the iterator and associated data, including the source and hooks.
+ *
+ * Proxies to `i->hooks->free(i)`
+ *
+ * @param i the iterator to free
+ * @return 0 on success, otherwise 1.
+ */
+inline const int as_iterator_free(as_iterator * i) {
+  return as_util_hook(free, 1, i);
+}
 
 /**
  * Tests if there are more values available in the iterator.
@@ -54,7 +98,9 @@ const void * as_iterator_source(const as_iterator *);
  * @param i the iterator to be tested.
  * @return true if there are more values, otherwise false.
  */
-const bool as_iterator_has_next(const as_iterator *);
+inline const bool as_iterator_has_next(const as_iterator * i) {
+  return as_util_hook(has_next, false, i);
+}
 
 /**
  * Attempts to get the next value from the iterator.
@@ -65,14 +111,6 @@ const bool as_iterator_has_next(const as_iterator *);
  * @param i the iterator to get the next value from.
  * @return the next value available in the iterator.
  */
-const as_val * as_iterator_next(as_iterator *);
-
-/**
- * Frees the iterator and associated data, including the source and hooks.
- *
- * Proxies to `i->hooks->free(i)`
- *
- * @param i the iterator to free
- * @return 0 on success, otherwise 1.
- */
-const int as_iterator_free(as_iterator *);
+inline const as_val * as_iterator_next(as_iterator * i) {
+  return as_util_hook(next, NULL, i);
+}

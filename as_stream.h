@@ -4,8 +4,21 @@
 
 #define AS_STREAM_END ((void *) 0)
 
+/******************************************************************************
+ *
+ * TYPE DECLARATIONS
+ * 
+ ******************************************************************************/
+
 typedef struct as_stream_s as_stream;
+
 typedef struct as_stream_hooks_s as_stream_hooks;
+
+/******************************************************************************
+ *
+ * TYPE DEFINITIONS
+ * 
+ ******************************************************************************/
 
 /**
  * Stream Structure
@@ -29,6 +42,13 @@ struct as_stream_hooks_s {
     const int (*free)(as_stream *);
 };
 
+
+/******************************************************************************
+ *
+ * FUNCTION DECLARATIONS
+ * 
+ ******************************************************************************/
+
 /**
  * Creates a new stream for a given source and hooks.
  *
@@ -38,30 +58,34 @@ struct as_stream_hooks_s {
 as_stream * as_stream_new(void *, const as_stream_hooks *);
 
 /**
- * Get the source for the stream
- *
- * @param stream to get the source from
- * @return pointer to the source of the stream
- */
-void * as_stream_source(const as_stream *);
-
-/**
- * Reads an element from the stream
- *
- * Proxies to `s->hooks->read(s)`
- *
- * @param s the read to be read.
- * @return the element read from the stream or STREAM_END
- */
-const as_val * as_stream_read(const as_stream *);
-
-/**
  * Creates an iterator from the stream
  *
  * @param s the stream to create an iterator from
  * @return a new iterator
  */
 as_iterator * as_stream_iterator(as_stream *);
+
+/******************************************************************************
+ *
+ * INLINE FUNCTION DEFINITIONS – VALUES
+ * 
+ ******************************************************************************/
+
+/**
+ * Get the source for the stream
+ *
+ * @param stream to get the source from
+ * @return pointer to the source of the stream
+ */
+inline void * as_stream_source(const as_stream * s) {
+    return (s ? s->source : NULL);
+}
+
+/******************************************************************************
+ *
+ * INLINE FUNCTION DEFINITIONS – HOOKS
+ * 
+ ******************************************************************************/
 
 /**
  * Frees the stream
@@ -71,4 +95,20 @@ as_iterator * as_stream_iterator(as_stream *);
  * @param s the stream to free
  * @return 0 on success, otherwise 1.
  */
-const int as_stream_free(as_stream *);
+inline const int as_stream_free(as_stream * s) {
+    return as_util_hook(free, 1, s);
+}
+
+/**
+ * Reads an element from the stream
+ *
+ * Proxies to `s->hooks->read(s)`
+ *
+ * @param s the read to be read.
+ * @return the element read from the stream or STREAM_END
+ */
+inline const as_val * as_stream_read(const as_stream * s) {
+    return as_util_hook(read, NULL, s);
+}
+
+
