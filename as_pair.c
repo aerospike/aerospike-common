@@ -1,10 +1,9 @@
-
+#include "as_util.h"
 #include "as_pair.h"
 #include <stdlib.h>
 #include <string.h>
 
 static const as_val AS_PAIR_VAL;
-static int as_pair_freeval(as_val *);
 
 
 int as_pair_free(as_pair * p) {
@@ -55,13 +54,8 @@ as_val * as_pair_2(as_pair * p) {
     return p->_2;
 }
 
-as_val * as_pair_toval(const as_pair * p) {
-    return (as_val *) p;
-}
 
-as_pair * as_pair_fromval(const as_val * v) {
-    return as_val_type(v) == AS_PAIR ? (as_pair *) v : NULL;
-}
+
 
 static int as_pair_val_free(as_val * v) {
     return as_val_type(v) == AS_PAIR ? as_pair_free((as_pair *) v) : 1;
@@ -77,7 +71,8 @@ static char * as_pair_val_tostring(as_val * v) {
 }
 
 static const as_val AS_PAIR_VAL = {
-    .type       = AS_PAIR, 
+    .type       = AS_PAIR,
+    .size       = sizeof(as_pair),
     .free       = as_pair_val_free,
     .hash       = as_pair_val_hash,
     .tostring   = as_pair_val_tostring

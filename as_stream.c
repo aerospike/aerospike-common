@@ -1,3 +1,4 @@
+#include "as_util.h"
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -34,38 +35,7 @@ as_stream * as_stream_new(void * source, const as_stream_hooks * hooks) {
     return s;
 }
 
-/**
- * Frees the stream
- *
- * Proxies to `s->hooks->free(s)`
- *
- * @param s the stream to free
- * @return 0 on success, otherwise 1.
- */
-const int as_stream_free(as_stream * s) {
-    return s->hooks->free(s);
-}
 
-/**
- * Get the source for the stream
- *
- * @param stream to get the source from
- * @return pointer to the source of the stream
- */
-void * as_stream_source(const as_stream * s) {
-    return s->source;
-}
-/**
- * Reads an element from the stream
- *
- * Proxies to `s->hooks->read(s)`
- *
- * @param s the read to be read.
- * @return the element read from the stream or STREAM_END
- */
-const as_val * as_stream_read(const as_stream * s) {
-    return s->hooks->read(s);
-}
 
 /**
  * Creates an iterator from the stream

@@ -20,11 +20,11 @@ static as_iterator * as_linkedlist_iterator(const as_list *);
 static as_list * as_linkedlist_last(as_list *);
 
 
-
 struct as_linkedlist_s {
     as_val *    head;
     as_list *   tail;
 };
+
 
 struct as_linkedlist_iterator_source_s {
     const as_list * list;

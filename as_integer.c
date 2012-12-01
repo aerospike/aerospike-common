@@ -34,13 +34,7 @@ int64_t as_integer_toint(const as_integer * i) {
     return i->value;
 }
 
-as_val * as_integer_toval(const as_integer * i) {
-    return (as_val *) i;
-}
 
-as_integer * as_integer_fromval(const as_val * v) {
-    return as_val_type(v) == AS_INTEGER ? (as_integer *) v : NULL;
-}
 
 static int as_integer_val_free(as_val * v) {
     return as_val_type(v) == AS_INTEGER ? as_integer_free((as_integer *) v) : 1;
@@ -60,6 +54,7 @@ static char * as_integer_val_tostring(as_val * v) {
 
 static const as_val AS_INTEGER_VAL = {
     .type       = AS_INTEGER, 
+    .size       = sizeof(as_integer),
     .free       = as_integer_val_free, 
     .hash       = as_integer_val_hash,
     .tostring   = as_integer_val_tostring

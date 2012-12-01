@@ -3,8 +3,10 @@
 #include <stdbool.h>
 #include <string.h>
 
+
 typedef struct as_arraylist_s as_arraylist;
 typedef struct as_arraylist_iterator_source_s as_arraylist_iterator_source;
+
 
 static const as_list_hooks as_arraylist_hooks;
 static const as_iterator_hooks as_arraylist_iterator_hooks;
@@ -21,7 +23,6 @@ static as_list * as_arraylist_tail(const as_list *);
 static as_iterator * as_arraylist_iterator(const as_list *);
 
 
-
 struct as_arraylist_s {
     as_val **   elements;
     uint32_t    size;
@@ -29,6 +30,7 @@ struct as_arraylist_s {
     uint32_t    block_size;
     bool        shadow;
 };
+
 
 struct as_arraylist_iterator_source_s {
     as_arraylist *  list;
