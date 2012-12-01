@@ -4,16 +4,11 @@
 #include "as_types.h"
 
 /******************************************************************************
- * TYPE DECLARATIONS
+ * TYPES
  ******************************************************************************/
 
 typedef struct as_aerospike_s as_aerospike;
-
 typedef struct as_aerospike_hooks_s as_aerospike_hooks;
-
-/******************************************************************************
- * TYPE DEFINITIONS
- ******************************************************************************/
 
 struct as_aerospike_s {
     void * source;
@@ -30,13 +25,13 @@ struct as_aerospike_hooks_s {
 };
 
 /******************************************************************************
- * FUNCTION DECLARATIONS
+ * FUNCTIONS
  ******************************************************************************/
 
 as_aerospike * as_aerospike_new(void *, const as_aerospike_hooks *);
 
 /******************************************************************************
- * INLINE FUNCTION DEFINITIONS
+ * INLINE FUNCTIONS
  ******************************************************************************/
 
 inline int as_aerospike_init(as_aerospike * a, void * s, const as_aerospike_hooks * h) {
