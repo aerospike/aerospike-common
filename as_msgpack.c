@@ -2,8 +2,6 @@
 #include "as_serializer.h"
 #include "as_types.h"
 
-
-
 /******************************************************************************
  * STATIC FUNCTIONS
  ******************************************************************************/
@@ -30,7 +28,6 @@ static const as_serializer_hooks as_msgpack_serializer_hooks = {
     .serialize      = as_msgpack_serialize,
     .deserialize    = as_msgpack_deserialize
 };
-
 
 /******************************************************************************
  * FUNCTIONS
