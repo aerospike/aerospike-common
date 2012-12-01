@@ -5,19 +5,11 @@
 #include <stdbool.h>
 
 /******************************************************************************
- *
- * TYPE DECLARATIONS
- * 
+ * TYPES
  ******************************************************************************/
 
 typedef struct as_iterator_s as_iterator;
 typedef struct as_iterator_hooks_s as_iterator_hooks;
-
-/******************************************************************************
- *
- * TYPE DEFINITIONS
- * 
- ******************************************************************************/
 
 /**
  * Iterator Structure
@@ -43,9 +35,7 @@ struct as_iterator_hooks_s {
 };
 
 /******************************************************************************
- *
- * FUNCTION DECLARATIONS
- * 
+ * FUNCTIONS
  ******************************************************************************/
 
 /**
@@ -56,17 +46,15 @@ struct as_iterator_hooks_s {
  */
 as_iterator * as_iterator_new(const void *, const as_iterator_hooks *);
 
+/******************************************************************************
+ * INLINE FUNCTIONS
+ ******************************************************************************/
+
 inline int as_iterator_init(as_iterator * i, const void * source, const as_iterator_hooks * hooks) {
     i->source = source;
     i->hooks = hooks;
     return 0;
 }
-
-/******************************************************************************
- *
- * INLINE FUNCTION DEFINITIONS – VALUES
- * 
- ******************************************************************************/
 
 /**
  * Get the source for the iterator
@@ -77,12 +65,6 @@ inline int as_iterator_init(as_iterator * i, const void * source, const as_itera
 inline const void * as_iterator_source(const as_iterator * i) {
     return i->source;
 }
-
-/******************************************************************************
- *
- * INLINE FUNCTION DEFINITIONS – HOOKS
- * 
- ******************************************************************************/
 
 /**
  * Frees the iterator and associated data, including the source and hooks.

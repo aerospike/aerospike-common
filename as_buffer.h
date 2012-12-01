@@ -8,6 +8,10 @@ struct as_buffer_s {
     char *  data;
 };
 
+/******************************************************************************
+ * INLINE FUNCTION DEFINITIONS
+ ******************************************************************************/
+
 inline int as_buffer_init(as_buffer * b) {
     b->capacity = 0;
     b->size = 0;

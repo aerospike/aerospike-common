@@ -4,20 +4,11 @@
 #include "as_val.h"
 
 /******************************************************************************
- *
- * TYPE DECLARATIONS
- * 
+ * TYPES
  ******************************************************************************/
 
 typedef struct as_rec_s as_rec;
-
 typedef struct as_rec_hooks_s as_rec_hooks;
-
-/******************************************************************************
- *
- * TYPE DEFINITIONS
- * 
- ******************************************************************************/
 
 /**
  * Record Structure
@@ -38,10 +29,10 @@ struct as_rec_s {
  * Provided functions that interface with the records.
  */
 struct as_rec_hooks_s {
+    int (*free)(as_rec *);
     as_val * (*get)(const as_rec *, const char *);
     int (*set)(const as_rec *, const char *, const as_val *);
     int (*remove)(const as_rec *, const char *);
-    int (*free)(as_rec *);
     uint32_t (*hash)(as_rec *);
 };
 
@@ -63,20 +54,12 @@ int as_rec_init(as_rec *, void *, const as_rec_hooks *);
 
 
 /******************************************************************************
- *
- * INLINE FUNCTION DEFINITIONS – VALUES
- * 
+ * INLINE FUNCTIONS
  ******************************************************************************/
 
 inline void * as_rec_source(const as_rec * r) {
     return (r ? r->source : NULL);
 }
-
-/******************************************************************************
- *
- * INLINE FUNCTION DEFINITIONS – HOOKS
- * 
- ******************************************************************************/
 
 /**
  * Free the as_rec.
@@ -131,12 +114,6 @@ inline int as_rec_set(const as_rec * r, const char * name, const as_val * value)
 inline int as_rec_remove(const as_rec * r, const char * name) {
     return as_util_hook(remove, 1, r, name);
 }
-
-/******************************************************************************
- *
- * INLINE FUNCTION DEFINITIONS – CONVERSIONS
- * 
- ******************************************************************************/
 
 inline as_val * as_rec_toval(const as_rec * r) {
     return (as_val *) r;

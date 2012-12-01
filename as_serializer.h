@@ -6,20 +6,11 @@
 #include <inttypes.h>
 
 /******************************************************************************
- *
- * TYPE DECLARATIONS
- * 
+ * TYPES
  ******************************************************************************/
 
 typedef struct as_serializer_s as_serializer;
-
 typedef struct as_serializer_hooks_s as_serializer_hooks;
-
-/******************************************************************************
- *
- * TYPE DEFINITIONS
- * 
- ******************************************************************************/
 
 struct as_serializer_s {
     const void * source;
@@ -33,9 +24,13 @@ struct as_serializer_hooks_s {
 };
 
 /******************************************************************************
- *
+ * FUNCTIONS
+ ******************************************************************************/
+
+as_serializer * as_serializer_new(const void *, const as_serializer_hooks *);
+
+/******************************************************************************
  * INLINE FUNCTIONS
- * 
  ******************************************************************************/
 
 inline int as_serializer_init(as_serializer * s, const void * source, const as_serializer_hooks * hooks) {
@@ -44,27 +39,9 @@ inline int as_serializer_init(as_serializer * s, const void * source, const as_s
     return 0;
 }
 
-inline as_serializer * as_serializer_new(const void * source, const as_serializer_hooks * hooks) {
-    as_serializer * s = (as_serializer *) malloc(sizeof(as_serializer));
-    as_serializer_init(s, source, hooks);
-    return s;
-}
-
-/******************************************************************************
- *
- * INLINE FUNCTION DEFINITIONS – VALUES
- * 
- ******************************************************************************/
-
 inline void * as_serializer_source(as_serializer * s) {
     return (s ? (void *)s->source : NULL);
 }
-
-/******************************************************************************
- *
- * INLINE FUNCTION DEFINITIONS – HOOKS
- * 
- ******************************************************************************/
 
 inline int as_serializer_free(as_serializer * s) {
     return as_util_hook(free, 1, s);

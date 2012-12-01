@@ -5,20 +5,11 @@
 #define AS_STREAM_END ((void *) 0)
 
 /******************************************************************************
- *
- * TYPE DECLARATIONS
- * 
+ * TYPES
  ******************************************************************************/
 
 typedef struct as_stream_s as_stream;
-
 typedef struct as_stream_hooks_s as_stream_hooks;
-
-/******************************************************************************
- *
- * TYPE DEFINITIONS
- * 
- ******************************************************************************/
 
 /**
  * Stream Structure
@@ -42,11 +33,8 @@ struct as_stream_hooks_s {
     const int (*free)(as_stream *);
 };
 
-
 /******************************************************************************
- *
- * FUNCTION DECLARATIONS
- * 
+ * FUNCTIONS
  ******************************************************************************/
 
 /**
@@ -66,9 +54,7 @@ as_stream * as_stream_new(void *, const as_stream_hooks *);
 as_iterator * as_stream_iterator(as_stream *);
 
 /******************************************************************************
- *
- * INLINE FUNCTION DEFINITIONS – VALUES
- * 
+ * INLINE FUNCTIONS
  ******************************************************************************/
 
 /**
@@ -80,12 +66,6 @@ as_iterator * as_stream_iterator(as_stream *);
 inline void * as_stream_source(const as_stream * s) {
     return (s ? s->source : NULL);
 }
-
-/******************************************************************************
- *
- * INLINE FUNCTION DEFINITIONS – HOOKS
- * 
- ******************************************************************************/
 
 /**
  * Frees the stream
