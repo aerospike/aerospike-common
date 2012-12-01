@@ -7,19 +7,11 @@
 #include <inttypes.h>
 
 /******************************************************************************
- *
- * TYPE DECLARATIONS
- * 
+ * TYPES
  ******************************************************************************/
 
 typedef struct as_list_s as_list;
 typedef struct as_list_hooks_s as_list_hooks;
-
-/******************************************************************************
- *
- * TYPE DEFINITIONS
- * 
- ******************************************************************************/
 
 struct as_list_s {
     as_val                  _;
@@ -41,9 +33,7 @@ struct as_list_hooks_s {
 };
 
 /******************************************************************************
- *
- * FUNCTION DECLARATIONS
- * 
+ * FUNCTIONS
  ******************************************************************************/
 
 as_list * as_list_new(void *, const as_list_hooks *);
@@ -51,9 +41,7 @@ as_list * as_list_new(void *, const as_list_hooks *);
 int as_list_init(as_list *, void *, const as_list_hooks *);
 
 /******************************************************************************
- *
- * INLINE FUNCTION DEFINITIONS
- * 
+ * INLINE FUNCTIONS
  ******************************************************************************/
 
 inline void * as_list_source(const as_list * l) {
