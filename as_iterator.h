@@ -56,6 +56,12 @@ struct as_iterator_hooks_s {
  */
 as_iterator * as_iterator_new(const void *, const as_iterator_hooks *);
 
+inline int as_iterator_init(as_iterator * i, const void * source, const as_iterator_hooks * hooks) {
+    i->source = source;
+    i->hooks = hooks;
+    return 0;
+}
+
 /******************************************************************************
  *
  * INLINE FUNCTION DEFINITIONS – VALUES

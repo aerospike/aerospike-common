@@ -14,13 +14,26 @@ typedef struct as_integer_s as_integer;
 
 /******************************************************************************
  *
+ * TYPE DEFINITIONS
+ * 
+ ******************************************************************************/
+
+struct as_integer_s {
+    as_val _;
+    int64_t value;
+};
+
+/******************************************************************************
+ *
  * FUNCTION DECLARATIONS
  * 
  ******************************************************************************/
 
-int as_integer_free(as_integer *);
-
 as_integer * as_integer_new(int64_t);
+
+int as_integer_init(as_integer *, int64_t);
+
+int as_integer_free(as_integer *);
 
 int as_integer_inc(as_integer *);
 

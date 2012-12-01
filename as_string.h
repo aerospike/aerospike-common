@@ -30,9 +30,11 @@ struct as_string_s {
  * 
  ******************************************************************************/
 
-int as_string_free(as_string *);
-
 as_string * as_string_new(char *);
+
+int as_string_init(as_string *, char *);
+
+int as_string_free(as_string *);
 
 char * as_string_tostring(const as_string *);
 

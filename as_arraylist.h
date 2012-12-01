@@ -15,3 +15,4 @@
  * @return a new as_list
  */
 as_list * as_arraylist_new(uint32_t, uint32_t);
+

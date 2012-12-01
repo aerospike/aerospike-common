@@ -30,7 +30,9 @@ struct as_pair_s {
  * 
  ******************************************************************************/
 
-as_pair * as_pair_new(as_val * _1, as_val * _2);
+as_pair * as_pair_new(as_val *, as_val *);
+
+int as_pair_init(as_pair *, as_val *, as_val *);
 
 int as_pair_free(as_pair *);
 

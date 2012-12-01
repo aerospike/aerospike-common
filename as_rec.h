@@ -59,7 +59,7 @@ struct as_rec_hooks_s {
  */
 as_rec * as_rec_new(void *, const as_rec_hooks *);
 
-int as_rec_update(as_rec *, void *, const as_rec_hooks *);
+int as_rec_init(as_rec *, void *, const as_rec_hooks *);
 
 
 /******************************************************************************

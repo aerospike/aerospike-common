@@ -49,6 +49,7 @@ struct as_map_hooks_s {
 
 as_map * as_map_new(void *, const as_map_hooks *);
 
+int as_map_init(as_map * m, void *, const as_map_hooks *);
 
 /******************************************************************************
  *

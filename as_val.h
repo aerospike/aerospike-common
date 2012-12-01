@@ -32,11 +32,11 @@ enum as_val_t {
 };
 
 struct as_val_s {
-    as_val_t type;
-    size_t size;
-    int (*free)(as_val * v);
-    uint32_t (*hash)(as_val * v);
-    char * (*tostring)(as_val * v);
+    as_val_t type;                      // type identifier, specified in as_val_t
+    size_t size;                        // type size, should be sizeof(type)
+    int (*free)(as_val * v);            // free memory used by the value
+    uint32_t (*hash)(as_val * v);       // hash value for the value
+    char * (*tostring)(as_val * v);     // string value for the value
 };
 
 /******************************************************************************

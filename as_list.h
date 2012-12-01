@@ -28,8 +28,8 @@ struct as_list_s {
 };
 
 struct as_list_hooks_s {
-    int (*free)(as_list *);
-    uint32_t (*hash)(as_list *);
+    int (* free)(as_list *);
+    uint32_t (* hash)(as_list *);
     uint32_t (* size)(const as_list *);
     int (* append)(as_list *, as_val *);
     int (* prepend)(as_list *, as_val *);
@@ -47,6 +47,8 @@ struct as_list_hooks_s {
  ******************************************************************************/
 
 as_list * as_list_new(void *, const as_list_hooks *);
+
+int as_list_init(as_list *, void *, const as_list_hooks *);
 
 /******************************************************************************
  *
