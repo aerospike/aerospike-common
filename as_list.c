@@ -8,10 +8,15 @@ static const as_val AS_LIST_VAL;
 
 as_list * as_list_new(void * source, const as_list_hooks * hooks) {
     as_list * l = (as_list *) malloc(sizeof(as_list));
+    as_list_init(l, source, hooks);
+    return l;
+}
+
+int as_list_init(as_list * l, void * source, const as_list_hooks * hooks) {
     l->_ = AS_LIST_VAL;
     l->source = source;
     l->hooks = hooks;
-    return l;
+    return 0;
 }
 
 static int as_list_val_free(as_val * v) {

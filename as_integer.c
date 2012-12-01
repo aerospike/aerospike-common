@@ -3,11 +3,6 @@
 #include <stdio.h>
 #include <string.h>
 
-struct as_integer_s {
-    as_val _;
-    int64_t value;
-};
-
 
 static const as_val AS_INTEGER_VAL;
 static int as_integer_freeval(as_val *);
@@ -15,9 +10,14 @@ static int as_integer_freeval(as_val *);
 
 as_integer * as_integer_new(int64_t i) {
     as_integer * v = (as_integer *) malloc(sizeof(as_integer));
+    as_integer_init(v, i);
+    return v;
+}
+
+extern inline int as_integer_init(as_integer * v, int64_t i) {
     v->_ = AS_INTEGER_VAL;
     v->value = i;
-    return v;
+    return 0;
 }
 
 int as_integer_free(as_integer * i) {

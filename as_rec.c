@@ -15,19 +15,16 @@ static const as_val AS_REC_VAL;
  */
 as_rec * as_rec_new(void * source, const as_rec_hooks * hooks) {
     as_rec * r = (as_rec *) malloc(sizeof(as_rec));
-    r->_ = AS_REC_VAL;
-    r->source = source;
-    r->hooks = hooks;
+    as_rec_init(r, source, hooks);
     return r;
 }
 
-int as_rec_update(as_rec * r, void * source, const as_rec_hooks * hooks) {
+extern inline int as_rec_init(as_rec * r, void * source, const as_rec_hooks * hooks) {
     r->_ = AS_REC_VAL;
     r->source = source;
     r->hooks = hooks;
     return 0;
 }
-
 
 static int as_rec_val_free(as_val * v) {
     return as_val_type(v) == AS_REC ? as_rec_free((as_rec *) v) : 1;

@@ -12,10 +12,15 @@ static const as_val AS_STRING_VAL;
  */
 as_string * as_string_new(char * s) {
     as_string * v = (as_string *) malloc(sizeof(as_string));
+    as_string_init(v, s);
+    return v;
+}
+
+extern inline int as_string_init(as_string * v, char * s) {
     v->_ = AS_STRING_VAL;
     v->value = s;
     v->len = 0;
-    return v;
+    return 0;
 }
 
 int as_string_free(as_string * s) {

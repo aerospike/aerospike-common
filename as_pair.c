@@ -39,12 +39,16 @@ static uint32_t as_pair_hash(as_pair * p) {
 
 as_pair * as_pair_new(as_val * _1, as_val * _2) {
     as_pair * p = (as_pair *) malloc(sizeof(as_pair));
-    p->_ = AS_PAIR_VAL;
-    p->_1 = _1;
-    p->_2 = _2;
+    as_pair_init(p, _1, _2);
     return p;
 }
 
+int as_pair_init(as_pair * p, as_val * _1, as_val * _2) {
+    p->_ = AS_PAIR_VAL;
+    p->_1 = _1;
+    p->_2 = _2;
+    return 0;
+}
 
 as_val * as_pair_1(as_pair * p) {
     return p->_1;

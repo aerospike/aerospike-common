@@ -5,13 +5,20 @@
 
 static const as_val AS_MAP_VAL;
 
+inline int as_map_hash(as_map * m);
+inline int as_map_free(as_map * m);
 
 as_map * as_map_new(void * source, const as_map_hooks * hooks) {
     as_map * m = (as_map *) malloc(sizeof(as_map));
+    as_map_init(m, source, hooks);
+    return m;
+}
+
+int as_map_init(as_map * m, void * source, const as_map_hooks * hooks) {
     m->_ = AS_MAP_VAL;
     m->source = source;
     m->hooks = hooks;
-    return m;
+    return 0;
 }
 
 static int as_map_val_free(as_val * v) {

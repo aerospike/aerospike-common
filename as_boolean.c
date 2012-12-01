@@ -3,21 +3,19 @@
 #include <stdio.h>
 #include <string.h>
 
-
-struct as_boolean_s {
-    as_val _;
-    bool value;
-};
-
-
 static const as_val AS_BOOLEAN_VAL;
 
 
 as_boolean * as_boolean_new(bool b) {
     as_boolean * v = (as_boolean *) malloc(sizeof(as_boolean));
+    as_boolean_init(v,b);
+    return v;
+}
+
+extern inline int as_boolean_init(as_boolean * v, bool b) {
     v->_ = AS_BOOLEAN_VAL;
     v->value = b;
-    return v;
+    return 0;
 }
 
 int as_boolean_free(as_boolean * b) {

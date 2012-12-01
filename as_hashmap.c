@@ -24,15 +24,22 @@ struct as_hashmap_iterator_source_s {
     uint32_t size;
 };
 
+
+
 static uint32_t as_hashmap_hashfn(void * k) {
     return *((uint32_t *) k);
 }
+
+
 
 as_map * as_hashmap_new(uint32_t capacity) {
     shash * t = NULL;
     shash_create(&t, as_hashmap_hashfn, sizeof(uint32_t), sizeof(as_pair *), capacity, SHASH_CR_MT_BIGLOCK | SHASH_CR_RESIZE);
     return as_map_new(t, &as_hashmap_hooks);
 }
+
+
+
 
 static int as_hashmap_free(as_map * m) {
     shash_destroy((shash *) m->source);
