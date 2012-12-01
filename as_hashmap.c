@@ -4,17 +4,12 @@
 #include "shash.h"
 #include <stdlib.h>
 
+/******************************************************************************
+ * TYPES
+ ******************************************************************************/
+
 typedef struct as_hashmap_s as_hashmap;
 typedef struct as_hashmap_iterator_source_s as_hashmap_iterator_source;
-
-static const as_map_hooks as_hashmap_hooks;
-static const as_iterator_hooks as_hashmap_iterator_hooks;
-
-static int as_hashmap_free(as_map *);
-static uint32_t as_hashmap_size(const as_map *);
-static int as_hashmap_set(as_map *, const as_val *, const as_val *);
-static as_val * as_hashmap_get(const as_map *, const as_val *);
-static as_iterator * as_hashmap_iterator(const as_map *);
 
 struct as_hashmap_iterator_source_s {
     shash * h;
@@ -24,22 +19,53 @@ struct as_hashmap_iterator_source_s {
     uint32_t size;
 };
 
+/******************************************************************************
+ * STATIC FUNCTIONS
+ ******************************************************************************/
 
+static int as_hashmap_free(as_map *);
+static uint32_t as_hashmap_hash(const as_map *);
+static uint32_t as_hashmap_size(const as_map *);
+static int as_hashmap_set(as_map *, const as_val *, const as_val *);
+static as_val * as_hashmap_get(const as_map *, const as_val *);
+static as_iterator * as_hashmap_iterator(const as_map *);
+
+static const bool as_hashmap_iterator_has_next(const as_iterator *);
+static const as_val * as_hashmap_iterator_next(as_iterator *);
+static const int as_hashmap_iterator_free(as_iterator *);
+
+/******************************************************************************
+ * VARIABLES
+ ******************************************************************************/
+
+static const as_map_hooks as_hashmap_hooks = {
+    .free       = as_hashmap_free,
+    .hash       = as_hashmap_hash,
+    .size       = as_hashmap_size,
+    .set        = as_hashmap_set,
+    .get        = as_hashmap_get,
+    .iterator   = as_hashmap_iterator
+};
+
+static const as_iterator_hooks as_hashmap_iterator_hooks = {
+    .has_next   = as_hashmap_iterator_has_next,
+    .next       = as_hashmap_iterator_next,
+    .free       = as_hashmap_iterator_free
+};
+
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 
 static uint32_t as_hashmap_hashfn(void * k) {
     return *((uint32_t *) k);
 }
-
-
 
 as_map * as_hashmap_new(uint32_t capacity) {
     shash * t = NULL;
     shash_create(&t, as_hashmap_hashfn, sizeof(uint32_t), sizeof(as_pair *), capacity, SHASH_CR_MT_BIGLOCK | SHASH_CR_RESIZE);
     return as_map_new(t, &as_hashmap_hooks);
 }
-
-
-
 
 static int as_hashmap_free(as_map * m) {
     shash_destroy((shash *) m->source);
@@ -49,7 +75,7 @@ static int as_hashmap_free(as_map * m) {
     return 0;
 }
 
-static uint32_t as_hashmap_hash(as_map * l) {
+static uint32_t as_hashmap_hash(const as_map * l) {
     return 0;
 }
 
@@ -148,19 +174,3 @@ static const int as_hashmap_iterator_free(as_iterator * i) {
     free(i);
     return 0;
 }
-
-static const as_iterator_hooks as_hashmap_iterator_hooks = {
-    .has_next   = as_hashmap_iterator_has_next,
-    .next       = as_hashmap_iterator_next,
-    .free       = as_hashmap_iterator_free
-};
-
-
-static const as_map_hooks as_hashmap_hooks = {
-    .free       = as_hashmap_free,
-    .hash       = as_hashmap_hash,
-    .size       = as_hashmap_size,
-    .set        = as_hashmap_set,
-    .get        = as_hashmap_get,
-    .iterator   = as_hashmap_iterator
-};

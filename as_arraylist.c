@@ -3,25 +3,12 @@
 #include <stdbool.h>
 #include <string.h>
 
+/******************************************************************************
+ * TYPES
+ ******************************************************************************/
 
 typedef struct as_arraylist_s as_arraylist;
 typedef struct as_arraylist_iterator_source_s as_arraylist_iterator_source;
-
-
-static const as_list_hooks as_arraylist_hooks;
-static const as_iterator_hooks as_arraylist_iterator_hooks;
-
-
-static int as_arraylist_free(as_list *);
-static uint32_t as_arraylist_size(const as_list *);
-static int as_arraylist_append(as_list *, as_val *);
-static int as_arraylist_prepend(as_list *, as_val *);
-static as_val * as_arraylist_get(const as_list *, const uint32_t);
-static int as_arraylist_set(as_list *, const uint32_t, as_val *);
-static as_val * as_arraylist_head(const as_list *);
-static as_list * as_arraylist_tail(const as_list *);
-static as_iterator * as_arraylist_iterator(const as_list *);
-
 
 struct as_arraylist_s {
     as_val **   elements;
@@ -31,12 +18,56 @@ struct as_arraylist_s {
     bool        shadow;
 };
 
-
 struct as_arraylist_iterator_source_s {
     as_arraylist *  list;
     uint32_t        pos;
 };
 
+/******************************************************************************
+ * STATIC FUNCTIONS
+ ******************************************************************************/
+
+static int as_arraylist_free(as_list *);
+static uint32_t as_arraylist_hash(const as_list *);
+static uint32_t as_arraylist_size(const as_list *);
+static int as_arraylist_append(as_list *, as_val *);
+static int as_arraylist_prepend(as_list *, as_val *);
+static as_val * as_arraylist_get(const as_list *, const uint32_t);
+static int as_arraylist_set(as_list *, const uint32_t, as_val *);
+static as_val * as_arraylist_head(const as_list *);
+static as_list * as_arraylist_tail(const as_list *);
+static as_iterator * as_arraylist_iterator(const as_list *);
+
+static const bool as_arraylist_iterator_has_next(const as_iterator *);
+static const as_val * as_arraylist_iterator_next(as_iterator *);
+static const int as_arraylist_iterator_free(as_iterator *);
+
+/******************************************************************************
+ * VARIABLES
+ ******************************************************************************/
+
+static const as_list_hooks as_arraylist_hooks = {
+    .free       = as_arraylist_free,
+    .hash       = as_arraylist_hash,
+    .size       = as_arraylist_size,
+    .append     = as_arraylist_append,
+    .prepend    = as_arraylist_prepend,
+    .get        = as_arraylist_get,
+    .set        = as_arraylist_set,
+    .head       = as_arraylist_head,
+    .tail       = as_arraylist_tail,
+    .iterator   = as_arraylist_iterator
+};
+
+static const as_iterator_hooks as_arraylist_iterator_hooks = {
+    .has_next   = as_arraylist_iterator_has_next,
+    .next       = as_arraylist_iterator_next,
+    .free       = as_arraylist_iterator_free
+};
+
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 
 as_list * as_arraylist_new(uint32_t capacity, uint32_t block_size) {
     as_arraylist * l = (as_arraylist *) malloc(sizeof(as_arraylist));
@@ -62,7 +93,7 @@ static int as_arraylist_free(as_list * l) {
     return 0;
 }
 
-static uint32_t as_arraylist_hash(as_list * l) {
+static uint32_t as_arraylist_hash(const as_list * l) {
     return 0;
 }
 
@@ -167,22 +198,3 @@ static const int as_arraylist_iterator_free(as_iterator * i) {
     free(i);
     return 0;
 }
-
-static const as_iterator_hooks as_arraylist_iterator_hooks = {
-    .has_next   = as_arraylist_iterator_has_next,
-    .next       = as_arraylist_iterator_next,
-    .free       = as_arraylist_iterator_free
-};
-
-static const as_list_hooks as_arraylist_hooks = {
-    .free       = as_arraylist_free,
-    .hash       = as_arraylist_hash,
-    .size       = as_arraylist_size,
-    .append     = as_arraylist_append,
-    .prepend    = as_arraylist_prepend,
-    .get        = as_arraylist_get,
-    .set        = as_arraylist_set,
-    .head       = as_arraylist_head,
-    .tail       = as_arraylist_tail,
-    .iterator   = as_arraylist_iterator
-};

@@ -1,24 +1,12 @@
 #include "as_linkedlist.h"
 #include <stdlib.h>
 
+/******************************************************************************
+ * TYPES
+ ******************************************************************************/
+
 typedef struct as_linkedlist_s as_linkedlist;
 typedef struct as_linkedlist_iterator_source_s as_linkedlist_iterator_source;
-
-static const as_list_hooks as_linkedlist_hooks;
-static const as_iterator_hooks as_linkedlist_iterator_hooks;
-
-static int as_linkedlist_free(as_list *);
-static uint32_t as_linkedlist_size(const as_list *);
-static int as_linkedlist_append(as_list *, as_val *);
-static int as_linkedlist_prepend(as_list *, as_val *);
-static as_val * as_linkedlist_get(const as_list *, const uint32_t);
-static int as_linkedlist_set(as_list *, const uint32_t, as_val *);
-static as_val * as_linkedlist_head(const as_list *);
-static as_list * as_linkedlist_tail(const as_list *);
-static as_iterator * as_linkedlist_iterator(const as_list *);
-
-static as_list * as_linkedlist_last(as_list *);
-
 
 struct as_linkedlist_s {
     as_val *    head;
@@ -30,6 +18,53 @@ struct as_linkedlist_iterator_source_s {
     const as_list * list;
 };
 
+/******************************************************************************
+ * STATIC FUNCTIONS
+ ******************************************************************************/
+
+static int as_linkedlist_free(as_list *);
+static uint32_t as_linkedlist_hash(const as_list *);
+static uint32_t as_linkedlist_size(const as_list *);
+static int as_linkedlist_append(as_list *, as_val *);
+static int as_linkedlist_prepend(as_list *, as_val *);
+static as_val * as_linkedlist_get(const as_list *, const uint32_t);
+static int as_linkedlist_set(as_list *, const uint32_t, as_val *);
+static as_val * as_linkedlist_head(const as_list *);
+static as_list * as_linkedlist_tail(const as_list *);
+static as_iterator * as_linkedlist_iterator(const as_list *);
+
+static as_list * as_linkedlist_last(as_list *);
+
+static const bool as_linkedlist_iterator_has_next(const as_iterator *);
+static const as_val * as_linkedlist_iterator_next(as_iterator *);
+static const int as_linkedlist_iterator_free(as_iterator *);
+
+/******************************************************************************
+ * VARIABLES
+ ******************************************************************************/
+
+static const as_list_hooks as_linkedlist_hooks = {
+    .free       = as_linkedlist_free,
+    .hash       = as_linkedlist_hash,
+    .size       = as_linkedlist_size,
+    .append     = as_linkedlist_append,
+    .prepend    = as_linkedlist_prepend,
+    .get        = as_linkedlist_get,
+    .set        = as_linkedlist_set,
+    .head       = as_linkedlist_head,
+    .tail       = as_linkedlist_tail,
+    .iterator   = as_linkedlist_iterator
+};
+
+static const as_iterator_hooks as_linkedlist_iterator_hooks = {
+    .has_next   = as_linkedlist_iterator_has_next,
+    .next       = as_linkedlist_iterator_next,
+    .free       = as_linkedlist_iterator_free
+};
+
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 
 as_list * as_linkedlist_new(as_val * head, as_list * tail) {
     as_linkedlist * l = (as_linkedlist *) malloc(sizeof(as_linkedlist));
@@ -48,7 +83,7 @@ static int as_linkedlist_free(as_list * l) {
     return 0;
 }
 
-static uint32_t as_linkedlist_hash(as_list * l) {
+static uint32_t as_linkedlist_hash(const as_list * l) {
     return 0;
 }
 
@@ -146,22 +181,3 @@ static const int as_linkedlist_iterator_free(as_iterator * i) {
     free(i);
     return 0;
 }
-
-static const as_iterator_hooks as_linkedlist_iterator_hooks = {
-    .has_next   = as_linkedlist_iterator_has_next,
-    .next       = as_linkedlist_iterator_next,
-    .free       = as_linkedlist_iterator_free
-};
-
-static const as_list_hooks as_linkedlist_hooks = {
-    .free       = as_linkedlist_free,
-    .hash       = as_linkedlist_hash,
-    .size       = as_linkedlist_size,
-    .append     = as_linkedlist_append,
-    .prepend    = as_linkedlist_prepend,
-    .get        = as_linkedlist_get,
-    .set        = as_linkedlist_set,
-    .head       = as_linkedlist_head,
-    .tail       = as_linkedlist_tail,
-    .iterator   = as_linkedlist_iterator
-};

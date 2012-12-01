@@ -1,6 +1,10 @@
 #include "as_result.h"
 #include <stdlib.h>
 
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+
 as_result * as_success(as_val * value) {
     as_result * r = (as_result *) malloc(sizeof(as_result));
     r->is_success = true;

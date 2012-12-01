@@ -2,9 +2,36 @@
 #include <stdlib.h>
 #include <string.h>
 
+/******************************************************************************
+ * INLINE FUNCTIONS
+ ******************************************************************************/
 
-static const as_val AS_STRING_VAL;
+inline as_val * as_string_toval(const as_string *);
+inline as_string * as_string_fromval(const as_val *);
 
+/******************************************************************************
+ * STATIC FUNCTIONS
+ ******************************************************************************/
+
+static int as_string_val_free(as_val *);
+static uint32_t as_string_val_hash(as_val *);
+static char * as_string_val_tostring(as_val *);
+
+/******************************************************************************
+ * VARIABLES
+ ******************************************************************************/
+
+static const as_val AS_STRING_VAL = {
+    .type       = AS_STRING, 
+    .size       = sizeof(as_string),
+    .free       = as_string_val_free,
+    .hash       = as_string_val_hash,
+    .tostring   = as_string_val_tostring
+};
+
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 
 /**
  * The `char *` passed as a parameter will be managed by the as_string going forward.
@@ -73,11 +100,3 @@ static char * as_string_val_tostring(as_val * v) {
     strcpy(str+1+sl, "\"");
     return str;
 }
-
-static const as_val AS_STRING_VAL = {
-    .type       = AS_STRING, 
-    .size       = sizeof(as_string),
-    .free       = as_string_val_free,
-    .hash       = as_string_val_hash,
-    .tostring   = as_string_val_tostring
-};

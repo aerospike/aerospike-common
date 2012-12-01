@@ -4,7 +4,9 @@
 
 
 
-static const as_serializer_hooks as_msgpack_serializer_hooks;
+/******************************************************************************
+ * STATIC FUNCTIONS
+ ******************************************************************************/
 
 static int as_msgpack_pack_boolean(msgpack_packer *, as_boolean *);
 static int as_msgpack_pack_integer(msgpack_packer *, as_integer *);
@@ -15,6 +17,24 @@ static int as_msgpack_pack_rec(msgpack_packer *, as_rec *);
 static int as_msgpack_pack_pair(msgpack_packer *, as_pair *);
 static int as_msgpack_pack_val(msgpack_packer *, as_val *);
 
+static int as_msgpack_free(as_serializer *);
+static int as_msgpack_serialize(as_serializer * s, as_val * v, as_buffer * buff);
+static int as_msgpack_deserialize(as_serializer * s, as_buffer * buff, as_val ** v);
+
+/******************************************************************************
+ * VARIABLES
+ ******************************************************************************/
+
+static const as_serializer_hooks as_msgpack_serializer_hooks = {
+    .free           = as_msgpack_free,
+    .serialize      = as_msgpack_serialize,
+    .deserialize    = as_msgpack_deserialize
+};
+
+
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 
 as_serializer * as_msgpack_new() {
     return as_serializer_new(NULL, &as_msgpack_serializer_hooks);
@@ -132,10 +152,3 @@ static int as_msgpack_serialize(as_serializer * s, as_val * v, as_buffer * buff)
 static int as_msgpack_deserialize(as_serializer * s, as_buffer * buff, as_val ** v) {
     return 0;
 }
-
-static const as_serializer_hooks as_msgpack_serializer_hooks = {
-    .free           = as_msgpack_free,
-    .serialize      = as_msgpack_serialize,
-    .deserialize    = as_msgpack_deserialize
-};
-

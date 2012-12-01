@@ -5,12 +5,11 @@
 #include "as_stream.h"
 #include "as_iterator.h"
 
-typedef struct as_stream_iterator_source_s as_stream_iterator_source;
+/******************************************************************************
+ * TYPES
+ ******************************************************************************/
 
-static const bool as_stream_iterator_has_next(const as_iterator * i);
-static const as_val * as_stream_iterator_next(as_iterator * i);
-static const int as_stream_iterator_free(as_iterator * i);
-static const as_iterator_hooks as_stream_iterator_hooks;
+typedef struct as_stream_iterator_source_s as_stream_iterator_source;
 
 /**
  * Source for stream iterators
@@ -21,6 +20,35 @@ struct as_stream_iterator_source_s {
     bool done;
 };
 
+/******************************************************************************
+ * INLINE FUNCTIONS
+ ******************************************************************************/
+
+extern inline void * as_stream_source(const as_stream *);
+extern inline const int as_stream_free(as_stream *);
+extern inline const as_val * as_stream_read(const as_stream *);
+
+/******************************************************************************
+ * STATIC FUNCTIONS
+ ******************************************************************************/
+
+static const bool as_stream_iterator_has_next(const as_iterator *);
+static const as_val * as_stream_iterator_next(as_iterator *);
+static const int as_stream_iterator_free(as_iterator *);
+
+/******************************************************************************
+ * VARIABLES
+ ******************************************************************************/
+
+static const as_iterator_hooks as_stream_iterator_hooks = {
+    as_stream_iterator_has_next,
+    as_stream_iterator_next,
+    as_stream_iterator_free
+};
+
+/******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
 
 /**
  * Creates a new stream for a given source and hooks.
@@ -34,8 +62,6 @@ as_stream * as_stream_new(void * source, const as_stream_hooks * hooks) {
     s->hooks = hooks;
     return s;
 }
-
-
 
 /**
  * Creates an iterator from the stream
@@ -86,9 +112,3 @@ static const int as_stream_iterator_free(as_iterator * i) {
     free(i);
     return 0;
 }
-
-static const as_iterator_hooks as_stream_iterator_hooks = {
-    as_stream_iterator_has_next,
-    as_stream_iterator_next,
-    as_stream_iterator_free
-};
