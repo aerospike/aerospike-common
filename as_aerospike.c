@@ -9,6 +9,7 @@ extern inline int as_aerospike_init(as_aerospike * a, void * s, const as_aerospi
 extern inline int as_aerospike_free(as_aerospike * a);
 extern inline int as_aerospike_create(const as_aerospike * a, const as_rec * r);
 extern inline int as_aerospike_update(const as_aerospike * a, const as_rec * r);
+extern inline int as_aerospike_exists(const as_aerospike * a, const as_rec * r);
 extern inline int as_aerospike_remove(const as_aerospike * a, const as_rec * r);
 extern inline int as_aerospike_log(const as_aerospike * a, const char * name, const int line, const int lvl, const char * msg);
 
