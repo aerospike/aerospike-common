@@ -52,6 +52,10 @@ inline int as_aerospike_update(const as_aerospike * a, const as_rec * r) {
     return as_util_hook(update, 1, a, r);
 }
 
+inline int as_aerospike_exists(const as_aerospike * a, const as_rec * r) {
+    return as_util_hook(exists, 1, a, r);
+}
+
 inline int as_aerospike_remove(const as_aerospike * a, const as_rec * r) {
     return as_util_hook(remove, 1, a, r);
 }
