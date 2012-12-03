@@ -32,20 +32,30 @@ struct as_map_hooks_s {
  * FUNCTIONS
  ******************************************************************************/
 
-as_map * as_map_new(void *, const as_map_hooks *);
-
-int as_map_init(as_map * m, void *, const as_map_hooks *);
+int as_map_init(as_map *, void *, const as_map_hooks *);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline void * as_map_source(const as_map * m) {
-    return m->source;
+inline int as_map_destroy(as_map * m) {
+    m->source = NULL;
+    m->hooks = NULL;
+    return 0;
+}
+
+inline as_map * as_map_new(void * source, const as_map_hooks * hooks) {
+    as_map * m = (as_map *) malloc(sizeof(as_map));
+    as_map_init(m, source, hooks);
+    return m;
 }
 
 inline int as_map_free(as_map * m) {
     return as_util_hook(free, 1, m);
+}
+
+inline void * as_map_source(const as_map * m) {
+    return m->source;
 }
 
 inline int as_map_hash(as_map * m) {

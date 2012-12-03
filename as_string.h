@@ -3,6 +3,7 @@
 #include "as_util.h"
 #include "as_val.h"
 #include <sys/types.h>
+#include <string.h>
 
 /******************************************************************************
  * TYPES
@@ -20,19 +21,38 @@ struct as_string_s {
  * FUNCTIONS
  ******************************************************************************/
 
-as_string * as_string_new(char *);
-
 int as_string_init(as_string *, char *);
-
-int as_string_free(as_string *);
-
-char * as_string_tostring(const as_string *);
-
-size_t as_string_len(as_string *);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
+
+inline int as_string_destroy(as_string * s) {
+    free(s->value);
+    s->value = NULL;
+    s->len = 0;
+    return 0;
+}
+
+inline as_string * as_string_new(char * s) {
+    as_string * v = (as_string *) malloc(sizeof(as_string));
+    as_string_init(v, s);
+    return v;
+}
+
+inline int as_string_free(as_string * s) {
+    as_string_destroy(s);
+    free(s);
+    return 0;
+}
+
+inline char * as_string_tostring(const as_string * s) {
+    return (s ? s->value : NULL);
+}
+
+inline size_t as_string_len(as_string * s) {
+    return ( s && s->value ? ( s->len ? s->len : ( s->len = strlen(s->value) ) ) : 0 );
+}
 
 inline as_val * as_string_toval(const as_string * s) {
     return (as_val *)s;

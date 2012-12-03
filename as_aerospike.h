@@ -25,12 +25,6 @@ struct as_aerospike_hooks_s {
 };
 
 /******************************************************************************
- * FUNCTIONS
- ******************************************************************************/
-
-as_aerospike * as_aerospike_new(void *, const as_aerospike_hooks *);
-
-/******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
@@ -38,6 +32,19 @@ inline int as_aerospike_init(as_aerospike * a, void * s, const as_aerospike_hook
     a->source = s;
     a->hooks = h;
     return 0;
+}
+
+inline int as_aerospike_destroy(as_aerospike * a) {
+    a->source = NULL;
+    a->hooks = NULL;
+    return 0;
+}
+
+inline as_aerospike * as_aerospike_new(void * s, const as_aerospike_hooks * h) {
+    as_aerospike * a = (as_aerospike *) malloc(sizeof(as_aerospike));
+    a->source = s;
+    a->hooks = h;
+    return a;
 }
 
 inline int as_aerospike_free(as_aerospike * a) {

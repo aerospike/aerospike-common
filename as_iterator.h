@@ -29,22 +29,10 @@ struct as_iterator_s {
  * Provided functions that interface with the iterators.
  */
 struct as_iterator_hooks_s {
+    int (*free)(as_iterator *);
     const bool (*has_next)(const as_iterator *);
     const as_val * (*next)(as_iterator *);
-    const int (*free)(as_iterator *);
 };
-
-/******************************************************************************
- * FUNCTIONS
- ******************************************************************************/
-
-/**
- * Creates a new iterator for a given source and hooks.
- *
- * @param source the source feeding the iterator
- * @param hooks the hooks that interface with the source
- */
-as_iterator * as_iterator_new(const void *, const as_iterator_hooks *);
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -56,14 +44,23 @@ inline int as_iterator_init(as_iterator * i, const void * source, const as_itera
     return 0;
 }
 
+inline int as_iterator_destroy(as_iterator * i) {
+    i->source = NULL;
+    i->hooks = NULL;
+    return 0;
+}
+
 /**
- * Get the source for the iterator
+ * Creates a new iterator for a given source and hooks.
  *
- * @param iterator to get the source from
- * @return pointer to the source of the iterator
+ * @param source the source feeding the iterator
+ * @param hooks the hooks that interface with the source
  */
-inline const void * as_iterator_source(const as_iterator * i) {
-    return i->source;
+inline as_iterator * as_iterator_new(const void * source, const as_iterator_hooks * hooks) {
+    as_iterator * i = (as_iterator *) malloc(sizeof(as_iterator));
+    i->source = source;
+    i->hooks = hooks;
+    return i;
 }
 
 /**
@@ -74,8 +71,20 @@ inline const void * as_iterator_source(const as_iterator * i) {
  * @param i the iterator to free
  * @return 0 on success, otherwise 1.
  */
-inline const int as_iterator_free(as_iterator * i) {
-  return as_util_hook(free, 1, i);
+inline int as_iterator_free(as_iterator * i) {
+  int rc = as_util_hook(free, 1, i);
+  if ( !rc ) free(i);
+  return rc;
+}
+
+/**
+ * Get the source for the iterator
+ *
+ * @param iterator to get the source from
+ * @return pointer to the source of the iterator
+ */
+inline const void * as_iterator_source(const as_iterator * i) {
+    return i->source;
 }
 
 /**

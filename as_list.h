@@ -36,20 +36,30 @@ struct as_list_hooks_s {
  * FUNCTIONS
  ******************************************************************************/
 
-as_list * as_list_new(void *, const as_list_hooks *);
-
 int as_list_init(as_list *, void *, const as_list_hooks *);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline void * as_list_source(const as_list * l) {
-    return l->source;
+inline int as_list_destroy(as_list * l) {
+    l->source = NULL;
+    l->hooks = NULL;
+    return 0;
+}
+
+inline as_list * as_list_new(void * source, const as_list_hooks * hooks) {
+    as_list * l = (as_list *) malloc(sizeof(as_list));
+    as_list_init(l, source, hooks);
+    return l;
 }
 
 inline int as_list_free(as_list * l) {
     return as_util_hook(free, 1, l);
+}
+
+inline void * as_list_source(const as_list * l) {
+    return l->source;
 }
 
 inline uint32_t as_list_hash(as_list * l) {

@@ -40,23 +40,28 @@ struct as_rec_hooks_s {
  * FUNCTIONS
  ******************************************************************************/
 
-/**
- * Create a new record backed by source and supported by hooks.
- *
- * @param source the source backing the record.
- * @param hooks the hooks that support the record.
- */
-as_rec * as_rec_new(void *, const as_rec_hooks *);
-
 int as_rec_init(as_rec *, void *, const as_rec_hooks *);
-
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline void * as_rec_source(const as_rec * r) {
-    return (r ? r->source : NULL);
+inline int as_rec_destroy(as_rec * r) {
+    r->source = NULL;
+    r->hooks = NULL;
+    return 0;
+}
+
+/**
+ * Create a new as_rec backed by source and supported by hooks.
+ *
+ * @param source the source backing the as_rec.
+ * @param hooks the hooks that support the as_rec.
+ */
+inline as_rec * as_rec_new(void * source, const as_rec_hooks * hooks) {
+    as_rec * r = (as_rec *) malloc(sizeof(as_rec));
+    as_rec_init(r, source, hooks);
+    return r;
 }
 
 /**
@@ -69,6 +74,10 @@ inline void * as_rec_source(const as_rec * r) {
  */
 inline int as_rec_free(as_rec * r) {
     return as_util_hook(free, 1, r);
+}
+
+inline void * as_rec_source(const as_rec * r) {
+    return (r ? r->source : NULL);
 }
 
 inline uint32_t as_rec_hash(as_rec * r) {
