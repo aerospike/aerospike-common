@@ -5,19 +5,13 @@
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-extern inline int as_aerospike_init(as_aerospike * a, void * s, const as_aerospike_hooks * h);
-extern inline int as_aerospike_free(as_aerospike * a);
-extern inline int as_aerospike_create(const as_aerospike * a, const as_rec * r);
-extern inline int as_aerospike_update(const as_aerospike * a, const as_rec * r);
-extern inline int as_aerospike_remove(const as_aerospike * a, const as_rec * r);
-extern inline int as_aerospike_log(const as_aerospike * a, const char * name, const int line, const int lvl, const char * msg);
+extern inline int as_aerospike_init(as_aerospike *, void *, const as_aerospike_hooks *);
+extern inline int as_aerospike_destroy(as_aerospike *);
 
-/******************************************************************************
- * FUNCTIONS
- ******************************************************************************/
+extern inline as_aerospike * as_aerospike_new(void *, const as_aerospike_hooks *);
+extern inline int as_aerospike_free(as_aerospike *);
 
-as_aerospike * as_aerospike_new(void * source, const as_aerospike_hooks * hooks) {
-    as_aerospike * a = (as_aerospike *) malloc(sizeof(as_aerospike));
-    as_aerospike_init(a, source, hooks);
-    return a;
-}
+extern inline int as_aerospike_create(const as_aerospike *, const as_rec *);
+extern inline int as_aerospike_update(const as_aerospike *, const as_rec *);
+extern inline int as_aerospike_remove(const as_aerospike *, const as_rec *);
+extern inline int as_aerospike_log(const as_aerospike *, const char *, const int, const int, const char *);

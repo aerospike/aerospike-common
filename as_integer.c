@@ -7,6 +7,13 @@
  * INLINE FUNCTIONS
  ******************************************************************************/
 
+extern inline int as_integer_destroy(as_integer *);
+
+extern inline as_integer * as_integer_new(int64_t);
+extern inline int as_integer_free(as_integer *);
+
+extern inline int64_t as_integer_toint(const as_integer *);
+
 extern inline as_val * as_integer_toval(const as_integer *);
 extern inline as_integer * as_integer_fromval(const as_val *);
 
@@ -34,30 +41,10 @@ static const as_val AS_INTEGER_VAL = {
  * FUNCTIONS
  ******************************************************************************/
 
-as_integer * as_integer_new(int64_t i) {
-    as_integer * v = (as_integer *) malloc(sizeof(as_integer));
-    as_integer_init(v, i);
-    return v;
-}
-
 int as_integer_init(as_integer * v, int64_t i) {
     v->_ = AS_INTEGER_VAL;
     v->value = i;
     return 0;
-}
-
-int as_integer_free(as_integer * i) {
-    free(i);
-    return 0;
-}
-
-int as_integer_inc(as_integer * i) {
-    i->value = i->value + 1;
-    return 0;
-}
-
-int64_t as_integer_toint(const as_integer * i) {
-    return i->value;
 }
 
 static int as_integer_val_free(as_val * v) {

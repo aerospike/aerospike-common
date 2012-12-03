@@ -7,13 +7,19 @@
  * INLINE FUNCTIONS
  ******************************************************************************/
 
+extern inline int as_map_destroy(as_map *);
+
+extern inline as_map * as_map_new(void *, const as_map_hooks *);
+extern inline int as_map_free(as_map *);
+
 extern inline void * as_map_source(const as_map *);
-extern inline int as_map_free(as_map * m);
-extern inline int as_map_hash(as_map * m);
-extern inline uint32_t as_map_size(const as_map * m);
-extern inline as_val * as_map_get(const as_map * m, const as_val * k);
-extern inline int as_map_set(as_map * m, const as_val * k, const as_val * v);
-extern inline as_iterator * as_map_iterator(const as_map * m);
+
+extern inline int as_map_hash(as_map *);
+extern inline uint32_t as_map_size(const as_map *);
+extern inline as_val * as_map_get(const as_map *, const as_val *);
+extern inline int as_map_set(as_map *, const as_val *, const as_val *);
+extern inline as_iterator * as_map_iterator(const as_map *);
+
 extern inline as_val * as_map_toval(const as_map *);
 extern inline as_map * as_map_fromval(const as_val *);
 
@@ -40,12 +46,6 @@ static const as_val AS_MAP_VAL = {
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-
-as_map * as_map_new(void * source, const as_map_hooks * hooks) {
-    as_map * m = (as_map *) malloc(sizeof(as_map));
-    as_map_init(m, source, hooks);
-    return m;
-}
 
 int as_map_init(as_map * m, void * source, const as_map_hooks * hooks) {
     m->_ = AS_MAP_VAL;

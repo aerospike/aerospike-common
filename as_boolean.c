@@ -9,6 +9,14 @@ static const as_val AS_BOOLEAN_VAL;
  * INLINE FUNCTIONS
  ******************************************************************************/
 
+extern inline int as_boolean_destroy(as_boolean *);
+
+extern inline as_boolean * as_boolean_new(bool);
+extern inline int as_boolean_free(as_boolean *);
+
+extern inline uint32_t as_boolean_hash(const as_boolean *);
+
+extern inline bool as_boolean_tobool(const as_boolean *);
 extern inline as_val * as_boolean_toval(const as_boolean *);
 extern inline as_boolean * as_boolean_fromval(const as_val *);
 
@@ -36,29 +44,10 @@ static const as_val AS_BOOLEAN_VAL = {
  * FUNCTIONS
  ******************************************************************************/
 
-as_boolean * as_boolean_new(bool b) {
-    as_boolean * v = (as_boolean *) malloc(sizeof(as_boolean));
-    as_boolean_init(v,b);
-    return v;
-}
-
 int as_boolean_init(as_boolean * v, bool b) {
     v->_ = AS_BOOLEAN_VAL;
     v->value = b;
     return 0;
-}
-
-int as_boolean_free(as_boolean * b) {
-    free(b);
-    return 0;
-}
-
-uint32_t as_boolean_hash(const as_boolean * b) {
-    return b->value ? 1 : 0;
-}
-
-bool as_boolean_tobool(const as_boolean * b) {
-    return b->value;
 }
 
 static int as_boolean_val_free(as_val * v) {

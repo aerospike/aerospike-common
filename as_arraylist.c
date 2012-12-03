@@ -28,6 +28,7 @@ struct as_arraylist_iterator_source_s {
  ******************************************************************************/
 
 static int as_arraylist_free(as_list *);
+
 static uint32_t as_arraylist_hash(const as_list *);
 static uint32_t as_arraylist_size(const as_list *);
 static int as_arraylist_append(as_list *, as_val *);
