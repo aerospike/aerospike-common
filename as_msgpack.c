@@ -144,7 +144,7 @@ static int as_msgpack_integer_to_val(int64_t i, as_val ** v) {
 static int as_msgpack_string_to_val(msgpack_object_raw * r, as_val ** v) {
     char * s = (char *) malloc(sizeof(char) * (r->size + 1));
     memcpy(s, r->ptr, sizeof(char) * r->size);
-    s[r->size] = NULL;
+    s[r->size] = '\0';
     *v = (as_val *) as_string_new(s);
     return 0;
 }
