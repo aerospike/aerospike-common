@@ -25,6 +25,7 @@ struct as_map_hooks_s {
     uint32_t (* size)(const as_map *);
     int (* set)(as_map *, const as_val *, const as_val *);
     as_val * (* get)(const as_map *, const as_val *);
+    int (* empty)(as_map *);
     as_iterator * (*iterator)(const as_map *);
 };
 
@@ -72,6 +73,10 @@ inline as_val * as_map_get(const as_map * m, const as_val * k) {
 
 inline int as_map_set(as_map * m, const as_val * k, const as_val * v) {
     return as_util_hook(set, 1, m, k, v);
+}
+
+inline int as_map_empty(as_map * m) {
+    return as_util_hook(empty, 1, m);
 }
 
 inline as_iterator * as_map_iterator(const as_map * m) {
