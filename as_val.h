@@ -12,7 +12,7 @@ typedef struct as_val_s as_val;
 
 enum as_val_t {
     AS_UNKNOWN = 0,
-    AS_EMPTY,
+    AS_NIL,
     AS_BOOLEAN,
     AS_INTEGER,
     AS_STRING,
@@ -37,13 +37,7 @@ struct as_val_s {
 /**
  * Represents empty values. As in a value with no value.
  */
-const as_val as_empty = {
-    .type       = AS_EMPTY, 
-    .size       = 0,
-    .free       = NULL,
-    .hash       = NULL,
-    .tostring   = NULL
-}
+extern const as_val as_nil;
 
 /******************************************************************************
  * MACROS
