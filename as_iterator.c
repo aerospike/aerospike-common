@@ -5,10 +5,10 @@
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-extern inline int as_iterator_init(as_iterator *, const void *, const as_iterator_hooks *);
+extern inline int as_iterator_init(as_iterator *, void *, const as_iterator_hooks *);
 extern inline int as_iterator_destroy(as_iterator *);
 
-extern inline as_iterator * as_iterator_new(const void *, const as_iterator_hooks *);
+extern inline as_iterator * as_iterator_new(void *, const as_iterator_hooks *);
 extern inline int as_iterator_free(as_iterator *);
 
 extern inline const void * as_iterator_source(const as_iterator *);

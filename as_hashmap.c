@@ -28,12 +28,12 @@ static uint32_t as_hashmap_hash(const as_map *);
 static uint32_t as_hashmap_size(const as_map *);
 static int as_hashmap_set(as_map *, const as_val *, const as_val *);
 static as_val * as_hashmap_get(const as_map *, const as_val *);
-static int as_hashmap_empty(as_map *);
+static int as_hashmap_clear(as_map *);
 static as_iterator * as_hashmap_iterator(const as_map *);
 
+static const int as_hashmap_iterator_free(as_iterator *);
 static const bool as_hashmap_iterator_has_next(const as_iterator *);
 static const as_val * as_hashmap_iterator_next(as_iterator *);
-static const int as_hashmap_iterator_free(as_iterator *);
 
 /******************************************************************************
  * VARIABLES
@@ -45,13 +45,14 @@ static const as_map_hooks as_hashmap_hooks = {
     .size       = as_hashmap_size,
     .set        = as_hashmap_set,
     .get        = as_hashmap_get,
+    .clear      = as_hashmap_clear,
     .iterator   = as_hashmap_iterator
 };
 
 static const as_iterator_hooks as_hashmap_iterator_hooks = {
+    .free       = as_hashmap_iterator_free,
     .has_next   = as_hashmap_iterator_has_next,
-    .next       = as_hashmap_iterator_next,
-    .free       = as_hashmap_iterator_free
+    .next       = as_hashmap_iterator_next
 };
 
 /******************************************************************************
@@ -105,8 +106,9 @@ static as_val * as_hashmap_get(const as_map * m, const as_val * k) {
     return as_pair_2(p);
 }
 
-static int as_hashmap_empty(as_map * m) {
-    // TODO: clear all elements from shash
+static int as_hashmap_clear(as_map * m) {
+    shash * t = (shash *) m->source;
+    shash_deleteall_lockfree(t);
     return 0;
 }
 

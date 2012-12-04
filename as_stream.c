@@ -38,18 +38,18 @@ extern inline const as_val * as_stream_read(const as_stream *);
  * STATIC FUNCTIONS
  ******************************************************************************/
 
+static const int as_stream_iterator_free(as_iterator *);
 static const bool as_stream_iterator_has_next(const as_iterator *);
 static const as_val * as_stream_iterator_next(as_iterator *);
-static const int as_stream_iterator_free(as_iterator *);
 
 /******************************************************************************
  * VARIABLES
  ******************************************************************************/
 
 static const as_iterator_hooks as_stream_iterator_hooks = {
-    as_stream_iterator_has_next,
-    as_stream_iterator_next,
-    as_stream_iterator_free
+    .free       = as_stream_iterator_free,
+    .has_next   = as_stream_iterator_has_next,
+    .next       = as_stream_iterator_next
 };
 
 /******************************************************************************

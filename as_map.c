@@ -18,6 +18,7 @@ extern inline int as_map_hash(as_map *);
 extern inline uint32_t as_map_size(const as_map *);
 extern inline as_val * as_map_get(const as_map *, const as_val *);
 extern inline int as_map_set(as_map *, const as_val *, const as_val *);
+extern inline int as_map_clear(as_map *);
 extern inline as_iterator * as_map_iterator(const as_map *);
 
 extern inline as_val * as_map_toval(const as_map *);

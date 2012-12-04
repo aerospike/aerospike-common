@@ -39,9 +39,9 @@ static as_val * as_arraylist_head(const as_list *);
 static as_list * as_arraylist_tail(const as_list *);
 static as_iterator * as_arraylist_iterator(const as_list *);
 
+static const int as_arraylist_iterator_free(as_iterator *);
 static const bool as_arraylist_iterator_has_next(const as_iterator *);
 static const as_val * as_arraylist_iterator_next(as_iterator *);
-static const int as_arraylist_iterator_free(as_iterator *);
 
 /******************************************************************************
  * VARIABLES
@@ -61,9 +61,9 @@ static const as_list_hooks as_arraylist_hooks = {
 };
 
 static const as_iterator_hooks as_arraylist_iterator_hooks = {
+    .free       = as_arraylist_iterator_free,
     .has_next   = as_arraylist_iterator_has_next,
-    .next       = as_arraylist_iterator_next,
-    .free       = as_arraylist_iterator_free
+    .next       = as_arraylist_iterator_next
 };
 
 /******************************************************************************
