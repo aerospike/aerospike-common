@@ -20,7 +20,7 @@ typedef struct as_iterator_hooks_s as_iterator_hooks;
  * @field hooks the interface to the source
  */
 struct as_iterator_s {
-    const void * source;
+    void * source;
     const as_iterator_hooks * hooks;
 };
 
@@ -29,7 +29,7 @@ struct as_iterator_s {
  * Provided functions that interface with the iterators.
  */
 struct as_iterator_hooks_s {
-    int (*free)(as_iterator *);
+    const int (*free)(as_iterator *);
     const bool (*has_next)(const as_iterator *);
     const as_val * (*next)(as_iterator *);
 };
@@ -38,7 +38,7 @@ struct as_iterator_hooks_s {
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline int as_iterator_init(as_iterator * i, const void * source, const as_iterator_hooks * hooks) {
+inline int as_iterator_init(as_iterator * i, void * source, const as_iterator_hooks * hooks) {
     i->source = source;
     i->hooks = hooks;
     return 0;
@@ -56,7 +56,7 @@ inline int as_iterator_destroy(as_iterator * i) {
  * @param source the source feeding the iterator
  * @param hooks the hooks that interface with the source
  */
-inline as_iterator * as_iterator_new(const void * source, const as_iterator_hooks * hooks) {
+inline as_iterator * as_iterator_new(void * source, const as_iterator_hooks * hooks) {
     as_iterator * i = (as_iterator *) malloc(sizeof(as_iterator));
     i->source = source;
     i->hooks = hooks;
