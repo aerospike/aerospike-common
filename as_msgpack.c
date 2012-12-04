@@ -15,9 +15,16 @@ static int as_msgpack_pack_rec(msgpack_packer *, as_rec *);
 static int as_msgpack_pack_pair(msgpack_packer *, as_pair *);
 static int as_msgpack_pack_val(msgpack_packer *, as_val *);
 
+static int as_msgpack_boolean_to_val(bool, as_val **);
+static int as_msgpack_integer_to_val(int64_t, as_val **);
+static int as_msgpack_string_to_val(msgpack_object_raw *, as_val **);
+static int as_msgpack_array_to_val(msgpack_object_array *, as_val **);
+static int as_msgpack_map_to_val(msgpack_object_map *, as_val **);
+static int as_msgpack_object_to_val(msgpack_object *, as_val **);
+
 static int as_msgpack_free(as_serializer *);
-static int as_msgpack_serialize(as_serializer * s, as_val * v, as_buffer * buff);
-static int as_msgpack_deserialize(as_serializer * s, as_buffer * buff, as_val ** v);
+static int as_msgpack_serialize(as_serializer *, as_val *, as_buffer *);
+static int as_msgpack_deserialize(as_serializer *, as_buffer *, as_val **);
 
 /******************************************************************************
  * VARIABLES
@@ -123,6 +130,74 @@ static int as_msgpack_pack_val(msgpack_packer * pk, as_val * v) {
     }
 }
 
+
+static int as_msgpack_boolean_to_val(bool b, as_val ** v) {
+    *v = (as_val *) as_boolean_new(b);
+    return 0;
+}
+
+static int as_msgpack_integer_to_val(int64_t i, as_val ** v) {
+    *v = (as_val *) as_integer_new(i);
+    return 0;
+}
+
+static int as_msgpack_string_to_val(msgpack_object_raw * r, as_val ** v) {
+    char * s = (char *) malloc(sizeof(char) * r->size);
+    memcpy(s, r->ptr, sizeof(char) * r->size);
+    *v = (as_val *) as_string_new(s);
+    return 0;
+}
+
+static int as_msgpack_array_to_val(msgpack_object_array * a, as_val ** v) {
+    as_list * l = as_arraylist_new(a->size,0);
+    for ( int i = 0; i < a->size; i++) {
+        msgpack_object * o = a->ptr + i;
+        as_val * val = NULL;
+        as_msgpack_object_to_val(o, &val);
+        if ( val != NULL ) {
+            as_list_append(l, val);
+        }
+    }
+    *v = (as_val *) l;
+    return 0;
+}
+
+static int as_msgpack_map_to_val(msgpack_object_map * o, as_val ** v) {
+    as_map * m = as_hashmap_new(o->size);
+    for ( int i = 0; i < o->size; i++) {
+        msgpack_object_kv * kv = o->ptr + i;
+        as_val * key = NULL;
+        as_val * val = NULL;
+        as_msgpack_object_to_val(&kv->key, &key);
+        as_msgpack_object_to_val(&kv->val, &val);
+        if ( key != NULL && val != NULL ) {
+            as_map_set(m, key, val);
+        }
+    }
+    *v = (as_val *) m;
+    return 0;
+}
+
+static int as_msgpack_object_to_val(msgpack_object * object, as_val ** val) {
+    if ( object == NULL ) return 1;
+    switch( object->type ) {
+        case MSGPACK_OBJECT_BOOLEAN             : return as_msgpack_boolean_to_val  (object->via.boolean, val);
+        case MSGPACK_OBJECT_POSITIVE_INTEGER    : return as_msgpack_integer_to_val  ((int64_t) object->via.u64, val);
+        case MSGPACK_OBJECT_NEGATIVE_INTEGER    : return as_msgpack_integer_to_val  ((int64_t) object->via.i64, val);
+        case MSGPACK_OBJECT_RAW                 : return as_msgpack_string_to_val   (&object->via.raw, val);
+        case MSGPACK_OBJECT_ARRAY               : return as_msgpack_array_to_val    (&object->via.array, val);
+        case MSGPACK_OBJECT_MAP                 : return as_msgpack_map_to_val      (&object->via.map, val);
+        // case MSGPACK_OBJECT_POSITIVE_INTEGER    : {
+            // The assumption is that uint is used as an identifier for a specific type of object.
+            // So we will read the uint and baed on the value, deserialize to that object.        
+            // case AS_REC     : return as_msgpack_unpack_rec      (buff, msg, offset, (as_rec **) v);
+            // case AS_PAIR    : return as_msgpack_unpack_pair     (buff, msg, offset, (as_pair **) v);
+        // }
+        default                                 : return 2;
+    }
+}
+
+
 static int as_msgpack_free(as_serializer * s) {
     return 0;
 }
@@ -140,12 +215,19 @@ static int as_msgpack_serialize(as_serializer * s, as_val * v, as_buffer * buff)
     buff->size = sbuf.size;
     buff->capacity = sbuf.alloc;
 
-    // sbuf.data = NULL;
-    // msgpack_sbuffer_destroy(&sbuf);
     return 0;
 }
 
-
 static int as_msgpack_deserialize(as_serializer * s, as_buffer * buff, as_val ** v) {
+    msgpack_unpacked msg;
+    msgpack_unpacked_init(&msg);
+
+    size_t offset = 0;
+
+    if ( msgpack_unpack_next(&msg, buff->data, buff->size, &offset) ) {
+        as_msgpack_object_to_val(&msg.data, v);
+    }
+
+    msgpack_unpacked_destroy(&msg);
     return 0;
 }
