@@ -31,6 +31,21 @@ struct as_val_s {
 };
 
 /******************************************************************************
+ * VARIABLES
+ ******************************************************************************/
+
+/**
+ * Represents empty values. As in a value with no value.
+ */
+const as_val as_empty = {
+    .type       = AS_EMPTY, 
+    .size       = 0,
+    .free       = NULL,
+    .hash       = NULL,
+    .tostring   = NULL
+}
+
+/******************************************************************************
  * MACROS
  ******************************************************************************/
 
@@ -38,7 +53,7 @@ struct as_val_s {
     (v && ((as_val *)v)->free ? ((as_val *)v)->free((as_val *)v) : 1)
 
 #define as_val_type(v) \
-    (v && ((as_val *)v)->free ? ((as_val *)v)->type : AS_UNKNOWN)
+    (v && ((as_val *)v)->type ? ((as_val *)v)->type : AS_UNKNOWN)
 
 #define as_val_hash(v) \
     (v && ((as_val *)v)->hash ? ((as_val *)v)->hash((as_val *)v) : 0)
