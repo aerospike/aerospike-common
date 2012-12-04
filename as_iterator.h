@@ -72,9 +72,7 @@ inline as_iterator * as_iterator_new(const void * source, const as_iterator_hook
  * @return 0 on success, otherwise 1.
  */
 inline int as_iterator_free(as_iterator * i) {
-  int rc = as_util_hook(free, 1, i);
-  if ( !rc ) free(i);
-  return rc;
+    return as_util_hook(free, 1, i);
 }
 
 /**
