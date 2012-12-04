@@ -28,6 +28,7 @@ static uint32_t as_hashmap_hash(const as_map *);
 static uint32_t as_hashmap_size(const as_map *);
 static int as_hashmap_set(as_map *, const as_val *, const as_val *);
 static as_val * as_hashmap_get(const as_map *, const as_val *);
+static int as_hashmap_empty(as_map *);
 static as_iterator * as_hashmap_iterator(const as_map *);
 
 static const bool as_hashmap_iterator_has_next(const as_iterator *);
@@ -102,6 +103,11 @@ static as_val * as_hashmap_get(const as_map * m, const as_val * k) {
     }
 
     return as_pair_2(p);
+}
+
+static int as_hashmap_empty(as_map * m) {
+    // TODO: clear all elements from shash
+    return 0;
 }
 
 static as_iterator * as_hashmap_iterator(const as_map * m) {
