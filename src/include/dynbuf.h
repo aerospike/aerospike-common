@@ -67,4 +67,5 @@ extern int cf_buf_builder_append_uint16(cf_buf_builder **bb_r, uint16_t i);
 extern int cf_buf_builder_append_uint8(cf_buf_builder **bb_r, uint8_t i);
 // reserve the bytes and give me the handle to the spot reserved
 extern int cf_buf_builder_reserve(cf_buf_builder **bb_r, int sz, uint8_t **buf);
+extern size_t cf_dyn_buf_get_newsize(int alloc, int used, int requested);
 

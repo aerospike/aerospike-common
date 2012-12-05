@@ -13,6 +13,29 @@
 #include "cf.h"
 
 #include "asm/byteorder.h"
+
+//
+// Function which return new size
+size_t
+cf_dyn_buf_get_newsize(int alloc, int used, int requested) 
+{
+	if (alloc - used > requested)  return alloc;
+	
+	size_t new_sz = alloc + requested + sizeof(cf_buf_builder);
+	int backoff;
+	if (new_sz < (1024 * 8))
+		backoff = 1024;
+	else if (new_sz < (1024 * 32))
+		backoff = (1024 * 4);
+	else if (new_sz < (1024 * 128))
+		backoff = (1024 * 32);
+	else
+		backoff = (1024 * 256);
+	new_sz = new_sz + (backoff - (new_sz % backoff));
+	return new_sz;
+}
+
+
 //
 // Make sure the buf has enough bytes for whatever you're up to
 
@@ -20,21 +43,8 @@ int
 cf_dyn_buf_reserve(cf_dyn_buf *db, size_t	sz)
 {
 	// see if we need more space
-	if ( db->alloc_sz - db->used_sz < sz ) {
-
-		size_t new_sz = db->alloc_sz + sz;
-		int backoff;
-		if (new_sz < (1024 * 8))
-			backoff = 1024;
-		else if (new_sz < (1024 * 32))
-			backoff = (1024 * 4);
-		else if (new_sz < (1024 * 128))
-			backoff = (1024 * 32);
-		else
-			backoff = (1024 * 256);
-		
-		new_sz = new_sz + (backoff - (new_sz % backoff));
-
+	size_t new_sz = cf_dyn_buf_get_newsize(db->alloc_sz, db->used_sz, sz);
+	if (new_sz > db->alloc_sz) {
 		uint8_t	*_t;
 		if (db->is_stack) {
 			_t = cf_malloc(new_sz);
@@ -161,21 +171,8 @@ cf_buf_builder_reserve_internal(cf_buf_builder **bb_r, size_t	sz)
 	cf_buf_builder *bb = *bb_r;
 	
 	// see if we need more space
-	if ( bb->alloc_sz - bb->used_sz < sz ) {
-
-		size_t new_sz = bb->alloc_sz + sz + sizeof(cf_buf_builder);
-		int backoff;
-		if (new_sz < (1024 * 8))
-			backoff = 1024;
-		else if (new_sz < (1024 * 32))
-			backoff = (1024 * 4);
-		else if (new_sz < (1024 * 128))
-			backoff = (1024 * 32);
-		else
-			backoff = (1024 * 256);
-		
-		new_sz = new_sz + (backoff - (new_sz % backoff));
-
+	size_t new_sz = cf_dyn_buf_get_newsize(bb->alloc_sz, bb->used_sz, sz);
+	if (new_sz > bb->alloc_sz) {
 		bb = cf_realloc(bb, new_sz);
 		if (!bb)	return(-1);
 		bb->alloc_sz = new_sz - sizeof(cf_buf_builder);
