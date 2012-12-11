@@ -1197,7 +1197,7 @@ void * cf_rc_alloc_at(size_t sz, char *file, int line)
 
 #ifdef MEM_COUNT
 	// Track the calling program location.
-	addr = cf_malloc_count(asz, file, line);
+	addr = cf_malloc_at(asz, file, line);
 #else
 	addr = cf_malloc(asz);
 #endif
@@ -1244,7 +1244,7 @@ void cf_rc_free_at(void *addr, char *file, int line)
 #endif		
 	
 #ifdef MEM_COUNT
-	cf_free_count((void *)hdr, file, line);
+	cf_free_at((void *)hdr, file, line);
 #else
 	cf_free((void *)hdr);
 #endif
