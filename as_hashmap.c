@@ -1,7 +1,7 @@
 #include "as_hashmap.h"
 #include "as_string.h"
 #include "as_pair.h"
-#include "shash.h"
+#include "cf_shash.h"
 #include <stdlib.h>
 
 /******************************************************************************
