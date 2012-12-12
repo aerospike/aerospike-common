@@ -14,3 +14,4 @@
  */
 as_list * as_arraylist_new(uint32_t, uint32_t);
 
+int as_arraylist_init(as_list *, uint32_t, uint32_t);
