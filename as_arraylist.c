@@ -70,14 +70,24 @@ static const as_iterator_hooks as_arraylist_iterator_hooks = {
  * FUNCTIONS
  ******************************************************************************/
 
+int as_arraylist_init(as_list * l, uint32_t capacity, uint32_t block_size) {
+    as_arraylist * a = (as_arraylist *) malloc(sizeof(as_arraylist));
+    a->elements = (as_val **) malloc(sizeof(as_val *) * capacity);
+    a->size = 0;
+    a->capacity = capacity;
+    a->block_size = block_size;
+    a->shadow = false;
+    return as_list_init(l, a, &as_arraylist_hooks);
+}
+
 as_list * as_arraylist_new(uint32_t capacity, uint32_t block_size) {
-    as_arraylist * l = (as_arraylist *) malloc(sizeof(as_arraylist));
-    l->elements = (as_val **) malloc(sizeof(as_val *) * capacity);
-    l->size = 0;
-    l->capacity = capacity;
-    l->block_size = block_size;
-    l->shadow = false;
-    return as_list_new(l, &as_arraylist_hooks);
+    as_arraylist * a = (as_arraylist *) malloc(sizeof(as_arraylist));
+    a->elements = (as_val **) malloc(sizeof(as_val *) * capacity);
+    a->size = 0;
+    a->capacity = capacity;
+    a->block_size = block_size;
+    a->shadow = false;
+    return as_list_new(a, &as_arraylist_hooks);
 }
 
 static int as_arraylist_free(as_list * l) {
