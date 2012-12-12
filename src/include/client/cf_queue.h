@@ -9,6 +9,10 @@
 /**
  * Custome allocation size for clients
  */
+
+#ifdef CF_QUEUE_ALLOCSZ
+#undef CF_QUEUE_ALLOCSZ
+#endif
 #define CF_QUEUE_ALLOCSZ 64
 
 #include "../cf_queue.h"

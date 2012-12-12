@@ -58,6 +58,7 @@ CLIENT += cf_vector.o
 
 SHARED =
 SHARED += cf_b64.o
+SHARED += cf_bits.o
 SHARED += cf_clock.o
 SHARED += cf_digest.o
 SHARED += cf_ll.o
@@ -83,15 +84,17 @@ libcf-client.a: $(call objects, $(CLIENT), client) | $(TARGET_LIB)
 libcf-server.a: $(call objects, $(SERVER), server) | $(TARGET_LIB)
 	$(call archive, $(empty), $(empty), $(empty), $(empty))
 
-libcf.a: libcf-client.a libcf-server.a
+libcf-shared.a: $(call objects, $(SHARED), shared) | $(TARGET_LIB)
+	$(call archive, $(empty), $(empty), $(empty), $(empty))
 
-prepare: 
-	mkdir -p $(TARGET_INCL)/client/citrusleaf
-	cp $(SOURCE_INCL)/client/*.h $(TARGET_INCL)/client/citrusleaf/.
-	cp $(SOURCE_INCL)/*.h $(TARGET_INCL)/client/.
+libcf.a: libcf-client.a libcf-server.a libcf-shared.a
+
+prepare:
+	mkdir -p $(TARGET_INCL)
+	cp $(SOURCE_INCL)/*.h $(TARGET_INCL)/.
+	mkdir -p $(TARGET_INCL)/citrusleaf
+	cp $(SOURCE_INCL)/client/*.h $(TARGET_INCL)/citrusleaf/.
 	mkdir -p $(TARGET_INCL)/server
 	cp $(SOURCE_INCL)/server/*.h $(TARGET_INCL)/server/.
-	mkdir -p $(TARGET_INCL)/shared
-	cp $(SOURCE_INCL)/*.h $(TARGET_INCL)/shared/.
 
 all: libcf.a prepare

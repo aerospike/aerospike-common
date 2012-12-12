@@ -585,3 +585,104 @@ Done:
 int cf_queue_delete_all(cf_queue *q) {
 	return cf_queue_delete(q, NULL, false);
 }
+
+#define TEST1_SZ 400
+#define TEST1_INTERVAL 10
+
+void *
+cf_queue_test_1_write(void *arg)
+{
+	cf_queue *q = (cf_queue *) arg;
+
+	for (int i=0; i<TEST1_SZ;i++) {
+
+		usleep(TEST1_INTERVAL * 1000);
+
+		int rv;
+		rv = cf_queue_push(q, &i);
+		if (0 != rv) {
+			fprintf(stderr, "queue push failed: error %d",rv);
+			return((void *)-1);
+		}
+	}
+
+	return((void *)0);
+
+}	
+
+void *
+cf_queue_test_1_read(void *arg)
+{
+	cf_queue *q = (cf_queue *) arg;
+
+	for (int i=0;i<TEST1_SZ;i++) {
+
+		// sleep twice as long as the inserter, to test overflow
+		usleep(TEST1_INTERVAL * 1000 * 2);
+
+		int  v = -1;
+		int rv = cf_queue_pop(q, &v, CF_QUEUE_FOREVER);
+		if (rv != CF_QUEUE_OK) {
+			fprintf(stderr, "cf_queue_test1: pop error %d",rv);
+			return((void *) -1);
+		}
+		if (v != i) {
+			fprintf(stderr, "cf_queue_test1: pop value error: %d should be %d",v,i);
+			return((void *) -1);
+		}
+
+	}
+	return((void *) 0);	
+}
+
+
+int
+cf_queue_test_1()
+{
+	pthread_t 	write_th;
+	pthread_t     read_th;
+	cf_queue    *q;
+
+	q = cf_queue_create(sizeof(int), true);
+
+	pthread_create( & write_th, 0, cf_queue_test_1_write, q);
+
+	pthread_create( & read_th, 0, cf_queue_test_1_read, q);
+
+	void *th_return;
+
+	if (0 != pthread_join(write_th, &th_return)) {
+		fprintf(stderr, "queue test 1: could not join1 %d\n",errno);
+		return(-1);
+	}
+
+	if (0 != th_return) {
+		fprintf(stderr, "queue test 1: returned error %p\n",th_return);
+		return(-1);
+	}
+
+	if (0 != pthread_join(read_th, &th_return)) {
+		fprintf(stderr, "queue test 1: could not join2 %d\n",errno);
+		return(-1);
+	}
+
+	if (0 != th_return) {
+		fprintf(stderr, "queue test 1: returned error 2 %p\n",th_return);
+		return(-1);
+	}
+
+	cf_queue_destroy(q);
+
+	return(0);
+}
+
+int
+cf_queue_test()
+{
+	if (0 != cf_queue_test_1()) {
+		fprintf(stderr, "CF QUEUE TEST ONE FAILED\n");
+		return(-1);
+	}
+
+	return(0);
+}

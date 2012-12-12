@@ -1,5 +1,6 @@
 #pragma once
 #include "../cf_queue.h"
+#include "queue_priority.h"
 
 #ifdef CF_QUEUE_ALLOCSZ
 #undef CF_QUEUE_ALLOCSZ
