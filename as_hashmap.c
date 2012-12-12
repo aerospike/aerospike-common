@@ -124,16 +124,21 @@ static as_iterator * as_hashmap_iterator(const as_map * m) {
 }
 
 static const bool as_hashmap_iterator_seek(as_hashmap_iterator_source * source) {
-    
-    if ( source->pos >= source->size ) return false;
 
-    if ( source->curr ) return true;
+    // We no longer have slots in the table
+    if ( source->pos > source->size ) return false;
 
-    if ( source->next ) {
+    // If curr is set, that means we have a value ready to be read.
+    if ( source->curr != NULL ) return true;
+
+    // If next is set, that means we have something to iterate to.
+    if ( source->next != NULL ) {
         if ( source->next->in_use ) {
             source->curr = source->next;
             source->next = source->curr->next;
-            if ( !source->next ) source->pos++;
+            if ( !source->next ) {
+                source->pos++;
+            }
             return true;
         }
         else {
@@ -142,12 +147,30 @@ static const bool as_hashmap_iterator_seek(as_hashmap_iterator_source * source) 
         }
     }
 
+    // Iterate over the slots in the table
     for( ; source->pos < source->size; source->pos++ ) {
+
+        // Get the bucket in the current slot
         source->curr = (shash_elem *) (((byte *) source->h->table) + (SHASH_ELEM_SZ(source->h) * source->pos));
+
+        // If the bucket has a value, then return true
         if ( source->curr && source->curr->in_use ) {
+
+            shash *         h   = source->h;
+            shash_elem *    e   = source->curr;
+            as_pair **      p   = (as_pair **) SHASH_ELEM_VALUE_PTR(h, e);
+
+            // we set next, so we have the next item in the bucket
             source->next = source->curr->next;
+
+            // if next is empty, then we will move to the next bucket
             if ( !source->next ) source->pos++;
+
             return true;
+        }
+        else {
+            source->curr = NULL;
+            source->next = NULL;
         }
     }
     
@@ -164,7 +187,7 @@ static const bool as_hashmap_iterator_has_next(const as_iterator * i) {
 
 static const as_val * as_hashmap_iterator_next(as_iterator * i) {
     as_hashmap_iterator_source * source = (as_hashmap_iterator_source *) as_iterator_source(i);
-    
+
     if ( !as_hashmap_iterator_seek(source) ) return NULL;
 
     shash *         h   = source->h;
@@ -172,7 +195,7 @@ static const as_val * as_hashmap_iterator_next(as_iterator * i) {
     as_pair **      p   = (as_pair **) SHASH_ELEM_VALUE_PTR(h, e);
     
     source->curr = NULL; // consume the value, so we can get the next one.
-
+    
     return (as_val *) *p;
 }
 
