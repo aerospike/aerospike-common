@@ -155,11 +155,7 @@ static const bool as_hashmap_iterator_seek(as_hashmap_iterator_source * source) 
 
         // If the bucket has a value, then return true
         if ( source->curr && source->curr->in_use ) {
-
-            shash *         h   = source->h;
-            shash_elem *    e   = source->curr;
-            as_pair **      p   = (as_pair **) SHASH_ELEM_VALUE_PTR(h, e);
-
+            
             // we set next, so we have the next item in the bucket
             source->next = source->curr->next;
 
