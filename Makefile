@@ -1,6 +1,7 @@
 include project/build.makefile
 
-CFLAGS = -std=gnu99 -g -O3 -fno-common -fno-strict-aliasing -rdynamic  -Wall $(AS_CFLAGS) -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D_GNU_SOURCE 
+CFLAGS = -std=gnu99 -g -O3 -fPIC -fno-common -fno-strict-aliasing -rdynamic  -Wall $(AS_CFLAGS) -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D_GNU_SOURCE 
+LDFLAGS += -fPIC
 
 SERVER = 
 SERVER += alloc.o
