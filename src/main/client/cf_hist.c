@@ -7,6 +7,7 @@
  *  ABOVE DOES NOT EVIDENCE ANY ACTUAL OR INTENDED PUBLICATION.
  */
 #include "client/cf_hist.h"
+#include "client/cf_bits.h"
 #include "client/cf_clock.h"
 #include "client/cf_atomic.h"
 #include "client/cf_log_internal.h"
@@ -18,27 +19,6 @@
 #include <time.h>
 #include <inttypes.h>
 #include <unistd.h>
-
-
-int cf_bits_find_last_set(uint32_t v) {
-
-	int r;
-	uint32_t t, tt;
-	
-	if ((tt = v >> 16))
-		r = (t = tt >> 8) ? (24 + cf_LogTable256[t]) : (16 + cf_LogTable256[tt]);
-	else
-		r = (t = v >> 8) ? (8 + cf_LogTable256[t]) : cf_LogTable256[v];
-	return (r);
-}
-
-int cf_bits_find_last_set_64(uint64_t v) {
-	uint64_t t;
-	if ((t = v >> 32))
-		return( cf_bits_find_last_set(t) + 32 );
-	else
-		return( cf_bits_find_last_set(v) );
-}
 
 
 cf_histogram * cf_histogram_create(char *name) {
