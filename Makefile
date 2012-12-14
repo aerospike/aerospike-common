@@ -73,12 +73,6 @@ ifeq ($(MEM_COUNT),1)
 endif
 
 
-# $(TARGET_OBJ)/client/%.o: $(SOURCE_MAIN)/client/%.c | $(TARGET_OBJ)
-# 	$(call object, src/include/client)
-
-# $(TARGET_OBJ)/server/%.o: $(SOURCE_MAIN)/server/%.c | $(TARGET_OBJ) 
-# 	$(call object, src/include/server)
-
 libcf-client.a: $(call objects, $(CLIENT), client) | $(TARGET_LIB)
 	$(call archive, $(empty), $(empty), $(empty), $(empty))
 
