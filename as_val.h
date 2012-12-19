@@ -11,15 +11,15 @@ typedef enum as_val_t as_val_t;
 typedef struct as_val_s as_val;
 
 enum as_val_t {
-    AS_UNKNOWN = 0,
-    AS_NIL,
-    AS_BOOLEAN,
-    AS_INTEGER,
-    AS_STRING,
-    AS_LIST,
-    AS_MAP,
-    AS_REC,
-    AS_PAIR
+    AS_UNKNOWN      = 0,
+    AS_NIL          = 1,
+    AS_BOOLEAN      = 2,
+    AS_INTEGER      = 3,
+    AS_STRING       = 4,
+    AS_LIST         = 5,
+    AS_MAP          = 6,
+    AS_REC          = 7,
+    AS_PAIR         = 8
 };
 
 struct as_val_s {
