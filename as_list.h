@@ -29,6 +29,8 @@ struct as_list_hooks_s {
     int (* set)(as_list *, const uint32_t, as_val *);
     as_val * (* head)(const as_list *);
     as_list * (* tail)(const as_list *);
+    as_list * (* drop)(const as_list *, uint32_t);
+    as_list * (* take)(const as_list *, uint32_t);
     as_iterator * (* iterator)(const as_list *);
 };
 
@@ -92,6 +94,14 @@ inline as_val * as_list_head(const as_list * l) {
 
 inline as_list * as_list_tail(const as_list * l) {
     return as_util_hook(tail, NULL, l);
+}
+
+inline as_list * as_list_drop(const as_list * l, uint32_t n) {
+    return as_util_hook(drop, NULL, l, n);
+}
+
+inline as_list * as_list_take(const as_list * l, uint32_t n) {
+    return as_util_hook(take, NULL, l, n);
 }
 
 inline as_iterator * as_list_iterator(const as_list * l) {
