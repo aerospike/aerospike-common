@@ -31,6 +31,8 @@ static as_val * as_linkedlist_get(const as_list *, const uint32_t);
 static int as_linkedlist_set(as_list *, const uint32_t, as_val *);
 static as_val * as_linkedlist_head(const as_list *);
 static as_list * as_linkedlist_tail(const as_list *);
+static as_list * as_linkedlist_drop(const as_list *, uint32_t n);
+static as_list * as_linkedlist_take(const as_list *, uint32_t n);
 static as_iterator * as_linkedlist_iterator(const as_list *);
 
 static as_list * as_linkedlist_last(as_list *);
@@ -53,6 +55,8 @@ static const as_list_hooks as_linkedlist_hooks = {
     .set        = as_linkedlist_set,
     .head       = as_linkedlist_head,
     .tail       = as_linkedlist_tail,
+    .drop       = as_linkedlist_drop,
+    .take       = as_linkedlist_take,
     .iterator   = as_linkedlist_iterator
 };
 
@@ -148,6 +152,29 @@ static as_val * as_linkedlist_head(const as_list * l) {
 static as_list * as_linkedlist_tail(const as_list * l) {
     as_linkedlist * ll  = (as_linkedlist *) as_list_source(l);
     return ll->tail;
+}
+
+static as_list * as_linkedlist_drop(const as_list * l, uint32_t n) {
+    as_list * sub = as_linkedlist_new(NULL,NULL);
+    as_list * p = (as_list *) l;
+    for (int i = 0; p && i < n; i++ ) {
+        p = as_linkedlist_tail(p);
+    }
+    while ( p ) {
+        as_list_append(sub, as_linkedlist_head(p));
+        p = as_linkedlist_tail(p);
+    }
+    return sub;
+}
+
+static as_list * as_linkedlist_take(const as_list * l, uint32_t n) {
+    as_list * sub = as_linkedlist_new(NULL,NULL);
+    as_list * p = (as_list *) l;
+    for (int i = 0; p && i < n; i++ ) {
+        as_list_append(sub, as_linkedlist_head(p));
+        p = as_linkedlist_tail(p);
+    }
+    return sub;
 }
 
 static as_list * as_linkedlist_last(as_list * l) {
