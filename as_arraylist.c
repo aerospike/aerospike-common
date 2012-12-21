@@ -189,18 +189,13 @@ static as_list * as_arraylist_drop(const as_list * l, uint32_t n) {
 
     as_arraylist * sup  = (as_arraylist *) as_list_source(l);
 
-    if ( sup->size == 0 ) return NULL;
+    uint32_t sz = as_list_size((as_list *)l);
+    uint32_t c = n < sz ? n : sz;
 
-    uint32_t c = n < sup->size ? n : sup->size;
-
-    as_list * sub = as_arraylist_new(c, sup->block_size);
-    as_arraylist * ssub = as_list_source(sub);
-
-    for(int i = n; i < sup->size; i++) {
-        as_list_append(sub, sup->elements[i]);
+    as_list * sub = as_arraylist_new(sz-c, sup->block_size);
+    for(int i = c; i < sz; i++) {
+        as_list_append(sub, as_list_get(l,i));
     }
-
-    ssub->shadow = false;
 
     return sub;
 }
@@ -209,18 +204,13 @@ static as_list * as_arraylist_take(const as_list * l, uint32_t n) {
 
     as_arraylist * sup  = (as_arraylist *) as_list_source(l);
 
-    if ( sup->size == 0 ) return NULL;
-
-    uint32_t c = n < sup->size ? n : sup->size;
+    uint32_t sz = as_list_size((as_list *)l);
+    uint32_t c = n < sz ? n : sz;
 
     as_list * sub = as_arraylist_new(c, sup->block_size);
-    as_arraylist * ssub = as_list_source(sub);
-
     for(int i = 0; i < c; i++) {
-        as_list_append(sub, sup->elements[i]);
+        as_list_append(sub, as_list_get(l,i));
     }
-
-    ssub->shadow = false;
 
     return sub;
 }

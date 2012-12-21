@@ -155,6 +155,7 @@ static as_list * as_linkedlist_tail(const as_list * l) {
 }
 
 static as_list * as_linkedlist_drop(const as_list * l, uint32_t n) {
+
     as_list * sub = as_linkedlist_new(NULL,NULL);
     as_list * p = (as_list *) l;
     for (int i = 0; p && i < n; i++ ) {
