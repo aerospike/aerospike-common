@@ -99,8 +99,9 @@ cf_socket_send(int sock, void *buf, size_t buflen, int flags)
 {
 	int i;
     flags |= MSG_NOSIGNAL;
-	if (0 >= (i = send(sock, buf, buflen, flags))) 
-		cf_warning(CF_SOCKET, "send() failed: %d %s", i, cf_strerror(errno));
+	if (0 >= (i = send(sock, buf, buflen, flags))) {
+		cf_warning(CF_SOCKET, "send() failed: %d %s", errno, cf_strerror(errno));
+	}
 
 	return(i);
 }

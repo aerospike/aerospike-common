@@ -49,6 +49,8 @@ const char* ARENAX_ERR_STRINGS[] = {
 	"unknown error"
 };
 
+const uint32_t FREE_MAGIC = 0xff1234ff;
+
 //------------------------------------------------
 // Typedefs
 //
@@ -60,8 +62,8 @@ typedef struct arenax_handle_s {
 
 // TODO - should we bother with this wrapper struct?
 typedef struct free_element_s {
-	cf_arenax_handle next_h;
-	// Not bothering with a "magic" member for now.
+	uint32_t			magic;
+	cf_arenax_handle	next_h;
 } free_element;
 
 //------------------------------------------------
@@ -272,6 +274,17 @@ cf_arenax_resume(cf_arenax* this, key_t key_base, uint32_t element_size,
 		}
 	}
 
+	// This is just for backward compatibility when first upgrading to a version
+	// with arena leak detection and repair capability - remove it when we can.
+	if (this->free_h != 0 &&
+			((free_element*)cf_arenax_resolve(this, this->free_h))->magic !=
+					FREE_MAGIC) {
+		// Assume if the head had wrong/no magic, everything else will too.
+		cf_warning(CF_ARENAX, "wrong magic, treating free elements as lost");
+
+		this->free_h = 0;
+	}
+
 	return result;
 }
 
@@ -376,6 +389,7 @@ cf_arenax_free(cf_arenax* this, cf_arenax_handle h)
 		return;
 	}
 
+	p_free_element->magic = FREE_MAGIC;
 	p_free_element->next_h = this->free_h;
 	this->free_h = h;
 
@@ -392,6 +406,110 @@ cf_arenax_resolve(cf_arenax* this, cf_arenax_handle h)
 {
 	return this->stages[((arenax_handle*)&h)->stage_id] +
 			(((arenax_handle*)&h)->element_id * this->element_size);
+}
+
+//------------------------------------------------
+// Return the maximum number of elements that have
+// ever been in the arena, excluding null element.
+// Not thread safe.
+//
+uint32_t
+cf_arenax_hwm(cf_arenax* this)
+{
+	return (this->at_stage_id * this->stage_capacity) + this->at_element_id - 1;
+}
+
+//------------------------------------------------
+// Return the number of elements in the free-
+// element list. Not thread safe.
+//
+uint32_t
+cf_arenax_num_free(cf_arenax* this)
+{
+	uint32_t num_free = 0;
+	cf_arenax_handle h = this->free_h;
+
+	while (h != 0) {
+		num_free++;
+		h = ((free_element*)cf_arenax_resolve(this, h))->next_h;
+	}
+
+	return num_free;
+}
+
+//------------------------------------------------
+// Make specified callback for every used element
+// in specified stage. Returns false if stage has
+// never contained elements. Not thread safe.
+//
+bool
+cf_arenax_scan(cf_arenax* this, uint32_t stage_id, cf_arenax_scan_cb cb)
+{
+	if (stage_id > this->at_stage_id) {
+		return false;
+	}
+
+	uint32_t num_elements = stage_id == this->at_stage_id ?
+			this->at_element_id : this->stage_capacity;
+	uint8_t* p_scan = this->stages[stage_id];
+	uint8_t* p_end = p_scan + (this->element_size * num_elements);
+
+	// But skip the null element.
+	if (stage_id == 0) {
+		num_elements--;
+		p_scan += this->element_size;
+	}
+
+	while (p_scan < p_end) {
+		if (((free_element*)p_scan)->magic != FREE_MAGIC) {
+			cb((void*)p_scan);
+		}
+
+		p_scan += this->element_size;
+	}
+
+	return num_elements > 0;
+}
+
+//------------------------------------------------
+// Make specified callback for every used element
+// in the arena, freeing an element whenever its
+// callback returns true. Return the resulting
+// number of freed elements. Not thread safe.
+//
+uint32_t
+cf_arenax_free_by_scan(cf_arenax* this, cf_arenax_free_cb cb)
+{
+	uint32_t num_freed = 0;
+
+	for (uint32_t stage_id = 0; stage_id <= this->at_stage_id; stage_id++) {
+		uint32_t num_elements = stage_id == this->at_stage_id ?
+				this->at_element_id : this->stage_capacity;
+		uint32_t element_id = 0;
+		uint8_t* p_scan = this->stages[stage_id];
+
+		// But skip the null element.
+		if (stage_id == 0) {
+			element_id = 1;
+			p_scan += this->element_size;
+		}
+
+		while (element_id < num_elements) {
+			if (((free_element*)p_scan)->magic != FREE_MAGIC &&
+					cb((void*)p_scan)) {
+				((free_element*)p_scan)->magic = FREE_MAGIC;
+				((free_element*)p_scan)->next_h = this->free_h;
+				((arenax_handle*)&this->free_h)->stage_id = stage_id;
+				((arenax_handle*)&this->free_h)->element_id = element_id;
+				num_freed++;
+			}
+
+			p_scan += this->element_size;
+			element_id++;
+		}
+	}
+
+	return num_freed;
 }
 
 

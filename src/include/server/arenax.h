@@ -14,6 +14,7 @@
 // Includes
 //
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <sys/types.h>
@@ -42,6 +43,9 @@ typedef enum {
 
 // Stage is indexed by 8 bits.
 #define CF_ARENAX_MAX_STAGES (1 << 8) // 256
+
+typedef void (*cf_arenax_scan_cb)(void* pv_element);
+typedef bool (*cf_arenax_free_cb)(void* pv_element);
 
 
 //==========================================================
@@ -83,3 +87,11 @@ void cf_arenax_free(cf_arenax* this, cf_arenax_handle h);
 // Convert Handle to Pointer
 //
 void* cf_arenax_resolve(cf_arenax* this, cf_arenax_handle h);
+
+//------------------------------------------------
+// Find and Fix Leaked Elements
+//
+uint32_t cf_arenax_hwm(cf_arenax* this);
+uint32_t cf_arenax_num_free(cf_arenax* this);
+bool cf_arenax_scan(cf_arenax* this, uint32_t stage_id, cf_arenax_scan_cb cb);
+uint32_t cf_arenax_free_by_scan(cf_arenax* this, cf_arenax_free_cb cb);
