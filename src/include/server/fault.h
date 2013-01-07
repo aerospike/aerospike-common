@@ -81,7 +81,8 @@ typedef enum {
 	AS_SINDEX = 48,
 	AS_SPROC = 49,
 	AS_QUERY = 50,
-	CF_FAULT_CONTEXT_UNDEF = 51
+	AS_SMD = 51,
+	CF_FAULT_CONTEXT_UNDEF = 52
 } cf_fault_context;
 
 extern char *cf_fault_context_strings[];
