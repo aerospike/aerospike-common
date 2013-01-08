@@ -93,3 +93,4 @@ prepare:
 	cp $(SOURCE_INCL)/server/*.h $(TARGET_INCL)/server/.
 
 all: libcf.a prepare
+client_only: libcf-client.a libcf-shared.a prepare
