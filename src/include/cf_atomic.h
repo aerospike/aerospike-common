@@ -25,6 +25,7 @@
 
 #pragma once
 #include <stdint.h>
+#include "cf_arch.h"
 
 /**
  * SYNOPSIS
