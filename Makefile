@@ -86,11 +86,11 @@ libcf.a: libcf-client.a libcf-server.a libcf-shared.a
 
 prepare:
 	mkdir -p $(TARGET_INCL)
-	cp $(SOURCE_INCL)/*.h $(TARGET_INCL)/.
+	cp -p $(SOURCE_INCL)/*.h $(TARGET_INCL)/.
 	mkdir -p $(TARGET_INCL)/citrusleaf
-	cp $(SOURCE_INCL)/client/*.h $(TARGET_INCL)/citrusleaf/.
+	cp -p $(SOURCE_INCL)/client/*.h $(TARGET_INCL)/citrusleaf/.
 	mkdir -p $(TARGET_INCL)/server
-	cp $(SOURCE_INCL)/server/*.h $(TARGET_INCL)/server/.
+	cp -p $(SOURCE_INCL)/server/*.h $(TARGET_INCL)/server/.
 
 all: libcf.a prepare
 client_only: libcf-client.a libcf-shared.a prepare
