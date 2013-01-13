@@ -107,6 +107,7 @@ static char * as_list_val_tostring(as_val * v) {
         pos += vallen;
         sep = true;
     }
+    as_iterator_free(i);
 
     strcpy(buf + pos, ")");
     
