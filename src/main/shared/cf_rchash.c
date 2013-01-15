@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright 2008-2012 by Aerospike.  All rights reserved.
+ * Copyright 2008-2013 by Aerospike.  All rights reserved.
  * THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE.  THE COPYRIGHT NOTICE
  * ABOVE DOES NOT EVIDENCE ANY ACTUAL OR INTENDED PUBLICATION.
  ******************************************************************************/
@@ -17,6 +17,12 @@
  * ... that's what he said about shash!
  */
 
+// #define DEBUG
+// #define VALIDATE
+
+#if defined(DEBUG) || defined(VALIDATE)
+#include "../../include/server/fault.h"
+#endif
 #include "cf_rchash.h"
 #include "cf_alloc.h"
 #include "cf_atomic.h"
@@ -44,6 +50,7 @@ int cf_rchash_put_unique_v(cf_rchash *h, void *key, uint32_t key_len, void *obje
 int cf_rchash_put_v(cf_rchash *h, void *key, uint32_t key_len, void *object);
 uint32_t cf_rchash_get_size_v(cf_rchash *h);
 void cf_rchash_destroy_elements_v(cf_rchash *h);
+void cf_rchash_dump_v(cf_rchash *h);
 
 /******************************************************************************
  * FUNCTIONS
@@ -147,7 +154,7 @@ uint32_t cf_rchash_get_size(cf_rchash *h) {
 		pthread_mutex_t *l = &(h->lock_table[i]);
 		pthread_mutex_lock( l );
 
-		cf_rchash_elem_f *list_he = get_bucket(h, i);	
+		cf_rchash_elem_f *list_he = get_bucket(h, i);
 
 		while (list_he) {
 			// null object means unused head pointer
@@ -155,7 +162,7 @@ uint32_t cf_rchash_get_size(cf_rchash *h) {
 				break;
 			validate_size++;
 			list_he = list_he->next;
-		};
+		}
 		
 		pthread_mutex_unlock(l);
 		
@@ -167,7 +174,7 @@ uint32_t cf_rchash_get_size(cf_rchash *h) {
 }
 
 int cf_rchash_put(cf_rchash *h, void *key, uint32_t key_len, void *object) {
-    if (h->key_len == 0)    return(cf_rchash_get_size_v(h));
+    if (h->key_len == 0)    return(cf_rchash_put_v(h, key, key_len, object));
 
 	if (h->key_len != key_len) return(CF_RCHASH_ERR);
 
@@ -184,7 +191,7 @@ int cf_rchash_put(cf_rchash *h, void *key, uint32_t key_len, void *object) {
 	}
 	if (l)     pthread_mutex_lock( l );
 		
-	cf_rchash_elem_f *e = get_bucket(h, hash);	
+	cf_rchash_elem_f *e = get_bucket(h, hash);
 
 	// most common case should be insert into empty bucket, special case
 	if ( e->object == 0  ) {
@@ -194,11 +201,11 @@ int cf_rchash_put(cf_rchash *h, void *key, uint32_t key_len, void *object) {
 	cf_rchash_elem_f *e_head = e;
 
 	// This loop might be skippable if you know the key is not already in the hash
-	// (like, you just searched and it's single-threaded)	
+	// (like, you just searched and it's single-threaded)
 	while (e) {
 #ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
 			if (l)		pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -229,8 +236,7 @@ Copy:
 		h->elements++;
 	
 	if (l)		pthread_mutex_unlock(l);
-	return(CF_RCHASH_OK);	
-
+	return(CF_RCHASH_OK);
 }
 
 //
@@ -245,7 +251,7 @@ int cf_rchash_put_unique(cf_rchash *h, void *key, uint32_t key_len, void *object
 
 #ifdef VALIDATE
 	if (cf_rc_count(object) < 1) {
-		cf_info(CF_CF_RCHASH,"put unique! bad reference count on %p");
+		cf_info(CF_RCHASH,"put unique! bad reference count on %p");
 		return(CF_RCHASH_ERR);
 	}
 #endif    
@@ -263,7 +269,7 @@ int cf_rchash_put_unique(cf_rchash *h, void *key, uint32_t key_len, void *object
 	}
 	if (l)     pthread_mutex_lock( l );
 		
-	cf_rchash_elem_f *e = get_bucket(h, hash);	
+	cf_rchash_elem_f *e = get_bucket(h, hash);
 
 	// most common case should be insert into empty bucket, special case
 	if ( e->object == 0 ) goto Copy;
@@ -274,7 +280,7 @@ int cf_rchash_put_unique(cf_rchash *h, void *key, uint32_t key_len, void *object
 	while (e) {
 #ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -302,11 +308,8 @@ Copy:
 		h->elements++;
 
 	if (l)		pthread_mutex_unlock(l);
-	return(CF_RCHASH_OK);	
-
+	return(CF_RCHASH_OK);
 }
-
-
 
 int cf_rchash_get(cf_rchash *h, void *key, uint32_t key_len, void **object) {
     if (h->key_len == 0)    return(cf_rchash_get_v(h,key,key_len,object));
@@ -326,9 +329,9 @@ int cf_rchash_get(cf_rchash *h, void *key, uint32_t key_len, void **object) {
 	}
 	if (l)     pthread_mutex_lock( l );
 	
-	cf_rchash_elem_f *e = get_bucket(h, hash);	
+	cf_rchash_elem_f *e = get_bucket(h, hash);
 
-  	// most common case should be insert into empty bucket, special case
+  	// finding an empty bucket means key is not here
 	if ( e->object == 0 ) {
         rv = CF_RCHASH_ERR_NOTFOUND;
         goto Out;
@@ -337,11 +340,11 @@ int cf_rchash_get(cf_rchash *h, void *key, uint32_t key_len, void **object) {
 	while (e) {
 #ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
-#endif		
+#endif
 
 		if ( memcmp(key, e->key, key_len) == 0) {
 			cf_rc_reserve( e->object );
@@ -350,7 +353,7 @@ int cf_rchash_get(cf_rchash *h, void *key, uint32_t key_len, void **object) {
 			goto Out;
 		}
 		e = e->next;
-	};
+	}
     
 	rv = CF_RCHASH_ERR_NOTFOUND;
 	
@@ -359,7 +362,6 @@ Out:
 		pthread_mutex_unlock(l);
 
 	return(rv);
-					
 }
 
 int cf_rchash_delete(cf_rchash *h, void *key, uint32_t key_len) {
@@ -381,7 +383,7 @@ int cf_rchash_delete(cf_rchash *h, void *key, uint32_t key_len) {
 	}
 	if (l)     pthread_mutex_lock( l );
 		
-	cf_rchash_elem_f *e = get_bucket(h, hash);	
+	cf_rchash_elem_f *e = get_bucket(h, hash);
 
 	// If bucket empty, def can't delete
 	if ( e->object == 0 ) {
@@ -391,12 +393,12 @@ int cf_rchash_delete(cf_rchash *h, void *key, uint32_t key_len) {
 
 	cf_rchash_elem_f *e_prev = 0;
 
-	// Look for teh element and destroy if found
+	// Look for the element and destroy if found
 	while (e) {
 		
 #ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -440,9 +442,7 @@ int cf_rchash_delete(cf_rchash *h, void *key, uint32_t key_len) {
 
 Out:
 	if (l)	pthread_mutex_unlock(l);
-	return(rv);	
-	
-
+	return(rv);
 }
 
 // Call the function over every node in the tree
@@ -464,7 +464,7 @@ void cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) 
 			pthread_mutex_lock( l );
 		}
 
-		cf_rchash_elem_f *list_he = get_bucket(h, i);	
+		cf_rchash_elem_f *list_he = get_bucket(h, i);
 
 		while (list_he) {
 			
@@ -474,7 +474,7 @@ void cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) 
 			
 #ifdef VALIDATE
 			if (cf_rc_count(list_he->object) < 1) {
-				cf_info(CF_CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
+				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
 			}
 #endif		
 
@@ -484,7 +484,7 @@ void cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) 
 			}
 			
 			list_he = list_he->next;
-		};
+		}
 		
 		if (l)	pthread_mutex_unlock(l);
 		
@@ -529,7 +529,7 @@ void cf_rchash_reduce_delete(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *
 			
 #ifdef VALIDATE
 			if (cf_rc_count(list_he->object) < 1) {
-				cf_info(CF_CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
+				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
 				if (l)	pthread_mutex_unlock(l);
 				return;
 			}
@@ -580,7 +580,7 @@ void cf_rchash_reduce_delete(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *
 				list_he = list_he->next;
 			}	
 				
-		};
+		}
 		
 		if (l) pthread_mutex_unlock(l);
 		
@@ -624,8 +624,8 @@ void cf_rchash_destroy(cf_rchash *h) {
 	}
 
 	free(h->table);
-	free(h);	
-}	
+	free(h);
+}
 
 inline static cf_rchash_elem_v * get_bucket_v(cf_rchash *h, uint i) {
     return ( (cf_rchash_elem_v *) 
@@ -670,20 +670,20 @@ int cf_rchash_put_v(cf_rchash *h, void *key, uint32_t key_len, void *object) {
 	}
 	if (l)     pthread_mutex_lock( l );
 		
-	cf_rchash_elem_v *e = get_bucket_v(h, hash);	
+	cf_rchash_elem_v *e = get_bucket_v(h, hash);
 
 	// most common case should be insert into empty bucket, special case
-	if ( e->object == 0 ) 
+	if ( e->object == 0 )
 		goto Copy;
 
 	cf_rchash_elem_v *e_head = e;
 
 	// This loop might be skippable if you know the key is not already in the hash
-	// (like, you just searched and it's single-threaded)	
+	// (like, you just searched and it's single-threaded)
 	while (e) {
 #ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
 			if (l)		pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -714,8 +714,7 @@ Copy:
 
 	h->elements++;
 	if (l)		pthread_mutex_unlock(l);
-	return(CF_RCHASH_OK);	
-
+	return(CF_RCHASH_OK);
 }
 
 //
@@ -728,7 +727,7 @@ int cf_rchash_put_unique_v(cf_rchash *h, void *key, uint32_t key_len, void *obje
 
 #ifdef VALIDATE
 	if (cf_rc_count(object) < 1) {
-		cf_info(CF_CF_RCHASH,"put unique! bad reference count on %p");
+		cf_info(CF_RCHASH,"put unique! bad reference count on %p");
 		return(CF_RCHASH_ERR);
 	}
 #endif    
@@ -746,10 +745,10 @@ int cf_rchash_put_unique_v(cf_rchash *h, void *key, uint32_t key_len, void *obje
 	}
 	if (l)     pthread_mutex_lock( l );
 		
-	cf_rchash_elem_v *e = get_bucket_v(h, hash);	
+	cf_rchash_elem_v *e = get_bucket_v(h, hash);
 
 	// most common case should be insert into empty bucket, special case
-	if ( e->object ) 
+	if ( e->object == 0 )
 		goto Copy;
 
 	cf_rchash_elem_v *e_head = e;
@@ -758,7 +757,7 @@ int cf_rchash_put_unique_v(cf_rchash *h, void *key, uint32_t key_len, void *obje
 	while (e) {
 #ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -786,11 +785,8 @@ Copy:
 
 	h->elements++;
 	if (l)		pthread_mutex_unlock(l);
-	return(CF_RCHASH_OK);	
-
+	return(CF_RCHASH_OK);
 }
-
-
 
 int cf_rchash_get_v(cf_rchash *h, void *key, uint32_t key_len, void **object) {
 	int rv = CF_RCHASH_ERR;
@@ -807,10 +803,10 @@ int cf_rchash_get_v(cf_rchash *h, void *key, uint32_t key_len, void **object) {
 	}
 	if (l)     pthread_mutex_lock( l );
 	
-	cf_rchash_elem_v *e = get_bucket_v(h, hash);	
+	cf_rchash_elem_v *e = get_bucket_v(h, hash);
 
-  	// most common case should be insert into empty bucket, special case
-	if ( e->object ) {
+  	// finding an empty bucket means key is not here
+	if ( e->object == 0 ) {
         rv = CF_RCHASH_ERR_NOTFOUND;
         goto Out;
 	}
@@ -818,7 +814,7 @@ int cf_rchash_get_v(cf_rchash *h, void *key, uint32_t key_len, void **object) {
 	while (e) {
 #ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -832,7 +828,7 @@ int cf_rchash_get_v(cf_rchash *h, void *key, uint32_t key_len, void **object) {
 			goto Out;
 		}
 		e = e->next;
-	};
+	}
     
 	rv = CF_RCHASH_ERR_NOTFOUND;
 	
@@ -841,7 +837,6 @@ Out:
 		pthread_mutex_unlock(l);
 
 	return(rv);
-					
 }
 
 int cf_rchash_delete_v(cf_rchash *h, void *key, uint32_t key_len) {
@@ -861,7 +856,7 @@ int cf_rchash_delete_v(cf_rchash *h, void *key, uint32_t key_len) {
 	}
 	if (l)     pthread_mutex_lock( l );
 		
-	cf_rchash_elem_v *e = get_bucket_v(h, hash);	
+	cf_rchash_elem_v *e = get_bucket_v(h, hash);
 
 	// If bucket empty, def can't delete
 	if ( ( e->next == 0 ) && (e->key_len == 0) ) {
@@ -871,12 +866,12 @@ int cf_rchash_delete_v(cf_rchash *h, void *key, uint32_t key_len) {
 
 	cf_rchash_elem_v *e_prev = 0;
 
-	// Look for teh element and destroy if found
+	// Look for the element and destroy if found
 	while (e) {
 		
 #ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -917,9 +912,7 @@ int cf_rchash_delete_v(cf_rchash *h, void *key, uint32_t key_len) {
 
 Out:
 	if (l)	pthread_mutex_unlock(l);
-	return(rv);	
-	
-
+	return(rv);
 }
 
 /**
@@ -939,7 +932,7 @@ void cf_rchash_reduce_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata
 			pthread_mutex_lock( l );
 		}
 
-		cf_rchash_elem_v *list_he = get_bucket_v(h, i);	
+		cf_rchash_elem_v *list_he = get_bucket_v(h, i);
 
 		while (list_he) {
 			
@@ -949,7 +942,7 @@ void cf_rchash_reduce_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata
 			
 #ifdef VALIDATE
 			if (cf_rc_count(list_he->object) < 1) {
-				cf_info(CF_CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
+				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
 			}
 #endif		
 
@@ -959,7 +952,7 @@ void cf_rchash_reduce_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata
 			}
 			
 			list_he = list_he->next;
-		};
+		}
 		
 		if (l)	pthread_mutex_unlock(l);
 		
@@ -1002,7 +995,7 @@ void cf_rchash_reduce_delete_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void
 			
 #ifdef VALIDATE
 			if (cf_rc_count(list_he->object) < 1) {
-				cf_info(CF_CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
+				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
 				if (l)	pthread_mutex_unlock(l);
 				return;
 			}
@@ -1050,7 +1043,7 @@ void cf_rchash_reduce_delete_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void
 				list_he = list_he->next;
 			}	
 				
-		};
+		}
 		
 		if (l) pthread_mutex_unlock(l);
 		
@@ -1061,7 +1054,6 @@ void cf_rchash_reduce_delete_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void
 
 	return;
 }
-
 
 void cf_rchash_destroy_elements_v(cf_rchash *h) {
 	for (uint i=0;i<h->table_len;i++) {
@@ -1081,5 +1073,117 @@ void cf_rchash_destroy_elements_v(cf_rchash *h) {
             e = t;
 		}
 	}
+}
 
-}	
+#ifdef DEBUG
+
+/*
+ *  Print contents of an rchash table.
+ */
+void cf_rchash_dump(cf_rchash *h)
+{
+	if (!(h->key_len)) {
+		cf_rchash_dump_v(h);
+		return;
+	}
+
+	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
+		pthread_mutex_lock(&h->biglock);
+	}
+
+	cf_info(CF_RCHASH, "rchash: %p ; flags 0x%08x ; key_len %d ; table_len %d", h, h->flags, h->key_len, h->table_len);
+	if (!(h->flags & CF_RCHASH_CR_MT_MANYLOCK)) {
+		cf_info(CF_RCHASH, "number of elements: %d", h->elements);
+	}
+
+	cf_info(CF_RCHASH, "Elements:");
+	cf_info(CF_RCHASH, "---------");
+
+	for (uint i = 0; i < h->table_len; i++) {
+		pthread_mutex_t *l = 0;
+		if (h->flags & CF_RCHASH_CR_MT_MANYLOCK) {
+			l = &(h->lock_table[i]);
+			pthread_mutex_lock(l);
+		}
+
+		cf_rchash_elem_f *list_he = get_bucket(h, i);
+
+		uint j = 0;
+		while (list_he) {
+			// 0 length means an unused head pointer - break
+			if (list_he->object == 0)
+			  break;
+			
+#ifdef VALIDATE
+			if (cf_rc_count(list_he->object) < 1) {
+				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
+			}
+#endif		
+			cf_info(CF_RCHASH, "[%d.%d] key: %p ; object: %p", i, j++, list_he->key, list_he->object);
+
+			list_he = list_he->next;
+		}
+
+		if (l)	pthread_mutex_unlock(l);
+	}
+
+	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
+		pthread_mutex_unlock(&h->biglock);
+	}
+}
+
+/*
+ *  Print contents of a variable-key-length rchash table.
+ */
+void cf_rchash_dump_v(cf_rchash *h)
+{
+	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
+		pthread_mutex_lock(&h->biglock);
+	}
+
+	cf_info(CF_RCHASH, "rchash: %p ; flags 0x%08x ; key_len %d ; table_len %d", h, h->flags, h->key_len, h->table_len);
+	if (!(h->flags & CF_RCHASH_CR_MT_MANYLOCK)) {
+		cf_info(CF_RCHASH, "number of elements: %d", h->elements);
+	}
+
+	cf_info(CF_RCHASH, "Elements:");
+	cf_info(CF_RCHASH, "---------");
+
+	for (uint i = 0; i < h->table_len; i++) {
+		pthread_mutex_t *l = 0;
+		if (h->flags & CF_RCHASH_CR_MT_MANYLOCK) {
+			l = &(h->lock_table[i]);
+			pthread_mutex_lock(l);
+		}
+
+		cf_rchash_elem_v *list_he = get_bucket_v(h, i);
+
+		uint j = 0;
+		while (list_he) {
+			// 0 length means an unused head pointer - break
+			if (list_he->object == 0)
+			  break;
+			
+#ifdef VALIDATE
+			if (cf_rc_count(list_he->object) < 1) {
+				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
+			}
+#endif		
+			cf_info(CF_RCHASH, "[%d.%d] key: %p ; key_len: %d ; object: %p", i, j++, list_he->key, list_he->key_len, list_he->object);
+
+			// XXX -- Not general ~~ Requires a string key.
+			// (Should pass in a printing function instead.)
+			cf_info(CF_RCHASH, "key: \"%s\"", (char *) list_he->key);
+
+			list_he = list_he->next;
+		}
+
+		if (l)	pthread_mutex_unlock(l);
+	}
+
+	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
+		pthread_mutex_unlock(&h->biglock);
+	}
+}
+
+#endif // defined(DEBUG)
