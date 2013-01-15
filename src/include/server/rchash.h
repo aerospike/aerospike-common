@@ -62,3 +62,4 @@ typedef void (*rchash_destructor_fn) (void *object);
 #define rchash_reduce cf_rchash_reduce
 #define rchash_reduce_delete cf_rchash_reduce_delete
 #define rchash_destroy cf_rchash_destroy
+#define rchash_dump cf_rchash_dump

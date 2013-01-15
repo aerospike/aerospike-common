@@ -118,7 +118,7 @@ rchash_free(rchash *h, void *object)
 int
 rchash_set_nlocks(rchash *h, int n_locks)
 {
-	if (!(h->flags & RCHASH_CR_MT_MANYLOCK))	return(-1);	
+	if (!(h->flags & RCHASH_CR_MT_MANYLOCK))	return(-1);
 	
 	// it would be silly to have more locks than buckets
 	if (n_locks > h->table_len)
@@ -181,7 +181,7 @@ rchash_get_size(rchash *h)
 		pthread_mutex_t *l = &(h->lock_table[i]);
 		pthread_mutex_lock( l );
 
-		rchash_elem_f *list_he = get_bucket(h, i);	
+		rchash_elem_f *list_he = get_bucket(h, i);
 
 		while (list_he) {
 			// null object means unused head pointer
@@ -189,7 +189,7 @@ rchash_get_size(rchash *h)
 				break;
 			validate_size++;
 			list_he = list_he->next;
-		};
+		}
 		
 		pthread_mutex_unlock(l);
 		
@@ -197,13 +197,12 @@ rchash_get_size(rchash *h)
 #endif
 
     return(sz);
-    
 }
 
 int
 rchash_put(rchash *h, void *key, uint32_t key_len, void *object)
 {
-    if (h->key_len == 0)    return(rchash_get_size_v(h));
+    if (h->key_len == 0)    return(rchash_put_v(h, key, key_len, object));
 
 	if (h->key_len != key_len) return(RCHASH_ERR);
 
@@ -221,7 +220,7 @@ rchash_put(rchash *h, void *key, uint32_t key_len, void *object)
 	}
 	if (l)     pthread_mutex_lock( l );
 		
-	rchash_elem_f *e = get_bucket(h, hash);	
+	rchash_elem_f *e = get_bucket(h, hash);
 
 	// most common case should be insert into empty bucket, special case
 	if ( e->object == 0  ) {
@@ -231,7 +230,7 @@ rchash_put(rchash *h, void *key, uint32_t key_len, void *object)
 	rchash_elem_f *e_head = e;
 
 	// This loop might be skippable if you know the key is not already in the hash
-	// (like, you just searched and it's single-threaded)	
+	// (like, you just searched and it's single-threaded)
 	while (e) {
 #ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
@@ -265,8 +264,7 @@ Copy:
 		h->elements++;
 	
 	if (l)		pthread_mutex_unlock(l);
-	return(RCHASH_OK);	
-
+	return(RCHASH_OK);
 }
 
 //
@@ -302,7 +300,7 @@ rchash_put_unique(rchash *h, void *key, uint32_t key_len, void *object)
 	}
 	if (l)     pthread_mutex_lock( l );
 		
-	rchash_elem_f *e = get_bucket(h, hash);	
+	rchash_elem_f *e = get_bucket(h, hash);
 
 	// most common case should be insert into empty bucket, special case
 	if ( e->object == 0 ) goto Copy;
@@ -367,9 +365,9 @@ rchash_get(rchash *h, void *key, uint32_t key_len, void **object)
 	}
 	if (l)     pthread_mutex_lock( l );
 	
-	rchash_elem_f *e = get_bucket(h, hash);	
+	rchash_elem_f *e = get_bucket(h, hash);
 
-  	// most common case should be insert into empty bucket, special case
+  	// finding an empty bucket means key is not here
 	if ( e->object == 0 ) {
         rv = RCHASH_ERR_NOTFOUND;
         goto Out;
@@ -391,7 +389,7 @@ rchash_get(rchash *h, void *key, uint32_t key_len, void **object)
 			goto Out;
 		}
 		e = e->next;
-	};
+	}
     
 	rv = RCHASH_ERR_NOTFOUND;
 	
@@ -400,7 +398,6 @@ Out:
 		pthread_mutex_unlock(l);
 
 	return(rv);
-					
 }
 
 int
@@ -425,7 +422,7 @@ rchash_delete(rchash *h, void *key, uint32_t key_len)
 	}
 	if (l)     pthread_mutex_lock( l );
 		
-	rchash_elem_f *e = get_bucket(h, hash);	
+	rchash_elem_f *e = get_bucket(h, hash);
 
 	// If bucket empty, def can't delete
 	if ( e->object == 0 ) {
@@ -435,7 +432,7 @@ rchash_delete(rchash *h, void *key, uint32_t key_len)
 
 	rchash_elem_f *e_prev = 0;
 
-	// Look for teh element and destroy if found
+	// Look for the element and destroy if found
 	while (e) {
 		
 #ifdef VALIDATE
@@ -509,7 +506,7 @@ rchash_reduce_manylock(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			lock_id++;
 		}
 
-		rchash_elem_f *list_he = get_bucket(h, i);	
+		rchash_elem_f *list_he = get_bucket(h, i);
 
 		while (list_he) {
 			
@@ -528,17 +525,15 @@ rchash_reduce_manylock(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			}
 			
 			list_he = list_he->next;
-		};
+		}
 		
 	}
 
 Out:
-	pthread_mutex_unlock(&h->lock_table[lock_id]);	
+	pthread_mutex_unlock(&h->lock_table[lock_id]);
 
 	return;
 }
-
-
 
 // Call the function over every node in the tree
 // Can be lock-expensive at the moment, until we improve the lockfree code
@@ -561,7 +556,7 @@ rchash_reduce(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 	
 	for (uint i=0; i<h->table_len ; i++) {
 
-		rchash_elem_f *list_he = get_bucket(h, i);	
+		rchash_elem_f *list_he = get_bucket(h, i);
 
 		while (list_he) {
 			
@@ -573,14 +568,14 @@ rchash_reduce(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			if (cf_rc_count(list_he->object) < 1) {
 				cf_info(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, list_he->object);
 			}
-#endif		
+#endif
 
 			if (0 != reduce_fn(list_he->key, h->key_len, list_he->object, udata)) {
 				goto Out;
 			}
 			
 			list_he = list_he->next;
-		};
+		}
 		
 	}
 
@@ -590,7 +585,6 @@ Out:
 
 	return;
 }
-
 
 // A special version of 'reduce' that supports deletion
 // In this case, if you return '-1' from the reduce fn, that node will be
@@ -625,7 +619,7 @@ rchash_reduce_delete_manylock(rchash *h, rchash_reduce_fn reduce_fn, void *udata
 			if (cf_rc_count(list_he->object) < 1) {
 				cf_info(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, list_he->object);
 			}
-#endif		
+#endif
 			
 			rv = reduce_fn(list_he->key, h->key_len, list_he->object, udata);
 			
@@ -672,11 +666,11 @@ rchash_reduce_delete_manylock(rchash *h, rchash_reduce_fn reduce_fn, void *udata
 				list_he = list_he->next;
 			}	
 				
-		};
+		}
 		
 	}
 	
-	pthread_mutex_unlock(&h->lock_table[lock_id]);	
+	pthread_mutex_unlock(&h->lock_table[lock_id]);
 	return;
 }
 
@@ -718,7 +712,7 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			if (cf_rc_count(list_he->object) < 1) {
 				cf_info(CF_RCHASH,"rchash %p: internal bad reference count on %p",h, list_he->object);
 			}
-#endif		
+#endif
 			
 			rv = reduce_fn(list_he->key, h->key_len, list_he->object, udata);
 			
@@ -765,7 +759,7 @@ rchash_reduce_delete(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 				list_he = list_he->next;
 			}	
 				
-		};
+		}
 		
 	}
 
@@ -811,7 +805,7 @@ rchash_destroy(rchash *h)
 	}
 
 	cf_free(h->table);
-	cf_free(h);	
+	cf_free(h);
 }	
 
 inline static
@@ -865,7 +859,7 @@ rchash_put_v(rchash *h, void *key, uint32_t key_len, void *object)
 	}
 	if (l)     pthread_mutex_lock( l );
 		
-	rchash_elem_v *e = get_bucket_v(h, hash);	
+	rchash_elem_v *e = get_bucket_v(h, hash);
 
 	// most common case should be insert into empty bucket, special case
 	if ( e->object == 0 ) 
@@ -874,7 +868,7 @@ rchash_put_v(rchash *h, void *key, uint32_t key_len, void *object)
 	rchash_elem_v *e_head = e;
 
 	// This loop might be skippable if you know the key is not already in the hash
-	// (like, you just searched and it's single-threaded)	
+	// (like, you just searched and it's single-threaded)
 	while (e) {
 #ifdef VALIDATE
 		if (cf_rc_count(e->object) < 1) {
@@ -907,8 +901,7 @@ Copy:
 
 	h->elements++;
 	if (l)		pthread_mutex_unlock(l);
-	return(RCHASH_OK);	
-
+	return(RCHASH_OK);
 }
 
 //
@@ -942,10 +935,10 @@ rchash_put_unique_v(rchash *h, void *key, uint32_t key_len, void *object)
 	}
 	if (l)     pthread_mutex_lock( l );
 		
-	rchash_elem_v *e = get_bucket_v(h, hash);	
+	rchash_elem_v *e = get_bucket_v(h, hash);
 
 	// most common case should be insert into empty bucket, special case
-	if ( e->object ) 
+	if ( e->object == 0 ) 
 		goto Copy;
 
 	rchash_elem_v *e_head = e;
@@ -980,11 +973,8 @@ Copy:
 
 	h->elements++;
 	if (l)		pthread_mutex_unlock(l);
-	return(RCHASH_OK);	
-
+	return(RCHASH_OK);
 }
-
-
 
 int
 rchash_get_v(rchash *h, void *key, uint32_t key_len, void **object)
@@ -1004,10 +994,10 @@ rchash_get_v(rchash *h, void *key, uint32_t key_len, void **object)
 	}
 	if (l)     pthread_mutex_lock( l );
 	
-	rchash_elem_v *e = get_bucket_v(h, hash);	
+	rchash_elem_v *e = get_bucket_v(h, hash);
 
-  	// most common case should be insert into empty bucket, special case
-	if ( e->object ) {
+  	// finding an empty bucket means key is not here
+	if ( e->object == 0 ) {
         rv = RCHASH_ERR_NOTFOUND;
         goto Out;
 	}
@@ -1029,7 +1019,7 @@ rchash_get_v(rchash *h, void *key, uint32_t key_len, void **object)
 			goto Out;
 		}
 		e = e->next;
-	};
+	}
     
 	rv = RCHASH_ERR_NOTFOUND;
 	
@@ -1038,7 +1028,6 @@ Out:
 		pthread_mutex_unlock(l);
 
 	return(rv);
-					
 }
 
 int
@@ -1061,7 +1050,7 @@ rchash_delete_v(rchash *h, void *key, uint32_t key_len)
 	}
 	if (l)     pthread_mutex_lock( l );
 		
-	rchash_elem_v *e = get_bucket_v(h, hash);	
+	rchash_elem_v *e = get_bucket_v(h, hash);
 
 	// If bucket empty, def can't delete
 	if ( ( e->next == 0 ) && (e->key_len == 0) ) {
@@ -1071,7 +1060,7 @@ rchash_delete_v(rchash *h, void *key, uint32_t key_len)
 
 	rchash_elem_v *e_prev = 0;
 
-	// Look for teh element and destroy if found
+	// Look for the element and destroy if found
 	while (e) {
 		
 #ifdef VALIDATE
@@ -1118,10 +1107,7 @@ rchash_delete_v(rchash *h, void *key, uint32_t key_len)
 Out:
 	if (l)	pthread_mutex_unlock(l);
 	return(rv);	
-	
-
 }
-
 
 void
 rchash_reduce_manylock_v(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
@@ -1158,16 +1144,15 @@ rchash_reduce_manylock_v(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			}
 			
 			list_he = list_he->next;
-		};
+		}
 		
 	}
 
 Out:
-	pthread_mutex_unlock(&h->lock_table[lock_id]);	
+	pthread_mutex_unlock(&h->lock_table[lock_id]);
 
 	return;
 }
-
 
 // Call the function over every node in the tree
 // Can be lock-expensive at the moment, until we improve the lockfree code
@@ -1186,7 +1171,7 @@ rchash_reduce_v(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 	
 	for (uint i=0; i<h->table_len ; i++) {
 
-		rchash_elem_v *list_he = get_bucket_v(h, i);	
+		rchash_elem_v *list_he = get_bucket_v(h, i);
 
 		while (list_he) {
 			
@@ -1205,7 +1190,7 @@ rchash_reduce_v(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 			}
 			
 			list_he = list_he->next;
-		};
+		}
 		
 	}
 
@@ -1215,7 +1200,6 @@ Out:
 
 	return;
 }
-
 
 // A special version of 'reduce' that supports deletion
 // In this case, if you return '-1' from the reduce fn, that node will be
@@ -1296,15 +1280,14 @@ rchash_reduce_delete_manylock_v(rchash *h, rchash_reduce_fn reduce_fn, void *uda
 				list_he = list_he->next;
 			}	
 				
-		};
+		}
 		
 	}
 
-	pthread_mutex_unlock(&h->lock_table[lock_id]);	
+	pthread_mutex_unlock(&h->lock_table[lock_id]);
 	
 	return;
 }
-
 
 // A special version of 'reduce' that supports deletion
 // In this case, if you return '-1' from the reduce fn, that node will be
@@ -1390,7 +1373,7 @@ rchash_reduce_delete_v(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 				list_he = list_he->next;
 			}	
 				
-		};
+		}
 		
 		if (l) pthread_mutex_unlock(l);
 		
@@ -1401,7 +1384,6 @@ rchash_reduce_delete_v(rchash *h, rchash_reduce_fn reduce_fn, void *udata)
 
 	return;
 }
-
 
 void
 rchash_destroy_elements_v(rchash *h)
@@ -1423,5 +1405,4 @@ rchash_destroy_elements_v(rchash *h)
             e = t;
 		}
 	}
-
-}	
+}
