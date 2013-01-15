@@ -26,7 +26,9 @@ inline int as_result_init(as_result * r, bool is_success, as_val * v) {
 }
 
 inline int as_result_destroy(as_result * r) {
-    as_result_init(r, false, NULL);
+    r->is_success = false;
+    if ( r->value ) as_val_free(r->value);
+    r->value = NULL;
     return 0;
 }
 
