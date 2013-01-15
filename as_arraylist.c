@@ -99,7 +99,7 @@ static int as_arraylist_free(as_list * l) {
     
     if ( !al->shadow ) {
         for (int i = 0; i < al->size; i++ ) {
-            free(al->elements[i]);
+            as_val_free(al->elements[i]);
             al->elements[i] = NULL;
         }
     }

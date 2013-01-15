@@ -45,9 +45,9 @@ int as_pair_init(as_pair * p, as_val * _1, as_val * _2) {
 }
 
 int as_pair_destroy(as_pair * p) {
-    if ( p->_1 ) free(p->_1);
-    if ( p->_2 ) free(p->_2);
+    if ( p->_1 ) as_val_free(p->_1);
     p->_1 = NULL;
+    if ( p->_2 ) as_val_free(p->_2);
     p->_2 = NULL;
     return 0;
 }

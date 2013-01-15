@@ -90,7 +90,7 @@ static char * as_list_val_tostring(as_val * v) {
         as_val * val = (as_val *) as_iterator_next(i);
         char * valstr = as_val_tostring(val);
         size_t vallen = strlen(valstr);
-
+        
         if ( pos + vallen + 2 >= cap ) {
             uint32_t adj = vallen+2 > blk ? vallen+2 : blk;
             buf = realloc(buf, sizeof(char) * (cap + adj));
