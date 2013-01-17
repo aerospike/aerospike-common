@@ -116,6 +116,7 @@ static int as_arraylist_ensure(as_arraylist * al, uint32_t n) {
     if ( (al->size + n) >= al->capacity ) {
         al->elements = realloc(al->elements, sizeof(as_val) * (al->capacity + al->block_size));
         bzero(al->elements + (sizeof(as_val) * al->capacity), sizeof(as_val) * al->block_size);
+        al->capacity = al->capacity + al->block_size;
     }
     return 0;
 }
@@ -161,6 +162,7 @@ static int as_arraylist_set(as_list * l, const uint32_t i, as_val * v) {
 
     free(al->elements[i]);
     al->elements[i] = v;
+    al->size = i > al->size ? i : al->size;
 
     return 0;
 }
