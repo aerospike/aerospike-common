@@ -13,6 +13,8 @@
 typedef struct as_list_s as_list;
 typedef struct as_list_hooks_s as_list_hooks;
 
+typedef void (* as_list_foreach_callback)(as_val *, void *);
+
 struct as_list_s {
     as_val                  _;
     void *                  source;
@@ -31,6 +33,9 @@ struct as_list_hooks_s {
     as_list * (* tail)(const as_list *);
     as_list * (* drop)(const as_list *, uint32_t);
     as_list * (* take)(const as_list *, uint32_t);
+
+    void (* foreach)(const as_list *, void *, as_list_foreach_callback);
+
     as_iterator * (* iterator)(const as_list *);
 };
 
@@ -102,6 +107,10 @@ inline as_list * as_list_drop(const as_list * l, uint32_t n) {
 
 inline as_list * as_list_take(const as_list * l, uint32_t n) {
     return as_util_hook(take, NULL, l, n);
+}
+
+inline void as_list_foreach(const as_list * l, void * context, as_list_foreach_callback callback) {
+    as_util_hook(foreach, NULL, l, context, callback);
 }
 
 inline as_iterator * as_list_iterator(const as_list * l) {
