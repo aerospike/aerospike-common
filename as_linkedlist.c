@@ -57,6 +57,7 @@ static const as_list_hooks as_linkedlist_hooks = {
     .tail       = as_linkedlist_tail,
     .drop       = as_linkedlist_drop,
     .take       = as_linkedlist_take,
+    .foreach    = NULL,                     // @TODO: add implementation
     .iterator   = as_linkedlist_iterator
 };
 

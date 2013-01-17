@@ -61,6 +61,7 @@ static const as_list_hooks as_arraylist_hooks = {
     .tail       = as_arraylist_tail,
     .drop       = as_arraylist_drop,
     .take       = as_arraylist_take,
+    .foreach    = NULL,                     // @TODO: add implementation
     .iterator   = as_arraylist_iterator
 };
 

@@ -13,14 +13,16 @@ static int as_msgpack_pack_list(msgpack_packer *, as_list *);
 static int as_msgpack_pack_map(msgpack_packer *, as_map *);
 static int as_msgpack_pack_rec(msgpack_packer *, as_rec *);
 static int as_msgpack_pack_pair(msgpack_packer *, as_pair *);
-static int as_msgpack_pack_val(msgpack_packer *, as_val *);
+
+// static int as_msgpack_pack_val(msgpack_packer *, as_val *);
 
 static int as_msgpack_boolean_to_val(bool, as_val **);
 static int as_msgpack_integer_to_val(int64_t, as_val **);
 static int as_msgpack_string_to_val(msgpack_object_raw *, as_val **);
 static int as_msgpack_array_to_val(msgpack_object_array *, as_val **);
 static int as_msgpack_map_to_val(msgpack_object_map *, as_val **);
-static int as_msgpack_object_to_val(msgpack_object *, as_val **);
+
+// static int as_msgpack_object_to_val(msgpack_object *, as_val **);
 
 static int as_msgpack_free(as_serializer *);
 static int as_msgpack_serialize(as_serializer *, as_val *, as_buffer *);
@@ -116,7 +118,7 @@ static int as_msgpack_pack_pair(msgpack_packer * pk, as_pair * p) {
     return rc;
 }
 
-static int as_msgpack_pack_val(msgpack_packer * pk, as_val * v) {
+int as_msgpack_pack_val(msgpack_packer * pk, as_val * v) {
     if ( v == NULL ) return 1;
     switch( as_val_type(v) ) {
         case AS_BOOLEAN : return as_msgpack_pack_boolean(pk, (as_boolean *) v);
@@ -176,7 +178,7 @@ static int as_msgpack_map_to_val(msgpack_object_map * o, as_val ** v) {
     return 0;
 }
 
-static int as_msgpack_object_to_val(msgpack_object * object, as_val ** val) {
+int as_msgpack_object_to_val(msgpack_object * object, as_val ** val) {
     if ( object == NULL ) return 1;
     switch( object->type ) {
         case MSGPACK_OBJECT_BOOLEAN             : return as_msgpack_boolean_to_val  (object->via.boolean, val);

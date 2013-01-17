@@ -60,10 +60,9 @@ static const as_iterator_hooks as_hashmap_iterator_hooks = {
  ******************************************************************************/
 
 static int as_hashmap_reduce_fn (void * key, void * data, void * udata) {
-    as_pair * value = (as_pair *) data;
+    as_pair * value = *((as_pair **) data);
     as_pair_free(value);
-    value = NULL;
-    return -1;
+    return SHASH_REDUCE_DELETE;
 }
 
 static uint32_t as_hashmap_hashfn(void * k) {
@@ -78,9 +77,10 @@ as_map * as_hashmap_new(uint32_t capacity) {
 
 static int as_hashmap_free(as_map * m) {
     shash * t = (shash *) m->source;
-    // shash_reduce_delete(t, as_hashmap_reduce_fn, NULL);
+    shash_reduce_delete(t, as_hashmap_reduce_fn, NULL);
     shash_destroy(t);
-    m->source = NULL;
+    // shash_destroy(t);
+    // m->source = NULL;
     free(m);
     m = NULL;
     return 0;
