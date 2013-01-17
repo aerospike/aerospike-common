@@ -28,8 +28,10 @@ int as_string_init(as_string *, char *);
  ******************************************************************************/
 
 inline int as_string_destroy(as_string * s) {
-    free(s->value);
-    s->value = NULL;
+    if ( s->value ) {
+        free(s->value);
+        s->value = NULL;
+    }
     s->len = 0;
     return 0;
 }
