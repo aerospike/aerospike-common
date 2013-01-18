@@ -17,20 +17,35 @@ struct as_pair_s {
 };
 
 /******************************************************************************
- * FUNCTIONS
+ * CONSTANTS
  ******************************************************************************/
 
-int as_pair_init(as_pair *, as_val *, as_val *);
-int as_pair_destroy(as_pair *);
+extern const as_val as_pair_val;
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
+inline as_pair * as_pair_init(as_pair * p, as_val * _1, as_val * _2) {
+    if ( !p ) return p;
+    p->_ = as_pair_val;
+    p->_1 = _1;
+    p->_2 = _2;
+    return p;
+}
+
 inline as_pair * as_pair_new(as_val * _1, as_val * _2) {
     as_pair * p = (as_pair *) malloc(sizeof(as_pair));
-    as_pair_init(p, _1, _2);
-    return p;
+    return as_pair_init(p, _1, _2);
+}
+
+inline int as_pair_destroy(as_pair * p) {
+    if ( !p ) return 0;
+    if ( p->_1 ) as_val_free(p->_1);
+    p->_1 = NULL;
+    if ( p->_2 ) as_val_free(p->_2);
+    p->_2 = NULL;
+    return 0;
 }
 
 inline int as_pair_free(as_pair * p) {

@@ -29,25 +29,20 @@ struct as_iterator_s {
  * Provided functions that interface with the iterators.
  */
 struct as_iterator_hooks_s {
-    const int (*free)(as_iterator *);
-    const bool (*has_next)(const as_iterator *);
-    const as_val * (*next)(as_iterator *);
+    const int       (* free)(as_iterator *);
+    const bool      (* has_next)(const as_iterator *);
+    const as_val *  (* next)(as_iterator *);
 };
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline int as_iterator_init(as_iterator * i, void * source, const as_iterator_hooks * hooks) {
+inline as_iterator * as_iterator_init(as_iterator * i, void * source, const as_iterator_hooks * hooks) {
+    if ( !i ) return i;
     i->source = source;
     i->hooks = hooks;
-    return 0;
-}
-
-inline int as_iterator_destroy(as_iterator * i) {
-    i->source = NULL;
-    i->hooks = NULL;
-    return 0;
+    return i;
 }
 
 /**
@@ -58,21 +53,34 @@ inline int as_iterator_destroy(as_iterator * i) {
  */
 inline as_iterator * as_iterator_new(void * source, const as_iterator_hooks * hooks) {
     as_iterator * i = (as_iterator *) malloc(sizeof(as_iterator));
-    i->source = source;
-    i->hooks = hooks;
-    return i;
+    return as_iterator_init(i, source, hooks);
 }
+
+
+inline int as_iterator_destroy(as_iterator * i) {
+    if ( !i ) return 0;
+    i->source = NULL;
+    i->hooks = NULL;
+    return 0;
+}
+
 
 /**
  * Frees the iterator and associated data, including the source and hooks.
  *
- * Proxies to `i->hooks->free(i)`
+ * Free sequence:
+ * 1. Call the hook designated for freeing the source.
+ * 2. Free the resources
+ * 3. Free the iterator
  *
  * @param i the iterator to free
  * @return 0 on success, otherwise 1.
  */
 inline int as_iterator_free(as_iterator * i) {
-    return as_util_hook(free, 1, i);
+    as_util_hook(free, 1, i);
+    as_iterator_destroy(i);
+    free(i);
+    return 0;
 }
 
 /**

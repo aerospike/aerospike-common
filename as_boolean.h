@@ -16,23 +16,30 @@ struct as_boolean_s {
 };
 
 /******************************************************************************
- * FUNCTIONS
+ * CONSTANTS
  ******************************************************************************/
 
-int as_boolean_init(as_boolean *, bool);
+extern const as_val as_boolean_val;
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline int as_boolean_destroy(as_boolean * b) {
-    return 0;
+inline as_boolean * as_boolean_init(as_boolean * v, bool b) {
+    if ( !v ) return v;
+    v->_ = as_boolean_val;
+    v->value = b;
+    return v;
 }
 
 inline as_boolean * as_boolean_new(bool b) {
     as_boolean * v = (as_boolean *) malloc(sizeof(as_boolean));
-    as_boolean_init(v, b);
-    return v;
+    return as_boolean_init(v, b);
+}
+
+inline int as_boolean_destroy(as_boolean * b) {
+    if ( b ) b->value = false;
+    return 0;
 }
 
 inline int as_boolean_free(as_boolean * b) {
@@ -40,16 +47,20 @@ inline int as_boolean_free(as_boolean * b) {
     return 0;
 }
 
-inline uint32_t as_boolean_hash(const as_boolean * b) {
-    return b->value ? 1 : 0;
-}
+
 
 inline bool as_boolean_tobool(const as_boolean * b) {
     return b->value;
 }
 
+
+
+inline uint32_t as_boolean_hash(const as_boolean * b) {
+    return b->value ? 1 : 0;
+}
+
 inline as_val * as_boolean_toval(const as_boolean * b) {
-    return (as_val *)b;
+    return (as_val *) b;
 }
 
 inline as_boolean * as_boolean_fromval(const as_val * v) {

@@ -22,56 +22,75 @@ struct as_list_s {
 };
 
 struct as_list_hooks_s {
-    int (* free)(as_list *);
-    uint32_t (* hash)(const as_list *);
-    uint32_t (* size)(const as_list *);
-    int (* append)(as_list *, as_val *);
-    int (* prepend)(as_list *, as_val *);
-    as_val * (* get)(const as_list *, const uint32_t);
-    int (* set)(as_list *, const uint32_t, as_val *);
-    as_val * (* head)(const as_list *);
-    as_list * (* tail)(const as_list *);
-    as_list * (* drop)(const as_list *, uint32_t);
-    as_list * (* take)(const as_list *, uint32_t);
+    int         (* free)(as_list *);
 
-    void (* foreach)(const as_list *, void *, as_list_foreach_callback);
+    uint32_t    (* hash)(const as_list *);
+    
+    uint32_t    (* size)(const as_list *);
+    int         (* append)(as_list *, as_val *);
+    int         (* prepend)(as_list *, as_val *);
+    as_val *    (* get)(const as_list *, const uint32_t);
+    int         (* set)(as_list *, const uint32_t, as_val *);
+    as_val *    (* head)(const as_list *);
+    as_list *   (* tail)(const as_list *);
+    as_list *   (* drop)(const as_list *, uint32_t);
+    as_list *   (* take)(const as_list *, uint32_t);
+
+    void        (* foreach)(const as_list *, void *, as_list_foreach_callback);
 
     as_iterator * (* iterator)(const as_list *);
 };
 
 /******************************************************************************
- * FUNCTIONS
+ * CONSTANTS
  ******************************************************************************/
 
-int as_list_init(as_list *, void *, const as_list_hooks *);
+extern const as_val as_list_val;
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
+inline as_list * as_list_init(as_list * l, void * source, const as_list_hooks * hooks) {
+    if ( !l ) return l;
+    l->_ = as_list_val;
+    l->source = source;
+    l->hooks = hooks;
+    return l;
+}
+
+inline as_list * as_list_new(void * source, const as_list_hooks * hooks) {
+    as_list * l = (as_list *) malloc(sizeof(as_list));
+    return as_list_init(l, source, hooks);
+}
+
 inline int as_list_destroy(as_list * l) {
+    if ( !l ) return 0;
     l->source = NULL;
     l->hooks = NULL;
     return 0;
 }
 
-inline as_list * as_list_new(void * source, const as_list_hooks * hooks) {
-    as_list * l = (as_list *) malloc(sizeof(as_list));
-    as_list_init(l, source, hooks);
-    return l;
+/**
+ * Free sequence:
+ * 1. Call the hook designated for freeing the source.
+ * 2. Free the resources
+ * 3. Free the list
+ */
+inline int as_list_free(as_list * l) {
+    as_util_hook(free, 1, l);
+    as_list_destroy(l);
+    free(l);
+    return 0;
 }
 
-inline int as_list_free(as_list * l) {
-    return as_util_hook(free, 1, l);
-}
+
 
 inline void * as_list_source(const as_list * l) {
-    return l->source;
+    return l == NULL ? NULL : l->source;
 }
 
-inline uint32_t as_list_hash(as_list * l) {
-    return as_util_hook(hash, 0, l);
-}
+
 
 inline uint32_t as_list_size(as_list * l) {
     return as_util_hook(size, 0, l);
@@ -115,6 +134,12 @@ inline void as_list_foreach(const as_list * l, void * context, as_list_foreach_c
 
 inline as_iterator * as_list_iterator(const as_list * l) {
     return as_util_hook(iterator, NULL, l);
+}
+
+
+
+inline uint32_t as_list_hash(as_list * l) {
+    return as_util_hook(hash, 0, l);
 }
 
 inline as_val * as_list_toval(const as_list * l) {
