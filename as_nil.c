@@ -16,7 +16,7 @@ static char * as_nil_val_tostring(as_val *);
 /**
  * Represents empty values. As in a value with no value.
  */
-extern const as_val as_nil = {
+const as_val as_nil = {
     .type       = AS_NIL, 
     .size       = 0,
     .free       = as_nil_val_free,

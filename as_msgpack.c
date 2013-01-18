@@ -66,13 +66,15 @@ static int as_msgpack_pack_string(msgpack_packer * pk, as_string * s) {
 }
 
 static int as_msgpack_pack_list(msgpack_packer * pk, as_list * l) {
+    
     int rc = msgpack_pack_array(pk, as_list_size(l));
     if ( rc ) return rc;
 
     as_iterator * i = as_list_iterator(l);
     while ( as_iterator_has_next(i) ) {
         as_val * val = (as_val *) as_iterator_next(i);
-        if ( as_msgpack_pack_val(pk, val) ) {
+        int rc = as_msgpack_pack_val(pk, val);
+        if ( rc ) {
             as_iterator_free(i);
             return 2;
         }
@@ -149,21 +151,22 @@ static int as_msgpack_string_to_val(msgpack_object_raw * r, as_val ** v) {
 }
 
 static int as_msgpack_array_to_val(msgpack_object_array * a, as_val ** v) {
-    as_list * l = as_arraylist_new(a->size,0);
+    as_arraylist * l = as_arraylist_new(a->size,8);
+    l->size = a->size;
     for ( int i = 0; i < a->size; i++) {
         msgpack_object * o = a->ptr + i;
         as_val * val = NULL;
         as_msgpack_object_to_val(o, &val);
         if ( val != NULL ) {
-            as_list_append(l, val);
+            l->elements[i] = val;
         }
     }
-    *v = (as_val *) l;
+    *v = (as_val *) as_list_new(l, &as_arraylist_list);
     return 0;
 }
 
 static int as_msgpack_map_to_val(msgpack_object_map * o, as_val ** v) {
-    as_map * m = as_hashmap_new(o->size);
+    as_hashmap * m = as_hashmap_new(o->size);
     for ( int i = 0; i < o->size; i++) {
         msgpack_object_kv * kv = o->ptr + i;
         as_val * key = NULL;
@@ -171,10 +174,10 @@ static int as_msgpack_map_to_val(msgpack_object_map * o, as_val ** v) {
         as_msgpack_object_to_val(&kv->key, &key);
         as_msgpack_object_to_val(&kv->val, &val);
         if ( key != NULL && val != NULL ) {
-            as_map_set(m, key, val);
+            as_hashmap_set(m, key, val);
         }
     }
-    *v = (as_val *) m;
+    *v = (as_val *) as_map_new(m, &as_hashmap_map);
     return 0;
 }
 

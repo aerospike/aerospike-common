@@ -8,7 +8,9 @@
  ******************************************************************************/
 
 extern inline as_pair * as_pair_new(as_val *, as_val *);
-extern inline int as_pair_free(as_pair *);
+extern inline as_pair * as_pair_init(as_pair *, as_val * _1, as_val * _2);
+extern inline int       as_pair_destroy(as_pair *);
+extern inline int       as_pair_free(as_pair *);
 
 extern inline as_val * as_pair_1(as_pair *);
 extern inline as_val * as_pair_2(as_pair *);
@@ -17,15 +19,15 @@ extern inline as_val * as_pair_2(as_pair *);
  * STATIC FUNCTIONS
  ******************************************************************************/
 
-static int as_pair_val_free(as_val *);
+static int      as_pair_val_free(as_val *);
 static uint32_t as_pair_val_hash(as_val *);
-static char * as_pair_val_tostring(as_val *);
+static char *   as_pair_val_tostring(as_val *);
 
 /******************************************************************************
- * VARIABLES
+ * CONSTANTS
  ******************************************************************************/
 
-static const as_val AS_PAIR_VAL = {
+const as_val as_pair_val = {
     .type       = AS_PAIR,
     .size       = sizeof(as_pair),
     .free       = as_pair_val_free,
@@ -37,20 +39,6 @@ static const as_val AS_PAIR_VAL = {
  * FUNCTIONS
  ******************************************************************************/
 
-int as_pair_init(as_pair * p, as_val * _1, as_val * _2) {
-    p->_ = AS_PAIR_VAL;
-    p->_1 = _1;
-    p->_2 = _2;
-    return 0;
-}
-
-int as_pair_destroy(as_pair * p) {
-    if ( p->_1 ) as_val_free(p->_1);
-    p->_1 = NULL;
-    if ( p->_2 ) as_val_free(p->_2);
-    p->_2 = NULL;
-    return 0;
-}
 
 static char * as_pair_tostring(as_pair * p) {
 

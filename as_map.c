@@ -8,36 +8,36 @@
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-extern inline int as_map_destroy(as_map *);
+extern inline as_map *      as_map_new(void *, const as_map_hooks *);
+extern inline as_map *      as_map_init(as_map *, void *, const as_map_hooks *);
+extern inline int           as_map_destroy(as_map *);
+extern inline int           as_map_free(as_map *);
 
-extern inline as_map * as_map_new(void *, const as_map_hooks *);
-extern inline int as_map_free(as_map *);
+extern inline void *        as_map_source(const as_map *);
 
-extern inline void * as_map_source(const as_map *);
-
-extern inline int as_map_hash(as_map *);
-extern inline uint32_t as_map_size(const as_map *);
-extern inline as_val * as_map_get(const as_map *, const as_val *);
-extern inline int as_map_set(as_map *, const as_val *, const as_val *);
-extern inline int as_map_clear(as_map *);
+extern inline uint32_t      as_map_size(const as_map *);
+extern inline as_val *      as_map_get(const as_map *, const as_val *);
+extern inline int           as_map_set(as_map *, const as_val *, const as_val *);
+extern inline int           as_map_clear(as_map *);
 extern inline as_iterator * as_map_iterator(const as_map *);
 
-extern inline as_val * as_map_toval(const as_map *);
-extern inline as_map * as_map_fromval(const as_val *);
+extern inline int           as_map_hash(as_map *);
+extern inline as_val *      as_map_toval(const as_map *);
+extern inline as_map *      as_map_fromval(const as_val *);
 
 /******************************************************************************
  * STATIC FUNCTIONS
  ******************************************************************************/
 
-static int as_map_val_free(as_val *);
+static int      as_map_val_free(as_val *);
 static uint32_t as_map_val_hash(as_val *);
-static char * as_map_val_tostring(as_val *);
+static char *   as_map_val_tostring(as_val *);
 
 /******************************************************************************
- * VARIABLES
+ * CONSTANTS
  ******************************************************************************/
 
-static const as_val AS_MAP_VAL = {
+const as_val as_map_val = {
     .type       = AS_MAP,
     .size       = sizeof(as_map),
     .free       = as_map_val_free, 
@@ -48,13 +48,6 @@ static const as_val AS_MAP_VAL = {
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-
-int as_map_init(as_map * m, void * source, const as_map_hooks * hooks) {
-    m->_ = AS_MAP_VAL;
-    m->source = source;
-    m->hooks = hooks;
-    return 0;
-}
 
 static int as_map_val_free(as_val * v) {
     return as_val_type(v) == AS_MAP ? as_map_free((as_map *) v) : 1;
@@ -108,7 +101,14 @@ static char * as_map_val_tostring(as_val * v) {
         strncpy(buf + pos + keylen + 2, valstr, vallen);
         pos += keylen + 2 + vallen;
         sep = true;
+
+        free(keystr);
+        keystr = NULL;
+        free(valstr);
+        valstr = NULL;
     }
+
+    as_iterator_free(i);
 
     strcpy(buf + pos, ")");
     

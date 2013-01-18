@@ -3,36 +3,34 @@
 #include <stdio.h>
 #include <string.h>
 
-static const as_val AS_BOOLEAN_VAL;
-
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-extern inline int as_boolean_destroy(as_boolean *);
+extern inline as_boolean *  as_boolean_new(bool);
+extern inline as_boolean *  as_boolean_init(as_boolean *, bool);
+extern inline int           as_boolean_destroy(as_boolean *);
+extern inline int           as_boolean_free(as_boolean *);
 
-extern inline as_boolean * as_boolean_new(bool);
-extern inline int as_boolean_free(as_boolean *);
+extern inline bool          as_boolean_tobool(const as_boolean *);
 
-extern inline uint32_t as_boolean_hash(const as_boolean *);
-
-extern inline bool as_boolean_tobool(const as_boolean *);
-extern inline as_val * as_boolean_toval(const as_boolean *);
-extern inline as_boolean * as_boolean_fromval(const as_val *);
+extern inline uint32_t      as_boolean_hash(const as_boolean *);
+extern inline as_val *      as_boolean_toval(const as_boolean *);
+extern inline as_boolean *  as_boolean_fromval(const as_val *);
 
 /******************************************************************************
  * STATIC FUNCTIONS
  ******************************************************************************/
 
-static int as_boolean_val_free(as_val *);
+static int      as_boolean_val_free(as_val *);
 static uint32_t as_boolean_val_hash(as_val *);
-static char * as_boolean_val_tostring(as_val *);
+static char *   as_boolean_val_tostring(as_val *);
 
 /******************************************************************************
- * VARIABLES
+ * CONSTANTS
  ******************************************************************************/
 
-static const as_val AS_BOOLEAN_VAL = {
+const as_val as_boolean_val = {
     .type       = AS_BOOLEAN, 
     .size       = sizeof(as_boolean),
     .free       = as_boolean_val_free, 
@@ -44,11 +42,6 @@ static const as_val AS_BOOLEAN_VAL = {
  * FUNCTIONS
  ******************************************************************************/
 
-int as_boolean_init(as_boolean * v, bool b) {
-    v->_ = AS_BOOLEAN_VAL;
-    v->value = b;
-    return 0;
-}
 
 static int as_boolean_val_free(as_val * v) {
     return as_val_type(v) == AS_BOOLEAN ? as_boolean_free((as_boolean *) v) : 1;
