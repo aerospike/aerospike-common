@@ -204,8 +204,9 @@ int cf_rchash_put(cf_rchash *h, void *key, uint32_t key_len, void *object) {
 	// (like, you just searched and it's single-threaded)
 	while (e) {
 #ifdef VALIDATE
-		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+		cf_atomic_int_t rc;
+		if ((rc = cf_rc_count(e->object)) < 1) {
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count (%d) on %p", h, rc, e->object);
 			if (l)		pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -250,8 +251,9 @@ int cf_rchash_put_unique(cf_rchash *h, void *key, uint32_t key_len, void *object
 	if (h->key_len != key_len) return(CF_RCHASH_ERR);
 
 #ifdef VALIDATE
-	if (cf_rc_count(object) < 1) {
-		cf_info(CF_RCHASH,"put unique! bad reference count on %p");
+	cf_atomic_int_t rc;
+	if ((rc = cf_rc_count(object)) < 1) {
+		cf_info(CF_RCHASH,"cf_rchash %d: put unique! bad reference count (%d) on %p", h, rc, object);
 		return(CF_RCHASH_ERR);
 	}
 #endif    
@@ -279,8 +281,9 @@ int cf_rchash_put_unique(cf_rchash *h, void *key, uint32_t key_len, void *object
 	// check for uniqueness of key - if not unique, fail!
 	while (e) {
 #ifdef VALIDATE
-		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+		cf_atomic_int_t rc;
+		if ((rc = cf_rc_count(e->object)) < 1) {
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count (%d) on %p", h, rc, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -339,8 +342,9 @@ int cf_rchash_get(cf_rchash *h, void *key, uint32_t key_len, void **object) {
     
 	while (e) {
 #ifdef VALIDATE
-		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+		cf_atomic_int_t rc;
+		if ((rc = cf_rc_count(e->object)) < 1) {
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count (%d) on %p", h, rc, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -397,8 +401,9 @@ int cf_rchash_delete(cf_rchash *h, void *key, uint32_t key_len) {
 	while (e) {
 		
 #ifdef VALIDATE
-		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+		cf_atomic_int_t rc;
+		if ((rc = cf_rc_count(e->object)) < 1) {
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count (%d) on %p", h, rc, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -473,8 +478,9 @@ void cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) 
 				break;
 			
 #ifdef VALIDATE
-			if (cf_rc_count(list_he->object) < 1) {
-				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
+			cf_atomic_int_t rc;
+			if ((rc = cf_rc_count(list_he->object)) < 1) {
+				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count (%d) on %p", h, rc, list_he->object);
 			}
 #endif		
 
@@ -528,8 +534,9 @@ void cf_rchash_reduce_delete(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *
 				break;
 			
 #ifdef VALIDATE
-			if (cf_rc_count(list_he->object) < 1) {
-				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
+			cf_atomic_int_t rc;
+			if ((rc = cf_rc_count(list_he->object)) < 1) {
+				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count (%d) on %p", h, rc, list_he->object);
 				if (l)	pthread_mutex_unlock(l);
 				return;
 			}
@@ -682,8 +689,9 @@ int cf_rchash_put_v(cf_rchash *h, void *key, uint32_t key_len, void *object) {
 	// (like, you just searched and it's single-threaded)
 	while (e) {
 #ifdef VALIDATE
-		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+		cf_atomic_int_t rc;
+		if ((rc = cf_rc_count(e->object)) < 1) {
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p", h, rc, e->object);
 			if (l)		pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -726,8 +734,9 @@ int cf_rchash_put_unique_v(cf_rchash *h, void *key, uint32_t key_len, void *obje
 	if ((h->key_len) &&  (h->key_len != key_len) ) return(CF_RCHASH_ERR);
 
 #ifdef VALIDATE
-	if (cf_rc_count(object) < 1) {
-		cf_info(CF_RCHASH,"put unique! bad reference count on %p");
+	cf_atomic_int_t rc;
+	if ((rc = cf_rc_count(object)) < 1) {
+		cf_info(CF_RCHASH,"cf_rchash %p: put unique! bad reference count (%d) on %p", h, rc, object);
 		return(CF_RCHASH_ERR);
 	}
 #endif    
@@ -756,8 +765,9 @@ int cf_rchash_put_unique_v(cf_rchash *h, void *key, uint32_t key_len, void *obje
 	// check for uniqueness of key - if not unique, fail!
 	while (e) {
 #ifdef VALIDATE
-		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+		cf_atomic_int_t rc;
+		if ((rc = cf_rc_count(e->object)) < 1) {
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count (%d) on %p", h, rc, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -813,8 +823,9 @@ int cf_rchash_get_v(cf_rchash *h, void *key, uint32_t key_len, void **object) {
     
 	while (e) {
 #ifdef VALIDATE
-		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+		cf_atomic_int_t rc;
+		if ((rc = cf_rc_count(e->object)) < 1) {
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count (%d) on %p", h, rc, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -870,8 +881,9 @@ int cf_rchash_delete_v(cf_rchash *h, void *key, uint32_t key_len) {
 	while (e) {
 		
 #ifdef VALIDATE
-		if (cf_rc_count(e->object) < 1) {
-			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, e->object);
+		cf_atomic_int_t rc;
+		if ((rc = cf_rc_count(e->object)) < 1) {
+			cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count (%d) on %p", h, rc, e->object);
 			if (l)	pthread_mutex_unlock(l);
 			return(CF_RCHASH_ERR);
 		}
@@ -941,8 +953,9 @@ void cf_rchash_reduce_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata
 				break;
 			
 #ifdef VALIDATE
-			if (cf_rc_count(list_he->object) < 1) {
-				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
+			cf_atomic_int_t rc;
+			if ((rc = cf_rc_count(list_he->object)) < 1) {
+				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count (%d) on %p", h, rc, list_he->object);
 			}
 #endif		
 
@@ -994,8 +1007,9 @@ void cf_rchash_reduce_delete_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void
 				break;
 			
 #ifdef VALIDATE
-			if (cf_rc_count(list_he->object) < 1) {
-				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
+			cf_atomic_int_t rc;
+			if ((rc = cf_rc_count(list_he->object)) < 1) {
+				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count (%d) on %p", h, rc, list_he->object);
 				if (l)	pthread_mutex_unlock(l);
 				return;
 			}
@@ -1114,12 +1128,13 @@ void cf_rchash_dump(cf_rchash *h)
 			if (list_he->object == 0)
 			  break;
 			
-#ifdef VALIDATE
-			if (cf_rc_count(list_he->object) < 1) {
-				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
+			// (Always validates.)
+			cf_atomic_int_t rc;
+			if ((rc = cf_rc_count(list_he->object)) < 1) {
+				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count (%d) on %p", h, rc, list_he->object);
 			}
-#endif		
-			cf_info(CF_RCHASH, "[%d.%d] key: %p ; object: %p", i, j++, list_he->key, list_he->object);
+
+			cf_info(CF_RCHASH, "[%d.%d] key: %p ; object: %p (rc %d)", i, j++, list_he->key, list_he->object, rc);
 
 			list_he = list_he->next;
 		}
@@ -1163,13 +1178,14 @@ void cf_rchash_dump_v(cf_rchash *h)
 			// 0 length means an unused head pointer - break
 			if (list_he->object == 0)
 			  break;
-			
-#ifdef VALIDATE
-			if (cf_rc_count(list_he->object) < 1) {
-				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count on %p",h, list_he->object);
+
+			// (Always validates.)
+			cf_atomic_int_t rc;
+			if ((rc = cf_rc_count(list_he->object)) < 1) {
+				cf_info(CF_RCHASH,"cf_rchash %p: internal bad reference count (%d) on %p", h, rc, list_he->object);
 			}
-#endif		
-			cf_info(CF_RCHASH, "[%d.%d] key: %p ; key_len: %d ; object: %p", i, j++, list_he->key, list_he->key_len, list_he->object);
+
+			cf_info(CF_RCHASH, "[%d.%d] key: %p ; key_len: %d ; object: %p (rc %d)", i, j++, list_he->key, list_he->key_len, list_he->object, rc);
 
 			// XXX -- Not general ~~ Requires a string key.
 			// (Should pass in a printing function instead.)
