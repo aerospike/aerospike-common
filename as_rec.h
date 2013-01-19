@@ -19,9 +19,9 @@ typedef struct as_rec_hooks_s as_rec_hooks;
  * @field hooks contains the record interface that works with the source.
  */
 struct as_rec_s {
-    as_val _;
-    void * source;
-    const as_rec_hooks * hooks;
+    as_val                  _;
+    void *                  source;
+    const as_rec_hooks *    hooks;
 };
 
 /**
@@ -29,27 +29,31 @@ struct as_rec_s {
  * Provided functions that interface with the records.
  */
 struct as_rec_hooks_s {
-    int (*free)(as_rec *);
-    as_val * (*get)(const as_rec *, const char *);
-    int (*set)(const as_rec *, const char *, const as_val *);
-    int (*remove)(const as_rec *, const char *);
-    uint32_t (*hash)(as_rec *);
+    int         (* free)(as_rec *);
+    as_val *    (* get)(const as_rec *, const char *);
+    int         (* set)(const as_rec *, const char *, const as_val *);
+    int         (* remove)(const as_rec *, const char *);
+    uint32_t    (* ttl)(const as_rec *);
+    uint16_t    (* gen)(const as_rec *);
+    uint32_t    (* hash)(as_rec *);
 };
 
 /******************************************************************************
- * FUNCTIONS
+ * CONSTANTS
  ******************************************************************************/
 
-int as_rec_init(as_rec *, void *, const as_rec_hooks *);
+extern const as_val as_rec_val;
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline int as_rec_destroy(as_rec * r) {
-    r->source = NULL;
-    r->hooks = NULL;
-    return 0;
+inline as_rec * as_rec_init(as_rec * r, void * source, const as_rec_hooks * hooks) {
+    if ( !r ) return r;
+    r->_ = as_rec_val;
+    r->source = source;
+    r->hooks = hooks;
+    return r;
 }
 
 /**
@@ -60,8 +64,14 @@ inline int as_rec_destroy(as_rec * r) {
  */
 inline as_rec * as_rec_new(void * source, const as_rec_hooks * hooks) {
     as_rec * r = (as_rec *) malloc(sizeof(as_rec));
-    as_rec_init(r, source, hooks);
-    return r;
+    return as_rec_init(r, source, hooks);
+}
+
+inline int as_rec_destroy(as_rec * r) {
+    if ( !r ) return 0;
+    r->source = NULL;
+    r->hooks = NULL;
+    return 0;
 }
 
 /**
@@ -73,7 +83,11 @@ inline as_rec * as_rec_new(void * source, const as_rec_hooks * hooks) {
  * @param r the as_rec to be freed.
  */
 inline int as_rec_free(as_rec * r) {
-    return as_util_hook(free, 1, r);
+    if ( !r ) return 0;
+    as_util_hook(free, 1, r);
+    as_rec_destroy(r);
+    free(r);
+    return 0;
 }
 
 inline void * as_rec_source(const as_rec * r) {
@@ -120,6 +134,15 @@ inline int as_rec_set(const as_rec * r, const char * name, const as_val * value)
  */
 inline int as_rec_remove(const as_rec * r, const char * name) {
     return as_util_hook(remove, 1, r, name);
+}
+
+
+inline uint32_t as_rec_ttl(const as_rec * r) {
+    return as_util_hook(ttl, 0, r);
+}
+
+inline uint16_t as_rec_gen(const as_rec * r) {
+    return as_util_hook(gen, 0, r);
 }
 
 inline as_val * as_rec_toval(const as_rec * r) {
