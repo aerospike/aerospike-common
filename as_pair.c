@@ -8,9 +8,10 @@
  ******************************************************************************/
 
 extern inline as_pair * as_pair_new(as_val *, as_val *);
+extern inline int       as_pair_free(as_pair *);
+
 extern inline as_pair * as_pair_init(as_pair *, as_val * _1, as_val * _2);
 extern inline int       as_pair_destroy(as_pair *);
-extern inline int       as_pair_free(as_pair *);
 
 extern inline as_val * as_pair_1(as_pair *);
 extern inline as_val * as_pair_2(as_pair *);

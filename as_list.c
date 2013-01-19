@@ -8,9 +8,10 @@
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-extern inline as_list *     as_list_new(void *, const as_list_hooks *);
 extern inline as_list *     as_list_init(as_list *, void *, const as_list_hooks *);
 extern inline int           as_list_destroy(as_list *);
+
+extern inline as_list *     as_list_new(void *, const as_list_hooks *);
 extern inline int           as_list_free(as_list *);
 
 extern inline void *        as_list_source(const as_list *);

@@ -8,9 +8,10 @@
  ******************************************************************************/
 
 extern inline as_integer *  as_integer_new(int64_t);
+extern inline int           as_integer_free(as_integer *);
+
 extern inline as_integer *  as_integer_init(as_integer *, int64_t);
 extern inline int           as_integer_destroy(as_integer *);
-extern inline int           as_integer_free(as_integer *);
 
 extern inline int64_t       as_integer_toint(const as_integer *);
 

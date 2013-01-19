@@ -8,9 +8,10 @@
  ******************************************************************************/
 
 extern inline as_boolean *  as_boolean_new(bool);
+extern inline int           as_boolean_free(as_boolean *);
+
 extern inline as_boolean *  as_boolean_init(as_boolean *, bool);
 extern inline int           as_boolean_destroy(as_boolean *);
-extern inline int           as_boolean_free(as_boolean *);
 
 extern inline bool          as_boolean_tobool(const as_boolean *);
 

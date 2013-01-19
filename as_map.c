@@ -9,9 +9,10 @@
  ******************************************************************************/
 
 extern inline as_map *      as_map_new(void *, const as_map_hooks *);
+extern inline int           as_map_free(as_map *);
+
 extern inline as_map *      as_map_init(as_map *, void *, const as_map_hooks *);
 extern inline int           as_map_destroy(as_map *);
-extern inline int           as_map_free(as_map *);
 
 extern inline void *        as_map_source(const as_map *);
 
