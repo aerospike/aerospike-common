@@ -1072,7 +1072,7 @@ void cf_rchash_reduce_delete_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void
 void cf_rchash_destroy_elements_v(cf_rchash *h) {
 	for (uint i=0;i<h->table_len;i++) {
         
-        cf_rchash_elem_f *e = get_bucket(h, i);
+        cf_rchash_elem_v *e = get_bucket_v(h, i);
         if (e->object == 0) continue;
         
         cf_rchash_free(h, e->object);
@@ -1080,7 +1080,7 @@ void cf_rchash_destroy_elements_v(cf_rchash *h) {
         e = e->next; // skip the first, it's in place
 
         while (e) {
-            cf_rchash_elem_f *t = e->next;
+            cf_rchash_elem_v *t = e->next;
             cf_rchash_free(h, e->object);
             cf_free(e->key);
             cf_free(e);
