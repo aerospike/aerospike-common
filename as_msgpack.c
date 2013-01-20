@@ -75,13 +75,13 @@ static int as_msgpack_pack_list(msgpack_packer * pk, as_list * l) {
         as_val * val = (as_val *) as_iterator_next(i);
         int rc = as_msgpack_pack_val(pk, val);
         if ( rc ) {
-            as_iterator_free(i);
-            return 2;
+            rc = 2;
+            break;
         }
     }
     as_iterator_free(i);
 
-    return 0;
+    return rc;
 }
 
 static int as_msgpack_pack_map(msgpack_packer * pk, as_map * m) {
@@ -93,15 +93,14 @@ static int as_msgpack_pack_map(msgpack_packer * pk, as_map * m) {
         as_pair * p = (as_pair *) as_iterator_next(i);
         if ( !p ) {
             rc = 2;
-            goto Cleanup;
+            break;
         }
         rc = as_msgpack_pack_val(pk, as_pair_1(p));
-        if ( rc ) goto Cleanup;
+        if ( rc ) break;
         rc = as_msgpack_pack_val(pk, as_pair_2(p));
-        if ( rc ) goto Cleanup;
+        if ( rc ) break;
     }
 
-Cleanup:
     as_iterator_free(i);
 
     return rc;

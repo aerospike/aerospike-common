@@ -234,6 +234,7 @@ static const as_val * as_linkedlist_iterator_next(as_iterator * i) {
 
 static const int as_linkedlist_iterator_free(as_iterator * i) {
     if ( !i ) return 0;
+    if ( i->source ) free(i->source);
     i->source = NULL;
     i->hooks = NULL;
     return 0;
