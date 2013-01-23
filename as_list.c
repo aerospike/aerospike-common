@@ -27,6 +27,8 @@ extern inline as_list *     as_list_drop(const as_list *, uint32_t);
 extern inline as_list *     as_list_take(const as_list *, uint32_t);
 extern inline as_iterator * as_list_iterator(const as_list *);
 
+extern inline void as_list_foreach(const as_list *, void *, as_list_foreach_callback);
+
 extern inline uint32_t      as_list_hash(as_list *);
 extern inline as_val *      as_list_toval(const as_list *);
 extern inline as_list *     as_list_fromval(const as_val *);
