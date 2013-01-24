@@ -25,6 +25,7 @@
 
 #pragma once
 #include <stdlib.h>
+#include "cf_atomic.h"
 
 /******************************************************************************
  * FUNCTIONS
@@ -41,6 +42,7 @@ void cf_free_at(void *p, char *file, int line);
 void * cf_rc_alloc_at(size_t sz, char *file, int line);
 void cf_rc_free_at(void *addr, char *file, int line);
 
+cf_atomic_int_t cf_rc_count(void *addr);
 int cf_rc_reserve(void *addr);
 int cf_rc_release(void *addr);
 int cf_rc_releaseandfree(void *addr);

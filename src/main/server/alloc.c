@@ -1153,9 +1153,7 @@ cf_rc_init(char *clib_path) {
 
 /* cf_rc_count
  * Get the reservation count for a memory region */
-int
-cf_rc_count(void *addr)
-{
+cf_atomic_int_t cf_rc_count(void *addr) {
 #ifdef EXTRA_CHECKS	
 	if (addr == 0) {
 		cf_warning(CF_ALLOC, "rccount: null address");

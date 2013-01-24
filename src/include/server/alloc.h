@@ -21,4 +21,3 @@ typedef struct {
 
 
 extern void cf_rc_init();
-extern int cf_rc_count(void *addr);
