@@ -2,16 +2,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <cf_alloc.h>
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-extern inline as_boolean *  as_boolean_new(bool);
-extern inline int           as_boolean_free(as_boolean *);
-
-extern inline as_boolean *  as_boolean_init(as_boolean *, bool);
-extern inline int           as_boolean_destroy(as_boolean *);
 
 extern inline bool          as_boolean_tobool(const as_boolean *);
 
@@ -43,6 +39,32 @@ const as_val as_boolean_val = {
  * FUNCTIONS
  ******************************************************************************/
 
+as_boolean * as_boolean_init(as_boolean * v, bool b) {
+    if ( !v ) return v;
+    v->_ = as_boolean_val;
+    v->value = b;
+    return v;
+}
+
+int as_boolean_destroy(as_boolean * b) {
+    if ( b ) b->value = false;
+    return 0;
+}
+
+as_boolean * as_boolean_new(bool b) {
+    as_boolean * v = (as_boolean *) cf_rc_alloc(sizeof(as_boolean));
+    return as_boolean_init(v, b);
+}
+
+int as_boolean_free(as_boolean * b) {
+    if ( !b ) return 0;
+    cf_rc_releaseandfree(b);
+    return 0;
+}
+
+/******************************************************************************
+ * STATIC FUNCTIONS
+ ******************************************************************************/
 
 static int as_boolean_val_free(as_val * v) {
     return as_val_type(v) == AS_BOOLEAN ? as_boolean_free((as_boolean *) v) : 1;

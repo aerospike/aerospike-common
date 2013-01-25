@@ -3,16 +3,11 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <cf_alloc.h>
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
-
-extern inline as_map *      as_map_new(void *, const as_map_hooks *);
-extern inline int           as_map_free(as_map *);
-
-extern inline as_map *      as_map_init(as_map *, void *, const as_map_hooks *);
-extern inline int           as_map_destroy(as_map *);
 
 extern inline void *        as_map_source(const as_map *);
 
@@ -48,6 +43,45 @@ const as_val as_map_val = {
 
 /******************************************************************************
  * FUNCTIONS
+ ******************************************************************************/
+
+as_map * as_map_init(as_map * m, void * source, const as_map_hooks * hooks) {
+    if ( !m ) return m;
+    m->_ = as_map_val;
+    m->source = source;
+    m->hooks = hooks;
+    return m;
+}
+
+as_map * as_map_new(void * source, const as_map_hooks * hooks) {
+    as_map * m = (as_map *) cf_rc_alloc(sizeof(as_map));
+    return as_map_init(m, source, hooks);
+}
+
+int as_map_destroy(as_map * m) {
+    if ( !m ) return 0;
+    m->source = NULL;
+    m->hooks = NULL;
+    return 0;
+}
+
+/**
+ * Free sequence:
+ * 1. Call the hook designated for freeing the source.
+ * 2. NULL-ify members
+ * 3. Free the map
+ */
+int as_map_free(as_map * m) {
+    if ( !m ) return 0;
+    if ( cf_rc_release(m) > 0 ) return 0;
+    as_util_hook(free, 1, m);
+    as_map_destroy(m);
+    cf_rc_free(m);
+    return 0;
+}
+
+/******************************************************************************
+ * STATIC FUNCTIONS
  ******************************************************************************/
 
 static int as_map_val_free(as_val * v) {

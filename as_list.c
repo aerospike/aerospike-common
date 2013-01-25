@@ -3,16 +3,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
+#include <cf_alloc.h>
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
-
-extern inline as_list *     as_list_init(as_list *, void *, const as_list_hooks *);
-extern inline int           as_list_destroy(as_list *);
-
-extern inline as_list *     as_list_new(void *, const as_list_hooks *);
-extern inline int           as_list_free(as_list *);
 
 extern inline void *        as_list_source(const as_list *);
 
@@ -55,6 +50,45 @@ const as_val as_list_val = {
 
 /******************************************************************************
  * FUNCTIONS
+ ******************************************************************************/
+
+as_list * as_list_init(as_list * l, void * source, const as_list_hooks * hooks) {
+    if ( !l ) return l;
+    l->_ = as_list_val;
+    l->source = source;
+    l->hooks = hooks;
+    return l;
+}
+
+int as_list_destroy(as_list * l) {
+    if ( !l ) return 0;
+    l->source = NULL;
+    l->hooks = NULL;
+    return 0;
+}
+
+as_list * as_list_new(void * source, const as_list_hooks * hooks) {
+    as_list * l = (as_list *) cf_rc_alloc(sizeof(as_list));
+    return as_list_init(l, source, hooks);
+}
+
+/**
+ * Free sequence:
+ * 1. Call the hook designated for freeing the source.
+ * 2. Free the resources
+ * 3. Free the list
+ */
+int as_list_free(as_list * l) {
+    if ( !l ) return 0;
+    if ( cf_rc_release(l) > 0 ) return 0;
+    as_util_hook(free, 1, l);
+    as_list_destroy(l); 
+    cf_rc_free(l);
+    return 0;
+}
+
+/******************************************************************************
+ * STATIC FUNCTIONS
  ******************************************************************************/
 
 static int as_list_val_free(as_val * v) {

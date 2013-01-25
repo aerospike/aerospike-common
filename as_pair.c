@@ -2,16 +2,11 @@
 #include "as_pair.h"
 #include <stdlib.h>
 #include <string.h>
+#include <cf_alloc.h>
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
-
-extern inline as_pair * as_pair_new(as_val *, as_val *);
-extern inline int       as_pair_free(as_pair *);
-
-extern inline as_pair * as_pair_init(as_pair *, as_val * _1, as_val * _2);
-extern inline int       as_pair_destroy(as_pair *);
 
 extern inline as_val * as_pair_1(as_pair *);
 extern inline as_val * as_pair_2(as_pair *);
@@ -40,6 +35,39 @@ const as_val as_pair_val = {
  * FUNCTIONS
  ******************************************************************************/
 
+as_pair * as_pair_init(as_pair * p, as_val * _1, as_val * _2) {
+    if ( !p ) return p;
+    p->_ = as_pair_val;
+    p->_1 = _1;
+    p->_2 = _2;
+    return p;
+}
+
+as_pair * as_pair_new(as_val * _1, as_val * _2) {
+    as_pair * p = (as_pair *) cf_rc_alloc(sizeof(as_pair));
+    return as_pair_init(p, _1, _2);
+}
+
+int as_pair_destroy(as_pair * p) {
+    if ( !p ) return 0;
+    if ( p->_1 ) as_val_free(p->_1);
+    p->_1 = NULL;
+    if ( p->_2 ) as_val_free(p->_2);
+    p->_2 = NULL;
+    return 0;
+}
+
+int as_pair_free(as_pair * p) {
+    if ( !p ) return 0;
+    if ( cf_rc_release(p) > 0 ) return 0;
+    as_pair_destroy(p);
+    cf_rc_free(p);
+    return 0;
+}
+
+/******************************************************************************
+ * STATIC FUNCTIONS
+ ******************************************************************************/
 
 static char * as_pair_tostring(as_pair * p) {
 

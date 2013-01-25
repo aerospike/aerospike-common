@@ -2,16 +2,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <cf_alloc.h>
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-extern inline as_integer *  as_integer_new(int64_t);
-extern inline int           as_integer_free(as_integer *);
-
-extern inline as_integer *  as_integer_init(as_integer *, int64_t);
-extern inline int           as_integer_destroy(as_integer *);
 
 extern inline int64_t       as_integer_toint(const as_integer *);
 
@@ -31,7 +27,7 @@ static char *   as_integer_val_tostring(as_val *);
  * VARIABLES
  ******************************************************************************/
 
-extern const as_val as_integer_val = {
+const as_val as_integer_val = {
     .type       = AS_INTEGER, 
     .size       = sizeof(as_integer),
     .free       = as_integer_val_free, 
@@ -41,6 +37,33 @@ extern const as_val as_integer_val = {
 
 /******************************************************************************
  * FUNCTIONS
+ ******************************************************************************/
+
+as_integer * as_integer_init(as_integer * v, int64_t i) {
+    if ( !v ) return v;
+    v->_ = as_integer_val;
+    v->value = i;
+    return v;
+}
+
+as_integer * as_integer_new(int64_t i) {
+    as_integer * v = (as_integer *) cf_rc_alloc(sizeof(as_integer));
+    return as_integer_init(v, i);
+}
+
+int as_integer_destroy(as_integer * i) {
+    if ( i ) i->value = 0;
+    return 0;
+}
+
+int as_integer_free(as_integer * i) {
+    if ( !i ) return 0;
+    cf_rc_releaseandfree(i);
+    return 0;
+}
+
+/******************************************************************************
+ * STATIC FUNCTIONS
  ******************************************************************************/
 
 static int as_integer_val_free(as_val * v) {
