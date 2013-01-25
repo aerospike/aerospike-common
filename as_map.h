@@ -38,41 +38,18 @@ struct as_map_hooks_s {
 extern const as_val as_map_val;
 
 /******************************************************************************
- * INLINE FUNCTIONS
+ * FUNCTIONS
  ******************************************************************************/
 
-inline as_map * as_map_init(as_map * m, void * source, const as_map_hooks * hooks) {
-    if ( !m ) return m;
-    m->_ = as_map_val;
-    m->source = source;
-    m->hooks = hooks;
-    return m;
-}
+as_map *      as_map_new(void *, const as_map_hooks *);
+int           as_map_free(as_map *);
 
-inline as_map * as_map_new(void * source, const as_map_hooks * hooks) {
-    as_map * m = (as_map *) malloc(sizeof(as_map));
-    return as_map_init(m, source, hooks);
-}
+as_map *      as_map_init(as_map *, void *, const as_map_hooks *);
+int           as_map_destroy(as_map *);
 
-inline int as_map_destroy(as_map * m) {
-    if ( !m ) return 0;
-    m->source = NULL;
-    m->hooks = NULL;
-    return 0;
-}
-
-/**
- * Free sequence:
- * 1. Call the hook designated for freeing the source.
- * 2. NULL-ify members
- * 3. Free the map
- */
-inline int as_map_free(as_map * m) {
-    as_util_hook(free, 1, m);
-    as_map_destroy(m);
-    free(m);
-    return 0;
-}
+/******************************************************************************
+ * INLINE FUNCTIONS
+ ******************************************************************************/
 
 
 

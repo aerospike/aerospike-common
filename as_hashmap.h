@@ -7,7 +7,7 @@
  * TYPES
  ******************************************************************************/
 
-typedef struct shash_s as_hashmap;
+typedef struct as_hashmap_s as_hashmap;
 typedef struct as_hashmap_iterator_source_s as_hashmap_iterator_source;
 
 /******************************************************************************
@@ -20,6 +20,9 @@ extern const as_iterator_hooks as_hashmap_iterator;
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+as_hashmap *    as_hashmap_init(as_hashmap *, uint32_t);
+int             as_hashmap_destroy(as_hashmap *);
 
 as_hashmap *    as_hashmap_new(uint32_t);
 int             as_hashmap_free(as_hashmap *);

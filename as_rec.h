@@ -45,50 +45,19 @@ struct as_rec_hooks_s {
 extern const as_val as_rec_val;
 
 /******************************************************************************
+ * FUNCTIONS
+ ******************************************************************************/
+
+as_rec *  as_rec_init(as_rec *, void *, const as_rec_hooks *);
+int       as_rec_destroy(as_rec *);
+
+as_rec *  as_rec_new(void *, const as_rec_hooks *);
+int       as_rec_free(as_rec *);
+
+/******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline as_rec * as_rec_init(as_rec * r, void * source, const as_rec_hooks * hooks) {
-    if ( !r ) return r;
-    r->_ = as_rec_val;
-    r->source = source;
-    r->hooks = hooks;
-    return r;
-}
-
-/**
- * Create a new as_rec backed by source and supported by hooks.
- *
- * @param source the source backing the as_rec.
- * @param hooks the hooks that support the as_rec.
- */
-inline as_rec * as_rec_new(void * source, const as_rec_hooks * hooks) {
-    as_rec * r = (as_rec *) malloc(sizeof(as_rec));
-    return as_rec_init(r, source, hooks);
-}
-
-inline int as_rec_destroy(as_rec * r) {
-    if ( !r ) return 0;
-    r->source = NULL;
-    r->hooks = NULL;
-    return 0;
-}
-
-/**
- * Free the as_rec.
- * This will free the as_rec object, the source and hooks.
- *
- * Proxies to `r->hooks->free(r)`
- *
- * @param r the as_rec to be freed.
- */
-inline int as_rec_free(as_rec * r) {
-    if ( !r ) return 0;
-    as_util_hook(free, 1, r);
-    as_rec_destroy(r);
-    free(r);
-    return 0;
-}
 
 inline void * as_rec_source(const as_rec * r) {
     return (r ? r->source : NULL);

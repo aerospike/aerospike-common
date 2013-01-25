@@ -27,35 +27,15 @@ extern const as_val as_string_val;
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline as_string * as_string_init(as_string * v, char * s) {
-    if ( !v ) return v;
-    v->_ = as_string_val;
-    v->value = s;
-    v->len = 0;
-    return v;
-}
+as_string *   as_string_init(as_string *, char *);
+int           as_string_destroy(as_string *);
 
-inline as_string * as_string_new(char * s) {
-    as_string * v = (as_string *) malloc(sizeof(as_string));
-    return as_string_init(v, s);
-}
+as_string *   as_string_new(char *);
+int           as_string_free(as_string *);
 
-inline int as_string_destroy(as_string * s) {
-    if ( !s ) return 0;
-
-    if ( s->value ) free(s->value);
-    s->value = NULL;
-    s->len = 0;
-    return 0;
-}
-
-inline int as_string_free(as_string * s) {
-    as_string_destroy(s);
-    free(s);
-    return 0;
-}
-
-
+/******************************************************************************
+ * INLINE FUNCTIONS
+ ******************************************************************************/
 
 inline char * as_string_tostring(const as_string * s) {
     return (s ? s->value : NULL);

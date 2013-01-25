@@ -22,32 +22,18 @@ struct as_boolean_s {
 extern const as_val as_boolean_val;
 
 /******************************************************************************
- * INLINE FUNCTIONS
+ * FUNCTIONS
  ******************************************************************************/
 
-inline as_boolean * as_boolean_init(as_boolean * v, bool b) {
-    if ( !v ) return v;
-    v->_ = as_boolean_val;
-    v->value = b;
-    return v;
-}
+as_boolean *  as_boolean_init(as_boolean *, bool);
+int           as_boolean_destroy(as_boolean *);
 
-inline as_boolean * as_boolean_new(bool b) {
-    as_boolean * v = (as_boolean *) malloc(sizeof(as_boolean));
-    return as_boolean_init(v, b);
-}
+as_boolean *  as_boolean_new(bool);
+int           as_boolean_free(as_boolean *);
 
-inline int as_boolean_destroy(as_boolean * b) {
-    if ( b ) b->value = false;
-    return 0;
-}
-
-inline int as_boolean_free(as_boolean * b) {
-    free(b);
-    return 0;
-}
-
-
+/******************************************************************************
+ * INLINE FUNCTIONS
+ ******************************************************************************/
 
 inline bool as_boolean_tobool(const as_boolean * b) {
     return b->value;

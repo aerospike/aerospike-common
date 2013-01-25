@@ -22,38 +22,23 @@ struct as_integer_s {
 extern const as_val as_integer_val;
 
 /******************************************************************************
- * INLINE FUNCTIONS
+ * FUNCTIONS
  ******************************************************************************/
 
+as_integer *  as_integer_init(as_integer *, int64_t);
+int           as_integer_destroy(as_integer *);
 
-inline as_integer * as_integer_init(as_integer * v, int64_t i) {
-    if ( !v ) return v;
-    v->_ = as_integer_val;
-    v->value = i;
-    return v;
-}
+as_integer *  as_integer_new(int64_t);
+int           as_integer_free(as_integer *);
 
-inline as_integer * as_integer_new(int64_t i) {
-    as_integer * v = (as_integer *) malloc(sizeof(as_integer));
-    return as_integer_init(v, i);
-}
-
-inline int as_integer_destroy(as_integer * i) {
-    if ( i ) i->value = 0;
-    return 0;
-}
-
-inline int as_integer_free(as_integer * i) {
-    free(i);
-    return 0;
-}
-
+/******************************************************************************
+ * INLINE FUNCTIONS
+ ******************************************************************************/
 
 
 inline int64_t as_integer_toint(const as_integer * i) {
     return i->value;
 }
-
 
 
 inline uint32_t as_integer_hash(const as_integer * i) {

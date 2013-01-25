@@ -48,42 +48,18 @@ struct as_list_hooks_s {
 extern const as_val as_list_val;
 
 /******************************************************************************
- * INLINE FUNCTIONS
+ * FUNCTIONS
  ******************************************************************************/
 
-inline as_list * as_list_init(as_list * l, void * source, const as_list_hooks * hooks) {
-    if ( !l ) return l;
-    l->_ = as_list_val;
-    l->source = source;
-    l->hooks = hooks;
-    return l;
-}
+as_list *     as_list_init(as_list *, void *, const as_list_hooks *);
+int           as_list_destroy(as_list *);
 
-inline as_list * as_list_new(void * source, const as_list_hooks * hooks) {
-    as_list * l = (as_list *) malloc(sizeof(as_list));
-    return as_list_init(l, source, hooks);
-}
+as_list *     as_list_new(void *, const as_list_hooks *);
+int           as_list_free(as_list *);
 
-inline int as_list_destroy(as_list * l) {
-    if ( !l ) return 0;
-    l->source = NULL;
-    l->hooks = NULL;
-    return 0;
-}
-
-/**
- * Free sequence:
- * 1. Call the hook designated for freeing the source.
- * 2. Free the resources
- * 3. Free the list
- */
-inline int as_list_free(as_list * l) {
-    as_util_hook(free, 1, l);
-    as_list_destroy(l);
-    free(l);
-    return 0;
-}
-
+/******************************************************************************
+ * INLINE FUNCTIONS
+ ******************************************************************************/
 
 
 inline void * as_list_source(const as_list * l) {
