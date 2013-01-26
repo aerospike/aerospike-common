@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cf_alloc.h>
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -59,9 +60,11 @@ int as_pair_destroy(as_pair * p) {
 
 int as_pair_free(as_pair * p) {
     if ( !p ) return 0;
+    LOG("as_pair_free: release");
     if ( cf_rc_release(p) > 0 ) return 0;
     as_pair_destroy(p);
     cf_rc_free(p);
+    LOG("as_pair_free: free");
     return 0;
 }
 

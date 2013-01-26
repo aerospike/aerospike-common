@@ -1,6 +1,7 @@
 #include "as_result.h"
 #include <stdlib.h>
 #include <cf_alloc.h>
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -41,9 +42,11 @@ as_result * as_failure(as_val * e) {
 
 int as_result_free(as_result * r) {
     if ( !r ) return 0;
+    LOG("as_result_free: release");
     if ( cf_rc_release(r) > 0 ) return 0;
     as_result_destroy(r);
     cf_rc_free(r);
+    LOG("as_result_free: free");
     return 0;
 }
 

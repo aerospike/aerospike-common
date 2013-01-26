@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cf_alloc.h>
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -61,9 +62,11 @@ int as_string_destroy(as_string * s) {
 
 int as_string_free(as_string * s) {
     if ( !s ) return 0;
+    LOG("as_string_free: release");
     if ( cf_rc_release(s) > 0 ) return 0;
     as_string_destroy(s);
     cf_rc_free(s);
+    LOG("as_string_free: free");
     return 0;
 }
 

@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "as_stream.h"
 #include "as_iterator.h"
+#include "internal.h"
 
 /******************************************************************************
  * TYPES

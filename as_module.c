@@ -1,4 +1,5 @@
 #include "as_module.h"
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS

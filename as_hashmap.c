@@ -3,6 +3,7 @@
 #include <cf_shash.h>
 #include <cf_alloc.h>
 #include <stdlib.h>
+#include "internal.h"
 
 /******************************************************************************
  * TYPES
@@ -86,9 +87,11 @@ as_hashmap * as_hashmap_new(uint32_t capacity) {
 
 int as_hashmap_free(as_hashmap * m) {
     if ( !m ) return 0;
+    LOG("as_hashmap_free: release");
     if ( cf_rc_release(m) > 0 ) return 0;
     as_hashmap_destroy(m);
     cf_rc_free(m);
+    LOG("as_hashmap_free: free");
     return 0;
 }
 

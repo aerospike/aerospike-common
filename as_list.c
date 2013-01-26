@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cf_alloc.h>
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -80,10 +81,12 @@ as_list * as_list_new(void * source, const as_list_hooks * hooks) {
  */
 int as_list_free(as_list * l) {
     if ( !l ) return 0;
+    LOG("as_list_free: release");
     if ( cf_rc_release(l) > 0 ) return 0;
     as_util_hook(free, 1, l);
     as_list_destroy(l); 
     cf_rc_free(l);
+    LOG("as_list_free: free");
     return 0;
 }
 

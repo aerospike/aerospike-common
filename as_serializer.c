@@ -1,4 +1,5 @@
 #include "as_serializer.h"
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS

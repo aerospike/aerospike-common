@@ -1,6 +1,7 @@
 #include "as_aerospike.h"
 #include <stdlib.h>
 #include <cf_alloc.h>
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -37,9 +38,11 @@ as_aerospike * as_aerospike_new(void * s, const as_aerospike_hooks * h) {
 
 int as_aerospike_free(as_aerospike * a) {
     if ( !a ) return 0;
+    LOG("as_aerospike_free: release");
     if ( cf_rc_release(a) > 0 ) return 0;
     as_util_hook(free, 1, a);
     as_aerospike_destroy(a); 
     cf_rc_free(a);
+    LOG("as_aerospike_free: free");
     return 0;
 }

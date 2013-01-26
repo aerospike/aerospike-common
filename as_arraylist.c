@@ -4,6 +4,7 @@
 #include <stdbool.h>
 #include <string.h>
 #include <cf_alloc.h>
+#include "internal.h"
 
 /******************************************************************************
  * STATIC FUNCTIONS
@@ -93,9 +94,11 @@ as_arraylist * as_arraylist_new(uint32_t capacity, uint32_t block_size) {
 
 int as_arraylist_free(as_arraylist * a) {
     if ( !a ) return 0;
+    LOG("as_arraylist_free: release");
     if ( cf_rc_release(a) > 0 ) return 0;
     as_arraylist_destroy(a);
     cf_rc_free(a);
+    LOG("as_arraylist_free: free");
     return 0;
 }
 

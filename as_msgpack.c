@@ -1,6 +1,7 @@
 #include "as_msgpack.h"
 #include "as_serializer.h"
 #include "as_types.h"
+#include "internal.h"
 
 /******************************************************************************
  * STATIC FUNCTIONS

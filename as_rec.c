@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <cf_alloc.h>
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -79,10 +80,12 @@ as_rec * as_rec_new(void * source, const as_rec_hooks * hooks) {
  */
 int as_rec_free(as_rec * r) {
     if ( !r ) return 0;
+    LOG("as_rec_free: release");
     if ( cf_rc_release(r) > 0 ) return 0;
     as_util_hook(free, 1, r);
     as_rec_destroy(r);
     cf_rc_free(r);
+    LOG("as_rec_free: free");
     return 0;
 }
 

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <cf_alloc.h>
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -59,6 +60,7 @@ as_boolean * as_boolean_new(bool b) {
 int as_boolean_free(as_boolean * b) {
     if ( !b ) return 0;
     cf_rc_releaseandfree(b);
+    LOG("as_boolean_free: release & free");
     return 0;
 }
 

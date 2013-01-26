@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <cf_alloc.h>
+#include "internal.h"
 
 /******************************************************************************
  * STATIC FUNCTIONS
@@ -93,9 +94,11 @@ as_linkedlist * as_linkedlist_new(as_val * head, as_linkedlist * tail) {
 
 int as_linkedlist_free(as_linkedlist * l) {
     if ( !l ) return 0;
+    LOG("as_arraylist_free: release");
     if ( cf_rc_release(l) > 0 ) return 0;
     as_linkedlist_destroy(l);
     cf_rc_free(l);
+    LOG("as_arraylist_free: free");
     return 0;
 }
 
@@ -140,7 +143,7 @@ static int as_linkedlist_list_append(as_list * l, as_val * v) {
         lle->head = v;
     }
     else {
-        lle->tail = as_linkedlist_new(as_val_ref(v), NULL);
+        lle->tail = as_linkedlist_new(v, NULL);
     }
     
     return 0;

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <cf_alloc.h>
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -59,6 +60,7 @@ int as_integer_destroy(as_integer * i) {
 int as_integer_free(as_integer * i) {
     if ( !i ) return 0;
     cf_rc_releaseandfree(i);
+    LOG("as_integer_free: release & free");
     return 0;
 }
 

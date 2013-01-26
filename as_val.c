@@ -1,5 +1,6 @@
 #include "as_val.h"
 #include <cf_alloc.h>
+#include "internal.h"
 
 /******************************************************************************
  * FUNCTIONS

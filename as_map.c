@@ -3,7 +3,9 @@
 #include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <cf_alloc.h>
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -73,10 +75,12 @@ int as_map_destroy(as_map * m) {
  */
 int as_map_free(as_map * m) {
     if ( !m ) return 0;
+    LOG("as_map_free: release");
     if ( cf_rc_release(m) > 0 ) return 0;
     as_util_hook(free, 1, m);
     as_map_destroy(m);
     cf_rc_free(m);
+    LOG("as_map_free: free");
     return 0;
 }
 

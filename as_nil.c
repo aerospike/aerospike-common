@@ -1,5 +1,6 @@
 #include "as_val.h"
 #include <string.h>
+#include "internal.h"
 
 /******************************************************************************
  * STATIC FUNCTIONS
