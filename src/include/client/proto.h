@@ -169,6 +169,7 @@ typedef struct cl_msg_field_s {
 #define CL_MSG_FIELD_TYPE_UDF_FILENAME          30
 #define CL_MSG_FIELD_TYPE_UDF_FUNCTION          31
 #define CL_MSG_FIELD_TYPE_UDF_ARGLIST           32
+#define CL_MSG_FIELD_TYPE_UDF_OP                33
 
 // #define CL_MSG_FIELD_TYPE_SPROC_PACKAGE			30
 // #define CL_MSG_FIELD_TYPE_SPROC_PACKAGE_GEN		31
