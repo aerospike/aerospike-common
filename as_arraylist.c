@@ -107,16 +107,21 @@ int as_arraylist_free(as_arraylist * a) {
  ******************************************************************************/
 
 static int as_arraylist_ensure(as_arraylist * a, uint32_t n) {
-    if ( (a->size + n) >= a->capacity && a->block_size > 0 ) {
-        a->elements = realloc(a->elements, sizeof(as_val *) * (a->capacity + a->block_size));
-        if ( a->elements ) {
-            bzero(a->elements + (sizeof(as_val *) * a->capacity), sizeof(as_val *) * a->block_size);
-            a->capacity = a->capacity + a->block_size;
-            return AS_ARRAYLIST_OK;
+    if ( (a->size + n) > a->capacity ) {
+        if ( a->block_size > 0 ) {
+            as_val ** elements = (as_val **) cf_realloc(a->elements, sizeof(as_val *) * (a->capacity + a->block_size));
+            if ( elements != NULL ) {
+                a->elements = elements;
+                // bzero(a->elements + (sizeof(as_val *) * a->capacity), sizeof(as_val *) * a->block_size);
+                a->capacity = a->capacity + a->block_size;
+                return AS_ARRAYLIST_OK;
+            }
+            a->elements = elements;
+            return AS_ARRAYLIST_ERR_ALLOC;
         }
-        return AS_ARRAYLIST_ERR_ALLOC;
+        return AS_ARRAYLIST_ERR_MAX;
     }
-    return AS_ARRAYLIST_ERR_MAX;
+    return AS_ARRAYLIST_OK;
 }
 
 
@@ -138,14 +143,16 @@ static uint32_t as_arraylist_list_size(const as_list * l) {
 
 static int as_arraylist_list_append(as_list * l, as_val * v) {
     as_arraylist * a = (as_arraylist *) as_list_source(l);
-    as_arraylist_ensure(a,1);
+    int rc = as_arraylist_ensure(a,1);
+    if ( rc != AS_ARRAYLIST_OK ) return rc;
     a->elements[a->size++] = v;
-    return 0;
+    return rc;
 }
 
 static int as_arraylist_list_prepend(as_list * l, as_val * v) {
     as_arraylist * a  = (as_arraylist *) as_list_source(l);
-    as_arraylist_ensure(a,1);
+    int rc = as_arraylist_ensure(a,1);
+    if ( rc != AS_ARRAYLIST_OK ) return rc;
 
     for (int i = a->size; i > 0; i-- ) {
         a->elements[i] = a->elements[i-1];
@@ -154,7 +161,7 @@ static int as_arraylist_list_prepend(as_list * l, as_val * v) {
     a->elements[0] = v;
     a->size++;
 
-    return 0;
+    return rc;
 }
 
 static as_val * as_arraylist_list_get(const as_list * l, const uint32_t i) {
@@ -164,16 +171,18 @@ static as_val * as_arraylist_list_get(const as_list * l, const uint32_t i) {
 
 static int as_arraylist_list_set(as_list * l, const uint32_t i, as_val * v) {
     as_arraylist * a  = (as_arraylist *) as_list_source(l);
+    int rc = AS_ARRAYLIST_OK;
 
     if ( i > a->capacity ) {
-        as_arraylist_ensure(a, i - a->capacity);
+        rc = as_arraylist_ensure(a, i - a->capacity);
+        if ( rc != AS_ARRAYLIST_OK ) return rc;
     }
 
     as_val_free(a->elements[i]);
     a->elements[i] = v;
     a->size = i > a->size ? i : a->size;
 
-    return 0;
+    return rc;
 }
 
 static as_val * as_arraylist_list_head(const as_list * l) {
