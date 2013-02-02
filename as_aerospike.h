@@ -49,7 +49,7 @@ inline int as_aerospike_rec_update(const as_aerospike * a, const as_rec * r) {
     return as_util_hook(rec_update, 1, a, r);
 }
 
-inline char *as_aerospike_rec_unique(const as_aerospike * a, const as_rec * r) 
+inline char *as_aerospike_rec_unique(const as_aerospike * a, const as_rec * r) {
 	return as_util_hook(rec_unique, NULL, a, r);
 }
 
