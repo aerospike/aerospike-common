@@ -20,6 +20,7 @@ struct as_aerospike_hooks_s {
     void (*destroy)(as_aerospike *);
     int (*rec_create)(const as_aerospike *, const as_rec *);
     int (*rec_update)(const as_aerospike *, const as_rec *);
+	char *(*rec_unique)(const as_aerospike *, const as_rec *);
     int (*rec_remove)(const as_aerospike *, const as_rec *);
     int (*rec_exists)(const as_aerospike *, const as_rec *);
     int (*log)(const as_aerospike *, const char *, const int, const int, const char *);
@@ -46,6 +47,10 @@ inline int as_aerospike_rec_create(const as_aerospike * a, const as_rec * r) {
 
 inline int as_aerospike_rec_update(const as_aerospike * a, const as_rec * r) {
     return as_util_hook(rec_update, 1, a, r);
+}
+
+inline char *as_aerospike_rec_unique(const as_aerospike * a, const as_rec * r) 
+	return as_util_hook(rec_unique, NULL, a, r);
 }
 
 inline int as_aerospike_rec_exists(const as_aerospike * a, const as_rec * r) {
