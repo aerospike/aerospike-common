@@ -1,7 +1,15 @@
 include project/build.makefile
 
+###############################################################################
+##  FLAGS                                                                    ##
+###############################################################################
+
 CFLAGS = -std=gnu99 -g -O3 -fPIC -fno-common -fno-strict-aliasing -rdynamic  -Wall $(AS_CFLAGS) -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D_GNU_SOURCE 
 LDFLAGS += -fPIC 
+
+###############################################################################
+##  OBJECTS                                                                  ##
+###############################################################################
 
 SERVER = 
 SERVER += alloc.o
@@ -72,19 +80,41 @@ ifeq ($(MEM_COUNT),1)
   CFLAGS += -DMEM_COUNT
 endif
 
+###############################################################################
+##  MAIN TARGETS                                                             ##
+###############################################################################
 
-libcf-client.a: $(call objects, $(CLIENT), client) | $(TARGET_LIB)
+.PHONY: all
+all: build prepare
+
+.PHONY: build 
+build: libcf-client.a libcf-server.a libcf-shared.a
+
+.PHONY: prepare
+prepare: $(TARGET_INCL)
+
+.PHONY: libcf-client.a libcf-server.a libcf-shared.a
+libcf-client.a: $(TARGET_LIB)/libcf-client.a
+libcf-server.a: $(TARGET_LIB)/libcf-server.a
+libcf-shared.a: $(TARGET_LIB)/libcf-shared.a
+
+.PHONY: client
+client: libcf-client.a libcf-shared.a prepare
+
+###############################################################################
+##  BUILD TARGETS                                                            ##
+###############################################################################
+
+$(TARGET_LIB)/libcf-client.a: $(CLIENT:%=$(TARGET_OBJ)/client/%) | $(TARGET_LIB)
 	$(call archive, $(empty), $(empty), $(empty), $(empty))
 
-libcf-server.a: $(call objects, $(SERVER), server) | $(TARGET_LIB)
+$(TARGET_LIB)/libcf-server.a: $(SERVER:%=$(TARGET_OBJ)/server/%) | $(TARGET_LIB)
 	$(call archive, $(empty), $(empty), $(empty), $(empty))
 
-libcf-shared.a: $(call objects, $(SHARED), shared) | $(TARGET_LIB)
+$(TARGET_LIB)/libcf-shared.a: $(SHARED:%=$(TARGET_OBJ)/shared/%) | $(TARGET_LIB)
 	$(call archive, $(empty), $(empty), $(empty), $(empty))
 
-libcf.a: libcf-client.a libcf-server.a libcf-shared.a
-
-prepare:
+$(TARGET_INCL):
 	mkdir -p $(TARGET_INCL)
 	cp -p $(SOURCE_INCL)/*.h $(TARGET_INCL)/.
 	mkdir -p $(TARGET_INCL)/citrusleaf
@@ -92,5 +122,4 @@ prepare:
 	mkdir -p $(TARGET_INCL)/server
 	cp -p $(SOURCE_INCL)/server/*.h $(TARGET_INCL)/server/.
 
-all: libcf.a prepare
-client_only: libcf-client.a libcf-shared.a prepare
+

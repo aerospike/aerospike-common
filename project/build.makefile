@@ -103,6 +103,7 @@ define build
 endef
 
 define executable
+	@if [ ! -d `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(strip $(CC) \
 		$(addprefix -I, $(MODULES:%=modules/%/$(SOURCE_INCL))) \
 		$(addprefix -I, $(INC_PATH)) \
@@ -117,18 +118,19 @@ define executable
 		$(4) \
 		$(LDFLAGS) \
 		$($@_flags) \
-		-o $(TARGET_BIN)/$@ \
+		-o $@ \
 		$^ \
+		$(5) \
 	)
 endef
 
 define archive
-	@mkdir -p `dirname $@`
-	$(strip $(AR) rcs $(ARFLAGS) $(4) $(TARGET_LIB)/$@ $^ )
+	@if [ ! -d `dirname $@` ]; then mkdir -p `dirname $@`; fi
+	$(strip $(AR) rcs $(ARFLAGS) $(4) $@ $^ $(5))
 endef
 
 define library
-	@mkdir -p `dirname $@`
+	@if [ ! -d `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(strip $(CC) -shared \
 		$(addprefix -I, $(MODULES:%=modules/%/$(SOURCE_INCL))) \
 		$(addprefix -I, $(INC_PATH)) \
@@ -143,14 +145,16 @@ define library
 		$(4) \
 		$(LDFLAGS) \
 		$($@_flags) \
-		-o $(TARGET_LIB)/$@ \
+		-o $@ \
 		$^ \
+		$(5) \
 	)
 endef
 
 define object
-	@mkdir -p `dirname $@`
+	@if [ ! -d `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(strip $(CC) \
+		-MD \
 		$(addprefix -I, $(MODULES:%=modules/%/$(SOURCE_INCL))) \
 		$(addprefix -I, $(INC_PATH)) \
 		$(addprefix -I, $($@_inc_path)) \
@@ -166,6 +170,7 @@ define object
 		$($@_flags) \
 		-o $@ \
 		-c $^ \
+		$(5) \
 	)
 endef
 
@@ -193,8 +198,9 @@ endef
 # Common Targets
 #
 
+# .PHONY: $(TARGET)
 $(TARGET):
-	mkdir -p $@
+	mkdir $@
 
 $(TARGET_BASE): | $(TARGET)
 	mkdir $@
@@ -211,6 +217,7 @@ $(TARGET_LIB): | $(TARGET_BASE)
 $(TARGET_OBJ): | $(TARGET_BASE)
 	mkdir $@
 
+.PHONY: info
 info:
 	@echo
 	@echo "  NAME:     " $(NAME) 
@@ -233,12 +240,15 @@ info:
 	@echo "      flags:      " $(LDFLAGS)
 	@echo
 
+.PHONY: clean
 clean: 
 	@rm -rf $(TARGET)
 	$(call make_each, $(MODULES:%=modules/%), clean)
 
-$(MODULES): 
-	make -C modules/$@ all
 
+.PHONY: $(TARGET_OBJ)/%.o
 $(TARGET_OBJ)/%.o : %.c | $(TARGET_OBJ) 
 	$(call object)
+
+
+.DEFAULT_GOAL := all
