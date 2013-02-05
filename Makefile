@@ -4,8 +4,14 @@ include project/build.makefile
 ##  FLAGS                                                                    ##
 ###############################################################################
 
-CFLAGS = -std=gnu99 -g -O3 -fPIC -fno-common -fno-strict-aliasing -rdynamic  -Wall $(AS_CFLAGS) -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D_GNU_SOURCE 
-LDFLAGS += -fPIC 
+CFLAGS = -O3
+
+CC_FLAGS = $(CFLAGS) -std=gnu99 -g -rdynamic -Wall 
+CC_FLAGS += -fPIC -fno-common -fno-strict-aliasing
+CC_FLAGS += -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64 
+CC_FLAGS += -D_REENTRANT -D_GNU_SOURCE -DMEM_COUNT=1
+
+LD_FLAGS = $(LDGLAGS) -lm -fPIC 
 
 ###############################################################################
 ##  OBJECTS                                                                  ##
@@ -75,11 +81,6 @@ SHARED += cf_rchash.o
 SHARED += cf_shash.o
 SHARED += cf_vector.o
 
-ifeq ($(MEM_COUNT),1)
-  LDFLAGS += -lm
-  CFLAGS += -DMEM_COUNT
-endif
-
 ###############################################################################
 ##  MAIN TARGETS                                                             ##
 ###############################################################################
@@ -106,20 +107,20 @@ client: libcf-client.a libcf-shared.a prepare
 ###############################################################################
 
 $(TARGET_LIB)/libcf-client.a: $(CLIENT:%=$(TARGET_OBJ)/client/%) | $(TARGET_LIB)
-	$(call archive, $(empty), $(empty), $(empty), $(empty))
+	$(archive)
 
 $(TARGET_LIB)/libcf-server.a: $(SERVER:%=$(TARGET_OBJ)/server/%) | $(TARGET_LIB)
-	$(call archive, $(empty), $(empty), $(empty), $(empty))
+	$(archive)
 
 $(TARGET_LIB)/libcf-shared.a: $(SHARED:%=$(TARGET_OBJ)/shared/%) | $(TARGET_LIB)
-	$(call archive, $(empty), $(empty), $(empty), $(empty))
+	$(archive)
 
 $(TARGET_INCL):
-	mkdir -p $(TARGET_INCL)
+	@mkdir -p $(TARGET_INCL)
 	cp -p $(SOURCE_INCL)/*.h $(TARGET_INCL)/.
-	mkdir -p $(TARGET_INCL)/citrusleaf
+	@mkdir -p $(TARGET_INCL)/citrusleaf
 	cp -p $(SOURCE_INCL)/client/*.h $(TARGET_INCL)/citrusleaf/.
-	mkdir -p $(TARGET_INCL)/server
+	@mkdir -p $(TARGET_INCL)/server
 	cp -p $(SOURCE_INCL)/server/*.h $(TARGET_INCL)/server/.
 
 
