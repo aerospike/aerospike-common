@@ -1,4 +1,6 @@
-include project/build.makefile
+###############################################################################
+include project/settings.makefile
+###############################################################################
 
 ###############################################################################
 ##  FLAGS                                                                    ##
@@ -88,16 +90,26 @@ SHARED += cf_vector.o
 .PHONY: all
 all: build prepare
 
-.PHONY: build 
-build: libcf-client.a libcf-server.a libcf-shared.a
-
 .PHONY: prepare
 prepare: $(TARGET_INCL)
 
-.PHONY: libcf-client.a libcf-server.a libcf-shared.a
+.PHONY: build 
+build: libcf-client libcf-server libcf-shared
+
+.PHONY: libcf-client libcf-client.a libcf-client.so
+libcf-client: libcf-client.a libcf-client.so
 libcf-client.a: $(TARGET_LIB)/libcf-client.a
+libcf-client.so: $(TARGET_LIB)/libcf-client.so
+
+.PHONY: libcf-server libcf-server.a libcf-server.so
+libcf-server: libcf-server.a libcf-server.so
 libcf-server.a: $(TARGET_LIB)/libcf-server.a
+libcf-server.so: $(TARGET_LIB)/libcf-server.so
+
+.PHONY: libcf-shared libcf-shared.a libcf-shared.so
+libcf-shared: libcf-shared.a libcf-shared.so
 libcf-shared.a: $(TARGET_LIB)/libcf-shared.a
+libcf-shared.so: $(TARGET_LIB)/libcf-shared.so
 
 .PHONY: client
 client: libcf-client.a libcf-shared.a prepare
@@ -106,14 +118,11 @@ client: libcf-client.a libcf-shared.a prepare
 ##  BUILD TARGETS                                                            ##
 ###############################################################################
 
-$(TARGET_LIB)/libcf-client.a: $(CLIENT:%=$(TARGET_OBJ)/client/%) | $(TARGET_LIB)
-	$(archive)
+$(TARGET_LIB)/libcf-client.a $(TARGET_LIB)/libcf-client.so: $(CLIENT:%=$(TARGET_OBJ)/client/%)
 
-$(TARGET_LIB)/libcf-server.a: $(SERVER:%=$(TARGET_OBJ)/server/%) | $(TARGET_LIB)
-	$(archive)
+$(TARGET_LIB)/libcf-server.a $(TARGET_LIB)/libcf-server.so: $(SERVER:%=$(TARGET_OBJ)/server/%)
 
-$(TARGET_LIB)/libcf-shared.a: $(SHARED:%=$(TARGET_OBJ)/shared/%) | $(TARGET_LIB)
-	$(archive)
+$(TARGET_LIB)/libcf-shared.a $(TARGET_LIB)/libcf-shared.so: $(SHARED:%=$(TARGET_OBJ)/shared/%)
 
 $(TARGET_INCL):
 	@mkdir -p $(TARGET_INCL)
@@ -124,3 +133,6 @@ $(TARGET_INCL):
 	cp -p $(SOURCE_INCL)/server/*.h $(TARGET_INCL)/server/.
 
 
+###############################################################################
+include project/rules.makefile
+###############################################################################
