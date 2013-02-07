@@ -1,7 +1,23 @@
-include project/build.makefile
+###############################################################################
+include project/settings.makefile
+###############################################################################
 
-CFLAGS = -std=gnu99 -g -O3 -fPIC -fno-common -fno-strict-aliasing -rdynamic  -Wall $(AS_CFLAGS) -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D_GNU_SOURCE 
-LDFLAGS += -fPIC 
+###############################################################################
+##  FLAGS                                                                    ##
+###############################################################################
+
+CFLAGS = -O3
+
+CC_FLAGS = $(CFLAGS) -std=gnu99 -g -rdynamic -Wall 
+CC_FLAGS += -fPIC -fno-common -fno-strict-aliasing
+CC_FLAGS += -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64 
+CC_FLAGS += -D_REENTRANT -D_GNU_SOURCE -DMEM_COUNT=1
+
+LD_FLAGS = $(LDGLAGS) -lm -fPIC 
+
+###############################################################################
+##  OBJECTS                                                                  ##
+###############################################################################
 
 SERVER = 
 SERVER += alloc.o
@@ -67,30 +83,56 @@ SHARED += cf_rchash.o
 SHARED += cf_shash.o
 SHARED += cf_vector.o
 
-ifeq ($(MEM_COUNT),1)
-  LDFLAGS += -lm
-  CFLAGS += -DMEM_COUNT
-endif
+###############################################################################
+##  MAIN TARGETS                                                             ##
+###############################################################################
 
+.PHONY: all
+all: build prepare
 
-libcf-client.a: $(call objects, $(CLIENT), client) | $(TARGET_LIB)
-	$(call archive, $(empty), $(empty), $(empty), $(empty))
+.PHONY: prepare
+prepare: $(TARGET_INCL)
 
-libcf-server.a: $(call objects, $(SERVER), server) | $(TARGET_LIB)
-	$(call archive, $(empty), $(empty), $(empty), $(empty))
+.PHONY: build 
+build: libcf-client libcf-server libcf-shared
 
-libcf-shared.a: $(call objects, $(SHARED), shared) | $(TARGET_LIB)
-	$(call archive, $(empty), $(empty), $(empty), $(empty))
+.PHONY: libcf-client libcf-client.a libcf-client.so
+libcf-client: libcf-client.a libcf-client.so
+libcf-client.a: $(TARGET_LIB)/libcf-client.a
+libcf-client.so: $(TARGET_LIB)/libcf-client.so
 
-libcf.a: libcf-client.a libcf-server.a libcf-shared.a
+.PHONY: libcf-server libcf-server.a libcf-server.so
+libcf-server: libcf-server.a libcf-server.so
+libcf-server.a: $(TARGET_LIB)/libcf-server.a
+libcf-server.so: $(TARGET_LIB)/libcf-server.so
 
-prepare:
-	mkdir -p $(TARGET_INCL)
+.PHONY: libcf-shared libcf-shared.a libcf-shared.so
+libcf-shared: libcf-shared.a libcf-shared.so
+libcf-shared.a: $(TARGET_LIB)/libcf-shared.a
+libcf-shared.so: $(TARGET_LIB)/libcf-shared.so
+
+.PHONY: client
+client: libcf-client.a libcf-shared.a prepare
+
+###############################################################################
+##  BUILD TARGETS                                                            ##
+###############################################################################
+
+$(TARGET_LIB)/libcf-client.a $(TARGET_LIB)/libcf-client.so: $(CLIENT:%=$(TARGET_OBJ)/client/%)
+
+$(TARGET_LIB)/libcf-server.a $(TARGET_LIB)/libcf-server.so: $(SERVER:%=$(TARGET_OBJ)/server/%)
+
+$(TARGET_LIB)/libcf-shared.a $(TARGET_LIB)/libcf-shared.so: $(SHARED:%=$(TARGET_OBJ)/shared/%)
+
+$(TARGET_INCL):
+	@mkdir -p $(TARGET_INCL)
 	cp -p $(SOURCE_INCL)/*.h $(TARGET_INCL)/.
-	mkdir -p $(TARGET_INCL)/citrusleaf
+	@mkdir -p $(TARGET_INCL)/citrusleaf
 	cp -p $(SOURCE_INCL)/client/*.h $(TARGET_INCL)/citrusleaf/.
-	mkdir -p $(TARGET_INCL)/server
+	@mkdir -p $(TARGET_INCL)/server
 	cp -p $(SOURCE_INCL)/server/*.h $(TARGET_INCL)/server/.
 
-all: libcf.a prepare
-client_only: libcf-client.a libcf-shared.a prepare
+
+###############################################################################
+include project/rules.makefile
+###############################################################################
