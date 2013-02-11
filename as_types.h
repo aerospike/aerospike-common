@@ -7,6 +7,7 @@
 #include "as_integer.h"
 #include "as_string.h"
 #include "as_pair.h"
+#include "as_nil.h"
 
 #include "as_list.h"
 #include "as_map.h"

@@ -17,7 +17,7 @@ struct as_aerospike_s {
 };
 
 struct as_aerospike_hooks_s {
-    int (*destroy)(as_aerospike *);
+    void (*destroy)(as_aerospike *);
     int (*rec_create)(const as_aerospike *, const as_rec *);
     int (*rec_update)(const as_aerospike *, const as_rec *);
     int (*rec_remove)(const as_aerospike *, const as_rec *);
