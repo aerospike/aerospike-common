@@ -1,7 +1,7 @@
 #include "as_result.h"
 #include <stdlib.h>
 #include <cf_alloc.h>
-#include "internal.h"
+#include "as_internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -15,42 +15,35 @@ extern inline as_result * as_result_tofailure(as_result *, as_val *);
  ******************************************************************************/
 
 as_result * as_result_init(as_result * r, bool is_success, as_val * v) {
-    if ( !r ) return r;
+    r->is_malloc = false;
     r->is_success = is_success;
-    r->value = as_val_ref(v);
+    r->value = v;
     return r;
 }
 
-int as_result_destroy(as_result * r) {
-    if ( !r ) return 0;
-    r->is_success = false;
-    if ( r->value ) as_val_free(r->value);
-    r->value = NULL;
-    return 0;
+void as_result_destroy(as_result *r) {
+    // if we reach the last reference, call the destructor, and free
+    if ( 0 == cf_atomic32_decr(&(r->count)) ) {
+        as_val_destroy(r->value); 
+        if (r->is_malloc) {
+            free(r);
+        }
+    }
+    return;
 }
 
 
 as_result * as_success(as_val * v) {
-    as_result * r = (as_result *) cf_rc_alloc(sizeof(as_result));
+    as_result * r = (as_result *) malloc(sizeof(as_result));
     return as_result_init(r, true, v);
 }
 
 as_result * as_failure(as_val * e) {
-    as_result * r = (as_result *) cf_rc_alloc(sizeof(as_result));
+    as_result * r = (as_result *) malloc(sizeof(as_result));
     return as_result_init(r, false, e);
 }
 
-int as_result_free(as_result * r) {
-    if ( !r ) return 0;
-    LOG("as_result_free: release");
-    if ( cf_rc_release(r) > 0 ) return 0;
-    as_result_destroy(r);
-    cf_rc_free(r);
-    LOG("as_result_free: free");
-    return 0;
-}
-
-
-as_val * as_result_value(as_result * r) {
-    return as_val_ref(r->value);
+int as_result_reserve(as_result * r) {
+    int i = cf_atomic32_incr(&(r->count));
+    return i;
 }

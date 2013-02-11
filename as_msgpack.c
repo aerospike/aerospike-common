@@ -1,7 +1,9 @@
 #include "as_msgpack.h"
+
+#include "as_internal.h"
+
 #include "as_serializer.h"
 #include "as_types.h"
-#include "internal.h"
 
 /******************************************************************************
  * STATIC FUNCTIONS
@@ -25,7 +27,7 @@ static int as_msgpack_map_to_val(msgpack_object_map *, as_val **);
 
 // static int as_msgpack_object_to_val(msgpack_object *, as_val **);
 
-static int as_msgpack_free(as_serializer *);
+static int as_msgpack_destroy(as_serializer *);
 static int as_msgpack_serialize(as_serializer *, as_val *, as_buffer *);
 static int as_msgpack_deserialize(as_serializer *, as_buffer *, as_val **);
 
@@ -34,7 +36,7 @@ static int as_msgpack_deserialize(as_serializer *, as_buffer *, as_val **);
  ******************************************************************************/
 
 static const as_serializer_hooks as_msgpack_serializer_hooks = {
-    .free           = as_msgpack_free,
+    .destroy           = as_msgpack_destroy,
     .serialize      = as_msgpack_serialize,
     .deserialize    = as_msgpack_deserialize
 };
@@ -71,16 +73,17 @@ static int as_msgpack_pack_list(msgpack_packer * pk, as_list * l) {
     int rc = msgpack_pack_array(pk, as_list_size(l));
     if ( rc ) return rc;
 
-    as_iterator * i = as_list_iterator(l);
-    while ( as_iterator_has_next(i) ) {
-        as_val * val = (as_val *) as_iterator_next(i);
+    as_iterator i;
+    as_list_iterator_init(&i, l);
+    while ( as_iterator_has_next(&i) ) {
+        as_val * val = (as_val *) as_iterator_next(&i);
         int rc = as_msgpack_pack_val(pk, val);
         if ( rc ) {
             rc = 2;
             break;
         }
     }
-    as_iterator_free(i);
+    as_iterator_destroy(&i);
 
     return rc;
 }
@@ -89,9 +92,10 @@ static int as_msgpack_pack_map(msgpack_packer * pk, as_map * m) {
     int rc = msgpack_pack_map(pk, as_map_size(m));
     if ( rc ) return rc;
 
-    as_iterator * i = as_map_iterator(m);
-    while ( as_iterator_has_next(i) ) {
-        as_pair * p = (as_pair *) as_iterator_next(i);
+    as_iterator i;
+    as_map_iterator_init(&i, m);
+    while ( as_iterator_has_next(&i) ) {
+        as_pair * p = (as_pair *) as_iterator_next(&i);
         if ( !p ) {
             rc = 2;
             break;
@@ -102,7 +106,7 @@ static int as_msgpack_pack_map(msgpack_packer * pk, as_map * m) {
         if ( rc ) break;
     }
 
-    as_iterator_free(i);
+    as_iterator_destroy(&i);
 
     return rc;
 }
@@ -146,27 +150,26 @@ static int as_msgpack_integer_to_val(int64_t i, as_val ** v) {
 }
 
 static int as_msgpack_string_to_val(msgpack_object_raw * r, as_val ** v) {
-    *v = (as_val *) as_string_new(strndup(r->ptr, sizeof(char) * r->size));
+    *v = (as_val *) as_string_new(strndup(r->ptr, sizeof(char) * r->size), true /*ismalloc*/);
     return 0;
 }
 
 static int as_msgpack_array_to_val(msgpack_object_array * a, as_val ** v) {
-    as_arraylist * l = as_arraylist_new(a->size,8);
-    l->size = a->size;
+    as_list * l = as_arraylist_new(a->size,8);
     for ( int i = 0; i < a->size; i++) {
         msgpack_object * o = a->ptr + i;
         as_val * val = NULL;
         as_msgpack_object_to_val(o, &val);
         if ( val != NULL ) {
-            l->elements[i] = val;
+            as_list_set(l, i, val);
         }
     }
-    *v = (as_val *) as_list_new(l, &as_arraylist_list);
+    *v = (as_val *) l;
     return 0;
 }
 
 static int as_msgpack_map_to_val(msgpack_object_map * o, as_val ** v) {
-    as_hashmap * m = as_hashmap_new(o->size);
+    as_map * m = as_hashmap_new(o->size);
     for ( int i = 0; i < o->size; i++) {
         msgpack_object_kv * kv = o->ptr + i;
         as_val * key = NULL;
@@ -174,10 +177,10 @@ static int as_msgpack_map_to_val(msgpack_object_map * o, as_val ** v) {
         as_msgpack_object_to_val(&kv->key, &key);
         as_msgpack_object_to_val(&kv->val, &val);
         if ( key != NULL && val != NULL ) {
-            as_hashmap_set(m, key, val);
+            as_map_set(m, key, val);
         }
     }
-    *v = (as_val *) as_map_new(m, &as_hashmap_map);
+    *v = (as_val *) m;
     return 0;
 }
 
@@ -201,7 +204,7 @@ int as_msgpack_object_to_val(msgpack_object * object, as_val ** val) {
 }
 
 
-static int as_msgpack_free(as_serializer * s) {
+static int as_msgpack_destroy(as_serializer * s) {
     return 0;
 }
 

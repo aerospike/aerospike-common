@@ -1,42 +1,37 @@
 #include "as_val.h"
+#include "as_nil.h"
 #include <string.h>
-#include "internal.h"
+#include <cf_alloc.h>
+#include "as_internal.h"
 
-/******************************************************************************
- * STATIC FUNCTIONS
- ******************************************************************************/
-
-static int as_nil_val_free(as_val *);
-static uint32_t as_nil_val_hash(as_val *);
-static char * as_nil_val_tostring(as_val *);
 
 /******************************************************************************
  * VARIABLES
  ******************************************************************************/
 
-/**
- * Represents empty values. As in a value with no value.
- */
-const as_val as_nil = {
-    .type       = AS_NIL, 
-    .size       = 0,
-    .free       = as_nil_val_free,
-    .hash       = as_nil_val_hash,
-    .tostring   = as_nil_val_tostring
-};
-
-/******************************************************************************
- * FUNCTIONS
- ******************************************************************************/
-
-static int as_nil_val_free(as_val * v) {
-    return 0;
+as_nil * as_nil_init(as_nil * n) {
+    as_val_init(&n->_, AS_NIL, true/*is_rcalloc*/);
+    return n;
 }
 
-static uint32_t as_nil_val_hash(as_val * v) {
-    return 0;
+as_nil * as_nil_new(bool b) {
+    as_nil * n = (as_nil *) malloc(sizeof(as_nil));
+    as_val_init(&n->_, AS_NIL, true/*is_rcalloc*/);
+    return n;
 }
 
-static char * as_nil_val_tostring(as_val * v) {
-    return strdup("NIL");
+void as_nil_destroy(as_nil * v) {
+    return;
+}
+
+void as_nil_val_destroy(as_val * v) {
+    return;
+}
+
+uint32_t as_nil_hash(const as_nil * v) {
+	return(0);
+}
+
+char *as_nil_val_tostring(const as_val *v) {
+	return(strdup("NIL"));
 }

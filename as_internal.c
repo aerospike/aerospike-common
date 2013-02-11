@@ -1,4 +1,4 @@
-#include "internal.h"
+#include "as_internal.h"
 
 void __log_append(const char * file, int line, const char * fmt, ...) {
     char msg[128] = {0};

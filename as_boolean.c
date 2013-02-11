@@ -3,80 +3,43 @@
 #include <stdio.h>
 #include <string.h>
 #include <cf_alloc.h>
-#include "internal.h"
+#include "as_internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
-
-
-extern inline bool          as_boolean_tobool(const as_boolean *);
-
-extern inline uint32_t      as_boolean_hash(const as_boolean *);
-extern inline as_val *      as_boolean_toval(const as_boolean *);
-extern inline as_boolean *  as_boolean_fromval(const as_val *);
-
-/******************************************************************************
- * STATIC FUNCTIONS
- ******************************************************************************/
-
-static int      as_boolean_val_free(as_val *);
-static uint32_t as_boolean_val_hash(as_val *);
-static char *   as_boolean_val_tostring(as_val *);
-
-/******************************************************************************
- * CONSTANTS
- ******************************************************************************/
-
-const as_val as_boolean_val = {
-    .type       = AS_BOOLEAN, 
-    .size       = sizeof(as_boolean),
-    .free       = as_boolean_val_free, 
-    .hash       = as_boolean_val_hash,
-    .tostring   = as_boolean_val_tostring
-};
+ 
+extern inline bool as_boolean_tobool(const as_boolean * b);
+extern inline uint32_t as_boolean_hash(const as_boolean * b) ;
+extern inline as_val * as_boolean_toval(const as_boolean * b);
+extern inline as_boolean * as_boolean_fromval(const as_val * v);
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
 as_boolean * as_boolean_init(as_boolean * v, bool b) {
-    if ( !v ) return v;
-    v->_ = as_boolean_val;
+    as_val_init(&v->_, AS_BOOLEAN, false /*is_rcalloc*/);
     v->value = b;
     return v;
 }
 
-int as_boolean_destroy(as_boolean * b) {
-    if ( b ) b->value = false;
-    return 0;
-}
-
 as_boolean * as_boolean_new(bool b) {
-    as_boolean * v = (as_boolean *) cf_rc_alloc(sizeof(as_boolean));
-    return as_boolean_init(v, b);
+    as_boolean * v = (as_boolean *) malloc(sizeof(as_boolean));
+    as_val_init(&v->_, AS_BOOLEAN, true /*is_rcalloc*/);
+    v->value = b;
+    return v;
 }
 
-int as_boolean_free(as_boolean * b) {
-    if ( !b ) return 0;
-    cf_rc_releaseandfree(b);
-    LOG("as_boolean_free: release & free");
-    return 0;
+void as_boolean_destroy(as_boolean * b) {
+    return;
 }
 
-/******************************************************************************
- * STATIC FUNCTIONS
- ******************************************************************************/
-
-static int as_boolean_val_free(as_val * v) {
-    return as_val_type(v) == AS_BOOLEAN ? as_boolean_free((as_boolean *) v) : 1;
+uint32_t as_boolean_val_hash(const as_val * v) {
+    return as_boolean_hash((const as_boolean *)v);
 }
 
-static uint32_t as_boolean_val_hash(as_val * v) {
-    return as_val_type(v) == AS_BOOLEAN ? as_boolean_hash((as_boolean *) v) : 0;
-}
-
-static char * as_boolean_val_tostring(as_val * v) {
+char * as_boolean_val_tostring(const as_val * v) {
     if ( as_val_type(v) != AS_BOOLEAN ) return NULL;
 
     as_boolean * b = (as_boolean *) v;

@@ -3,76 +3,45 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cf_alloc.h>
-#include "internal.h"
+#include "as_internal.h"
 
-/******************************************************************************
- * INLINE FUNCTIONS
- ******************************************************************************/
-
-extern inline as_val * as_pair_1(as_pair *);
-extern inline as_val * as_pair_2(as_pair *);
-
-/******************************************************************************
- * STATIC FUNCTIONS
- ******************************************************************************/
-
-static int      as_pair_val_free(as_val *);
-static uint32_t as_pair_val_hash(as_val *);
-static char *   as_pair_val_tostring(as_val *);
-
-/******************************************************************************
- * CONSTANTS
- ******************************************************************************/
-
-const as_val as_pair_val = {
-    .type       = AS_PAIR,
-    .size       = sizeof(as_pair),
-    .free       = as_pair_val_free,
-    .hash       = as_pair_val_hash,
-    .tostring   = as_pair_val_tostring
-};
+extern inline uint32_t as_pair_hash(const as_pair *p);
+extern inline as_val * as_pair_1(as_pair * p);
+extern inline as_val * as_pair_2(as_pair * p);
+extern inline as_val * as_pair_toval(const as_pair * p);
+extern inline as_pair * as_pair_fromval(const as_val * v) ;
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
 as_pair * as_pair_init(as_pair * p, as_val * _1, as_val * _2) {
-    if ( !p ) return p;
-    p->_ = as_pair_val;
+    as_val_init(&p->_,AS_PAIR, false /*is_rcalloc*/);
     p->_1 = _1;
     p->_2 = _2;
     return p;
 }
 
 as_pair * as_pair_new(as_val * _1, as_val * _2) {
-    as_pair * p = (as_pair *) cf_rc_alloc(sizeof(as_pair));
-    return as_pair_init(p, _1, _2);
+    as_pair * p = (as_pair *) malloc(sizeof(as_pair));
+    as_val_init(&p->_,AS_PAIR, true /*is_rcalloc*/);
+    p->_1 = _1;
+    p->_2 = _2;
+    return p;
 }
 
-int as_pair_destroy(as_pair * p) {
-    if ( !p ) return 0;
-    if ( p->_1 ) as_val_free(p->_1);
-    p->_1 = NULL;
-    if ( p->_2 ) as_val_free(p->_2);
-    p->_2 = NULL;
-    return 0;
+void as_pair_destroy(as_pair * p) {
+    if ( p->_1 ) as_val_destroy(p->_1);
+    if ( p->_2 ) as_val_destroy(p->_2);
 }
 
-int as_pair_free(as_pair * p) {
-    if ( !p ) return 0;
-    LOG("as_pair_free: release");
-    if ( cf_rc_release(p) > 0 ) return 0;
-    as_pair_destroy(p);
-    cf_rc_free(p);
-    LOG("as_pair_free: free");
-    return 0;
+void as_pair_val_destroy(as_val * v) {
+	as_pair *p = (as_pair *) v;
+    if ( p->_1 ) as_val_destroy(p->_1);
+    if ( p->_2 ) as_val_destroy(p->_2);
 }
 
-/******************************************************************************
- * STATIC FUNCTIONS
- ******************************************************************************/
-
-static char * as_pair_tostring(as_pair * p) {
+char * as_pair_tostring(const as_pair * p) {
 
     char * a = as_val_tostring(p->_1);
     size_t al = strlen(a);
@@ -88,24 +57,16 @@ static char * as_pair_tostring(as_pair * p) {
     strcpy(str+1+al+2, b);
     strcpy(str+1+al+2+bl,")");
     *(str+1+al+2+bl+1) = '\0';
-
+    free(a);
+    free(b);
     return str;
 }
 
-static uint32_t as_pair_hash(as_pair * p) {
+uint32_t as_pair_val_hash(const as_val *v) {
     return 0;
 }
 
-
-static int as_pair_val_free(as_val * v) {
-    return as_val_type(v) == AS_PAIR ? as_pair_free((as_pair *) v) : 1;
+char *as_pair_val_tostring(const as_val *v) {
+    return( as_pair_tostring( (as_pair *) v ) );
 }
 
-static uint32_t as_pair_val_hash(as_val * v) {
-    return as_val_type(v) == AS_PAIR ? as_pair_hash((as_pair *) v) : 0;
-}
-
-static char * as_pair_val_tostring(as_val * v) {
-    if ( as_val_type(v) != AS_PAIR ) return NULL;
-    return as_pair_tostring((as_pair *) v);
-}

@@ -2,88 +2,61 @@
 #include <stdlib.h>
 #include <string.h>
 #include <cf_alloc.h>
-#include "internal.h"
+#include "as_internal.h"
 
-/******************************************************************************
- * INLINE FUNCTIONS
- ******************************************************************************/
-
-extern inline char *        as_string_tostring(const as_string *);
-extern inline size_t        as_string_len(as_string *);
-
-extern inline uint32_t      as_string_hash(as_string *);
-extern inline as_val *      as_string_toval(const as_string *);
-extern inline as_string *   as_string_fromval(const as_val *);
-
-/******************************************************************************
- * STATIC FUNCTIONS
- ******************************************************************************/
-
-static int      as_string_val_free(as_val *);
-static uint32_t as_string_val_hash(as_val *);
-static char *   as_string_val_tostring(as_val *);
-
-/******************************************************************************
- * CONSTANTS
- ******************************************************************************/
-
-const as_val as_string_val = {
-    .type       = AS_STRING, 
-    .size       = sizeof(as_string),
-    .free       = as_string_val_free,
-    .hash       = as_string_val_hash,
-    .tostring   = as_string_val_tostring
-};
+extern inline char * as_string_tostring(const as_string * s);
+extern inline as_val * as_string_toval(const as_string * s);
+extern inline as_string * as_string_fromval(const as_val * v);
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-as_string * as_string_init(as_string * v, char * s) {
-    if ( !v ) return v;
-    v->_ = as_string_val;
+as_string * as_string_init(as_string * v, char * s, bool is_malloc) {
+    as_val_init(&v->_, AS_STRING, false /*is_malloc*/);
+    v->value_is_malloc = is_malloc;
     v->value = s;
-    v->len = 0;
+    v->len = SIZE_MAX;
     return v;
 }
 
-as_string * as_string_new(char * s) {
-    as_string * v = (as_string *) cf_rc_alloc(sizeof(as_string));
-    return as_string_init(v, s);
+as_string * as_string_new(char * s, bool is_malloc) {
+    as_string * v = (as_string *) malloc(sizeof(as_string));
+    as_val_init(&v->_, AS_STRING, true /*is_malloc*/);
+    v->value_is_malloc = is_malloc;
+    v->value = s;
+    v->len = SIZE_MAX;
+    return v;
 }
 
-int as_string_destroy(as_string * s) {
-    if ( !s ) return 0;
-    if ( s->value ) free(s->value);
-    s->value = NULL;
-    s->len = 0;
-    return 0;
+void as_string_destroy(as_string * s) {
+    if ( s->value_is_malloc && s->value ) free(s->value);
 }
 
-int as_string_free(as_string * s) {
-    if ( !s ) return 0;
-    LOG("as_string_free: release");
-    if ( cf_rc_release(s) > 0 ) return 0;
-    as_string_destroy(s);
-    cf_rc_free(s);
-    LOG("as_string_free: free");
-    return 0;
+void as_string_val_destroy(as_val * v) {
+   as_string_destroy( (as_string *)v );
 }
 
-/******************************************************************************
- * STATIC FUNCTIONS
- ******************************************************************************/
-
-static int as_string_val_free(as_val * v) {
-    return as_val_type(v) == AS_STRING ? as_string_free((as_string *) v) : 1;
+size_t as_string_len(as_string * s) {
+	if (s->len == SIZE_MAX) s->len = strlen(s->value);
+	return(s->len);
 }
 
-static uint32_t as_string_val_hash(as_val * v) {
-    return as_val_type(v) == AS_STRING ? as_string_hash((as_string *) v) : 0;
+uint32_t as_string_hash(const as_string * s) {
+    uint32_t hash = 0;
+    int c;
+    char * str = s->value;
+    while ( (c = *str++) ) {
+        hash = c + (hash << 6) + (hash << 16) - hash;
+    }
+    return hash;
 }
 
-static char * as_string_val_tostring(as_val * v) {
-    if ( as_val_type(v) != AS_STRING ) return NULL;
+uint32_t as_string_val_hash(const as_val * v) {
+    return as_string_hash((as_string *) v);
+}
+
+char * as_string_val_tostring(const as_val * v) {
     as_string * s = (as_string *) v;
     size_t sl = as_string_len(s);
     size_t st = 3 + sl;

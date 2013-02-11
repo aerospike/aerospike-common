@@ -1,190 +1,147 @@
-#include "as_hashmap.h"
-#include "as_string.h"
 #include <cf_shash.h>
 #include <cf_alloc.h>
 #include <stdlib.h>
-#include "internal.h"
 
-/******************************************************************************
- * TYPES
- ******************************************************************************/
+#include "as_internal.h"
 
-struct as_hashmap_s {
-    shash * h;
-};
-
-struct as_hashmap_iterator_source_s {
-    shash * h;
-    shash_elem * curr;
-    shash_elem * next;
-    uint32_t pos;
-    uint32_t size;
-};
+#include "as_hashmap.h"
+#include "as_string.h"
 
 /******************************************************************************
  * STATIC FUNCTIONS
  ******************************************************************************/
 
-static uint32_t     as_hashmap_hash_fn(void *);
-static int          as_hashmap_reduce_fn (void *, void *, void *);
-
-// as_map Implementation
-static int              as_hashmap_map_free(as_map *);
-static uint32_t         as_hashmap_map_hash(const as_map *);
-static uint32_t         as_hashmap_map_size(const as_map *);
-static int              as_hashmap_map_set(as_map *, const as_val *, const as_val *);
-static as_val *         as_hashmap_map_get(const as_map *, const as_val *);
-static int              as_hashmap_map_clear(as_map *);
-static as_iterator *    as_hashmap_map_iterator(const as_map *);
-
-// as_iterator Implementation
-static const int        as_hashmap_iterator_free(as_iterator *);
-static const bool       as_hashmap_iterator_has_next(const as_iterator *);
-static const as_val *   as_hashmap_iterator_next(as_iterator *);
+uint32_t     as_hashmap_hash_fn(void *);
+int          as_hashmap_reduce_fn (void *, void *, void *);
 
 /******************************************************************************
  * CONSTANTS
  ******************************************************************************/
 
-const as_map_hooks as_hashmap_map = {
-    .free       = as_hashmap_map_free,
-    .hash       = as_hashmap_map_hash,
-    .size       = as_hashmap_map_size,
-    .set        = as_hashmap_map_set,
-    .get        = as_hashmap_map_get,
-    .clear      = as_hashmap_map_clear,
-    .iterator   = as_hashmap_map_iterator
+const as_map_hooks as_hashmap_map_hooks = {
+    .destroy        = as_hashmap_destroy,
+    .hash           = as_hashmap_hash,
+    .size           = as_hashmap_size,
+    .set            = as_hashmap_set,
+    .get            = as_hashmap_get,
+    .clear          = as_hashmap_clear,
+    .iterator_init  = as_hashmap_iterator_init,
+    .iterator_new   = as_hashmap_iterator_new
 };
 
-const as_iterator_hooks as_hashmap_iterator = {
-    .free       = as_hashmap_iterator_free,
-    .has_next   = as_hashmap_iterator_has_next,
-    .next       = as_hashmap_iterator_next
+const as_iterator_hooks as_hashmap_iterator_hooks = {
+    .destroy        = as_hashmap_iterator_destroy,
+    .has_next       = as_hashmap_iterator_has_next,
+    .next           = as_hashmap_iterator_next
 };
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-as_hashmap * as_hashmap_init(as_hashmap * m, uint32_t capacity) {
-    if ( !m ) return m;
-    shash_create(&m->h, as_hashmap_hash_fn, sizeof(uint32_t), sizeof(as_pair *), capacity, SHASH_CR_MT_BIGLOCK | SHASH_CR_RESIZE);
+as_map *as_hashmap_init(as_map *m, uint32_t capacity) {
+    as_val_init(&m->_, AS_MAP, false /*is_malloc*/);
+    m->hooks = &as_hashmap_map_hooks;
+    as_hashmap_source  *s = &(m->u.hashmap);
+    shash_create(&s->h, as_hashmap_hash_fn, sizeof(uint32_t), sizeof(as_pair *), capacity, SHASH_CR_MT_BIGLOCK | SHASH_CR_RESIZE);
     return m;
 }
 
-int as_hashmap_destroy(as_hashmap * m) {
-    if ( !m ) return 0;
+as_map *as_hashmap_new(uint32_t capacity) {
+    as_map *m = (as_map *) malloc(sizeof(as_map));
+    as_val_init(&m->_, AS_MAP, true /*is_malloc*/);
+    m->hooks = &as_hashmap_map_hooks;
+    as_hashmap_source  *s = &(m->u.hashmap);
+    shash_create(&s->h, as_hashmap_hash_fn, sizeof(uint32_t), sizeof(as_pair *), capacity, SHASH_CR_MT_BIGLOCK | SHASH_CR_RESIZE);
+    return m;
+}
+
+void as_hashmap_destroy(as_map * m) {
     as_hashmap_clear(m);
-    shash_destroy(m->h);
-    return 0;
+    as_hashmap_source  *s = &(m->u.hashmap);
+    shash_destroy(s->h);
 }
 
+int as_hashmap_set(as_map * m, const as_val * k, const as_val * v) {
 
-as_hashmap * as_hashmap_new(uint32_t capacity) {
-    as_hashmap * m = (as_hashmap * ) cf_rc_alloc(sizeof(as_hashmap));
-    return as_hashmap_init(m, capacity);
-}
-
-int as_hashmap_free(as_hashmap * m) {
-    if ( !m ) return 0;
-    LOG("as_hashmap_free: release");
-    if ( cf_rc_release(m) > 0 ) return 0;
-    as_hashmap_destroy(m);
-    cf_rc_free(m);
-    LOG("as_hashmap_free: free");
-    return 0;
-}
-
-int as_hashmap_set(as_hashmap * m, const as_val * k, const as_val * v) {
+    as_hashmap_source  *s = &(m->u.hashmap);
     uint32_t h = as_val_hash(k);
     as_pair * p = NULL;
 
-    if ( shash_get(m->h, &h, &p) == SHASH_OK ) {
-        as_pair_free(p);
+    if ( shash_get(s->h, &h, &p) == SHASH_OK ) {
+        as_val_destroy((as_val *)p);
         p = NULL;
     }
-
-    p = pair(k,v);
-    return shash_put(m->h, &h, &p);
+    p = pair_new(k,v);
+    return shash_put(s->h, &h, &p);
 }
 
-as_val * as_hashmap_get(const as_hashmap * m, const as_val * k) {
+as_val * as_hashmap_get(const as_map * m, const as_val * k) {
+    const as_hashmap_source  *s = &(m->u.hashmap);
     uint32_t h = as_val_hash(k);
     as_pair * p = NULL;
 
-    if ( shash_get(m->h, &h, &p) != SHASH_OK ) {
+    if ( shash_get(s->h, &h, &p) != SHASH_OK ) {
         return NULL;
     }
-
-    return as_pair_2(p);
+    as_val *v = as_pair_2(p);
+    return v;
 }
 
-int as_hashmap_clear(as_hashmap * m) {
-    shash_reduce_delete(m->h, as_hashmap_reduce_fn, NULL);
+int as_hashmap_clear(as_map * m) {
+    as_hashmap_source  *s = &(m->u.hashmap);
+    shash_reduce_delete(s->h, as_hashmap_reduce_fn, NULL);
     return 0;
 }
 
-uint32_t as_hashmap_size(const as_hashmap * m) {
-    return shash_get_size(m->h);
+uint32_t as_hashmap_size(const as_map * m) {
+    const as_hashmap_source  *s = &(m->u.hashmap);
+    return shash_get_size(s->h);
 }
 
-/******************************************************************************
- * STATIC FUNCTIONS
- ******************************************************************************/
+uint32_t as_hashmap_hash(const as_map *m) {
+    return(1);
+}
 
-
-static uint32_t as_hashmap_hash_fn(void * k) {
+uint32_t as_hashmap_hash_fn(void * k) {
     return *((uint32_t *) k);
 }
 
-static int as_hashmap_reduce_fn (void * key, void * data, void * udata) {
-    as_pair * value = *((as_pair **) data);
-    as_pair_free(value);
+int as_hashmap_reduce_fn (void * key, void * data, void * udata) {
+    as_val * value = *((as_val **) data); // this is the pair at this key-value
+    as_val_destroy(value);
     return SHASH_REDUCE_DELETE;
 }
 
-static int as_hashmap_map_free(as_map * m) {
-    as_hashmap_free((as_hashmap *) m->source);
-    m->source = NULL;
-    return 0;
+
+as_iterator * as_hashmap_iterator_init(const as_map * m, as_iterator *i ) {
+    i->is_malloc = false;
+    i->hooks = &as_hashmap_iterator_hooks;
+    as_hashmap_iterator_source * is = (as_hashmap_iterator_source *) &i->u.hashmap;
+    const as_hashmap_source * ms = (as_hashmap_source *) &m->u.hashmap;
+    is->h = ms->h;
+    is->curr = NULL;
+    is->next = NULL;
+    is->size = (uint32_t) ms->h->table_len;
+    is->pos = 0;
+    return i;
 }
 
-static uint32_t as_hashmap_map_hash(const as_map * l) {
-    return 0;
+as_iterator * as_hashmap_iterator_new(const as_map * m) {
+    as_iterator *i = (as_iterator *) malloc(sizeof(as_iterator));
+    i->is_malloc = true;
+    i->hooks = &as_hashmap_iterator_hooks;
+    as_hashmap_iterator_source * is = (as_hashmap_iterator_source *) &i->u.hashmap;
+    const as_hashmap_source * ms = (as_hashmap_source *) &m->u.hashmap;
+    is->h = ms->h;
+    is->curr = NULL;
+    is->next = NULL;
+    is->size = (uint32_t) ms->h->table_len;
+    is->pos = 0;
+    return i;
 }
 
-static uint32_t as_hashmap_map_size(const as_map * m) {
-    return as_hashmap_size((as_hashmap *) m->source);
-}
-
-static int as_hashmap_map_set(as_map * m, const as_val * k, const as_val * v) {
-    return as_hashmap_set((as_hashmap *) m->source, k, v);
-}
-
-static as_val * as_hashmap_map_get(const as_map * m, const as_val * k) {
-    return as_hashmap_get((as_hashmap *) m->source, k);
-}
-
-static int as_hashmap_map_clear(as_map * m) {
-    return as_hashmap_clear((as_hashmap *) m->source);
-}
-
-static as_iterator * as_hashmap_map_iterator(const as_map * m) {
-    if ( m == NULL ) return NULL;
-    as_hashmap * hm = (as_hashmap *) as_map_source(m);
-    as_hashmap_iterator_source * source = (as_hashmap_iterator_source *) malloc(sizeof(as_hashmap_iterator_source));
-    source->h = hm->h;
-    source->curr = NULL;
-    source->next = NULL;
-    source->size = (uint32_t) source->h->table_len;
-    source->pos = 0;
-    return as_iterator_new(source, &as_hashmap_iterator);
-}
-
-
-
-
-static const bool as_hashmap_iterator_seek(as_hashmap_iterator_source * source) {
+static bool as_hashmap_iterator_seek(as_hashmap_iterator_source * source) {
 
     // We no longer have slots in the table
     if ( source->pos > source->size ) return false;
@@ -237,28 +194,25 @@ static const bool as_hashmap_iterator_seek(as_hashmap_iterator_source * source) 
     return false;
 }
 
-static const bool as_hashmap_iterator_has_next(const as_iterator * i) {
-    as_hashmap_iterator_source * source = (as_hashmap_iterator_source *) as_iterator_source(i);
-    return as_hashmap_iterator_seek(source);
+bool as_hashmap_iterator_has_next(const as_iterator * i) {
+    as_hashmap_iterator_source * s = (as_hashmap_iterator_source *) &i->u.hashmap;
+    return as_hashmap_iterator_seek(s);
 }
 
-static const as_val * as_hashmap_iterator_next(as_iterator * i) {
-    as_hashmap_iterator_source * source = (as_hashmap_iterator_source *) as_iterator_source(i);
+as_val * as_hashmap_iterator_next(as_iterator * i) {
+    as_hashmap_iterator_source * s = (as_hashmap_iterator_source *) &i->u.hashmap;
 
-    if ( !as_hashmap_iterator_seek(source) ) return NULL;
+    if ( !as_hashmap_iterator_seek(s) ) return NULL;
 
-    shash *         h   = source->h;
-    shash_elem *    e   = source->curr;
+    shash *         h   = s->h;
+    shash_elem *    e   = s->curr;
     as_pair **      p   = (as_pair **) SHASH_ELEM_VALUE_PTR(h, e);
     
-    source->curr = NULL; // consume the value, so we can get the next one.
+    s->curr = NULL; // consume the value, so we can get the next one.
     
     return (as_val *) *p;
 }
 
-static const int as_hashmap_iterator_free(as_iterator * i) {
-    if ( !i ) return 0;
-    if ( i->source ) free(i->source);
-    i->source = NULL;
-    return 0;
+void as_hashmap_iterator_destroy(as_iterator * i) {
+    return;
 }
