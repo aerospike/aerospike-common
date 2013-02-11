@@ -2,6 +2,11 @@
 
 #include <stdlib.h>
 
+/*
+** an as_buffer is not a subtype of as_val and can't be used in any as_val functions,
+** thus I suspect we need to remove it
+*/
+
 /******************************************************************************
  * TYPES
  ******************************************************************************/
@@ -18,15 +23,5 @@ struct as_buffer_s {
  * INLINE FUNCTION DEFINITIONS
  ******************************************************************************/
 
-inline int as_buffer_init(as_buffer * b) {
-    b->capacity = 0;
-    b->size = 0;
-    b->data = NULL;
-    return 0;
-}
-
-inline int as_buffer_destroy(as_buffer * b) {
-    free(b->data);
-    b->data = NULL;
-    return 0;
-}
+int as_buffer_init(as_buffer * b);
+void as_buffer_destroy(as_buffer * b);

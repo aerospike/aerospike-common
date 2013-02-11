@@ -1,9 +1,10 @@
 #pragma once
 
-#include "as_util.h"
-#include "as_val.h"
 #include <sys/types.h>
 #include <string.h>
+
+#include "as_util.h"
+#include "as_val.h"
 
 /******************************************************************************
  * TYPES
@@ -13,6 +14,7 @@ typedef struct as_string_s as_string;
 
 struct as_string_s {
     as_val _;
+    bool value_is_malloc; 
     char * value;
     size_t len;
 };
@@ -24,38 +26,29 @@ struct as_string_s {
 extern const as_val as_string_val;
 
 /******************************************************************************
- * INLINE FUNCTIONS
+ * FUNCTIONS
  ******************************************************************************/
 
-as_string *   as_string_init(as_string *, char *);
-int           as_string_destroy(as_string *);
+as_string *    as_string_init(as_string *, char *s, bool is_malloc);
+as_string *   as_string_new(char *, bool is_malloc);
 
-as_string *   as_string_new(char *);
-int           as_string_free(as_string *);
+void           as_string_destroy(as_string *);
+void    		as_string_val_destroy(as_val *v);
+
+uint32_t as_string_val_hash(const as_val *);
+char *as_string_val_tostring(const as_val *);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
 inline char * as_string_tostring(const as_string * s) {
-    return (s ? s->value : NULL);
+    return (s->value);
 }
 
-inline size_t as_string_len(as_string * s) {
-    return ( s && s->value ? ( s->len ? s->len : ( s->len = strlen(s->value) ) ) : 0 );
-}
+size_t as_string_len(as_string * s);
 
-
-
-inline uint32_t as_string_hash(as_string * s) {
-    uint32_t hash = 0;
-    int c;
-    char * str = s->value;
-    while ( (c = *str++) ) {
-        hash = c + (hash << 6) + (hash << 16) - hash;
-    }
-    return hash;
-}
+uint32_t as_string_hash(const as_string * s);
 
 inline as_val * as_string_toval(const as_string * s) {
     return (as_val *)s;

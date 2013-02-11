@@ -1,7 +1,9 @@
 #pragma once
 
-#include "as_serializer.h"
 #include <msgpack.h>
+
+#include "as_serializer.h"
+
 
 /******************************************************************************
  * FUNCTIONS

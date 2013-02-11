@@ -1,8 +1,10 @@
 #pragma once
 
+#include <inttypes.h>
+
 #include "as_util.h"
 #include "as_val.h"
-#include <inttypes.h>
+
 
 /******************************************************************************
  * TYPES
@@ -16,34 +18,33 @@ struct as_integer_s {
 };
 
 /******************************************************************************
- * CONSTANTS
- ******************************************************************************/
-
-extern const as_val as_integer_val;
-
-/******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-as_integer *  as_integer_init(as_integer *, int64_t);
-int           as_integer_destroy(as_integer *);
+as_integer *  as_integer_init(as_integer *val, int64_t i);
+as_integer *  as_integer_new(int64_t i);
 
-as_integer *  as_integer_new(int64_t);
-int           as_integer_free(as_integer *);
+void 		 as_integer_val_destroy(as_val *v);
+
+uint32_t	 as_integer_val_hash(const as_val *v);
+char 		*as_integer_val_tostring(const as_val *v);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
+inline void as_integer_destroy(as_integer *i) {
+	return;
+}
 
 inline int64_t as_integer_toint(const as_integer * i) {
     return i->value;
 }
 
-
 inline uint32_t as_integer_hash(const as_integer * i) {
-    return (uint32_t) (i ? i->value : 0);
+    return (uint32_t) i->value;
 }
+
 
 inline as_val * as_integer_toval(const as_integer * i) {
     return (as_val *) i;

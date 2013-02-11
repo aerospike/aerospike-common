@@ -1,10 +1,13 @@
 #pragma once
 
+#include <stdbool.h>
+#include <inttypes.h>
+
+#include "as_internal.h"
+
 #include "as_util.h"
 #include "as_val.h"
 #include "as_iterator.h"
-#include <stdbool.h>
-#include <inttypes.h>
 
 /******************************************************************************
  * TYPES
@@ -15,14 +18,8 @@ typedef struct as_list_hooks_s as_list_hooks;
 
 typedef void (* as_list_foreach_callback)(as_val *, void *);
 
-struct as_list_s {
-    as_val                  _;
-    void *                  source;
-    const as_list_hooks *   hooks;
-};
-
 struct as_list_hooks_s {
-    int         (* free)(as_list *);
+    void        (* destroy)(as_list *);
 
     uint32_t    (* hash)(const as_list *);
     
@@ -33,40 +30,31 @@ struct as_list_hooks_s {
     int         (* set)(as_list *, const uint32_t, as_val *);
     as_val *    (* head)(const as_list *);
     as_list *   (* tail)(const as_list *);
-    as_list *   (* drop)(const as_list *, uint32_t);
-    as_list *   (* take)(const as_list *, uint32_t);
+    as_list *   (* drop)(const as_list *l, uint32_t n); // create duplicate list from pos n
+    as_list *   (* take)(const as_list *l, uint32_t n); // create dup from head, n len
 
     void        (* foreach)(const as_list *, void *, as_list_foreach_callback);
 
-    as_iterator * (* iterator)(const as_list *);
+    as_iterator * (* iterator_init)(const as_list *, as_iterator *);
+    as_iterator * (* iterator_new)(const as_list *);
 };
-
-/******************************************************************************
- * CONSTANTS
- ******************************************************************************/
-
-extern const as_val as_list_val;
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
 as_list *     as_list_init(as_list *, void *, const as_list_hooks *);
-int           as_list_destroy(as_list *);
-
 as_list *     as_list_new(void *, const as_list_hooks *);
-int           as_list_free(as_list *);
+
+void           as_list_destroy(as_list *);
+void           as_list_val_destroy(as_val *v);
+
+uint32_t as_list_val_hash(const as_val * v);
+char * as_list_val_tostring(const as_val * v);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
-
-
-inline void * as_list_source(const as_list * l) {
-    return l == NULL ? NULL : l->source;
-}
-
-
 
 inline uint32_t as_list_size(as_list * l) {
     return as_util_hook(size, 0, l);
@@ -108,20 +96,22 @@ inline void as_list_foreach(const as_list * l, void * context, as_list_foreach_c
     as_util_hook(foreach, NULL, l, context, callback);
 }
 
-inline as_iterator * as_list_iterator(const as_list * l) {
-    return as_util_hook(iterator, NULL, l);
+inline as_iterator * as_list_iterator_init(as_iterator *i, const as_list * l) {
+    return as_util_hook(iterator_init, NULL, l, i);
 }
 
+inline as_iterator * as_list_iterator_new(const as_list * l) {
+    return as_util_hook(iterator_new, NULL, l);
+}
 
-
-inline uint32_t as_list_hash(as_list * l) {
+inline uint32_t as_list_hash(const as_list * l) {
     return as_util_hook(hash, 0, l);
 }
 
-inline as_val * as_list_toval(const as_list * l) {
+inline as_val * as_list_toval(as_list * l) {
     return (as_val *) l;
 }
 
-inline as_list * as_list_fromval(const as_val * v) {
+inline as_list * as_list_fromval(as_val * v) {
     return as_util_fromval(v, AS_LIST, as_list);
 }

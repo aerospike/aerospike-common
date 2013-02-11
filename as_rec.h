@@ -29,7 +29,7 @@ struct as_rec_s {
  * Provided functions that interface with the records.
  */
 struct as_rec_hooks_s {
-    int         (* free)(as_rec *);
+    int         (* destroy)(as_rec *);
     as_val *    (* get)(const as_rec *, const char *);
     int         (* set)(const as_rec *, const char *, const as_val *);
     int         (* remove)(const as_rec *, const char *);
@@ -49,10 +49,12 @@ extern const as_val as_rec_val;
  ******************************************************************************/
 
 as_rec *  as_rec_init(as_rec *, void *, const as_rec_hooks *);
-int       as_rec_destroy(as_rec *);
-
 as_rec *  as_rec_new(void *, const as_rec_hooks *);
-int       as_rec_free(as_rec *);
+
+void      as_rec_val_destroy(as_val *);
+
+uint32_t  as_rec_val_hash(const as_val *v);
+char *    as_rec_val_tostring(const as_val *v);
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -65,6 +67,10 @@ inline void * as_rec_source(const as_rec * r) {
 
 inline uint32_t as_rec_hash(as_rec * r) {
     return as_util_hook(hash, 0, r);
+}
+
+inline void as_rec_destroy(as_rec *r) {
+    as_util_hook(destroy, 0, r);
 }
 
 /**

@@ -1,14 +1,16 @@
 #pragma once
 
+#include <sys/types.h>
+
 #include "as_util.h"
 #include "as_val.h"
-#include <sys/types.h>
+
 
 /******************************************************************************
  * MACROS
  ******************************************************************************/
 
-#define pair(a,b) \
+#define pair_new(a,b) \
     as_pair_new((as_val *) a, (as_val *) b)
 
 /******************************************************************************
@@ -24,25 +26,28 @@ struct as_pair_s {
 };
 
 /******************************************************************************
- * CONSTANTS
- ******************************************************************************/
-
-extern const as_val as_pair_val;
-
-/******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
 as_pair * as_pair_new(as_val *, as_val *);
-int       as_pair_free(as_pair *);
-
 as_pair * as_pair_init(as_pair *, as_val * _1, as_val * _2);
-int       as_pair_destroy(as_pair *);
+
+void       as_pair_destroy(as_pair *);
+void       as_pair_val_destroy(as_val *);
+
+uint32_t   as_pair_val_hash(const as_val *);
+char *	   as_pair_val_tostring(const as_val *);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
+char *as_pair_tostring(const as_pair *);
+
+inline uint32_t as_pair_hash(const as_pair *p) {
+	return(0);
+}
+ 
 inline as_val * as_pair_1(as_pair * p) {
     return p->_1;
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "as_internal.h"
+
 #include "as_val.h"
 #include "as_boolean.h"
 #include "as_integer.h"

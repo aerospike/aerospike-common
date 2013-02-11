@@ -1,11 +1,13 @@
 #pragma once
 
+#include <stdlib.h>
+
 #include "as_util.h"
 #include "as_aerospike.h"
 #include "as_stream.h"
 #include "as_result.h"
 #include "as_types.h"
-#include <stdlib.h>
+
 
 /******************************************************************************
  * TYPES

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "as_internal.h"
+
 #include "as_iterator.h"
 
 #define AS_STREAM_END ((void *) 0)
@@ -30,7 +32,7 @@ struct as_stream_s {
  */
 struct as_stream_hooks_s {
     int (*free)(as_stream *);
-    const as_val * (*read)(const as_stream *);
+    as_val * (*read)(const as_stream *);
 };
 
 /******************************************************************************
@@ -101,7 +103,7 @@ inline void * as_stream_source(const as_stream * s) {
  * @param s the read to be read.
  * @return the element read from the stream or STREAM_END
  */
-inline const as_val * as_stream_read(const as_stream * s) {
+inline as_val * as_stream_read(const as_stream * s) {
     return as_util_hook(read, NULL, s);
 }
 
