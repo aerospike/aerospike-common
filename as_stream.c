@@ -20,7 +20,7 @@ typedef struct as_stream_iterator_source_s as_stream_iterator_source;
  ******************************************************************************/
 
 extern inline int as_stream_init(as_stream *, void *, const as_stream_hooks *);
-extern inline int as_stream_destroy(as_stream *);
+extern inline void as_stream_destroy(as_stream *);
 
 extern inline as_stream * as_stream_new(void *, const as_stream_hooks *);
 

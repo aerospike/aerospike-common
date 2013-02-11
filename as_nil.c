@@ -1,8 +1,11 @@
-#include "as_val.h"
-#include "as_nil.h"
 #include <string.h>
 #include <cf_alloc.h>
+
 #include "as_internal.h"
+
+#include "as_val.h"
+#include "as_nil.h"
+
 
 
 /******************************************************************************
@@ -10,13 +13,13 @@
  ******************************************************************************/
 
 as_nil * as_nil_init(as_nil * n) {
-    as_val_init(&n->_, AS_NIL, true/*is_rcalloc*/);
+    as_val_init(&n->_, AS_NIL, false/*is_malloc*/);
     return n;
 }
 
-as_nil * as_nil_new(bool b) {
+as_nil * as_nil_new() {
     as_nil * n = (as_nil *) malloc(sizeof(as_nil));
-    as_val_init(&n->_, AS_NIL, true/*is_rcalloc*/);
+    as_val_init(&n->_, AS_NIL, true/*is_malloc*/);
     return n;
 }
 
