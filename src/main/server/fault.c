@@ -89,7 +89,7 @@ char *cf_fault_context_strings[] = {
 	"fb_health",   // 46
 	"cf:arenax",   // 47
 	"sindex",      // 48
-	"sproc",       // 49
+	"udf",         // 49
 	"query",       // 50
 	"smd",         // 51
 	NULL           // 52

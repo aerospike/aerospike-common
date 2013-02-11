@@ -79,7 +79,7 @@ typedef enum {
 	AS_FB_HEALTH = 46,
 	CF_ARENAX = 47,
 	AS_SINDEX = 48,
-	AS_SPROC = 49,
+	AS_UDF = 49,
 	AS_QUERY = 50,
 	AS_SMD = 51,
 	CF_FAULT_CONTEXT_UNDEF = 52
