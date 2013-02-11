@@ -2,9 +2,9 @@
 #include <stdio.h>
 #include <cf_alloc.h>
 
-#include "as_internal.h"
-
 #include "as_linkedlist.h"
+
+#include "internal.h"
 
 /******************************************************************************
  * STATIC FUNCTIONS

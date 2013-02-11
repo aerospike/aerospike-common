@@ -1,7 +1,9 @@
-#include "as_result.h"
 #include <stdlib.h>
 #include <cf_alloc.h>
-#include "as_internal.h"
+
+#include "as_result.h"
+
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS

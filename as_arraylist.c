@@ -4,9 +4,8 @@
 #include <string.h>
 #include <cf_alloc.h>
 
-#include "as_internal.h"
-
 #include "as_arraylist.h"
+#include "internal.h"
 
 /******************************************************************************
  * STATIC FUNCTIONS

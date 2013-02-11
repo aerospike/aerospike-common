@@ -1,7 +1,7 @@
-#include "as_val.h"
+#include <stdlib.h>
 #include <cf_alloc.h>
-#include "as_internal.h"
 
+#include "as_val.h"
 #include "as_nil.h"
 #include "as_boolean.h"
 #include "as_integer.h"
@@ -10,7 +10,8 @@
 #include "as_map.h"
 #include "as_rec.h"
 #include "as_pair.h"
-#include <stdlib.h>
+
+#include "internal.h"
 
 extern inline void as_val_init(as_val *v, as_val_t type, bool is_rcalloc);
 

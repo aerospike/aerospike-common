@@ -2,10 +2,10 @@
 #include <cf_alloc.h>
 #include <stdlib.h>
 
-#include "as_internal.h"
-
 #include "as_hashmap.h"
 #include "as_string.h"
+
+#include "internal.h"
 
 /******************************************************************************
  * STATIC FUNCTIONS

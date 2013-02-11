@@ -1,8 +1,9 @@
-#include "as_rec.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <cf_alloc.h>
-#include "as_internal.h"
+
+#include "as_rec.h"
+
 
 /******************************************************************************
  * INLINES

@@ -1,9 +1,11 @@
-#include "as_util.h"
-#include "as_pair.h"
 #include <stdlib.h>
 #include <string.h>
 #include <cf_alloc.h>
-#include "as_internal.h"
+
+#include "as_util.h"
+#include "as_pair.h"
+
+#include "internal.h"
 
 extern inline uint32_t as_pair_hash(const as_pair *p);
 extern inline as_val * as_pair_1(as_pair * p);

@@ -1,8 +1,8 @@
-#include "as_string.h"
 #include <stdlib.h>
 #include <string.h>
 #include <cf_alloc.h>
-#include "as_internal.h"
+
+#include "as_string.h"
 
 extern inline char * as_string_tostring(const as_string * s);
 extern inline as_val * as_string_toval(const as_string * s);

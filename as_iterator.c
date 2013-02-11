@@ -1,6 +1,8 @@
-#include "as_iterator.h"
 #include <stdlib.h>
-#include "as_internal.h"
+
+#include "as_iterator.h"
+
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS

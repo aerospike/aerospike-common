@@ -1,7 +1,10 @@
 #include "as_aerospike.h"
+
 #include <stdlib.h>
 #include <cf_alloc.h>
-#include "as_internal.h"
+
+#include "internal.h"
+
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -34,6 +37,7 @@ as_aerospike * as_aerospike_new(void * s, const as_aerospike_hooks * h) {
 }
 
 void as_aerospike_destroy(as_aerospike * a) {
-	cf_rc_releaseandfree(a);
+    if (a->is_rcalloc)
+	   cf_rc_releaseandfree(a);
 }
 

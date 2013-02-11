@@ -3,9 +3,9 @@
 #include <string.h>
 #include <cf_alloc.h>
 
-#include "as_internal.h"
-
 #include "as_integer.h"
+
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS

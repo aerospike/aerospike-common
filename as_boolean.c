@@ -1,9 +1,10 @@
-#include "as_boolean.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <cf_alloc.h>
-#include "as_internal.h"
+
+#include "as_boolean.h"
+#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS

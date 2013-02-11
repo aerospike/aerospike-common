@@ -4,10 +4,10 @@
 #include <stdio.h>
 #include <cf_alloc.h>
 
-#include "as_internal.h"
-
 #include "as_map.h"
 #include "as_pair.h"
+
+#include "internal.h"
 
 
 /******************************************************************************

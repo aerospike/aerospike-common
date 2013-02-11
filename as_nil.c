@@ -1,12 +1,10 @@
 #include <string.h>
 #include <cf_alloc.h>
 
-#include "as_internal.h"
-
 #include "as_val.h"
 #include "as_nil.h"
 
-
+#include "internal.h"
 
 /******************************************************************************
  * VARIABLES

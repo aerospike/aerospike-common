@@ -2,12 +2,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "as_internal.h"
-
 #include "as_util.h"
 #include "as_stream.h"
 #include "as_iterator.h"
 
+#include "internal.h"
 
 /******************************************************************************
  * TYPES
