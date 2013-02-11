@@ -1,7 +1,5 @@
 #pragma once
 
-#include "as_internal.h"
-
 #include "as_iterator.h"
 
 #define AS_STREAM_END ((void *) 0)

@@ -3,8 +3,6 @@
 #include <stdbool.h>
 #include <inttypes.h>
 
-#include "as_internal.h"
-
 #include "as_util.h"
 #include "as_val.h"
 #include "as_iterator.h"

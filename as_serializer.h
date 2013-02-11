@@ -2,8 +2,6 @@
 
 #include <inttypes.h>
 
-#include "as_internal.h"
-
 #include "as_util.h"
 #include "as_types.h"
 #include "as_buffer.h"
