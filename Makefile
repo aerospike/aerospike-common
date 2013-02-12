@@ -8,7 +8,7 @@ include project/settings.makefile
 
 CFLAGS = -O3
 
-CC_FLAGS = $(CFLAGS) -std=gnu99 -g -rdynamic -Wall 
+CC_FLAGS = -std=gnu99 -g -rdynamic -Wall 
 CC_FLAGS += -fPIC -fno-common -fno-strict-aliasing
 CC_FLAGS += -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64 
 CC_FLAGS += -D_REENTRANT -D_GNU_SOURCE -DMEM_COUNT=1
