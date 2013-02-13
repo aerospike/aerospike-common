@@ -37,7 +37,7 @@ struct as_module_hooks_s {
     int (*init)(as_module *);
     int (*configure)(as_module *, void *);
     int (*apply_record)(as_module *, as_aerospike *, const char *, const char *, as_rec *, as_list *, as_result *);
-    int (*apply_stream)(as_module *, as_aerospike *, const char *, const char *, as_stream *, as_list *, as_result *);
+    int (*apply_stream)(as_module *, as_aerospike *, const char *, const char *, as_stream *, as_list *, as_stream *);
 };
 
 
@@ -93,17 +93,17 @@ inline int as_module_apply_record(as_module * m, as_aerospike * as, const char *
 }
 
 /**
- * Applies function to a stream and set of arguments.
+ * Applies function to a stream and set of arguments. Pushes the results into an output stream.
  *
  * Proxies to `m->hooks->apply_stream(m, ...)`
  *
  * @param m module from which the fqn will be resolved.
  * @param f fully-qualified name of the function to invoke.
- * @param s stream to apply to the function.
+ * @param istream pointer to a readable stream, that will provides values.
  * @param args list of arguments for the function represented as vals 
- * @param result pointer to a val that will be populated with the result.
+ * @param ostream pointer to a writable stream, that will be populated with results.
  * @return 0 on success, otherwise 1
  */
-inline int as_module_apply_stream(as_module * m, as_aerospike * as, const char * filename, const char * function, as_stream * s, as_list * args, as_result * res) {
-    return as_util_hook(apply_stream, 1, m, as, filename, function, s, args, res);
+inline int as_module_apply_stream(as_module * m, as_aerospike * as, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream) {
+    return as_util_hook(apply_stream, 1, m, as, filename, function, istream, args, ostream);
 }
