@@ -9,7 +9,16 @@
  ******************************************************************************/
 
 typedef struct as_stream_s as_stream;
+typedef enum as_stream_status_e as_stream_status;
 typedef struct as_stream_hooks_s as_stream_hooks;
+
+/**
+ * Stream Status Codes
+ */
+enum as_stream_status_e {
+    AS_STREAM_OK = 0,
+    AS_STREAM_ERR = 1
+};
 
 /**
  * Stream Structure
@@ -31,6 +40,7 @@ struct as_stream_s {
 struct as_stream_hooks_s {
     int (*destroy)(as_stream *);
     as_val * (*read)(const as_stream *);
+    as_stream_status * (*write)(const as_stream *, const as_val *);
 };
 
 /******************************************************************************
@@ -92,15 +102,28 @@ inline void * as_stream_source(const as_stream * s) {
 }
 
 /**
- * Reads an element from the stream
+ * Reads a value from the stream
  *
  * Proxies to `s->hooks->read(s)`
  *
- * @param s the read to be read.
+ * @param s the stream to be read.
  * @return the element read from the stream or STREAM_END
  */
 inline as_val * as_stream_read(const as_stream * s) {
     return as_util_hook(read, NULL, s);
+}
+
+/**
+ * Write a value to the stream
+ *
+ * Proxies to `s->hooks->write(s,v)`
+ *
+ * @param s the stream to write to.
+ * @param v the element to write to the stream.
+ * @return AS_STREAM_OK on success, otherwise is failure.
+ */
+inline as_stream_status * as_stream_write(const as_stream * s, const as_val * v) {
+    return as_util_hook(write, AS_STREAM_OK, s, v);
 }
 
 
