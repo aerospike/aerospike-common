@@ -28,39 +28,39 @@ char * as_val_tostring_null_func(const as_val *v) { return(0); }
  ******************************************************************************/
 
 as_val_destroy_func g_as_val_destroy_func_table[] = {
-	as_val_destroy_null_func, /* UNKNOWN */
-	as_val_destroy_null_func, /* AS_NIL */
-	as_val_destroy_null_func, /* AS_BOOLEAN */
-	as_integer_val_destroy, /* AS_INTEGER */
-	as_string_val_destroy, /* AS_STRING */
-	as_list_val_destroy, /* AS_LIST */
-	as_map_val_destroy, /* AS_MAP */
-	as_rec_val_destroy, /* AS_REC */
-	as_pair_val_destroy /* AS_PAIR */
+	[AS_UNKNOWN] 	= as_val_destroy_null_func,
+	[AS_NIL] 		= as_val_destroy_null_func,
+	[AS_BOOLEAN] 	= as_val_destroy_null_func,
+	[AS_INTEGER] 	= as_integer_val_destroy,
+	[AS_STRING] 	= as_string_val_destroy,
+	[AS_LIST] 		= as_list_val_destroy,
+	[AS_MAP] 		= as_map_val_destroy,
+	[AS_REC] 		= as_rec_val_destroy,
+	[AS_PAIR] 		= as_pair_val_destroy
 };
 
 as_val_hash_func g_as_val_hash_func_table[] = {
-	as_val_hash_null_func, /* UNKNOWN */
-	as_val_hash_null_func, /* AS_NIL */
-	as_boolean_val_hash, /* AS_BOOLEAN */
-	as_integer_val_hash, /* AS_INTEGER */
-	as_string_val_hash, /* AS_STRING */
-	as_list_val_hash, /* AS_LIST */
-	as_map_val_hash, /* AS_MAP */
-	as_rec_val_hash, /* AS_REC */
-	as_pair_val_hash /* AS_PAIR */
+	[AS_UNKNOWN] 	= as_val_hash_null_func,
+	[AS_NIL] 		= as_val_hash_null_func,
+	[AS_BOOLEAN] 	= as_boolean_val_hash,
+	[AS_INTEGER] 	= as_integer_val_hash,
+	[AS_STRING] 	= as_string_val_hash,
+	[AS_LIST] 		= as_list_val_hash,
+	[AS_MAP] 		= as_map_val_hash,
+	[AS_REC] 		= as_rec_val_hash,
+	[AS_PAIR] 		= as_pair_val_hash
 };
 
 as_val_tostring_func g_as_val_tostring_func_table[] = {
-	as_val_tostring_null_func, /* UNKNOWN */
-	as_nil_val_tostring,      /* AS_NIL */
-	as_boolean_val_tostring, /* AS_BOOLEAN */
-	as_integer_val_tostring, /* AS_INTEGER */
-	as_string_val_tostring, /* AS_STRING */
-	as_list_val_tostring, /* AS_LIST */
-	as_map_val_tostring, /* AS_MAP */
-	as_rec_val_tostring, /* AS_REC */
-	as_pair_val_tostring /* AS_PAIR */
+	[AS_UNKNOWN] 	= as_val_tostring_null_func,
+	[AS_NIL] 		= as_nil_val_tostring,
+	[AS_BOOLEAN] 	= as_boolean_val_tostring,
+	[AS_INTEGER] 	= as_integer_val_tostring,
+	[AS_STRING] 	= as_string_val_tostring,
+	[AS_LIST] 		= as_list_val_tostring,
+	[AS_MAP] 		= as_map_val_tostring,
+	[AS_REC] 		= as_rec_val_tostring,
+	[AS_PAIR] 		= as_pair_val_tostring
 };
 
 int as_val_val_reserve(as_val *v) {
