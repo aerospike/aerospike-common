@@ -64,9 +64,9 @@ as_val_tostring_func g_as_val_tostring_func_table[] = {
 };
 
 as_val * as_val_val_reserve(as_val *v) {
-	if (v == 0) return;
+	if (v == 0) return(0);
 	int i = cf_atomic32_add(&(v->count),1);
-	return( i );
+	return( v );
 }
 
 void as_val_val_destroy(as_val *v) {
