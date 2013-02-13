@@ -32,12 +32,22 @@ struct as_val_s {
     cf_atomic32 count;
 };
 
-// arraylist
+// arraylist:
+// Structure for arraylist -- note that all fields are in terms of elements,
+// not in terms of bytes.  Total size (bytes) allocated for the element
+// array is   sizeof( as_val * ) * capacity
+// The Field "block_size" is misleading -- it is NOT bytes, but it is the unit
+// of allocation to be used each time the list grows.  So, the block_size
+// might be 8 (for example), which means we'll grow by
+//   new_delta_bytes = multiplier * (sizeof( as_val *) * block_size)
+// each time we want to grow the array (with realloc).
 struct as_arraylist_source_s {
-    struct as_val_s **   elements;
-    uint32_t    size;
-    uint32_t    capacity;
-    uint32_t    block_size;
+    struct as_val_s **   elements; // An allocated area for ptrs to list elements
+    uint32_t    size;           // The current array size (element count)
+    uint32_t    capacity;       // The total array size (max element count)
+    uint32_t    block_size;     // The unit of allocation (e.g. 8 elements)
+                                // Note that block_size == 0 means no more
+                                // can be allocated
 };
 
 // linkedlist
