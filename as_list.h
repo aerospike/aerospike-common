@@ -52,6 +52,7 @@ char * as_list_val_tostring(const as_val * v);
 
 void * as_list_source(as_list *);
 
+
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
@@ -115,3 +116,28 @@ inline as_val * as_list_toval(as_list * l) {
 inline as_list * as_list_fromval(as_val * v) {
     return as_util_fromval(v, AS_LIST, as_list);
 }
+
+
+/*
+** HELPERS
+*/
+
+static inline int as_list_add_string(as_list * arglist, const char * s) {
+    return as_list_append(arglist, (as_val *) as_string_new(strdup(s), true));
+}
+
+static inline int as_list_add_integer(as_list * arglist, uint64_t i) {
+    return as_list_append(arglist, (as_val *) as_integer_new(i));
+}
+
+static inline int as_list_add_list(as_list * arglist, as_list * l) {
+    return as_list_append(arglist, (as_val *) l);
+}
+
+struct as_map_s;
+
+static inline int as_list_add_map(as_list * arglist, struct as_map_s * m) {
+    return as_list_append(arglist, (as_val *) m);
+}
+
+
