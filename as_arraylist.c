@@ -74,7 +74,6 @@ const as_iterator_hooks as_arraylist_iterator_hooks = {
 // Use calloc() for the new element memory so that it is initialized to zero
 as_list * as_arraylist_init(as_list * l, uint32_t capacity, uint32_t block_size) {
     as_val_init(&l->_, AS_LIST, false /*is_malloc*/);
-    printf("<> ArrayList INIT: Cap(%d) BlkSz(%d) \n", capacity, block_size );
     l->hooks = &as_arraylist_list_hooks;
     // Allocate 'capacity' elements of SIZE bytes each, all initialized to 0.
     l->u.arraylist.elements =
@@ -90,8 +89,6 @@ as_list * as_arraylist_init(as_list * l, uint32_t capacity, uint32_t block_size)
 // Use calloc() for the new element memory so that it is initialized to zero
 as_list * as_arraylist_new(uint32_t capacity, uint32_t block_size) {
     as_list * l = (as_list *) malloc(sizeof(as_list));
-    printf("<> ArrayList_NEW: Cap(%d) BLK SZ(%d) Malloc Sz(%d)\n",
-    		capacity, block_size, sizeof(as_list ));
     as_val_init(&l->_, AS_LIST, true /*is_malloc*/);
     l->hooks = &as_arraylist_list_hooks;
     // Allocate 'capacity' elements of SIZE bytes each, all initialized to 0.
@@ -114,7 +111,6 @@ as_list * as_arraylist_new(uint32_t capacity, uint32_t block_size) {
 //     when we grow the array list (e.g. 8, meaning space for 8 more elements)
 void as_arraylist_list_destroy(as_list * l) {
     as_arraylist_source *a = &l->u.arraylist;
-    printf("<> as_arraylist_DESTROY: ListSize(%d)\n", a->size );
     for (int i = 0; i < a->size; i++ ) {
         if (a->elements[i]) {    // check for non-null valid elements
             as_val_destroy(a->elements[i]);
@@ -146,8 +142,6 @@ void as_arraylist_list_destroy(as_list * l) {
 //     when we grow the array list (e.g. 8, meaning space for 8 more elements)
 static int as_arraylist_ensure(as_list * l, uint32_t delta_new) {
     as_arraylist_source *a = &l->u.arraylist;
-	printf("<> as_arraylist_ensure: A:Size(%d) A:Cap(%d) New(%d)\n",
-			a->size, a->capacity, delta_new );
     // Check for capacity (in terms of elements, NOT size in bytes), and if we
     // need to allocate more, do a realloc.
     if ( (a->size + delta_new) > a->capacity ) {
@@ -160,8 +154,6 @@ static int as_arraylist_ensure(as_list * l, uint32_t delta_new) {
         	// This will get us (conservatively) at least one block
             int new_blocks = (new_room + a->block_size) / a->block_size;
             int new_capacity = a->capacity + (new_blocks * a->block_size);
-            printf("[DEBUG]:as_arraylist_ensure: OldCapacity(%d) New Capacity(%d) \n",
-            		a->capacity, new_capacity );
             as_val ** elements =
               (as_val **) cf_realloc(a->elements, sizeof(as_val *) * new_capacity);
             if ( elements != NULL ) {
@@ -191,7 +183,6 @@ static uint32_t as_arraylist_list_size(const as_list * l) {
 
 static int as_arraylist_list_append(as_list * l, as_val * v) {
     as_arraylist_source *a = &l->u.arraylist;
-    // printf( "ListAppend: ValSize(%d)\n", a->size );
     int rc = as_arraylist_ensure(l,1);
     if ( rc != AS_ARRAYLIST_OK ) return rc;
     a->elements[a->size++] = v;
@@ -228,24 +219,17 @@ static int as_arraylist_list_set(as_list * l, const uint32_t index, as_val * v) 
 
     as_arraylist_source *a = &l->u.arraylist;
     int rc = AS_ARRAYLIST_OK;
-	printf("==> ENTER: [%s]: ListSize(%d) Cap(%d) BlkSz(%d) Size(%d) \n",
-			"as_array_list_set", a->size, a->capacity, a->block_size, index);
     if ( index > a->capacity ) {
-    	printf("==> DEBUG: [%s]: i(%d) Calling Ensure( Bytes(%d))\n",
-    			"as_array_list_set", index,  index - a->capacity);
         rc = as_arraylist_ensure(l, index - a->capacity);
         if ( rc != AS_ARRAYLIST_OK ) {
-        	printf("==>RETURN: as_arraylist_list_set: Return(%d)\n", rc );
         	return rc;
         }
     }
     as_val_destroy(a->elements[index]);
     a->elements[index] = v;
-    printf("==>DEBUG:BEFORE: as_array_list_set: size(%d) i(%d)\n",a->size, index );
     if( index  >= a->size ){
     	a->size = index + 1;
     }
-    printf("==>DEBUG:AFTER: as_array_list_set: size(%d) i(%d)\n",a->size, index );
 
     return rc;
 } // end as_arraylist_list_set()

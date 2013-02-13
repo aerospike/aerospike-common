@@ -78,11 +78,8 @@ static int as_msgpack_pack_list(msgpack_packer * pk, as_list * l) {
     as_list_iterator_init(&i, l);
     while ( as_iterator_has_next(&i) ) {
         as_val * val = (as_val *) as_iterator_next(&i);
-        printf("as_msgpack_pack_list: value(%s) Iteration(%d) \n",
-        		as_val_tostring( val ), debug_count++ );
         int rc = as_msgpack_pack_val(pk, val);
         if ( rc ) {
-            printf("[ERROR]:as_msgpack_pack_list: Error(%d)\n", rc);
             rc = 2;
             break;
         }
@@ -101,11 +98,8 @@ static int as_msgpack_pack_map(msgpack_packer * pk, as_map * m) {
     as_map_iterator_init(&i, m);
     while ( as_iterator_has_next(&i) ) {
         as_pair * p = (as_pair *) as_iterator_next(&i);
-        printf("[DEBUG]:as_msgpack_pack_map: Iteration(%d) Val1(%s) Val2(%s)\n",
-        	debug_count, as_val_tostring(p->_1), as_val_tostring(p->_2));
 
         if ( !p ) {
-            printf("[ERROR]:as_msgpack_pack_map: Error(%d)\n", rc);
             rc = 2;
             break;
         }
@@ -134,7 +128,6 @@ static int as_msgpack_pack_pair(msgpack_packer * pk, as_pair * p) {
 }
 
 int as_msgpack_pack_val(msgpack_packer * pk, as_val * v) {
-    printf("[ENTER]:as_msgpack_pack_val: value(%s) \n", as_val_tostring( v ));
     if ( v == NULL ) return 1;
     switch( as_val_type(v) ) {
         case AS_BOOLEAN : return as_msgpack_pack_boolean(pk, (as_boolean *) v);
@@ -165,23 +158,16 @@ static int as_msgpack_string_to_val(msgpack_object_raw * r, as_val ** v) {
 }
 
 static int as_msgpack_array_to_val(msgpack_object_array * a, as_val ** v) {
-	printf("[ENTER]:as_msgpack_array_to_val: a->size(%d) \n", a->size);
     as_list * l = as_arraylist_new(a->size,8);
     for ( int i = 0; i < a->size; i++) {
         msgpack_object * o = a->ptr + i;
         as_val * val = NULL;
         as_msgpack_object_to_val(o, &val);
-    	printf("[DEBUG]:as_msgpack_array_to_val: val(%s) \n",
-    			as_val_tostring( val ));
         if ( val != NULL ) {
-        	printf("[DEBUG]:as_msgpack_array_to_val:SET i(%d) val(%s) \n",
-        			i, as_val_tostring( val ));
             as_list_set(l, i, val);
         }
     }
     *v = (as_val *) l;
-	printf("[RETURN]:as_msgpack_array_to_val:L size(%d) result(%s) \n",
-			as_list_size(l), as_val_tostring( *v ));
     return 0;
 }
 
