@@ -77,6 +77,7 @@ SHARED =
 SHARED += cf_b64.o
 SHARED += cf_bits.o
 SHARED += cf_clock.o
+SHARED += cf_crypto.o
 SHARED += cf_digest.o
 SHARED += cf_ll.o
 SHARED += cf_rchash.o
