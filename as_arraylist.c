@@ -75,7 +75,7 @@ as_list * as_arraylist_init(as_list * l, uint32_t capacity, uint32_t block_size)
     l->u.arraylist.elements = (as_val **) malloc(sizeof(as_val *) * capacity);
     l->u.arraylist.size = 0;
     l->u.arraylist.capacity = capacity;
-    l->u.arraylist.size = block_size;
+    l->u.arraylist.block_size = block_size;
     return l;
 }
 
