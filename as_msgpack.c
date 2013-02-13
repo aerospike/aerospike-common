@@ -27,7 +27,7 @@ static int as_msgpack_map_to_val(msgpack_object_map *, as_val **);
 
 // static int as_msgpack_object_to_val(msgpack_object *, as_val **);
 
-static int as_msgpack_destroy(as_serializer *);
+static void as_msgpack_destroy(as_serializer *);
 static int as_msgpack_serialize(as_serializer *, as_val *, as_buffer *);
 static int as_msgpack_deserialize(as_serializer *, as_buffer *, as_val **);
 
@@ -49,9 +49,10 @@ as_serializer * as_msgpack_new() {
     return as_serializer_new(NULL, &as_msgpack_serializer_hooks);
 }
 
-int as_msgpack_init(as_serializer * s) {
+as_serializer * as_msgpack_init(as_serializer * s)
+ {
     as_serializer_init(s, NULL, &as_msgpack_serializer_hooks);
-    return 0;
+    return s;
 }
 
 static int as_msgpack_pack_boolean(msgpack_packer * pk, as_boolean * b) {
@@ -74,7 +75,6 @@ static int as_msgpack_pack_list(msgpack_packer * pk, as_list * l) {
     if ( rc ) return rc;
 
     as_iterator i;
-    int debug_count = 1; // remove later
     as_list_iterator_init(&i, l);
     while ( as_iterator_has_next(&i) ) {
         as_val * val = (as_val *) as_iterator_next(&i);
@@ -94,7 +94,6 @@ static int as_msgpack_pack_map(msgpack_packer * pk, as_map * m) {
     if ( rc ) return rc;
 
     as_iterator i;
-    int debug_count = 1;
     as_map_iterator_init(&i, m);
     while ( as_iterator_has_next(&i) ) {
         as_pair * p = (as_pair *) as_iterator_next(&i);
@@ -207,8 +206,8 @@ int as_msgpack_object_to_val(msgpack_object * object, as_val ** val) {
 }
 
 
-static int as_msgpack_destroy(as_serializer * s) {
-    return 0;
+static void as_msgpack_destroy(as_serializer * s) {
+    return;
 }
 
 static int as_msgpack_serialize(as_serializer * s, as_val * v, as_buffer * buff) {
