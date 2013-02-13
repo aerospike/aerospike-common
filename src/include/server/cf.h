@@ -8,6 +8,7 @@
 #pragma once
 
 #include "../cf_types.h"
+#include "../cf_crypto.h"
  
 #include "atomic.h"
 #include "dynbuf.h"
