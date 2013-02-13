@@ -63,7 +63,8 @@ as_val_tostring_func g_as_val_tostring_func_table[] = {
 	[AS_PAIR] 		= as_pair_val_tostring
 };
 
-int as_val_val_reserve(as_val *v) {
+as_val * as_val_val_reserve(as_val *v) {
+	if (v == 0) return;
 	int i = cf_atomic32_add(&(v->count),1);
 	return( i );
 }
