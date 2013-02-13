@@ -20,10 +20,10 @@
  * FUNCTIONS
  ******************************************************************************/
 /**
- * sha1_to_hex
+ * cf_convert_sha1_to_hex
  * Desc: Convert a sha1 returned hash to a hexadecimal string. 
  */
-bool sha1_to_hex(unsigned char * hash, unsigned char * sha1_hex_buff) { 
+bool cf_convert_sha1_to_hex(unsigned char * hash, unsigned char * sha1_hex_buff) { 
         if (!sha1_hex_buff || !hash) return false; 
         for (unsigned int i = 0; i < SHA_DIGEST_LENGTH; i++) { 
                 sprintf((char *)(sha1_hex_buff + (i * 2)), "%02x", hash[i]); 
