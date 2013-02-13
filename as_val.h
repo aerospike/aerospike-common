@@ -152,6 +152,8 @@ extern as_val_tostring_func g_as_val_tostring_func_table[];
 
 extern void as_val_val_destroy(as_val *v);
 extern as_val * as_val_val_reserve(as_val *v);
+extern uint32_t as_val_val_hash(const as_val *v);
+extern char * as_val_val_tostring(const as_val *v);
 
 /******************************************************************************
  * MACROS
@@ -168,11 +170,11 @@ inline void as_val_init(as_val *v, as_val_t type, bool is_malloc) {
 
 #define as_val_reserve(__v) ( as_val_val_reserve((as_val *)__v) )
 
-#define as_val_hash(__v) \
-    ((__v) ? (g_as_val_hash_func_table[ ((as_val *)__v)->type ] (__v) ) : NULL )
+#define as_val_hash(__v) ( as_val_val_hash((as_val *)__v) )
 
-#define as_val_tostring(__v) \
-    ((__v) ? ( g_as_val_tostring_func_table[ ((as_val *)__v)->type ] (__v) ) : NULL ) 
+#define as_val_tostring(__v) ( as_val_val_tostring((as_val *)__v) )
+
+
 
 /******************************************************************************
  * FUNCTIONS
