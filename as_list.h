@@ -122,10 +122,12 @@ inline as_list * as_list_fromval(as_val * v) {
 ** HELPERS
 */
 
+struct as_string_s *   as_string_new(char *, bool is_malloc);
 static inline int as_list_add_string(as_list * arglist, const char * s) {
     return as_list_append(arglist, (as_val *) as_string_new(strdup(s), true));
 }
 
+struct as_integer_s *  as_integer_new(int64_t i);
 static inline int as_list_add_integer(as_list * arglist, uint64_t i) {
     return as_list_append(arglist, (as_val *) as_integer_new(i));
 }
