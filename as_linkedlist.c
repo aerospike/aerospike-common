@@ -114,10 +114,10 @@ void linkedlist_dump(char *msg, as_list *l) {
  * STATIC FUNCTIONS
  ******************************************************************************/
 
-static uint32_t as_linkedlist_size(as_list * l) {
-    as_linkedlist_source *ll = &l->u.linkedlist;
-    return (ll->head ? 1 : 0) + (ll->tail ? as_linkedlist_size(ll->tail) : 0);
-}
+//static uint32_t as_linkedlist_size(as_list * l) {
+//    as_linkedlist_source *ll = &l->u.linkedlist;
+//    return (ll->head ? 1 : 0) + (ll->tail ? as_linkedlist_size(ll->tail) : 0);
+//}
 
 //
 // recurse through the link to find the end

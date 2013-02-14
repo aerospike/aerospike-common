@@ -63,19 +63,33 @@ as_val_tostring_func g_as_val_tostring_func_table[] = {
 	[AS_PAIR] 		= as_pair_val_tostring
 };
 
-int as_val_val_reserve(as_val *v) {
-	int i = cf_atomic32_add(&(v->count),1);
-	return( i );
+as_val * as_val_val_reserve(as_val *v) {
+	if (v == 0) return(0);
+	cf_atomic32_add(&(v->count),1);
+	return( v );
 }
 
 void as_val_val_destroy(as_val *v) {
 	if (v == 0)	return;
 	// if we reach the last reference, call the destructor, and free
 	if ( 0 == cf_atomic32_decr(&(v->count)) ) {
-		g_as_val_destroy_func_table[ ((as_val *)v)->type ](v);		
+		g_as_val_destroy_func_table[ v->type ](v);		
 		if (v->is_malloc) {
         	free(v);
         }
     }
 	return;
 }
+
+uint32_t as_val_val_hash(const as_val *v) {
+	if (v == 0)	return(0);
+	uint32_t hv = g_as_val_hash_func_table[ v->type ](v);
+	return(hv);
+}
+
+char * as_val_val_tostring(const as_val *v) {
+	if (v == 0)	return(0);
+	char *s = g_as_val_tostring_func_table[ v->type ](v);
+	return(s);
+}
+
