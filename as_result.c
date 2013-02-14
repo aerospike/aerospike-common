@@ -18,6 +18,16 @@ extern inline as_result * as_result_tofailure(as_result *, as_val *);
 
 as_result * as_result_init(as_result * r, bool is_success, as_val * v) {
     r->is_malloc = false;
+    r->count = 1;
+    r->is_success = is_success;
+    r->value = v;
+    return r;
+}
+
+as_result * as_result_new(bool is_success, as_val * v) {
+    as_result * r = (as_result *) malloc(sizeof(as_result));
+    r->is_malloc = true;
+    r->count = 1;
     r->is_success = is_success;
     r->value = v;
     return r;
@@ -45,7 +55,7 @@ as_result * as_failure(as_val * e) {
     return as_result_init(r, false, e);
 }
 
-int as_result_reserve(as_result * r) {
-    int i = cf_atomic32_incr(&(r->count));
-    return i;
+as_result * as_result_reserve(as_result * r) {
+    cf_atomic32_incr(&(r->count));
+    return r;
 }
