@@ -75,6 +75,7 @@ inline void as_rec_destroy(as_rec *r) {
 
 /**
  * Get a bin value by name.
+ * The return value must be destroyed or passed to another function
  *
  * Proxies to `r->hooks->get(r, name, value)`
  *
@@ -88,10 +89,11 @@ inline as_val * as_rec_get(const as_rec * r, const char * name) {
 
 /**
  * Set the value of a bin.
+ * This CONSUMES the reference on the value
  *
  * Proxies to `r->hooks->set(r, name, value)`
  *
- * @param r the as_rec to write the bin value to.
+ * @param r the as_rec to write the bin value to - CONSUMES REFERENCE
  * @param name the name of the bin.
  * @param value the value of the bin.
  */
