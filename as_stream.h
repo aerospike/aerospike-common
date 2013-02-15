@@ -119,7 +119,7 @@ inline bool as_stream_readable(const as_stream * s) {
  * @return AS_STREAM_OK on success, otherwise is failure.
  */
 inline as_stream_status as_stream_write(const as_stream * s, const as_val * v) {
-    return as_util_hook(write, AS_STREAM_OK, s, v);
+    return as_util_hook(write, AS_STREAM_ERR, s, v);
 }
 
 
