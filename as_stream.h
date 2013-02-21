@@ -38,9 +38,9 @@ struct as_stream_s {
  * Provided functions that interface with the streams.
  */
 struct as_stream_hooks_s {
-    int (*destroy)(as_stream *);
-    as_val * (*read)(const as_stream *);
-    as_stream_status (*write)(const as_stream *, const as_val *);
+    int                 (* destroy)(as_stream *);
+    as_val *            (* read)(const as_stream *);
+    as_stream_status    (* write)(const as_stream *, const as_val *);
 };
 
 /******************************************************************************
@@ -132,4 +132,3 @@ inline as_stream_status as_stream_write(const as_stream * s, const as_val * v) {
 inline bool as_stream_writable(const as_stream * s) {
     return s != NULL && s->hooks != NULL && s->hooks->write;
 }
-
