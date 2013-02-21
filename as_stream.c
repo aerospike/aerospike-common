@@ -10,15 +10,16 @@
 
 /******************************************************************************
  * TYPES
- ******************************************************************************/
+ *****************************************************************************/
 
 typedef struct as_stream_iterator_source_s as_stream_iterator_source;
 
 /******************************************************************************
  * INLINE FUNCTIONS
- ******************************************************************************/
+ *****************************************************************************/
 
 extern inline int as_stream_init(as_stream *, void *, const as_stream_hooks *);
+
 extern inline void as_stream_destroy(as_stream *);
 
 extern inline as_stream * as_stream_new(void *, const as_stream_hooks *);
@@ -32,3 +33,5 @@ extern inline bool as_stream_readable(const as_stream *);
 extern inline as_stream_status as_stream_write(const as_stream *, const as_val * v);
 
 extern inline bool as_stream_writable(const as_stream *);
+
+extern inline void as_stream_foreach(const as_stream * stream, void * udata, bool (*f)(const as_val *, void *));
