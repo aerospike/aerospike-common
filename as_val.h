@@ -23,7 +23,8 @@ enum as_val_t {
     AS_LIST         = 5,
     AS_MAP          = 6,
     AS_REC          = 7,
-    AS_PAIR         = 8
+    AS_PAIR         = 8,
+    AS_BYTES        = 9
 } __attribute__((packed));
 
 struct as_val_s {
