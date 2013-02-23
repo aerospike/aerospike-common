@@ -28,4 +28,4 @@ extern const as_iterator_hooks  as_arraylist_iterator_hooks;
 
 as_list *    	as_arraylist_init(as_list *, uint32_t capacity, uint32_t block_size);
 as_list *    	as_arraylist_new(uint32_t capacity, uint32_t block_size);
-int               as_arraylist_destroy(as_list *);
+void               as_arraylist_destroy(as_list *);

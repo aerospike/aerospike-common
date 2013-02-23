@@ -31,8 +31,8 @@ struct as_map_hooks_s {
  * FUNCTIONS
  ******************************************************************************/
  
-void          as_map_destroy(as_map *);
-void		  as_map_val_destroy(as_val *);
+void          as_map_destroy(as_map *);     // use this
+void		  as_map_val_destroy(as_val *); // internal
 
 uint32_t	  as_map_val_hash(const as_val *);
 char *		  as_map_val_tostring(const as_val *);

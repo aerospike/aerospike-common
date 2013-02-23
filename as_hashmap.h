@@ -24,8 +24,7 @@ extern const as_iterator_hooks as_hashmap_iterator;
 as_map *    as_hashmap_init(as_map *, uint32_t);
 as_map *    as_hashmap_new(uint32_t);
 
-void             as_hashmap_destroy(as_map *);
-void             as_hashmap_val_destroy(as_val *);
+void             as_hashmap_destroy(as_map *); 
 
 uint32_t		as_hashmap_hash(const as_map *m);
 int             as_hashmap_set(as_map * m, const as_val * k, const as_val * v);

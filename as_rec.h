@@ -51,7 +51,9 @@ extern const as_val as_rec_val;
 as_rec *  as_rec_init(as_rec *, void *, const as_rec_hooks *);
 as_rec *  as_rec_new(void *, const as_rec_hooks *);
 
+inline void	  as_rec_destroy(as_rec *);
 void      as_rec_val_destroy(as_val *);
+
 
 uint32_t  as_rec_val_hash(const as_val *v);
 char *    as_rec_val_tostring(const as_val *v);
@@ -70,7 +72,7 @@ inline uint32_t as_rec_hash(as_rec * r) {
 }
 
 inline void as_rec_destroy(as_rec *r) {
-    as_util_hook(destroy, 0, r);
+	as_val_val_destroy( (as_val *) r );
 }
 
 /**
