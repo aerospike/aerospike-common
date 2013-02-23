@@ -102,6 +102,13 @@ as_list * as_arraylist_new(uint32_t capacity, uint32_t block_size) {
     return l;
 } // end as_arraylist_new()
 
+//
+// as_arraylist_destroy
+// helper function for those who like the joy of as_arraylist_new
+void as_arraylist_destroy(as_list * l) {
+	as_val_val_destroy( (as_val *) l);
+}
+
 // Destroy the list.  It is assumed that valid elements are not null,
 // and all "element[]" array positions that do NOT contain elements ARE null.
 // So it is important that all element arrays begin initialized

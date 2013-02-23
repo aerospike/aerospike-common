@@ -33,8 +33,7 @@ as_pair * as_pair_new(as_val * _1, as_val * _2) {
 }
 
 void as_pair_destroy(as_pair * p) {
-    if ( p->_1 ) as_val_destroy(p->_1);
-    if ( p->_2 ) as_val_destroy(p->_2);
+	as_val_val_destroy((as_val *)p);
 }
 
 void as_pair_val_destroy(as_val * v) {

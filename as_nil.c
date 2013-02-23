@@ -21,7 +21,8 @@ as_nil * as_nil_new() {
     return n;
 }
 
-void as_nil_destroy(as_nil * v) {
+void as_nil_destroy(as_nil * n) {
+	as_val_val_destroy( (as_val *) n);
     return;
 }
 

@@ -11,7 +11,6 @@
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-extern inline void as_integer_destroy(as_integer *i) ;
 extern inline int64_t as_integer_toint(const as_integer * i);
 extern inline uint32_t as_integer_hash(const as_integer * i);
 extern inline as_val * as_integer_toval(const as_integer * i) ;\
@@ -36,6 +35,10 @@ as_integer * as_integer_new(int64_t i) {
 
 void as_integer_val_destroy(as_val * v) {
     return;
+}
+
+void as_integer_destroy(as_integer *i) {
+	as_val_val_destroy( (as_val *) i);
 }
 
 uint32_t as_integer_val_hash(const as_val * v) {

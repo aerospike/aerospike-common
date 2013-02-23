@@ -11,6 +11,7 @@
  * STATIC FUNCTIONS
  ******************************************************************************/
 
+static void		 as_hashmap_map_destroy(as_map *m);
 uint32_t     as_hashmap_hash_fn(void *);
 int          as_hashmap_reduce_fn (void *, void *, void *);
 
@@ -19,7 +20,7 @@ int          as_hashmap_reduce_fn (void *, void *, void *);
  ******************************************************************************/
 
 const as_map_hooks as_hashmap_map_hooks = {
-    .destroy        = as_hashmap_destroy,
+    .destroy        = as_hashmap_map_destroy,
     .hash           = as_hashmap_hash,
     .size           = as_hashmap_size,
     .set            = as_hashmap_set,
@@ -56,10 +57,14 @@ as_map *as_hashmap_new(uint32_t capacity) {
     return m;
 }
 
-void as_hashmap_destroy(as_map * m) {
+static void as_hashmap_map_destroy(as_map * m) {
     as_hashmap_clear(m);
     as_hashmap_source  *s = &(m->u.hashmap);
     shash_destroy(s->h);
+}
+
+void as_hashmap_destroy(as_map *m) {
+	as_val_val_destroy( (as_val *) m );
 }
 
 int as_hashmap_set(as_map * m, const as_val * k, const as_val * v) {

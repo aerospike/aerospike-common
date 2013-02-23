@@ -29,7 +29,7 @@ extern inline as_map * as_map_fromval(const as_val * v);
  ******************************************************************************/
 
 void as_map_destroy(as_map * m) {
-    as_util_hook(destroy, 1, m);
+    as_val_val_destroy( (as_val *) m );
 }
 
 void as_map_val_destroy(as_val *v) {

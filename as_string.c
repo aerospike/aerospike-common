@@ -30,11 +30,12 @@ as_string * as_string_new(char * s, bool is_malloc) {
 }
 
 void as_string_destroy(as_string * s) {
-    if ( s->value_is_malloc && s->value ) free(s->value);
+	as_val_val_destroy( (as_val *) s);
 }
 
 void as_string_val_destroy(as_val * v) {
-   as_string_destroy( (as_string *)v );
+	as_string *s = (as_string *) v;
+	if ( s->value_is_malloc && s->value ) free(s->value);
 }
 
 size_t as_string_len(as_string * s) {

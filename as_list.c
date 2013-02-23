@@ -48,9 +48,10 @@ as_list * as_list_new(void *source, const as_list_hooks *h) {
     return l;
 }
 
-
-void as_list_destroy(as_list * l) {
-    as_util_hook(destroy, 1, l);
+//
+// helper function, call this
+void as_list_destroy(as_list *l) {
+	as_val_val_destroy( (as_val *) l );
 }
 
 void *as_list_source(as_list *l) {
@@ -61,6 +62,10 @@ void *as_list_source(as_list *l) {
  * STATIC FUNCTIONS
  ******************************************************************************/
 
+//
+// calls the implementations destroy
+// not for external use
+ 
 void as_list_val_destroy(as_val *v) {
     as_list *l = (as_list *) v;
     as_util_hook(destroy, 1, l);

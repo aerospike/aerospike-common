@@ -46,6 +46,7 @@ as_rec * as_rec_new(void * source, const as_rec_hooks * hooks) {
     return r;
 }
 
+
 void as_rec_val_destroy(as_val *v) {
     as_rec *r = (as_rec *) v;
     as_rec_destroy(r);

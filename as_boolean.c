@@ -32,8 +32,14 @@ as_boolean * as_boolean_new(bool b) {
     return v;
 }
 
+// helper function
 void as_boolean_destroy(as_boolean * b) {
+	as_val_val_destroy( (as_val *) b );
     return;
+}
+
+void as_boolean_val_destroy(as_val *v) {
+	return;
 }
 
 uint32_t as_boolean_val_hash(const as_val * v) {

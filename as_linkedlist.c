@@ -92,10 +92,15 @@ as_list * as_linkedlist_new(as_val * head, as_list * tail) {
     return l;
 }
 
-void as_linkedlist_destroy(as_list * l) {
+// external, call this
+void as_linkedlist_destroy(as_list *l) {
+    as_val_val_destroy( (as_val *) l);
+}
+
+void as_linkedlist_list_destroy(as_list * l) {
     as_linkedlist_source *ll = &l->u.linkedlist;
-    if ( ll->head ) as_val_destroy(ll->head);
-    if ( ll->tail ) as_val_destroy((as_list *)ll->tail);
+    if ( ll->head ) as_val_val_destroy(ll->head);
+    if ( ll->tail ) as_val_val_destroy((as_val *)ll->tail);
 }
 
 #if 0
@@ -131,9 +136,7 @@ static as_list * as_linkedlist_end(as_list * l) {
     return as_linkedlist_end(ll->tail);
 }
 
-static void as_linkedlist_list_destroy(as_list *l) {
-    as_linkedlist_destroy(l);
-}
+
 
 static uint32_t as_linkedlist_list_hash(const as_list * l) {
     return 0;

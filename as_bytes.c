@@ -30,11 +30,12 @@ as_bytes * as_bytes_new(uint8_t * s, size_t len, bool is_malloc) {
 }
 
 void as_bytes_destroy(as_bytes * s) {
-    if ( s->value_is_malloc && s->value ) free(s->value);
+	as_val_val_destroy( (as_val *)s );
 }
 
 void as_bytes_val_destroy(as_val * v) {
-   as_bytes_destroy( (as_bytes *)v );
+	as_bytes *s = (as_bytes *) v;
+	if ( s->value_is_malloc && s->value ) free(s->value);
 }
 
 size_t as_bytes_len(as_bytes * s) {
