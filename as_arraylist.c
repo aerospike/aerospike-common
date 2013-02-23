@@ -28,6 +28,9 @@ static as_val *         as_arraylist_list_head(const as_list *);
 static as_list *        as_arraylist_list_tail(const as_list *);
 static as_list *        as_arraylist_list_drop(const as_list *, uint32_t);
 static as_list *        as_arraylist_list_take(const as_list *, uint32_t);
+
+static void             as_arraylist_list_foreach(const as_list *, void *, bool (*foreach)(as_val *, void *));
+
 static as_iterator *    as_arraylist_list_iterator_init(const as_list *, as_iterator *);
 static as_iterator *    as_arraylist_list_iterator_new(const as_list *);
 
@@ -43,20 +46,20 @@ static as_val *   as_arraylist_iterator_next(as_iterator *);
  ******************************************************************************/
 
 const as_list_hooks as_arraylist_list_hooks = {
-    .destroy       = as_arraylist_list_destroy,
-    .hash       = as_arraylist_list_hash,
-    .size       = as_arraylist_list_size,
-    .append     = as_arraylist_list_append,
-    .prepend    = as_arraylist_list_prepend,
-    .get        = as_arraylist_list_get,
-    .set        = as_arraylist_list_set,
-    .head       = as_arraylist_list_head,
-    .tail       = as_arraylist_list_tail,
-    .drop       = as_arraylist_list_drop,
-    .take       = as_arraylist_list_take,
-    .foreach    = NULL,     // @TODO: implement
-    .iterator_init   = as_arraylist_list_iterator_init,
-    .iterator_new    = as_arraylist_list_iterator_new
+    .destroy            = as_arraylist_list_destroy,
+    .hash               = as_arraylist_list_hash,
+    .size               = as_arraylist_list_size,
+    .append             = as_arraylist_list_append,
+    .prepend            = as_arraylist_list_prepend,
+    .get                = as_arraylist_list_get,
+    .set                = as_arraylist_list_set,
+    .head               = as_arraylist_list_head,
+    .tail               = as_arraylist_list_tail,
+    .drop               = as_arraylist_list_drop,
+    .take               = as_arraylist_list_take,
+    .foreach            = as_arraylist_list_foreach,
+    .iterator_init      = as_arraylist_list_iterator_init,
+    .iterator_new       = as_arraylist_list_iterator_new
 };
 
 const as_iterator_hooks as_arraylist_iterator_hooks = {
@@ -288,6 +291,16 @@ static as_list * as_arraylist_list_take(const as_list * l, uint32_t n) {
 
     return s;
 }
+
+static void as_arraylist_list_foreach(const as_list * l, void * udata, bool (*foreach)(as_val * val, void * udata)) {
+    const as_arraylist_source * a = &l->u.arraylist;
+    for(int i = 0; i < a->size; i++ ) {
+        if ( foreach(a->elements[i], udata) == false ) {
+            return;
+        }
+    }
+}
+
 
 static as_iterator * as_arraylist_list_iterator_init(const as_list * l, as_iterator *i) {
     i->is_malloc = false;

@@ -22,7 +22,7 @@ extern inline as_val * as_list_head(const as_list * l) ;
 extern inline as_list * as_list_tail(const as_list * l) ;
 extern inline as_list * as_list_drop(const as_list * l, uint32_t n) ;
 extern inline as_list * as_list_take(const as_list * l, uint32_t n) ;
-extern inline void as_list_foreach(const as_list * l, void * context, as_list_foreach_callback callback) ;
+extern inline void as_list_foreach(const as_list * l, void * context, bool (* foreach)(as_val *, void *)) ;
 extern inline as_iterator * as_list_iterator_init(as_iterator *i, const as_list * l);
 extern inline as_iterator * as_list_iterator_new(const as_list * l) ;
 extern inline uint32_t as_list_hash(const as_list * l) ;
