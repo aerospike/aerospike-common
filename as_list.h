@@ -14,6 +14,8 @@
 typedef struct as_list_s as_list;
 typedef struct as_list_hooks_s as_list_hooks;
 
+typedef bool (* as_list_foreach_callback) (as_val *, void *);
+
 struct as_list_hooks_s {
     void        (* destroy)(as_list *);
 
@@ -29,7 +31,7 @@ struct as_list_hooks_s {
     as_list *   (* drop)(const as_list *l, uint32_t n); // create duplicate list from pos n
     as_list *   (* take)(const as_list *l, uint32_t n); // create dup from head, n len
 
-    void        (* foreach)(const as_list *, void *, bool (* foreach)(as_val *, void *));
+    void        (* foreach)(const as_list *, void *, as_list_foreach_callback);
 
     as_iterator * (* iterator_init)(const as_list *, as_iterator *);
     as_iterator * (* iterator_new)(const as_list *);
