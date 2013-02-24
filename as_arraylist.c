@@ -195,7 +195,8 @@ static int as_arraylist_list_append(as_list * l, as_val * v) {
     as_arraylist_source *a = &l->u.arraylist;
     int rc = as_arraylist_ensure(l,1);
     if ( rc != AS_ARRAYLIST_OK ) return rc;
-    a->elements[a->size++] = v;
+    a->elements[a->size] = v;
+    a->size++;
     return rc;
 }
 
@@ -273,7 +274,8 @@ static as_list * as_arraylist_list_drop(const as_list * l, uint32_t n) {
     uint32_t        sz  = a->size;
     uint32_t        c   = n < sz ? n : sz;
     as_list *  s   = as_arraylist_new(sz-c, a->block_size);
-    const as_arraylist_source *sa = &l->u.arraylist;
+    as_arraylist_source *sa = &s->u.arraylist;
+    sa->size = sz-c;
 
     for(int i = c, j = 0; j < sa->size; i++, j++) {
         as_val_reserve(a->elements[i]);
@@ -289,11 +291,12 @@ static as_list * as_arraylist_list_take(const as_list * l, uint32_t n) {
     uint32_t        sz  = a->size;
     uint32_t        c   = n < sz ? n : sz;
     as_list *  s   = as_arraylist_new(c, a->block_size);
-    const as_arraylist_source *sa = &l->u.arraylist;
+    as_arraylist_source *sa = &s->u.arraylist;
+    sa->size = c;
 
     for(int i = 0; i < c; i++) {
-        sa->elements[i] = a->elements[i];
-        as_val_reserve(a->elements[i]);
+         as_val_reserve(a->elements[i]);
+         sa->elements[i] = a->elements[i];
     }
 
     return s;

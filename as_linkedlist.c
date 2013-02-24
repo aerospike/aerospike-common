@@ -103,12 +103,12 @@ void as_linkedlist_list_destroy(as_list * l) {
     if ( ll->tail ) as_val_val_destroy((as_val *)ll->tail);
 }
 
-#if 0
-void linkedlist_dump(char *msg, as_list *l) {
+#if 1
+void linkedlist_dump(const char *msg, const as_list *l) {
     int i=0;
     fprintf(stderr, "%s: linkedlist dump:\n",msg);
     while (l) {
-        as_linkedlist_source *s = & (l->u.linkedlist);
+        const as_linkedlist_source *s = & (l->u.linkedlist);
         char *c = as_val_tostring(s->head);
         fprintf(stderr, "linkedlist: e %d list %p val %s\n",i,l,c);
         free(c);
@@ -249,7 +249,9 @@ static as_list * as_linkedlist_list_take(const as_list * l, uint32_t n) {
     as_list * h = 0;
     as_list * t = 0;
 
-    int i = 0;
+//    linkedlist_dump("TAKE start", l);
+    
+    int i = 1;
     while (ll) {
         as_val_reserve(ll->head);
         if (h == 0) {
@@ -258,11 +260,11 @@ static as_list * as_linkedlist_list_take(const as_list * l, uint32_t n) {
             t->u.linkedlist.tail = as_linkedlist_new(ll->head,NULL);
             t = t->u.linkedlist.tail;
         }
-
         ll = &(ll->tail->u.linkedlist);
-        if (i++ > n) break;
+        if (i++ >= n) break;
     }
 
+//    linkedlist_dump("TAKE end", h);
     return(h);
 }
 

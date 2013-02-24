@@ -86,7 +86,6 @@ char * as_list_val_tostring(const as_val * v) {
     bool        sep = false;
 
     buf = (char *) malloc(sizeof(char) * cap);
-    bzero(buf, sizeof(char) * cap);
 
     strcpy(buf, "List(");
     pos += 5;
@@ -98,28 +97,33 @@ char * as_list_val_tostring(const as_val * v) {
             size_t vallen = strlen(valstr);
             
             if ( pos + vallen + 2 >= cap ) {
-                uint32_t adj = vallen+2 > blk ? vallen+2 : blk;
+                uint32_t adj = ((vallen+2) > blk) ? vallen+2 : blk;
                 buf = realloc(buf, sizeof(char) * (cap + adj));
-                bzero(buf+cap, sizeof(char)*adj);
                 cap += adj;
             }
 
             if ( sep ) {
-                strcpy(buf + pos, ", ");
+            	buf[pos] = ',';
+            	buf[pos+1] = ' ';
                 pos += 2;
             }
 
-            strncpy(buf + pos, valstr, vallen);
+            memcpy(buf + pos, valstr, vallen);
             pos += vallen;
             sep = true;
 
             free(valstr);
-            valstr = NULL;
         }
     }
     as_iterator_destroy(i);
 
-    strcpy(buf + pos, ")");
+    if ( pos + 2 >= cap ) {
+		buf = realloc(buf, sizeof(char) * (cap + 2));
+		cap += 2;
+	}
+
+    buf[pos] = ')';
+    buf[pos+1] = 0;
     
     return buf;
 }
