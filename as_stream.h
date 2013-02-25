@@ -40,17 +40,18 @@ struct as_stream_s {
 struct as_stream_hooks_s {
     int                 (* destroy)(as_stream *);
     as_val *            (* read)(const as_stream *);
-    as_stream_status    (* write)(const as_stream *, const as_val *);
+    as_stream_status    (* write)(const as_stream *, as_val *);
 };
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline int as_stream_init(as_stream * s, void * source, const as_stream_hooks * hooks) {
+inline as_stream * as_stream_init(as_stream * s, void * source, const as_stream_hooks * hooks) {
+    if ( s == NULL ) return s;
     s->source = source;
     s->hooks = hooks;
-    return 0;
+    return s;
 }
 
 /**
@@ -75,6 +76,7 @@ inline as_stream * as_stream_new(void * source, const as_stream_hooks * hooks) {
  */
 inline void as_stream_destroy(as_stream * s) {
     as_util_hook(destroy, 1, s);
+    free(s);
 }
 
 /**
@@ -118,7 +120,7 @@ inline bool as_stream_readable(const as_stream * s) {
  * @param v the element to write to the stream.
  * @return AS_STREAM_OK on success, otherwise is failure.
  */
-inline as_stream_status as_stream_write(const as_stream * s, const as_val * v) {
+inline as_stream_status as_stream_write(const as_stream * s, as_val * v) {
     return as_util_hook(write, AS_STREAM_ERR, s, v);
 }
 
