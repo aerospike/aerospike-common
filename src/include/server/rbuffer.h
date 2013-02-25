@@ -27,6 +27,12 @@
 #define RBUFFER_MAX_FILENAME			256
 #define RBUFFER_SEG_DATASIZE			8000
 
+// cf__rbuffer_fread error codes
+#define	RBUFFER_READ_HITS_WRITE		0	// Read hits write marker. Its not necessarily an error. 
+#define	RBUFFER_SEG_VERSION_MISMATCH	-1	// in case segment version mismatch.
+#define	RBUFFER_FILE_SYSTEM_ERROR	-2	// in case of file system related error like EOF, fseek failure.
+#define	RBUFFER_SEG_BAD_MAGIC		-3	// in case of bad segment magic.
+
 // Pointers in Ring Buffer
 typedef struct cf_rbuffer_pointer_s {
 	uint8_t				fidx;			// file index
@@ -65,6 +71,7 @@ typedef struct cf_rbuffer_hdr_s {
 	cf_rbuffer_ptr		nseg;	// Next Segment [after current file]
 	cf_rbuffer_ptr		pseg;	// Prev Segment [before current file]
 	uint16_t			unused[11];
+	uint64_t		udata[32]; // last ship times
 } cf_rbuffer_hdr;
 
 // Scan context with File pointer and mutex. A scan context is thread safe.

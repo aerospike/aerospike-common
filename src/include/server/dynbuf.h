@@ -28,6 +28,7 @@ typedef struct cf_dyn_buf_s {
 } cf_dyn_buf;
 
 #define cf_dyn_buf_define(__x)  uint8_t dyn_buf##__x[1024]; cf_dyn_buf __x = { dyn_buf##__x, true, 1024, 0 } 
+#define cf_dyn_buf_define_size(__x, __sz)  uint8_t dyn_buf##__x[__sz]; cf_dyn_buf __x = { dyn_buf##__x, true, __sz, 0 } 
 
 extern int cf_dyn_buf_append_string(cf_dyn_buf *db, const char *s);
 extern int cf_dyn_buf_append_char(cf_dyn_buf *db, char c);

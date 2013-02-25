@@ -21,6 +21,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <netinet/tcp.h>
+#include <sys/epoll.h>
 
 
 void
@@ -125,7 +126,7 @@ cf_socket_recvfrom(int sock, void *buf, size_t buflen, int flags, cf_sockaddr *f
     flags |= MSG_NOSIGNAL;
     
 	if (0 >= (i = recvfrom(sock, buf, buflen, flags, (struct sockaddr *)fp, &fl))) {
-		cf_warning(CF_SOCKET, "recvfrom() failed: %s", cf_strerror(errno));
+		cf_warning(CF_SOCKET, "recvfrom() failed: %d %s", errno, cf_strerror(errno));
 		if (from) memset(from, 0, sizeof(cf_sockaddr));
 	}
     else{
@@ -152,7 +153,7 @@ cf_socket_sendto(int sock, void *buf, size_t buflen, int flags, cf_sockaddr to)
     flags |= MSG_NOSIGNAL;
     
 	if (0 >= (i = sendto(sock, buf, buflen, flags, (struct sockaddr *)sp, sizeof(const struct sockaddr))))
-		cf_info(CF_SOCKET, "sendto() failed: %s", cf_strerror(errno));
+		cf_info(CF_SOCKET, "sendto() failed: %d %s", errno, cf_strerror(errno));
 
 	return(i);
 }
@@ -265,59 +266,104 @@ cf_socket_init_client(cf_socket_cfg *s)
 	s->saddr.sin_port = htons(s->port);
 
 	int rv = connect(s->sock, (struct sockaddr *)&s->saddr, sizeof(s->saddr));
-//	cf_detail(CF_SOCKET, "connect: rv %d errno %s",rv,cf_strerror(errno));
-	
+	cf_debug(CF_SOCKET, "connect: rv %d errno %s",rv,cf_strerror(errno));
+
 	if (rv < 0) {
+		int epoll_fd = -1;
+
 		if (errno == EINPROGRESS) {
 			cf_clock start = cf_getms();
-			do {
-				fd_set fdset;
-				struct timeval tv;
-				tv.tv_sec = 0;
-				tv.tv_usec = 500;
-				FD_ZERO(&fdset);
-				FD_SET(s->sock, &fdset);
-				rv = select(s->sock + 1,NULL, &fdset, NULL, &tv);
-				if (rv > 0) {
-					// Socket selected for write
-					int       val_opt;
-					socklen_t val_len = sizeof(val_opt); 
-					if (getsockopt(s->sock, SOL_SOCKET, SO_ERROR, (void*)(&val_opt), &val_len) < 0) { 
-					 cf_info(CF_SOCKET, "Error in getsockopt() %d - %s", s->sock, cf_strerror(errno)); 
-					 goto Fail;
-					} 
-					if (val_opt) { 
-					 cf_detail(CF_SOCKET, "Error in nonblocking connection() %d - %s", val_opt, strerror(val_opt)); 
-					 goto Fail;
-					} 
 
-					cf_detail(CF_SOCKET, "connect: success? fd %d",s->sock);
+			if (0 > (epoll_fd = epoll_create(1))) {
+				cf_warning(CF_SOCKET, "epoll_create() failed (errno %d: \"%s\")", errno, cf_strerror(errno));
+				goto Fail;
+			}
+
+			struct epoll_event event;
+			memset(&event, 0, sizeof(struct epoll_event));
+			event.data.fd = s->sock;
+			event.events = EPOLLOUT;
+
+			if (0 > epoll_ctl(epoll_fd, EPOLL_CTL_ADD, s->sock, &event)) {
+				cf_warning(CF_SOCKET, "epoll_ctl(ADD) of client socket failed (errno %d: \"%s\")", errno, cf_strerror(errno));
+				goto Fail;
+			}
+
+			int tries = 0;
+			do {
+				int nevents = 0;
+				int max_events = 1;
+				int wait_ms = 1;
+				struct epoll_event events[max_events];
+
+				if (0 > (nevents = epoll_wait(epoll_fd, events, max_events, wait_ms))) {
+					if (errno == EINTR) {
+						cf_debug(CF_SOCKET, "epoll_wait() on client socket encountered EINTR ~~ Retrying!");
+						goto Retry;
+					} else {
+						cf_warning(CF_SOCKET, "epoll_wait() on client socket failed (errno %d: \"%s\") ~~ Failing!", errno, cf_strerror(errno));
+						goto Fail;
+					}
+				} else {
+					if (nevents == 0) {
+						cf_debug(CF_SOCKET, "epoll_wait() returned no events ~~ Retrying!");
+						goto Retry;
+					}
+					if (nevents != 1) {
+						cf_warning(CF_SOCKET, "epoll_wait() returned %d events ~~ only 1 expected, so ignoring others!", nevents);
+					}
+					if (events[0].data.fd == s->sock) {
+						if (events[0].events & EPOLLOUT) {
+							cf_debug(CF_SOCKET, "epoll_wait() on client socket ready for write detected ~~ Succeeding!");
+						} else {
+							// (Note:  ERR and HUP events are automatically waited for as well.)
+							if (events[0].events & (EPOLLERR | EPOLLHUP)) {
+								cf_warning(CF_SOCKET, "epoll_wait() on client socket detected failure event 0x%x ~~ Failing!", events[0].events);
+							} else {
+								cf_warning(CF_SOCKET, "epoll_wait() on client socket detected non-write events 0x%x ~~ Failing!", events[0].events);
+							}
+							goto Fail;
+						}
+					} else {
+						cf_warning(CF_SOCKET, "epoll_wait() on client socket returned event on unknown socket %d ~~ Retrying!", events[0].data.fd);
+						goto Retry;
+					}
+					if (0 > epoll_ctl(epoll_fd, EPOLL_CTL_DEL, s->sock, &event)) {
+						cf_warning(CF_SOCKET, "epoll_ctl(DEL) on client socket failed (errno %d: \"%s\")", errno, cf_strerror(errno));
+					}
+					close(epoll_fd);
 					goto Success;
 				}
-				if (rv < 0 && errno != EINTR) {
-					goto Fail;
-				}
+Retry:
+				cf_debug(CF_SOCKET, "Connect epoll loop:  Retry #%d", tries++);
 				if (start + CONNECT_TIMEOUT < cf_getms()) {
-					cf_info(CF_SOCKET, "Error in delayed connect() timed out"); 
+					cf_warning(CF_SOCKET, "Error in delayed connect(): timed out");
 					errno = ETIMEDOUT;
 					goto Fail;
 				}
 			} while (1);
-				
 		}
-Fail:		
+Fail:
 		cf_debug(CF_SOCKET, "connect fail: %s", cf_strerror(errno));
+
+
+		if (epoll_fd > 0) {
+			close(epoll_fd);
+		}
+
 		close(s->sock);
 		s->sock = -1;
 		return(errno);
+	} else {
+		cf_debug(CF_SOCKET, "client socket connect() in 1 try!");
 	}
-Success:	;	
-		
+Success:	;
+
     // regarding this: calling here doesn't seem terribly effective.
     // on the fabric threads, it seems important to set nodelay much later
     int flag = 1;
-	setsockopt(s->sock, SOL_TCP, TCP_NODELAY, &flag, sizeof(flag) );
-	long farg = fcntl(s->sock, F_GETFL, 0);    
+	setsockopt(s->sock, SOL_TCP, TCP_NODELAY, &flag, sizeof(flag));
+	long farg = fcntl(s->sock, F_GETFL, 0);
 	fcntl(s->sock, F_SETFL, farg & (~O_NONBLOCK)); /* blocking again */
     
 	return(0);
@@ -419,8 +465,18 @@ cf_mcastsocket_init(cf_mcastsocket_cfg *ms)
     		return(errno);
         }
     }
-	while (0 > (bind(s->sock, (struct sockaddr *)&s->saddr, sizeof(struct sockaddr))))
+    unsigned char ttlvar = ms->mcast_ttl;
+    if (ttlvar>0) {
+		if (setsockopt(s->sock,IPPROTO_IP,IP_MULTICAST_TTL,(char *)&ttlvar,
+				sizeof(ttlvar)) == -1) {
+			cf_warning(CF_SOCKET, "IP_MULTICAST_TTL: %d %s", errno, cf_strerror(errno));
+		} else {
+			cf_info(CF_SOCKET, "setting multicast TTL to be %d",ttlvar);
+		}
+    }
+	while (0 > (bind(s->sock, (struct sockaddr *)&s->saddr, sizeof(struct sockaddr)))) {
 		cf_info(CF_SOCKET, "multicast socket bind failed: %d %s", errno, cf_strerror(errno));
+	}
 
 	// Register for the multicast group
 	inet_pton(AF_INET, s->addr, &ms->ireq.imr_multiaddr.s_addr);
@@ -497,4 +553,48 @@ cf_ifaddr_get( cf_ifaddr **ifaddr, int *ifaddr_sz, uint8_t *buf, size_t bufsz)
 	return(0);
 }
 
+int
+cf_socket_test()
+{
+	fd_set fdset;
+	int i, max_fds = 2048, fd[max_fds], max_fd = 0;
 
+	cf_info(CF_SOCKET, "Performing cf_socket tests:");
+
+#ifdef _FORTIFY_SOURCE
+	cf_info(CF_SOCKET, "_FORTIFY_SOURCE = %d", _FORTIFY_SOURCE);
+#else
+	cf_info(CF_SOCKET, "_FORTIFY_SOURCE undefined!");
+#endif
+
+#ifdef __USE_FORTIFY_LEVEL 
+	cf_info(CF_SOCKET, "__USE_FORTIFY_LEVEL = %d", __USE_FORTIFY_LEVEL);
+#else
+	cf_info(CF_SOCKET, "_USE_FORTIFY_LEVEL undefined!");
+#endif
+
+	cf_info(CF_SOCKET, "max_fds = %d ; sizeof(fd_set) = %lu ; FD_SETSIZE = %d", max_fds, sizeof(fd_set), FD_SETSIZE);
+
+	FD_ZERO(&fdset);
+
+	for (i = 0; i < max_fds; i++) {
+		if (!(fd[max_fd = i] = socket(AF_INET, SOCK_STREAM, PF_INET))) {
+			cf_info(CF_SOCKET, "socket() returned 0 @ #%d", i);
+			break;
+		}
+		FD_SET(fd[i], &fdset);
+	}
+
+	cf_info(CF_SOCKET, "Opened %d sockets!", max_fd + 1);
+
+	for (i = 0; i < max_fd; i++) {
+		FD_CLR(fd[i], &fdset);
+		close(fd[i]);
+	}
+
+	cf_info(CF_SOCKET, "Closed %d sockets!", max_fd + 1);
+
+	cf_info(CF_SOCKET, "cf_socket tests succeeded.");
+
+	return 0;
+}

@@ -636,7 +636,11 @@ cf_malloc_at(size_t sz, char *file, int line)
 		pthread_mutex_lock(&mem_count_lock);
 	}
 
+#ifdef USE_JEMALLOC
+	void *p = jex_malloc(sz);
+#else
 	void *p = malloc(sz);
+#endif
 
 	if (!g_memory_accounting_enabled) {
 		return(p);
@@ -675,7 +679,11 @@ void
 cf_free_at(void *p, char *file, int line)
 {
 	if (!g_memory_accounting_enabled) {
+#ifdef USE_JEMALLOC
+		jex_free(p);
+#else
 		free(p);
+#endif
 		return;
 	}
 
@@ -752,7 +760,11 @@ cf_realloc_at(void *ptr, size_t sz, char *file, int line)
 		pthread_mutex_lock(&mem_count_lock);
 	}
 
+#ifdef USE_JEMALLOC
+	void *p = jex_realloc(ptr, sz);
+#else
 	void *p = realloc(ptr, sz);
+#endif
 
 	if (!g_memory_accounting_enabled) {
 		return(p);
@@ -829,7 +841,11 @@ cf_strdup_at(const char *s, char *file, int line)
 		pthread_mutex_lock(&mem_count_lock);
 	}
 
+#ifdef USE_JEMALLOC
+	void *p = cf_jex_strdup(s);
+#else
 	void *p = strdup(s);
+#endif
 
 	if (!g_memory_accounting_enabled) {
 		return(p);
@@ -865,7 +881,11 @@ cf_strndup_at(const char *s, size_t n, char *file, int line)
 		pthread_mutex_lock(&mem_count_lock);
 	}
 
+#ifdef USE_JEMALLOC
+	void *p = cf_jex_strndup(s, n);
+#else
 	void *p = strndup(s, n);
+#endif
 
 	if (!g_memory_accounting_enabled) {
 		return(p);

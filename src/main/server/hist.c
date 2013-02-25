@@ -11,6 +11,7 @@
 #include "server/clock.h"
 #include "server/fault.h"
 #include "server/bits.h"
+#include "server/cf.h"
 
 #include <errno.h>
 #include <stdarg.h>
@@ -165,6 +166,8 @@ linear_histogram_create(char *name, uint64_t start, uint64_t max_offset, int num
 
 	linear_histogram * h = cf_malloc(sizeof(linear_histogram));
 	if (!h)	return(0);
+	if (0 != pthread_mutex_init(&h->info_lock, 0)) { cf_free(h); return(0); }
+	h->info_snapshot[0] = 0;
 	if (strlen(name) >= sizeof(h->name)-1) { cf_free(h); return(0); }
 	strcpy(h->name, name);
 	h->n_counts = 0;
@@ -175,6 +178,12 @@ linear_histogram_create(char *name, uint64_t start, uint64_t max_offset, int num
 		h->bucket_offset = 1;
 	memset(&h->count, 0, sizeof(h->count));
 	return(h);
+}
+
+void linear_histogram_destroy(linear_histogram *h)
+{
+	pthread_mutex_destroy(&h->info_lock);
+	cf_free(h);
 }
 
 // Note: not thread safe!
@@ -229,13 +238,7 @@ void linear_histogram_get_counts(linear_histogram *h, linear_histogram_counts *h
 
 uint64_t linear_histogram_get_total(linear_histogram *h)
 {
-	int64_t total = 0;
-
-	for (int i = 0; i < h->num_buckets; i++) {
-		total += cf_atomic_int_get(h->count[i]);
-	}
-
-	return (uint64_t)total;
+	return cf_atomic_int_get(h->n_counts);
 }
 
 // This routine is not thread safe and should be called from a single threaded routine
@@ -256,17 +259,39 @@ size_t linear_histogram_get_index_for_pct(linear_histogram *h, size_t pct)
 }
 
 // Note: not thread safe!
-uint64_t linear_histogram_get_offset_for_subtotal(linear_histogram *h, int64_t subtotal)
+uint64_t linear_histogram_get_threshold_for_fraction(linear_histogram *h, uint32_t tenths_pct, bool* p_is_last)
 {
-	if (h->n_counts == 0)
+	return linear_histogram_get_threshold_for_subtotal(h, (h->n_counts * tenths_pct) / 1000, p_is_last);
+}
+
+// Note: not thread safe!
+uint64_t linear_histogram_get_threshold_for_subtotal(linear_histogram *h, uint64_t subtotal, bool* p_is_last)
+{
+	if (h->n_counts == 0) {
 		return 0;
-	int count = 0;
-	for (int i = 0; i < h->num_buckets; i++) {
-		count += h->count[i];
-		if (count >= subtotal)
-			return h->start + ((i+1) * h->bucket_offset);
 	}
-	return h->start + (h->num_buckets * h->bucket_offset);
+
+	uint64_t count = 0;
+	int i;
+	int stop = h->num_buckets - 1;
+
+	for (i = 0; i < stop; i++) {
+		count += h->count[i];
+
+		if (count >= subtotal) {
+			break;
+		}
+	}
+
+	if (p_is_last) {
+		*p_is_last = (i == stop);
+
+		if (*p_is_last) {
+			i--;
+		}
+	}
+
+	return h->start + ((i + 1) * h->bucket_offset);
 }
 
 void linear_histogram_dump( linear_histogram *h )
@@ -275,7 +300,8 @@ void linear_histogram_dump( linear_histogram *h )
 	int pos = 0; // location to print from
 	printbuf[0] = '\0';
 	
-	cf_debug(AS_NSUP, "linear histogram dump: %s (%zu total)",h->name, h->n_counts);
+	cf_debug(AS_NSUP, "linear histogram dump: %s [%u %u]/[%u] (%zu total)",
+			h->name, h->start, h->start + h->num_buckets*h->bucket_offset, h->bucket_offset, h->n_counts);
 	int i, j;
 	int k = 0;
 	for (j = h->num_buckets - 1; j >= 0; j--) if (h->count[j]) break;
@@ -300,3 +326,28 @@ void linear_histogram_dump( linear_histogram *h )
 	if (pos > 0) 
 	    cf_debug(AS_NSUP, "%s", (char *) printbuf);
 }
+
+void linear_histogram_save_info(linear_histogram *h)
+{
+	pthread_mutex_lock(&h->info_lock);
+
+	// put in num buckets and the first count
+	int idx = 0;
+	int pos = snprintf(h->info_snapshot, INFO_SNAPSHOT_SIZE, "%d,%ld,%ld",
+			h->num_buckets, h->bucket_offset, cf_atomic_int_get(h->count[idx++]));
+
+	while (pos < INFO_SNAPSHOT_SIZE && idx < h->num_buckets) {
+		pos += snprintf(h->info_snapshot + pos, INFO_SNAPSHOT_SIZE - pos,
+				",%ld", h->count[idx++]);
+	}
+
+	pthread_mutex_unlock(&h->info_lock);
+}
+
+void linear_histogram_get_info(linear_histogram *h, cf_dyn_buf *db)
+{
+	pthread_mutex_lock(&h->info_lock);
+	cf_dyn_buf_append_string(db, h->info_snapshot);
+	pthread_mutex_unlock(&h->info_lock);
+}
+

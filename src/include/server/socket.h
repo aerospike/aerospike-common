@@ -42,6 +42,7 @@ struct cf_mcastsocket_cfg_t {
 	cf_socket_cfg s;
 	struct ip_mreq ireq;
     char *tx_addr;    // if there is a specific ip address that should be used to send the mcast message
+    unsigned char mcast_ttl;
 };
 typedef struct cf_mcastsocket_cfg_t cf_mcastsocket_cfg;
 

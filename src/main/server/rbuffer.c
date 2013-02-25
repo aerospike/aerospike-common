@@ -37,9 +37,9 @@
 #define CHDR 		(RDES->chdr)
 #define MAX_RECS	(CHDR.seg_size / CHDR.rec_size)
 
-#define RBUFFER_FILE_HEADER_SIZE	512
+#define RBUFFER_FILE_HEADER_SIZE	2048	
 #define RBUFFER_SEG_HEADER_SIZE		4
-#define RBUFFER_FILE_MAGIC		0xd19e56109f11e000L
+#define RBUFFER_FILE_MAGIC		0xd19e56109f11e001L
 #define RBUFFER_SEG_MAGIC		0xcf
 #define RBUFFER_SEG_SIZE		(RBUFFER_SEG_HEADER_SIZE + CHDR.seg_size)
 #define RBUFFER_FLAG_OVERWRITE_CHUNK	5           // Number of Segments Freed when overwrite happens
@@ -71,6 +71,9 @@ do{						\
 
 //#define RBTRACE(rb, type, ...) if (rb->chdr.flag & RBUFFER_FLAG_TRACE) fprintf(stderr, "\n"__VA_ARGS__);
 
+#define RBUFFER_MAX_SEG(f_idx) \
+	((HDR(f_idx).fsize / RBUFFER_SEG_SIZE))
+
 
 #define RBUFFER_NEXT_SEG(seg_id, f_idx) 	\
 	((seg_id + 1) % (HDR(f_idx).fsize / RBUFFER_SEG_SIZE));
@@ -84,7 +87,7 @@ bool cf__rbuffer_setup(cf_rbuffer *, cf_rbuffer_config *);
 bool cf__rbuffer_bootstrap(cf_rbuffer *, cf_rbuffer_config *, int);
 int  cf__rbuffer_rseek(cf_rbuffer *, cf_rbuffer_ctx *, int, bool);
 bool cf__rbuffer_wseek(cf_rbuffer *, cf_rbuffer_ctx *);
-int  cf__rbuffer_fseek(cf_rbuffer *, cf_rbuffer_ctx *);
+uint64_t  cf__rbuffer_fseek(cf_rbuffer *, cf_rbuffer_ctx *);
 int  cf__rbuffer_fread(cf_rbuffer *, cf_rbuffer_ctx *);
 bool cf__rbuffer_fwrite(cf_rbuffer *, cf_rbuffer_ctx *);
 bool cf__rbuffer_sanity(cf_rbuffer *);
@@ -112,6 +115,8 @@ cf_rbuffer_log(cf_rbuffer *rbuf_des)
 					RDES->rctx.ptr.seg_id, RDES->rctx.ptr.rec_id,
 					CHDR.wptr.seg_id, CHDR.wptr.rec_id,
 					RDES->wctx.ptr.seg_id, RDES->wctx.ptr.rec_id);
+
+	cf_detail(CF_RBUFFER, " Max Seg = %ld",RBUFFER_MAX_SEG(0));
 	pthread_mutex_unlock(&RDES->mlock);
 }
 
@@ -639,7 +644,7 @@ cf__rbuffer_wseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 //	Synchronization:
 //		Caller holds the context mutex
 //
-int
+uint64_t
 cf__rbuffer_fseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 {
 	uint64_t to_offset = RBUFFER_FILE_HEADER_SIZE +
@@ -654,7 +659,10 @@ cf__rbuffer_fseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 			RBTRACE(RDES, debug, "Offset did not match cur=%d, to=%d", cur_offset, to_offset);
 			cf_atomic64_add(&RDES->fseek_stat, 1);
 		}
-		fseek(ctx->fd[ctx->ptr.fidx], to_offset, SEEK_SET);
+		if (fseek(ctx->fd[ctx->ptr.fidx], to_offset, SEEK_SET) == -1) {
+			RBTRACE(RDES, warning, "Seek failed to [%d] with errno=%d", ctx->ptr.seg_id, errno);
+			return -1;
+		}
 	}
 	return to_offset;
 }
@@ -670,7 +678,7 @@ cf__rbuffer_fseek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 bool
 cf_rbuffer_fflush(cf_rbuffer *rbuf_des)
 {
-	int offset;
+	uint64_t offset;
 	cf_rbuffer_ctx *ctx = &RDES->wctx;
 	// Nothing to flush
 	if (ctx->ptr.rec_id == 0)
@@ -682,6 +690,11 @@ cf_rbuffer_fflush(cf_rbuffer *rbuf_des)
 	ctx->buf.magic 		= RBUFFER_SEG_MAGIC;
 
 	offset = cf__rbuffer_fseek(rbuf_des, ctx);
+	if (offset < 0) {
+		pthread_mutex_unlock(&RDES->mlock);
+		RBTRACE(RDES, warning, "Fseek failed with error %d", errno);
+		return false;
+	}
 	if (1 != fwrite(&ctx->buf, RBUFFER_SEG_SIZE, 1, ctx->fd[ctx->ptr.fidx])) 
 	{
 		pthread_mutex_unlock(&RDES->mlock);
@@ -718,7 +731,7 @@ cf_rbuffer_fflush(cf_rbuffer *rbuf_des)
 bool
 cf__rbuffer_fwrite(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 {
-	int offset;
+	uint64_t offset;
 	pthread_mutex_lock(&RDES->mlock);
 	ctx->buf.num_recs 	= ctx->ptr.rec_id; 	
 	ctx->buf.version	= CHDR.version;
@@ -732,6 +745,11 @@ cf__rbuffer_fwrite(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 #endif
 
 	offset = cf__rbuffer_fseek(rbuf_des, ctx);
+	if (offset < 0) {
+		pthread_mutex_unlock(&RDES->mlock);
+		RBTRACE(RDES, warning, "Fseek failed with error %d", errno);
+		return false;
+	}
 	if (1 != fwrite(&ctx->buf, RBUFFER_SEG_SIZE, 1, ctx->fd[ctx->ptr.fidx])) 
 	{
 		pthread_mutex_unlock(&RDES->mlock);
@@ -769,16 +787,16 @@ cf__rbuffer_fwrite(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 //
 //
 // Returns:
-//		0 			: in case of failure
-//		1			: in case of success
-//		-1			: in case version mismatch
+//	1				: in case of success
+//	0				: read hits write
+//	<0				: in case or error
 //
 // Synchronization:
 //		Caller holds the read context mutex
 int 
 cf__rbuffer_fread(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 {
-	int offset;
+	uint64_t offset;
 	int ret;
 
 	pthread_mutex_lock(&RDES->mlock);
@@ -790,23 +808,28 @@ cf__rbuffer_fread(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 
 	// seek on the file  
 	offset = cf__rbuffer_fseek(rbuf_des, ctx);
+	if (offset < 0) {
+		pthread_mutex_unlock(&RDES->mlock);
+		RBTRACE(RDES, warning, "Fseek failed with error %d", errno);
+		return RBUFFER_FILE_SYSTEM_ERROR;
+	}
 	ret = fread(&ctx->buf, RBUFFER_SEG_SIZE, 1, ctx->fd[ctx->ptr.fidx]);
 	if (ret != 1)
 	{
 		pthread_mutex_unlock(&RDES->mlock);
 		RBTRACE(RDES, warning, "Fread failed with error %d %d", ferror(ctx->fd[ctx->ptr.fidx]), feof(ctx->fd[ctx->ptr.fidx]));
-		return 0;
+		return RBUFFER_FILE_SYSTEM_ERROR;
 	}
 
 	if (ctx->buf.magic != RBUFFER_SEG_MAGIC)
 	{
 		pthread_mutex_unlock(&RDES->mlock);
-		RBTRACE(RDES, warning, "Read Buffer with Bad Magic %d", ctx->buf.magic);
+		RBTRACE(RDES, debug, "Read Buffer with Bad Magic %d", ctx->buf.magic);
 		cf_rbuffer_log(rbuf_des);
-		return 0;
+		return RBUFFER_SEG_BAD_MAGIC;
 	}
 	
-	// Return -1 if the current version is greater than the version read
+	// Return error if the current version is greater than the version read
 	// from the disk.
 	if (ctx->version != ctx->buf.version)
 	{
@@ -814,7 +837,7 @@ cf__rbuffer_fread(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx)
 		{
 			pthread_mutex_unlock(&RDES->mlock);
 			RBTRACE(RDES, debug, "Read context at the invalid version");
-			return -1;
+			return RBUFFER_SEG_VERSION_MISMATCH;
 		}
 		else
 		{
@@ -1102,7 +1125,11 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 					goto backout;
 				}
 
-				if (CHDR.magic != 0) 
+				// If the magic matches we read HDR.
+				// If magic does not match and which is non-zero. Then it is mostly old magic and we do not proceed.
+				// If magic does not match but we have magic zero. Then it is new digest log file and we proceed.
+
+				if (CHDR.magic == RBUFFER_FILE_MAGIC) 
 				{
 					stamped_fileidx = i;
 					if (1 != fread(&HDR(i), sizeof(cf_rbuffer_hdr), 1, RDES->mfd[i])) 
@@ -1110,6 +1137,11 @@ cf_rbuffer_init(cf_rbuffer_config *rcfg)
 						cf_warning(CF_RBUFFER, "Failed to read digest log file %s", rcfg->fname[i]);
 						goto backout;
 					}
+				} else if (CHDR.magic != 0) {
+					cf_warning(CF_RBUFFER, "Log version does not match. Remove digest log file and restart XDR.");
+					cf_warning(CF_RBUFFER, "Current magic is 0x%016llX, expected magic is 0x%016llX.", CHDR.magic, RBUFFER_FILE_MAGIC);
+					cf_crash(CF_RBUFFER, CF_GLOBAL, "Aborting...");
+					goto backout;
 				}
 			}
 		}
@@ -1289,8 +1321,9 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 	{
 		cf_rbuffer_getsetctx(rbuf_des, ctx, whence);
 			
-		// invalid version return -1 seek position is invalid
-		if (cf__rbuffer_fread(RDES, ctx) == -1)
+		// invalid version return -2 seek position is invalid
+		// Shall we not check for other errors here?
+		if (cf__rbuffer_fread(RDES, ctx) == RBUFFER_SEG_VERSION_MISMATCH)
 		{
 			pthread_mutex_unlock(&RDES->mlock);
 			return -1;
@@ -1385,8 +1418,10 @@ cf_rbuffer_seek(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, int num_recs, int whe
 //				   pointer is to be used.
 //
 // Returns
-//		number of records read
-//		if number of records read is 0 then -1 in case of version mismatch
+//		> 0 	if some records were read successfully
+//		0 	if there are no records to read (trying to read past the write)
+//		< 0	if there is some error in the lower level functions
+
 //
 // Synchronization:
 //		Acquires the context mutex when reading
@@ -1420,6 +1455,8 @@ cf_rbuffer_read(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, char *buf, int numrec
 			if (cf__rbuffer_rseek(RDES, ctx, 1, true) != 1) 
 			{
 				ctx->flag |= RBUFFER_CTX_FLAG_NEEDSEEK;
+				// Read pointer hits the write
+				ret = 0;
 				break;
 			}
 	
@@ -1433,26 +1470,30 @@ cf_rbuffer_read(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, char *buf, int numrec
 		}
 		else if (ctx->ptr.rec_id >= ctx->buf.num_recs)
 		{
+			// Do a fread so that the local buffer gets updated to the latest
+			// state (on disk) and then do a recheck.
+			// We change the context here.
+			
 			ret = cf__rbuffer_fread(RDES, ctx);
-
 			if (1 != ret)
 			{
 				break;
 			}
+
+			// Recheck
 			if (ctx->ptr.rec_id >= ctx->buf.num_recs)
 			{
+				// We are trying to read past the write
+				ret = 0;
 				break;
 			}
 		} 
 		else if (ctx->buf.magic != RBUFFER_SEG_MAGIC) 
 		{
+			// The current buffer has a bad magic. 
+			// Try to read it again from the disk.
 			ret = cf__rbuffer_fread(RDES, ctx);
-
 			if (1 != ret)
-			{
-				break;
-			}
-			if (ctx->buf.magic != RBUFFER_SEG_MAGIC)
 			{
 				break;
 			}
@@ -1464,6 +1505,7 @@ cf_rbuffer_read(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, char *buf, int numrec
 		{
 			ctx->buf.magic = 0;	
 			RBTRACE(RDES, debug, "Version Mismatch %d:%d:%ld", ctx->version, ctx->buf.version,ctx->ptr.seg_id);
+			ret = -2;
 			break;
 		}
 
@@ -1494,8 +1536,14 @@ cf_rbuffer_read(cf_rbuffer *rbuf_des, cf_rbuffer_ctx *ctx, char *buf, int numrec
 	}
 	pthread_mutex_unlock(&ctx->lock);
 	cf_atomic64_add(&RDES->read_stat, total);
-	if ((ret == -1) && (total == 0))
-		return -1;
+
+	// Did not read any records from digest log. Either there are really no records to read
+	// or there can be a filesystem/bad magic issue. Pass the return code from lower levels.
+	if(total == 0) {
+			// ret can not be 1 here. It has to be 0 or < 0
+			return ret;
+	}
+
 	return total;	
 }
 
@@ -2065,7 +2113,7 @@ int rbuffer_reads(void *arg, uint64_t total, int size, cf_rbuffer_ctx* myctx)
 	{
 		memset(rec, 0, rb->chdr.rec_size*size);
 		ret = cf_rbuffer_read(rb, myctx, (char *)&rec, size); 
-		if (ret == 0) 	
+		if (ret == RBUFFER_READ_HITS_WRITE) 	
 		{
 			sleep(1);
 		} 

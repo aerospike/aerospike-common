@@ -11,6 +11,7 @@
 #include "atomic.h"
 #include "../cf_types.h"
 #include <inttypes.h>
+#include "dynbuf.h"
 
 /* SYNOPSIS
  * For timing things, you want to know this histogram of what took how much time.
@@ -84,6 +85,7 @@ hist_getcycles()
  */
 
 #define MAX_LINEAR_BUCKETS 100
+#define INFO_SNAPSHOT_SIZE 2048
 
 //
 // The counts are linear.
@@ -105,14 +107,20 @@ typedef struct linear_histogram_s {
 	uint64_t bucket_offset;
 	cf_atomic_int n_counts;
 	cf_atomic_int count[MAX_LINEAR_BUCKETS];
+	pthread_mutex_t info_lock;
+	char info_snapshot[INFO_SNAPSHOT_SIZE];
 } linear_histogram;
 
 extern linear_histogram * linear_histogram_create(char *name, uint64_t start, uint64_t max_offset, int num_buckets);
+extern void linear_histogram_destroy(linear_histogram *h);
 extern void linear_histogram_clear(linear_histogram *h, uint64_t start, uint64_t max_offset); // Note: not thread-safe!
 extern void linear_histogram_dump( linear_histogram *h );  // for debugging, dumps to stderr
+extern void linear_histogram_save_info(linear_histogram *h);
+extern void linear_histogram_get_info(linear_histogram *h, cf_dyn_buf *db);
 extern void linear_histogram_get_counts(linear_histogram *h, linear_histogram_counts *hc);
 extern uint64_t linear_histogram_get_total(linear_histogram *h);
 extern void linear_histogram_insert_data_point(linear_histogram *h, uint64_t point);
 extern void linear_histogram_insert_data_point_val( linear_histogram *h, uint64_t point, int64_t val);
 extern size_t linear_histogram_get_index_for_pct(linear_histogram *h, size_t pct);
-extern uint64_t linear_histogram_get_offset_for_subtotal(linear_histogram *h, int64_t subtotal); // Note: not thread-safe!
+extern uint64_t linear_histogram_get_threshold_for_fraction(linear_histogram *h, uint32_t tenths_pct, bool* p_is_last); // Note: not thread-safe!
+extern uint64_t linear_histogram_get_threshold_for_subtotal(linear_histogram *h, uint64_t subtotal, bool* p_is_last); // Note: not thread-safe!
