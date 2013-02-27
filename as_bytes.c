@@ -180,15 +180,27 @@ uint32_t as_bytes_val_hash(const as_val * v) {
     return as_bytes_hash((as_bytes *) v);
 }
 
+static char hex_chars[] = "0123456789ABCDEF";
+
 char * as_bytes_val_tostring(const as_val * v) {
     as_bytes * s = (as_bytes *) v;
     if (s->value == NULL) return(NULL);
     size_t sl = as_bytes_len(s);
-    size_t st = 3 + sl;
-    char * str = (char *) malloc(sizeof(char) * st);
-    *(str + 0) = '\"';
-    memcpy(str + 1, s->value, s->len);
-    *(str + 1 + sl) = '\"';
-    *(str + 1 + sl + 1) = '\0';
-    return str;
+    if (sl == 0) {
+        return( strdup("\"\"") );
+    }
+    size_t st = (4 * sl) + 3;
+    char * str = (char *) malloc(st);
+    str[0] = '\"';
+    int j=1;
+    for (int i=0;i<sl;i++) {
+        str[j] = hex_chars[ s->value[i] >> 4 ];
+        str[j+1] = hex_chars[ s->value[i] & 0xf ];
+        str[j+2] = ' ';
+        j += 3;
+    }
+    j--; // chomp
+    str[j] = '\"';
+    str[j+1] = 0;
+    return str ;
 }
