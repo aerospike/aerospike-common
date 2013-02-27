@@ -31,7 +31,7 @@ struct as_list_hooks_s {
     as_list *   (* drop)(const as_list *l, uint32_t n); // create duplicate list from pos n
     as_list *   (* take)(const as_list *l, uint32_t n); // create dup from head, n len
 
-    void        (* foreach)(const as_list *, void *, as_list_foreach_callback);
+    bool        (* foreach)(const as_list *, void *, as_list_foreach_callback);
 
     as_iterator * (* iterator_init)(const as_list *, as_iterator *);
     as_iterator * (* iterator_new)(const as_list *);
@@ -94,7 +94,7 @@ inline as_list * as_list_take(const as_list * l, uint32_t n) {
 }
 
 inline void as_list_foreach(const as_list * l, void * context, bool (* foreach)(as_val *, void *)) {
-    as_util_hook(foreach, NULL, l, context, foreach);
+    as_util_hook(foreach, false, l, context, foreach);
 }
 
 inline as_iterator * as_list_iterator_init(as_iterator *i, const as_list * l) {

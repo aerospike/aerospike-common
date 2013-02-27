@@ -9,16 +9,15 @@
  ******************************************************************************/
 
 typedef struct as_stream_s as_stream;
-typedef enum as_stream_status_e as_stream_status;
 typedef struct as_stream_hooks_s as_stream_hooks;
 
 /**
  * Stream Status Codes
  */
-enum as_stream_status_e {
+typedef enum as_stream_status_e {
     AS_STREAM_OK = 0,
     AS_STREAM_ERR = 1
-};
+} as_stream_status;
 
 /**
  * Stream Structure
