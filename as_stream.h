@@ -29,6 +29,7 @@ enum as_stream_status_e {
  * @field hooks the interface to the source
  */
 struct as_stream_s {
+    bool is_malloc;
     void * source;
     const as_stream_hooks * hooks;
 };
@@ -49,6 +50,7 @@ struct as_stream_hooks_s {
 
 inline as_stream * as_stream_init(as_stream * s, void * source, const as_stream_hooks * hooks) {
     if ( s == NULL ) return s;
+    s->is_malloc = false;
     s->source = source;
     s->hooks = hooks;
     return s;
@@ -62,7 +64,9 @@ inline as_stream * as_stream_init(as_stream * s, void * source, const as_stream_
  */
 inline as_stream * as_stream_new(void * source, const as_stream_hooks * hooks) {
     as_stream * s = (as_stream *) malloc(sizeof(as_stream));
-    as_stream_init(s, source, hooks);
+    s->is_malloc = true;
+    s->source = source;
+    s->hooks = hooks;
     return s;
 }
 
@@ -76,9 +80,8 @@ inline as_stream * as_stream_new(void * source, const as_stream_hooks * hooks) {
  */
 inline void as_stream_destroy(as_stream * s) {
     as_util_hook(destroy, 1, s);
-    free(s);
+    if ( s && s->is_malloc) free(s);
 }
-
 /**
  * Get the source for the stream
  *
