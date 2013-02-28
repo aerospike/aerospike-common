@@ -76,7 +76,7 @@ struct cf_digest_s {
  * Compute the digest of an input 
  */
 static inline void cf_digest_compute(void *data, size_t len, cf_digest *d) {
-	RIPEMD160(data, len, (unsigned char *) d->digest);
+	RIPEMD160((const unsigned char *)data, len, (unsigned char *) d->digest);
 
 #ifdef DEBUG_VERBOSE	
 	fprintf(stderr, "digest computation: len %zu\n",len);
