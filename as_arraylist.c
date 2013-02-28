@@ -29,7 +29,7 @@ static as_list *        as_arraylist_list_tail(const as_list *);
 static as_list *        as_arraylist_list_drop(const as_list *, uint32_t);
 static as_list *        as_arraylist_list_take(const as_list *, uint32_t);
 
-static void             as_arraylist_list_foreach(const as_list *, void *, bool (*foreach)(as_val *, void *));
+static bool             as_arraylist_list_foreach(const as_list *, void *, bool (*foreach)(as_val *, void *));
 
 static as_iterator *    as_arraylist_list_iterator_init(const as_list *, as_iterator *);
 static as_iterator *    as_arraylist_list_iterator_new(const as_list *);
@@ -302,13 +302,14 @@ static as_list * as_arraylist_list_take(const as_list * l, uint32_t n) {
     return s;
 }
 
-static void as_arraylist_list_foreach(const as_list * l, void * udata, bool (*foreach)(as_val * val, void * udata)) {
+static bool as_arraylist_list_foreach(const as_list * l, void * udata, bool (*foreach)(as_val * val, void * udata)) {
     const as_arraylist_source * a = &l->u.arraylist;
     for(int i = 0; i < a->size; i++ ) {
         if ( foreach(a->elements[i], udata) == false ) {
-            return;
+            return false;
         }
     }
+    return true;
 }
 
 
