@@ -66,13 +66,13 @@ size_t as_bytes_len(as_bytes * s) {
 }
 
 int as_bytes_get(const as_bytes * s, int index, uint8_t *buf, int buf_len) {
-    if (index + buf_len > s->len) return(-1);
+    if ((index < 0) || (index + buf_len > s->len)) return(-1);
     memcpy(buf, &s->value[index], buf_len);
     return(0);
 }
 
 int as_bytes_set(as_bytes * s, int index, const uint8_t *buf, int buf_len) {
-    if (index + buf_len > s->len) return(-1);
+    if ((index < 0) || (index + buf_len > s->len)) return(-1);
     memcpy(&s->value[index], buf, buf_len);
     return(0);
 }
@@ -80,6 +80,8 @@ int as_bytes_set(as_bytes * s, int index, const uint8_t *buf, int buf_len) {
 // create a new as_bytes, a substring of the source
 as_bytes *as_bytes_slice_new(const as_bytes *src, int start_index, int end_index) {
     int len = end_index - start_index;
+    if ((start_index < 0) || (start_index > src->len)) return(0);
+    if ((end_index < 0) || (end_index > src->len)) return(0);
     as_bytes * v = (as_bytes *) malloc(sizeof(as_bytes));
     as_val_init(&v->_, AS_BYTES, true /*is_malloc*/);
     v->value_is_malloc = true;
@@ -93,6 +95,8 @@ as_bytes *as_bytes_slice_new(const as_bytes *src, int start_index, int end_index
 // create a new as_bytes, a substring of the source
 as_bytes *as_bytes_slice_init(as_bytes *v, const as_bytes *src, int start_index, int end_index){
     int len = end_index - start_index;
+    if ((start_index < 0) || (start_index > src->len)) return(0);
+    if ((end_index < 0) || (end_index > src->len)) return(0);
     as_val_init(&v->_, AS_BYTES, false /*is_malloc*/);
     v->value_is_malloc = true;
     v->value = malloc(len);
@@ -104,6 +108,7 @@ as_bytes *as_bytes_slice_init(as_bytes *v, const as_bytes *src, int start_index,
 
 int as_bytes_append(as_bytes *v, const uint8_t *buf, int buf_len) 
 {
+    if (buf_len < 0) return(-1);
     // not enough capacity? increase
     if (v->len + buf_len > v->capacity) {
         uint8_t *t;
@@ -158,6 +163,8 @@ int as_bytes_append_bytes(as_bytes *s1, as_bytes *s2)
 
 int as_bytes_delete(as_bytes *v, int d_pos, int d_len)
 {
+    if ((d_pos < 0) || (d_pos > v->len)) return(-1);
+    if (d_len < 0) return(-1);
     if (d_pos + d_len > v->len) return(-1);
     // overlapping writes require memmove
     memmove(&v->value[d_pos], &v->value[d_pos+d_len],v->len - (d_pos + d_len));
