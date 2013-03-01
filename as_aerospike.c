@@ -12,12 +12,15 @@
 
 extern inline int as_aerospike_rec_create(const as_aerospike * a, const as_rec * r);
 extern inline int as_aerospike_rec_update(const as_aerospike * a, const as_rec * r);
-extern inline char *as_aerospike_rec_unique(const as_aerospike * a, const as_rec * r);
-extern inline as_rec *as_aerospike_rec_get(const as_aerospike * a, const char * d);
 extern inline int as_aerospike_rec_exists(const as_aerospike * a, const as_rec * r);
 extern inline int as_aerospike_rec_remove(const as_aerospike * a, const as_rec * r);
 extern inline int as_aerospike_log(const as_aerospike * a, const char * name, 
     const int line, const int lvl, const char * msg);
+
+extern inline as_rec *as_aerospike_crec_create(const as_aerospike * a, const as_rec * r);
+extern inline as_rec *as_aerospike_crec_open(const as_aerospike * a, const as_rec *r, const char *);
+extern inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec * r, const as_rec *cr);
+extern inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec * r, const as_rec *cr);
 
 /******************************************************************************
  * FUNCTIONS

@@ -54,7 +54,7 @@ void as_list_destroy(as_list *l) {
 	as_val_val_destroy( (as_val *) l );
 }
 
-void *as_list_source(as_list *l) {
+void *as_list_source(const as_list *l) {
     return( l->u.generic );
 }
 
