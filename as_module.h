@@ -2,19 +2,83 @@
 
 #include <stdlib.h>
 
-#include "as_util.h"
 #include "as_aerospike.h"
 #include "as_stream.h"
 #include "as_result.h"
 #include "as_types.h"
+#include "as_logger.h"
 
-
-/******************************************************************************
+/*****************************************************************************
  * TYPES
- ******************************************************************************/
+ *****************************************************************************/
 
+enum as_module_event_type_e;
+typedef enum as_module_event_type_e as_module_event_type;
+
+struct as_module_event_data_s;
+typedef struct as_module_event_data_s as_module_event_data;
+
+struct as_module_event_s;
+typedef struct as_module_event_s as_module_event;
+
+struct as_module_s;
 typedef struct as_module_s as_module;
+
+struct as_module_hooks_s;
 typedef struct as_module_hooks_s as_module_hooks;
+
+/**
+ * Module events.
+ *
+ * as_module_event e;
+ * e.type = AS_MODULE_CONFIGURE;
+ * e.data.config = my_config;
+ */
+
+enum as_module_event_type_e {
+    AS_MODULE_EVENT_CONFIGURE     = 0,
+    AS_MODULE_EVENT_FILE_SCAN     = 1,
+    AS_MODULE_EVENT_FILE_ADD      = 2,
+    AS_MODULE_EVENT_FILE_REMOVE   = 3,
+};
+
+struct as_module_event_data_s {
+    void * config;
+    const char * filename;
+};
+
+struct as_module_event_s {
+    as_module_event_type     type;
+    as_module_event_data     data;
+};
+
+
+/**
+ * Module Interface 
+ * Provide functions which interface with a module.
+ */
+struct as_module_hooks_s {
+
+    /**
+     * Free resources used by the module.
+     */
+    int (* destroy)(as_module *);
+
+    /**
+     * Dispatch an event to the module.
+     */
+    int (* update)(as_module *, as_module_event *);
+
+    /**
+     * Apply a functio to a record
+     */
+    int (* apply_record)(as_module *, as_aerospike *, const char *, const char *, as_rec *, as_list *, as_result *);
+
+    /**
+     * Apply a function to a stream.
+     */
+    int (* apply_stream)(as_module *, as_aerospike *, const char *, const char *, as_stream *, as_list *, as_stream *);
+};
 
 /**
  * Module Structure.
@@ -24,43 +88,40 @@ typedef struct as_module_hooks_s as_module_hooks;
  * @field source contains module specific data.
  * @field hooks contains functions that can be applied to the module.
  */
+
 struct as_module_s {
-    const void * source;
+    const void *            source;
+    as_logger *             logger;
     const as_module_hooks * hooks;
 };
 
-/**
- * Module Interface 
- * Provide functions which interface with a module.
- */
-struct as_module_hooks_s {
-    int (*init)(as_module *);
-    int (*configure)(as_module *, void *);
-    int (*apply_record)(as_module *, as_aerospike *, const char *, const char *, as_rec *, as_list *, as_result *);
-    int (*apply_stream)(as_module *, as_aerospike *, const char *, const char *, as_stream *, as_list *, as_stream *);
-};
 
-
-/******************************************************************************
+/*****************************************************************************
  * INLINE FUNCTIONS
- ******************************************************************************/
-
-inline void * as_module_source(as_module * m) {
-    return (m ? (void *) m->source : NULL);
-}
+ *****************************************************************************/
 
 /**
- * Module Initializer.
- * This sets up the module before use. This is called only once on startup.
+ * Get the source of the module.
  *
- * Proxies to `m->hooks->init(m, ...)`
+ * @param m the module to get the source from.
+ */
+void * as_module_source(as_module * m);
+
+/**
+ * Get the logger for this module.
+ */
+as_logger * as_module_logger(as_module * m);
+
+/**
+ * Module Destroyer.
+ * This frees up the resources used by the module.
+ *
+ * Proxies to `m->hooks->destroy(m, ...)`
  *
  * @param m the module being initialized.
  * @return 0 on success, otherwhise 1
  */
-inline int as_module_init(as_module * m) {
-    return as_util_hook(init, 1, m);
-}
+int as_module_destroy(as_module * m);
 
 /**
  * Module Configurator. 
@@ -72,9 +133,17 @@ inline int as_module_init(as_module * m) {
  * @param m the module being configured.
  * @return 0 on success, otherwhise 1
  */
-inline int as_module_configure(as_module * m, void * c) {
-    return as_util_hook(configure, 1, m, c);
-}
+int as_module_configure(as_module * m, void * c);
+
+/**
+ * Update a Module.
+ *
+ * Proxies to `m->hooks->update(m, ...)`
+ *
+ * @param m the module being initialized.
+ * @return 0 on success, otherwhise 1
+ */
+int as_module_update(as_module * m, as_module_event * e);
 
 /**
  * Applies a record and arguments to the function specified by a fully-qualified name.
@@ -88,9 +157,7 @@ inline int as_module_configure(as_module * m, void * c) {
  * @param result pointer to a val that will be populated with the result.
  * @return 0 on success, otherwise 1
  */
-inline int as_module_apply_record(as_module * m, as_aerospike * as, const char * filename, const char * function, as_rec * r, as_list * args, as_result * res) {
-    return as_util_hook(apply_record, 1, m, as, filename, function, r, args, res);
-}
+int as_module_apply_record(as_module * m, as_aerospike * as, const char * filename, const char * function, as_rec * r, as_list * args, as_result * res);
 
 /**
  * Applies function to a stream and set of arguments. Pushes the results into an output stream.
@@ -104,6 +171,4 @@ inline int as_module_apply_record(as_module * m, as_aerospike * as, const char *
  * @param ostream pointer to a writable stream, that will be populated with results.
  * @return 0 on success, otherwise 1
  */
-inline int as_module_apply_stream(as_module * m, as_aerospike * as, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream) {
-    return as_util_hook(apply_stream, 1, m, as, filename, function, istream, args, ostream);
-}
+int as_module_apply_stream(as_module * m, as_aerospike * as, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream);
