@@ -35,6 +35,8 @@ struct as_rec_hooks_s {
     int         (* remove)(const as_rec *, const char *);
     uint32_t    (* ttl)(const as_rec *);
     uint16_t    (* gen)(const as_rec *);
+    uint16_t    (* numbins)(const as_rec *);
+    char *      (* digest)(const as_rec *);
     uint32_t    (* hash)(as_rec *);
 };
 
@@ -127,6 +129,15 @@ inline uint16_t as_rec_gen(const as_rec * r) {
 inline as_val * as_rec_toval(const as_rec * r) {
     return (as_val *) r;
 }
+
+inline uint16_t as_rec_numbins(const as_rec * r) {
+    return as_util_hook(numbins, 0, r);
+}
+
+inline char * as_rec_digest(const as_rec * r) {
+    return as_util_hook(digest, 0, r);
+}
+
 
 inline as_rec * as_rec_fromval(const as_val * v) {
     return as_util_fromval(v, AS_REC, as_rec);

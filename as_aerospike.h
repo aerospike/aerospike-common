@@ -20,11 +20,15 @@ struct as_aerospike_hooks_s {
     void (*destroy)(as_aerospike *);
     int (*rec_create)(const as_aerospike *, const as_rec *);
     int (*rec_update)(const as_aerospike *, const as_rec *);
-    char *(*rec_unique)(const as_aerospike *, const as_rec *);
-    as_rec *(*rec_get)(const as_aerospike *, const char *);
     int (*rec_remove)(const as_aerospike *, const as_rec *);
     int (*rec_exists)(const as_aerospike *, const as_rec *);
     int (*log)(const as_aerospike *, const char *, const int, const int, const char *);
+
+	// Chunk record related interfaces. Specific to Large Stack Objects
+    as_rec *(*crec_create)(const as_aerospike *, const as_rec *);
+    as_rec *(*crec_open)(const as_aerospike *, const as_rec *, const char *);
+    int (*crec_update)(const as_aerospike *, const as_rec *, const as_rec *);
+    int (*crec_close)(const as_aerospike *, const as_rec *, const as_rec *);
 };
 
 /******************************************************************************
@@ -50,12 +54,20 @@ inline int as_aerospike_rec_update(const as_aerospike * a, const as_rec * r) {
     return as_util_hook(rec_update, 1, a, r);
 }
 
-inline char *as_aerospike_rec_unique(const as_aerospike * a, const as_rec * r) {
-    return as_util_hook(rec_unique, NULL, a, r);
+inline as_rec *as_aerospike_crec_create(const as_aerospike * a, const as_rec * r) {
+    return as_util_hook(crec_create, NULL, a, r);
 }
 
-inline as_rec *as_aerospike_rec_get(const as_aerospike * a, const char * d) {
-    return as_util_hook(rec_get, NULL, a, d);
+inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec * r, const as_rec * cr) {
+    return as_util_hook(crec_update, 1, a, r, cr);
+}
+
+inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec * r, const as_rec * cr) {
+    return as_util_hook(crec_close, 1, a, r, cr);
+}
+
+inline as_rec * as_aerospike_crec_open(const as_aerospike * a, const as_rec * r, const char *dig) {
+    return as_util_hook(crec_open, NULL, a, r, dig);
 }
 
 inline int as_aerospike_rec_exists(const as_aerospike * a, const as_rec * r) {

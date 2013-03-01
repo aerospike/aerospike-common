@@ -50,7 +50,7 @@ void           as_list_val_destroy(as_val *v);
 uint32_t as_list_val_hash(const as_val * v);
 char * as_list_val_tostring(const as_val * v);
 
-void * as_list_source(as_list *);
+void * as_list_source(const as_list *);
 
 
 /******************************************************************************
