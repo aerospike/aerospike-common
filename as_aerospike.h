@@ -26,7 +26,7 @@ struct as_aerospike_hooks_s {
 
 	// Chunk record related interfaces. Specific to Large Stack Objects
     as_rec *(*crec_create)(const as_aerospike *, const as_rec *);
-    as_rec *(*crec_open)(const as_aerospike *, const as_rec *, const char *);
+    as_rec *(*crec_open)(const as_aerospike *, const as_rec *, const as_bytes *);
     int (*crec_update)(const as_aerospike *, const as_rec *, const as_rec *);
     int (*crec_close)(const as_aerospike *, const as_rec *, const as_rec *);
 };
@@ -66,8 +66,8 @@ inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec * r, con
     return as_util_hook(crec_close, 1, a, r, cr);
 }
 
-inline as_rec * as_aerospike_crec_open(const as_aerospike * a, const as_rec * r, const char *dig) {
-    return as_util_hook(crec_open, NULL, a, r, dig);
+inline as_rec * as_aerospike_crec_open(const as_aerospike * a, const as_rec * r, const as_bytes *bdig) {
+    return as_util_hook(crec_open, NULL, a, r, bdig);
 }
 
 inline int as_aerospike_rec_exists(const as_aerospike * a, const as_rec * r) {

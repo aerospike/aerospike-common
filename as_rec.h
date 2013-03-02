@@ -2,6 +2,7 @@
 
 #include "as_util.h"
 #include "as_val.h"
+#include "as_bytes.h"
 
 /******************************************************************************
  * TYPES
@@ -36,7 +37,7 @@ struct as_rec_hooks_s {
     uint32_t    (* ttl)(const as_rec *);
     uint16_t    (* gen)(const as_rec *);
     uint16_t    (* numbins)(const as_rec *);
-    char *      (* digest)(const as_rec *);
+    as_bytes *  (* digest)(const as_rec *);
     uint32_t    (* hash)(as_rec *);
 };
 
@@ -134,7 +135,7 @@ inline uint16_t as_rec_numbins(const as_rec * r) {
     return as_util_hook(numbins, 0, r);
 }
 
-inline char * as_rec_digest(const as_rec * r) {
+inline as_bytes * as_rec_digest(const as_rec * r) {
     return as_util_hook(digest, 0, r);
 }
 
