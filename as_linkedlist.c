@@ -270,7 +270,7 @@ static as_list * as_linkedlist_list_take(const as_list * l, uint32_t n) {
 
 
 static bool as_linkedlist_list_foreach(const as_list * l, void * udata, bool (*foreach)(as_val * val, void * udata)) {
-    const as_linkedlist_source * ll = &l->u.arraylist;
+    const as_linkedlist_source * ll = (as_linkedlist_source *)&l->u.arraylist;
     while ( ll != NULL && ll->head != NULL ) {
         if ( foreach(ll->head, udata) == false ) {
             return false;
