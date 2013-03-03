@@ -171,6 +171,22 @@ int as_bytes_delete(as_bytes *v, int d_pos, int d_len)
     return(0);
 }
 
+int as_bytes_set_len(as_bytes *v, int len)
+{
+    if (v->len == len) return(0);
+    if (v->len > len) {
+        if (len > v->capacity) {
+            v->value = realloc(v->value, len);
+            if (v->value == 0) return(-1);
+            memset(v->value + v->capacity, 0, len - v->capacity);
+            v->capacity = len;
+        } 
+        v->len = len;
+    }
+    v->len = len;
+    return(0);
+}
+
 uint32_t as_bytes_hash(const as_bytes * s) {
     if (s->value == NULL) return(0);
     uint32_t hash = 0;
