@@ -71,6 +71,10 @@ int as_bytes_append_bytes(as_bytes *s1, as_bytes *s2);
 
 int as_bytes_delete(as_bytes *s, int pos, int len);
 
+// changes length. Truncates if new length shorter.
+// extends with 0 if new length longer.
+int as_bytes_set_len(as_bytes *s, int len);
+
 // TODO: remove bytes from the middle (trim/delete)
 
 inline as_val * as_bytes_toval(const as_bytes * s) {
