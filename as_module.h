@@ -7,6 +7,7 @@
 #include "as_result.h"
 #include "as_types.h"
 #include "as_logger.h"
+#include "as_memtracker.h"
 
 /*****************************************************************************
  * TYPES
@@ -92,6 +93,7 @@ struct as_module_hooks_s {
 struct as_module_s {
     const void *            source;
     as_logger *             logger;
+    as_memtracker *         memtracker;
     const as_module_hooks * hooks;
 };
 
