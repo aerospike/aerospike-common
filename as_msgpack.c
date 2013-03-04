@@ -22,8 +22,7 @@ static int as_msgpack_pack_pair(msgpack_packer *, as_pair *);
 
 static int as_msgpack_boolean_to_val(bool, as_val **);
 static int as_msgpack_integer_to_val(int64_t, as_val **);
-static int as_msgpack_string_to_val(msgpack_object_raw *, as_val **);
-static int as_msgpack_bytes_to_val(msgpack_object_raw *, as_val **);
+static int as_msgpack_raw_to_val(msgpack_object_raw *, as_val **);
 static int as_msgpack_array_to_val(msgpack_object_array *, as_val **);
 static int as_msgpack_map_to_val(msgpack_object_map *, as_val **);
 
@@ -65,18 +64,29 @@ static int as_msgpack_pack_integer(msgpack_packer * pk, as_integer * i) {
     return msgpack_pack_int64(pk, as_integer_toint(i));
 }
 
+//
+// Subtypes of RAW
+
 static int as_msgpack_pack_string(msgpack_packer * pk, as_string * s) {
-    int rc = msgpack_pack_raw(pk, as_string_len(s));
+    int len = as_string_len(s) + 1;
+    uint8_t tbuf[len];
+    tbuf[0] = AS_STRING;
+    memcpy(tbuf+1, as_string_tostring(s),len-1);
+
+    int rc = msgpack_pack_raw(pk, len);
     if ( rc ) return rc;
-    return msgpack_pack_raw_body(pk, as_string_tostring(s), as_string_len(s));
+    return msgpack_pack_raw_body(pk, tbuf, len);
 }
 
-// TODO: BB -- how to differentiate in msgpack between string and bytes?
-// there is only "raw"?
 static int as_msgpack_pack_bytes(msgpack_packer * pk, as_bytes * b) {
-    int rc = msgpack_pack_raw(pk, as_bytes_len(b));
+    int len = as_bytes_len(b) + 1;
+    uint8_t tbuf[len];
+    tbuf[0] = AS_BYTES;
+    memcpy(tbuf+1, as_bytes_tobytes(b),len-1);
+
+    int rc = msgpack_pack_raw(pk, len);
     if ( rc ) return rc;
-    return msgpack_pack_raw_body(pk, as_bytes_tobytes(b), as_bytes_len(b));
+    return msgpack_pack_raw_body(pk, tbuf, len);
 }
 
 static int as_msgpack_pack_list(msgpack_packer * pk, as_list * l) {
@@ -88,6 +98,7 @@ static int as_msgpack_pack_list(msgpack_packer * pk, as_list * l) {
     as_list_iterator_init(&i, l);
     while ( as_iterator_has_next(&i) ) {
         as_val * val = (as_val *) as_iterator_next(&i);
+
         int rc = as_msgpack_pack_val(pk, val);
         if ( rc ) {
             rc = 2;
@@ -162,15 +173,21 @@ static int as_msgpack_integer_to_val(int64_t i, as_val ** v) {
     return 0;
 }
 
-static int as_msgpack_string_to_val(msgpack_object_raw * r, as_val ** v) {
-    *v = (as_val *) as_string_new(strndup(r->ptr, sizeof(char) * r->size), true /*ismalloc*/);
-    return 0;
-}
-
-static int as_msgpack_bytes_to_val(msgpack_object_raw * r, as_val ** v) {
-    uint8_t *b = malloc(r->size);
-    memcpy(b, r->ptr, r->size);
-    *v = (as_val *) as_bytes_new(b, r->size, true /*ismalloc*/);
+static int as_msgpack_raw_to_val(msgpack_object_raw * r, as_val ** v) {
+    const char * raw = r->ptr;
+    *v = 0;
+    if (*raw == AS_STRING) {
+        *v = (as_val *) as_string_new(strndup(raw+1,r->size - 1),true);
+    }
+    else if (*raw == AS_BYTES) {
+        int len = r->size - 1;
+        uint8_t *buf = malloc(len);
+        memcpy(buf, raw+1, len);
+        *v = (as_val *) as_bytes_new(buf, len, true /*ismalloc*/);
+    }
+    else {
+        return(-1);
+    }
     return 0;
 }
 
@@ -210,7 +227,7 @@ int as_msgpack_object_to_val(msgpack_object * object, as_val ** val) {
         case MSGPACK_OBJECT_BOOLEAN             : return as_msgpack_boolean_to_val  (object->via.boolean, val);
         case MSGPACK_OBJECT_POSITIVE_INTEGER    : return as_msgpack_integer_to_val  ((int64_t) object->via.u64, val);
         case MSGPACK_OBJECT_NEGATIVE_INTEGER    : return as_msgpack_integer_to_val  ((int64_t) object->via.i64, val);
-        case MSGPACK_OBJECT_RAW                 : return as_msgpack_string_to_val   (&object->via.raw, val);
+        case MSGPACK_OBJECT_RAW                 : return as_msgpack_raw_to_val   (&object->via.raw, val);
         case MSGPACK_OBJECT_ARRAY               : return as_msgpack_array_to_val    (&object->via.array, val);
         case MSGPACK_OBJECT_MAP                 : return as_msgpack_map_to_val      (&object->via.map, val);
         // case MSGPACK_OBJECT_POSITIVE_INTEGER    : {
