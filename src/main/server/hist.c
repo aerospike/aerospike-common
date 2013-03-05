@@ -259,39 +259,48 @@ size_t linear_histogram_get_index_for_pct(linear_histogram *h, size_t pct)
 }
 
 // Note: not thread safe!
-uint64_t linear_histogram_get_threshold_for_fraction(linear_histogram *h, uint32_t tenths_pct, bool* p_is_last)
+bool linear_histogram_get_thresholds_for_fraction(linear_histogram* h, uint32_t tenths_pct, uint64_t* p_low, uint64_t* p_high, uint32_t* p_mid_tenths_pct)
 {
-	return linear_histogram_get_threshold_for_subtotal(h, (h->n_counts * tenths_pct) / 1000, p_is_last);
+	return linear_histogram_get_thresholds_for_subtotal(h, (h->n_counts * tenths_pct) / 1000, p_low, p_high, p_mid_tenths_pct);
 }
 
 // Note: not thread safe!
-uint64_t linear_histogram_get_threshold_for_subtotal(linear_histogram *h, uint64_t subtotal, bool* p_is_last)
+bool linear_histogram_get_thresholds_for_subtotal(linear_histogram* h, uint64_t subtotal, uint64_t* p_low, uint64_t* p_high, uint32_t* p_mid_tenths_pct)
 {
 	if (h->n_counts == 0) {
-		return 0;
+		*p_low = 0;
+		*p_high = 0;
+		*p_mid_tenths_pct = 0;
+		return false;
 	}
 
 	uint64_t count = 0;
 	int i;
-	int stop = h->num_buckets - 1;
 
-	for (i = 0; i < stop; i++) {
+	for (i = 0; i < h->num_buckets; i++) {
 		count += h->count[i];
 
-		if (count >= subtotal) {
+		if (count > subtotal) {
 			break;
 		}
 	}
 
-	if (p_is_last) {
-		*p_is_last = (i == stop);
-
-		if (*p_is_last) {
-			i--;
-		}
+	if (i == h->num_buckets) {
+		// This means subtotal >= h->n_counts.
+		*p_low = 0;
+		*p_high = 0;
+		*p_mid_tenths_pct = 0;
+		return true;
 	}
 
-	return h->start + ((i + 1) * h->bucket_offset);
+	*p_low = h->start + (i * h->bucket_offset);
+	*p_high = *p_low + h->bucket_offset;
+
+	uint64_t bucket_subtotal = h->count[i] - (count - subtotal);
+
+	*p_mid_tenths_pct = (bucket_subtotal * 1000) / h->count[i];
+
+	return i == h->num_buckets - 1;
 }
 
 void linear_histogram_dump( linear_histogram *h )

@@ -122,5 +122,5 @@ extern uint64_t linear_histogram_get_total(linear_histogram *h);
 extern void linear_histogram_insert_data_point(linear_histogram *h, uint64_t point);
 extern void linear_histogram_insert_data_point_val( linear_histogram *h, uint64_t point, int64_t val);
 extern size_t linear_histogram_get_index_for_pct(linear_histogram *h, size_t pct);
-extern uint64_t linear_histogram_get_threshold_for_fraction(linear_histogram *h, uint32_t tenths_pct, bool* p_is_last); // Note: not thread-safe!
-extern uint64_t linear_histogram_get_threshold_for_subtotal(linear_histogram *h, uint64_t subtotal, bool* p_is_last); // Note: not thread-safe!
+extern bool linear_histogram_get_thresholds_for_fraction(linear_histogram* h, uint32_t tenths_pct, uint64_t* p_low, uint64_t* p_high, uint32_t* p_mid_tenths_pct); // Note: not thread-safe!
+extern bool linear_histogram_get_thresholds_for_subtotal(linear_histogram* h, uint64_t subtotal, uint64_t* p_low, uint64_t* p_high, uint32_t* p_mid_tenths_pct); // Note: not thread-safe!
