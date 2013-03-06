@@ -45,10 +45,14 @@ int as_memtracker_destroy(as_memtracker * memtracker) {
  *   - as_memtracker_reserve(memtracker, num_bytes)
  *   - as_memtracker_release(memtracker, num_bytes)
  */
-int as_memtracker_reserve(const as_memtracker * memtracker, const uint32_t num_bytes) {
+bool as_memtracker_reserve(const as_memtracker * memtracker, const uint32_t num_bytes) {
     return as_util_hook(reserve, false, memtracker, num_bytes);
 }
 
-int as_memtracker_release(const as_memtracker * memtracker, const uint32_t num_bytes) {
+bool as_memtracker_release(const as_memtracker * memtracker, const uint32_t num_bytes) {
     return as_util_hook(release, false, memtracker, num_bytes);
+}
+
+bool as_memtracker_reset(const as_memtracker * memtracker) {
+    return as_util_hook(reset, false, memtracker);
 }
