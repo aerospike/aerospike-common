@@ -25,8 +25,9 @@ struct as_memtracker_hooks_s {
      */
     int (* destroy)(as_memtracker *);
 
-    int (* reserve)(const as_memtracker *, const uint32_t);
-    int (* release)(const as_memtracker *, const uint32_t);
+    bool (* reserve)(const as_memtracker *, const uint32_t);
+    bool (* release)(const as_memtracker *, const uint32_t);
+    bool (* reset)(const as_memtracker *);
 };
 
 /**
@@ -67,9 +68,15 @@ int as_memtracker_destroy(as_memtracker * memtracker);
 /**
  * Reserve num_bytes bytes of memory
  */
-int as_memtracker_reserve(const as_memtracker * memtracker, const uint32_t num_bytes);
+bool as_memtracker_reserve(const as_memtracker * memtracker, const uint32_t num_bytes);
 
 /**
  * Release num_bytes bytes of memory
  */
-int as_memtracker_release(const as_memtracker * memtracker, const uint32_t num_bytes);
+bool as_memtracker_release(const as_memtracker * memtracker, const uint32_t num_bytes);
+
+/**
+ * Release the entire reservation for the current thread
+ */
+bool as_memtracker_reset(const as_memtracker * memtracker);
+
