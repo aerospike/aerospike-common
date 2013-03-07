@@ -51,7 +51,6 @@ as_rec * as_rec_new(void * source, const as_rec_hooks * hooks) {
 
 // called from the dispatch table - as_val_destroy ~ as_rec_destroy
 void as_rec_val_destroy(as_val *v) {
-    fprintf(stderr, "as_rec_val_destroy, calling destroy hook %p\n",v);
     as_rec *r = (as_rec *) v;
     as_util_hook(destroy, 1, r);
 }
