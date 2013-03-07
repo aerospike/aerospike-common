@@ -74,6 +74,7 @@ inline uint32_t as_rec_hash(as_rec * r) {
     return as_util_hook(hash, 0, r);
 }
 
+// equivilent to as_val_destroy, used externally
 inline void as_rec_destroy(as_rec *r) {
 	as_val_val_destroy( (as_val *) r );
 }
