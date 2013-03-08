@@ -15,6 +15,7 @@ extern inline as_bytes * as_bytes_fromval(const as_val * v);
 as_bytes * as_bytes_init(as_bytes * v, uint8_t * s, size_t len, bool is_malloc) {
     as_val_init(&v->_, AS_BYTES, false /*is_malloc*/);
     v->value_is_malloc = is_malloc;
+    v->type = AS_BYTES_TYPE_BLOB;
     v->value = s;
     v->len = len;
     v->capacity = len;
@@ -24,6 +25,7 @@ as_bytes * as_bytes_init(as_bytes * v, uint8_t * s, size_t len, bool is_malloc) 
 as_bytes * as_bytes_empty_init(as_bytes * v, size_t len) {
     as_val_init(&v->_, AS_BYTES, false /*is_malloc*/);
     v->value_is_malloc = true;
+    v->type = AS_BYTES_TYPE_BLOB;
     v->value = malloc(len);
     memset(v->value, 0, len);
     v->len = len;
@@ -35,6 +37,7 @@ as_bytes * as_bytes_new(uint8_t * s, size_t len, bool is_malloc) {
     as_bytes * v = (as_bytes *) malloc(sizeof(as_bytes));
     as_val_init(&v->_, AS_BYTES, true /*is_malloc*/);
     v->value_is_malloc = is_malloc;
+    v->type = AS_BYTES_TYPE_BLOB;
     v->value = s;
     v->len = len;
     v->capacity = len;
@@ -45,6 +48,7 @@ as_bytes * as_bytes_empty_new(size_t len) {
     as_bytes * v = (as_bytes *) malloc(sizeof(as_bytes));
     as_val_init(&v->_, AS_BYTES, true /*is_malloc*/);
     v->value_is_malloc = true;
+    v->type = AS_BYTES_TYPE_BLOB;
     v->value = malloc(len);
     memset(v->value, 0, len);
     v->len = len;
@@ -63,6 +67,15 @@ void as_bytes_val_destroy(as_val * v) {
 
 size_t as_bytes_len(as_bytes * s) {
 	return(s->len);
+}
+
+as_bytes_type as_bytes_get_type(const as_bytes * s) {
+    return(s->type);
+}
+
+void as_bytes_set_type(as_bytes *s, as_bytes_type t) {
+    s->type = t;
+    return;
 }
 
 int as_bytes_get(const as_bytes * s, int index, uint8_t *buf, int buf_len) {
@@ -174,7 +187,7 @@ int as_bytes_delete(as_bytes *v, int d_pos, int d_len)
 int as_bytes_set_len(as_bytes *v, int len)
 {
     if (v->len == len) return(0);
-    if (v->len > len) {
+    if (len > v->len) {
         if (len > v->capacity) {
             v->value = realloc(v->value, len);
             if (v->value == 0) return(-1);
