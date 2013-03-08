@@ -94,12 +94,6 @@ as_bytes *as_bytes_slice_new(const as_bytes *src, int start_index, int end_index
 // create a new as_bytes, a substring of the source
 as_bytes *as_bytes_slice_init(as_bytes *dst, const as_bytes *src, int start_index, int end_index);
 
-// create a new as_bytes, a substring of the source
-as_bytes *as_bytes_slice_new(const as_bytes *src, int start_index, int end_index);
-
-// create a new as_bytes, a substring of the source
-as_bytes *as_bytes_slice_init(as_bytes *dst, const as_bytes *src, int start_index, int end_index);
-
 int as_bytes_append(as_bytes *v, const uint8_t *buf, int buf_len);
 
 int as_bytes_append_bytes(as_bytes *s1, as_bytes *s2);
