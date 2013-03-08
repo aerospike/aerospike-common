@@ -70,7 +70,7 @@ static int as_msgpack_pack_integer(msgpack_packer * pk, as_integer * i) {
 static int as_msgpack_pack_string(msgpack_packer * pk, as_string * s) {
     int len = as_string_len(s) + 1;
     uint8_t tbuf[len];
-    tbuf[0] = AS_STRING;
+    tbuf[0] = AS_BYTES_TYPE_STRING;
     memcpy(tbuf+1, as_string_tostring(s),len-1);
 
     int rc = msgpack_pack_raw(pk, len);
@@ -81,7 +81,7 @@ static int as_msgpack_pack_string(msgpack_packer * pk, as_string * s) {
 static int as_msgpack_pack_bytes(msgpack_packer * pk, as_bytes * b) {
     int len = as_bytes_len(b) + 1;
     uint8_t tbuf[len];
-    tbuf[0] = AS_BYTES;
+    tbuf[0] = as_bytes_get_type(b);
     memcpy(tbuf+1, as_bytes_tobytes(b),len-1);
 
     int rc = msgpack_pack_raw(pk, len);
@@ -176,17 +176,19 @@ static int as_msgpack_integer_to_val(int64_t i, as_val ** v) {
 static int as_msgpack_raw_to_val(msgpack_object_raw * r, as_val ** v) {
     const char * raw = r->ptr;
     *v = 0;
-    if (*raw == AS_STRING) {
+    // strings are special
+    if (*raw == AS_BYTES_TYPE_STRING) {
         *v = (as_val *) as_string_new(strndup(raw+1,r->size - 1),true);
     }
-    else if (*raw == AS_BYTES) {
+    // everything else encoded as a bytes with the type set
+    else {
         int len = r->size - 1;
         uint8_t *buf = malloc(len);
         memcpy(buf, raw+1, len);
-        *v = (as_val *) as_bytes_new(buf, len, true /*ismalloc*/);
-    }
-    else {
-        return(-1);
+        as_bytes *b = as_bytes_new(buf, len, true /*ismalloc*/);
+        if (b)
+            as_bytes_set_type( b, (as_bytes_type) *raw );
+        *v = (as_val *) b;
     }
     return 0;
 }
