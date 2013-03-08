@@ -49,11 +49,10 @@ as_rec * as_rec_new(void * source, const as_rec_hooks * hooks) {
     return r;
 }
 
-
+// called from the dispatch table - as_val_destroy ~ as_rec_destroy
 void as_rec_val_destroy(as_val *v) {
     as_rec *r = (as_rec *) v;
-    as_rec_destroy(r);
-	return;
+    as_util_hook(destroy, 1, r);
 }
 
 uint32_t as_rec_val_hash(const as_val * v) {

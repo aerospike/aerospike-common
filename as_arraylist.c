@@ -217,7 +217,8 @@ static int as_arraylist_list_prepend(as_list * l, as_val * v) {
 
 static as_val * as_arraylist_list_get(const as_list * l, const uint32_t i) {
     const as_arraylist_source *a = &l->u.arraylist;
-    return a->size > i ? a->elements[i] : NULL;
+    if (i >= a->size) return(NULL);
+    return a->elements[i];
 }
 
 // Set the arraylist (L) at element index position (i) with element value (v).
@@ -230,8 +231,8 @@ static int as_arraylist_list_set(as_list * l, const uint32_t index, as_val * v) 
 
     as_arraylist_source *a = &l->u.arraylist;
     int rc = AS_ARRAYLIST_OK;
-    if ( index > a->capacity ) {
-        rc = as_arraylist_ensure(l, index - a->capacity);
+    if ( index >= a->capacity ) {
+        rc = as_arraylist_ensure(l, (index + 1) - a->capacity);
         if ( rc != AS_ARRAYLIST_OK ) {
         	return rc;
         }
@@ -261,8 +262,13 @@ static as_list * as_arraylist_list_tail(const as_list * l) {
     const as_arraylist_source *sa = &l->u.arraylist;
 
     for(int i = 1, j = 0; i < a->size; i++, j++) {
-        as_val_reserve(a->elements[i]);
-        sa->elements[j] = a->elements[i];
+        if (a->elements[i]) {
+            as_val_reserve(a->elements[i]);
+            sa->elements[j] = a->elements[i];
+        }
+        else {
+            sa->elements[j] = 0;
+        }
     }
 
     return s;
@@ -278,8 +284,13 @@ static as_list * as_arraylist_list_drop(const as_list * l, uint32_t n) {
     sa->size = sz-c;
 
     for(int i = c, j = 0; j < sa->size; i++, j++) {
-        as_val_reserve(a->elements[i]);
-        sa->elements[j] = a->elements[i];
+        if (a->elements[i]) {
+            as_val_reserve(a->elements[i]);
+            sa->elements[j] = a->elements[i];
+        }
+        else {
+            sa->elements[j] = 0;
+        }
     }
 
     return s;
@@ -295,8 +306,13 @@ static as_list * as_arraylist_list_take(const as_list * l, uint32_t n) {
     sa->size = c;
 
     for(int i = 0; i < c; i++) {
-         as_val_reserve(a->elements[i]);
-         sa->elements[i] = a->elements[i];
+        if (a->elements[i]) {
+            as_val_reserve(a->elements[i]);
+            sa->elements[i] = a->elements[i];
+        }
+        else {
+            sa->elements[i] = 0;
+        }
     }
 
     return s;

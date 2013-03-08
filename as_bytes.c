@@ -174,7 +174,7 @@ int as_bytes_delete(as_bytes *v, int d_pos, int d_len)
 int as_bytes_set_len(as_bytes *v, int len)
 {
     if (v->len == len) return(0);
-    if (v->len > len) {
+    if (len > v->len) {
         if (len > v->capacity) {
             v->value = realloc(v->value, len);
             if (v->value == 0) return(-1);
