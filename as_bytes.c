@@ -66,13 +66,13 @@ size_t as_bytes_len(as_bytes * s) {
 }
 
 int as_bytes_get(const as_bytes * s, int index, uint8_t *buf, int buf_len) {
-    if ((index < 0) || (index + buf_len >= s->len)) return(-1);
+    if ((index < 0) || (index + buf_len > s->len)) return(-1);
     memcpy(buf, &s->value[index], buf_len);
     return(0);
 }
 
 int as_bytes_set(as_bytes * s, int index, const uint8_t *buf, int buf_len) {
-    if ((index < 0) || (index + buf_len >= s->len)) return(-1);
+    if ((index < 0) || (index + buf_len > s->len)) return(-1);
     memcpy(&s->value[index], buf, buf_len);
     return(0);
 }
