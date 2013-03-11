@@ -13,7 +13,7 @@
 
 static void		 as_hashmap_map_destroy(as_map *m);
 uint32_t     as_hashmap_hash_fn(void *);
-int          as_hashmap_reduce_fn (void *, void *, void *);
+int          as_hashmap_clear_fn (void *, void *, void *);
 
 /******************************************************************************
  * CONSTANTS
@@ -57,9 +57,15 @@ as_map *as_hashmap_new(uint32_t capacity) {
     return m;
 }
 
+int as_hashmap_destroy_reduce_fn (void * key, void * data, void * udata) {
+    as_val * value = *((as_val **) data); // this is the pair at this key-value
+    as_val_destroy(value);
+    return 0;
+}
+
 static void as_hashmap_map_destroy(as_map * m) {
-    as_hashmap_clear(m);
     as_hashmap_source  *s = &(m->u.hashmap);
+    shash_reduce(s->h, as_hashmap_destroy_reduce_fn, NULL);
     shash_destroy(s->h);
 }
 
@@ -81,6 +87,7 @@ int as_hashmap_set(as_map * m, const as_val * k, const as_val * v) {
     return shash_put(s->h, &h, &p);
 }
 
+// Gets the value
 as_val * as_hashmap_get(const as_map * m, const as_val * k) {
     const as_hashmap_source  *s = &(m->u.hashmap);
     uint32_t h = as_val_hash(k);
@@ -93,9 +100,15 @@ as_val * as_hashmap_get(const as_map * m, const as_val * k) {
     return v;
 }
 
+int as_hashmap_clear_fn (void * key, void * data, void * udata) {
+    as_val * value = *((as_val **) data); // this is the pair at this key-value
+    as_val_destroy(value);
+    return SHASH_REDUCE_DELETE;
+}
+
 int as_hashmap_clear(as_map * m) {
     as_hashmap_source  *s = &(m->u.hashmap);
-    shash_reduce_delete(s->h, as_hashmap_reduce_fn, NULL);
+    shash_reduce_delete(s->h, as_hashmap_clear_fn, NULL);
     return 0;
 }
 
@@ -112,11 +125,6 @@ uint32_t as_hashmap_hash_fn(void * k) {
     return *((uint32_t *) k);
 }
 
-int as_hashmap_reduce_fn (void * key, void * data, void * udata) {
-    as_val * value = *((as_val **) data); // this is the pair at this key-value
-    as_val_destroy(value);
-    return SHASH_REDUCE_DELETE;
-}
 
 
 as_iterator * as_hashmap_iterator_init(const as_map * m, as_iterator *i ) {
