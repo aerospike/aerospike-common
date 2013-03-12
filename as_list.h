@@ -124,22 +124,22 @@ inline as_list * as_list_fromval(as_val * v) {
 ** HELPERS
 */
 
-static inline int as_list_add_string(as_list * arglist, const char * s) {
-    return as_list_append(arglist, (as_val *) as_string_new(strdup(s), true));
+static inline int as_list_add_string(as_list * l, const char * s) {
+    return as_list_append(l, (as_val *) as_string_new(strdup(s), true));
 }
 
-static inline int as_list_add_integer(as_list * arglist, int64_t i) {
-    return as_list_append(arglist, (as_val *) as_integer_new(i));
+static inline int as_list_add_integer(as_list * l, int64_t i) {
+    return as_list_append(l, (as_val *) as_integer_new(i));
 }
 
-static inline int as_list_add_list(as_list * arglist, as_list * l) {
-    return as_list_append(arglist, (as_val *) l);
+static inline int as_list_add_list(as_list * l, as_list * l2) {
+    return as_list_append(l, (as_val *) l2);
 }
 
 struct as_map_s;
 
-static inline int as_list_add_map(as_list * arglist, struct as_map_s * m) {
-    return as_list_append(arglist, (as_val *) m);
+static inline int as_list_add_map(as_list * l, struct as_map_s * m) {
+    return as_list_append(l, (as_val *) m);
 }
 
 
