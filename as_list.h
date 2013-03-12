@@ -128,7 +128,7 @@ static inline int as_list_add_string(as_list * arglist, const char * s) {
     return as_list_append(arglist, (as_val *) as_string_new(strdup(s), true));
 }
 
-static inline int as_list_add_integer(as_list * arglist, uint64_t i) {
+static inline int as_list_add_integer(as_list * arglist, int64_t i) {
     return as_list_append(arglist, (as_val *) as_integer_new(i));
 }
 
