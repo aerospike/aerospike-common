@@ -8,42 +8,22 @@
 #pragma once
 #include "../cf_types.h"
 
-extern unsigned int cf_str_itoa(int value, char *s, int radix);
-extern unsigned int cf_str_itoa_u64(uint64_t value, char *s, int radix);
-extern unsigned int cf_str_itoa_u32(uint32_t value, char *s, int radix);
+// These functions copy integers into a buffer, and return the number of bytes copied.
+unsigned int cf_str_itoa(int value, char *s, int radix);
+unsigned int cf_str_itoa_u64(uint64_t value, char *s, int radix);
+unsigned int cf_str_itoa_u32(uint32_t value, char *s, int radix);
 
-extern int cf_str_atoi_u64_x(char *s, uint64_t *value, int radix);
+// These functions convert a string to a number of different types
+// returns 0 on success
+int cf_str_atoi(char *s, int *value);
+int cf_str_atoi_u32(char *s, uint32_t *value);
+int cf_str_atoi_64(char *s, int64_t *value);
+int cf_str_atoi_u64(char *s, uint64_t *value);
 
-// return 0 on success, -1 on fail
-static inline int cf_str_atoi(char *s, int *value)
-{
-    int i = 0;
-    bool neg = false;
-    
-    if (*s == '-') { neg = true; s++; }
-    
-    while (*s >= '0' && *s <= '9') {
-        i *= 10;
-        i += *s - '0';
-        s++;
-    }
-    if (*s != 0)	return(-1); // reached a non-num before EOL
-    *value = neg ? -i : i;
-    return(0);
-}
+// and this does it also with radix
+int cf_str_atoi_u64_x(char *s, uint64_t *value, int radix);
 
-static inline int cf_str_atoi_u64(char *s, uint64_t *value)
-{
-    uint64_t i = 0;
-    while (*s >= '0' && *s <= '9') {
-        i *= 10;
-        i += *s - '0';
-        s++;
-    }
-    if (*s != 0)	return(-1);
-    *value = i;
-    return(0);
-}
+
 
 
 // Split the string 'str' based on input breaks in fmt
