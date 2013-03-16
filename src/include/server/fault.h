@@ -148,8 +148,11 @@ extern void cf_fault_sink_logroll(void);
 
 
 extern void cf_fault_event(const cf_fault_context, const cf_fault_scope, const cf_fault_severity severity, const char *fn, const int line, char *msg, ...);
+extern void cf_fault_event_nostack(const cf_fault_context, const cf_fault_scope, const cf_fault_severity severity, const char *fn, const int line, char *msg, ...);
 #define cf_assert(a, context, scope, severity, __msg, ...) ((void)((a) ? (void)0 : cf_fault_event((context), (scope), (severity), __func__, __LINE__, (__msg), ##__VA_ARGS__)))
+#define cf_assert_nostack(a, context, scope, severity, __msg, ...) ((void)((a) ? (void)0 : cf_fault_event_nostack((context), (scope), (severity), __func__, __LINE__, (__msg), ##__VA_ARGS__)))
 #define cf_crash(context, scope, __msg, ...) (cf_fault_event((context), (scope), CF_CRITICAL, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
+#define cf_crash_nostack(context, scope, __msg, ...) (cf_fault_event_nostack((context), (scope), CF_CRITICAL, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
 #define cf_warning(context, __msg, ...) (cf_fault_event((context), CF_THR, CF_WARNING, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
 #define cf_info(context, __msg, ...) (cf_fault_event((context), CF_THR, CF_INFO, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))
 #define cf_debug(context, __msg, ...) (cf_fault_event((context), CF_THR, CF_DEBUG, __FILE__, __LINE__, (__msg), ##__VA_ARGS__))

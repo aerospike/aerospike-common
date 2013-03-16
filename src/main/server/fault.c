@@ -12,6 +12,7 @@
 #include <errno.h>
 #include <execinfo.h>
 #include <pthread.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -404,9 +405,7 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	char mbuf[1024];
 	time_t now;
 	struct tm nowtm;
-	void *bt[CF_FAULT_BACKTRACE_DEPTH];
-	char **btstr;
-	int btn;
+
 	
 	/* Make sure there's always enough space for the \n\0. */
 	size_t limit = sizeof(mbuf) - 2;
@@ -471,6 +470,9 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 	if (CF_CRITICAL == severity) {
 		fflush(NULL);
 
+		void *bt[CF_FAULT_BACKTRACE_DEPTH];
+		char **btstr;
+		int btn;
 		int wb = 0;
 		
 		btn = backtrace(bt, CF_FAULT_BACKTRACE_DEPTH);
@@ -504,6 +506,105 @@ cf_fault_event(const cf_fault_context context, const cf_fault_scope scope, const
 				if (-1 == execvp(cf_fault_restart_argv[0], cf_fault_restart_argv))
 					cf_assert(NULL, CF_MISC, CF_GLOBAL, CF_CRITICAL, "execvp failed: %s", cf_strerror(errno));
 #endif				
+				break;
+			case CF_THR:
+			    /* Since we may have asynchronous cancellation disabled,
+				 * we always force a check for cancellation */
+				pthread_cancel(pthread_self());
+				pthread_testcancel();
+				break;
+		}
+	}
+
+	return;
+}
+
+/* cf_fault_event
+ * Respond to a fault */
+void
+cf_fault_event_nostack(const cf_fault_context context, const cf_fault_scope scope, const cf_fault_severity severity, const char *fn, const int line, char *msg, ...)
+{
+
+	/* Prefilter: don't construct messages we won't end up writing */
+	if (severity > cf_fault_filter[context])
+		return;
+
+	va_list argp;
+	char mbuf[1024];
+	time_t now;
+	struct tm nowtm;
+	
+	/* Make sure there's always enough space for the \n\0. */
+	size_t limit = sizeof(mbuf) - 2;
+
+	/* Set the timestamp */
+	now = time(NULL);
+	gmtime_r(&now, &nowtm);
+	size_t pos = strftime(mbuf, limit, "%b %d %Y %T %Z: ", &nowtm);
+
+	/* Set the context/scope/severity tag */
+	if (CF_CRITICAL == severity)
+		pos += snprintf(mbuf + pos, limit - pos, "%s %s (%s): ", cf_fault_severity_strings[severity], cf_fault_scope_strings[scope], cf_fault_context_strings[context]);
+	else
+		pos += snprintf(mbuf + pos, limit - pos, "%s (%s): ", cf_fault_severity_strings[severity], cf_fault_context_strings[context]);
+
+	/*
+	 * snprintf() and vsnprintf() will not write more than the size specified,
+	 * but they return the size that would have been written without truncation.
+	 * These checks make sure there's enough space for the final \n\0.
+	 */
+	if (pos > limit) {
+		pos = limit;
+	}
+
+	/* Set the location */
+	if (fn)
+		pos += snprintf(mbuf + pos, limit - pos, "(%s:%d) ", fn, line);
+
+	if (pos > limit) {
+		pos = limit;
+	}
+
+	/* Append the message */
+	va_start(argp, msg);
+	pos += vsnprintf(mbuf + pos, limit - pos, msg, argp);
+	va_end(argp);
+
+	if (pos > limit) {
+		pos = limit;
+	}
+
+	pos += snprintf(mbuf + pos, 2, "\n");
+
+	/* Route the message to the correct destinations */
+	if (0 == cf_fault_sinks_inuse) {
+	    /* If no fault sinks are defined, use stderr for critical messages */
+		if (CF_CRITICAL == severity)
+			fprintf(stderr, "%s", mbuf);
+	} else {
+		for (int i = 0; i < cf_fault_sinks_inuse; i++) {
+			if ((severity <= cf_fault_sinks[i].limit[context]) || (CF_CRITICAL == severity)) {
+				if (0 >= write(cf_fault_sinks[i].fd, mbuf, pos)) {
+					// this is OK for a bit in case of a HUP. It's even better to queue the buffers and apply them
+					// after the hup. TODO.
+					fprintf(stderr, "internal failure in fault message write: %s\n", cf_strerror(errno));
+				}
+			}
+		}
+	}
+
+	/* Critical errors */
+	if (CF_CRITICAL == severity) {
+		fflush(NULL);
+
+		// these signals don't throw stack traces in our system
+		switch(scope) {
+			case CF_GLOBAL:
+				raise(SIGINT);
+				break;
+			case CF_PROCESS:
+				// having process failures attempt restart is sometimes very confusing
+				raise(SIGINT);		
 				break;
 			case CF_THR:
 			    /* Since we may have asynchronous cancellation disabled,
