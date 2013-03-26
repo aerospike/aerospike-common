@@ -13,9 +13,6 @@
  * TYPES
  *****************************************************************************/
 
-enum as_module_event_type_e;
-typedef enum as_module_event_type_e as_module_event_type;
-
 struct as_module_event_data_s;
 typedef struct as_module_event_data_s as_module_event_data;
 
@@ -42,6 +39,8 @@ enum as_module_event_type_e {
     AS_MODULE_EVENT_FILE_ADD      = 2,
     AS_MODULE_EVENT_FILE_REMOVE   = 3,
 };
+
+typedef enum as_module_event_type_e as_module_event_type;
 
 struct as_module_event_data_s {
     void * config;
