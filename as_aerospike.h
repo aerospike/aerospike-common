@@ -25,17 +25,18 @@ struct as_aerospike_hooks_s {
     int (*log)(const as_aerospike *, const char *, const int, const int, const char *);
 
 	// Chunk record related interfaces. Specific to Large Stack Objects
-    as_rec *(*crec_create)(const as_aerospike *, const as_rec *);
-    as_rec *(*crec_open)(const as_aerospike *, const as_rec *, const char *);
-    int (*crec_update)(const as_aerospike *, const as_rec *, const as_rec *);
-    int (*crec_close)(const as_aerospike *, const as_rec *, const as_rec *);
+    as_rec *(*create_subrec)(const as_aerospike *, const as_rec *);
+    as_rec *(*open_subrec)(const as_aerospike *, const as_rec *, const char *);
+    int (*update_subrec)(const as_aerospike *, const as_rec *, const as_rec *);
+    int (*close_subrec)(const as_aerospike *, const as_rec *, const as_rec *);
 };
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-as_aerospike * as_aerospike_init(as_aerospike *a, void *source, const as_aerospike_hooks *hooks);
+as_aerospike * as_aerospike_init(as_aerospike *a, void *source,
+        const as_aerospike_hooks *hooks);
 
 as_aerospike * as_aerospike_new(void *source, const as_aerospike_hooks *hooks);
 
@@ -55,19 +56,19 @@ inline int as_aerospike_rec_update(const as_aerospike * a, const as_rec * r) {
 }
 
 inline as_rec *as_aerospike_crec_create(const as_aerospike * a, const as_rec * r) {
-    return as_util_hook(crec_create, NULL, a, r);
+    return as_util_hook(create_subrec, NULL, a, r);
 }
 
 inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec * r, const as_rec * cr) {
-    return as_util_hook(crec_update, 1, a, r, cr);
+    return as_util_hook(update_subrec, 1, a, r, cr);
 }
 
 inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec * r, const as_rec * cr) {
-    return as_util_hook(crec_close, 1, a, r, cr);
+    return as_util_hook(close_subrec, 1, a, r, cr);
 }
 
 inline as_rec * as_aerospike_crec_open(const as_aerospike * a, const as_rec * r, const char *dig) {
-    return as_util_hook(crec_open, NULL, a, r, dig);
+    return as_util_hook(open_subrec, NULL, a, r, dig);
 }
 
 inline int as_aerospike_rec_exists(const as_aerospike * a, const as_rec * r) {
