@@ -73,17 +73,6 @@
  * TYPES
  *****************************************************************************/
 
-
-enum as_log_level_e;
-typedef enum as_log_level_e as_log_level;
-
-struct as_logger_hooks_s;
-typedef struct as_logger_hooks_s as_logger_hooks;
-
-struct as_logger_s;
-typedef struct as_logger_s as_logger;
-
-
 /**
  * The supported logging levels
  */
@@ -94,6 +83,10 @@ enum as_log_level_e {
     AS_LOG_WARN      = 3,
     AS_LOG_ERROR     = 4
 };
+
+typedef enum as_log_level_e as_log_level;
+typedef struct as_logger_hooks_s as_logger_hooks;
+typedef struct as_logger_s as_logger;
 
 /**
  * The interface which all loggers should implement.
@@ -122,6 +115,8 @@ struct as_logger_hooks_s {
     int (* log)(const as_logger *, const as_log_level, const char *, const int, const char *, va_list);
 };
 
+
+
 /**
  * Logger handle
  */
@@ -130,6 +125,7 @@ struct as_logger_s {
     void *                  source;
     const as_logger_hooks * hooks;
 };
+
 
 /*****************************************************************************
  * FUNCTIONS
