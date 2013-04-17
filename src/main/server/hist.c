@@ -298,7 +298,8 @@ bool linear_histogram_get_thresholds_for_subtotal(linear_histogram* h, uint64_t 
 
 	uint64_t bucket_subtotal = h->count[i] - (count - subtotal);
 
-	*p_mid_tenths_pct = (bucket_subtotal * 1000) / h->count[i];
+	// Round up to nearest tenth of a percent.
+	*p_mid_tenths_pct = ((bucket_subtotal * 1000) + h->count[i] - 1) / h->count[i];
 
 	return i == h->num_buckets - 1;
 }
