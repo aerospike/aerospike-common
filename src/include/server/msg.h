@@ -24,7 +24,8 @@ typedef enum msg_field_type_t {
 	M_FT_BUF = 6,
 	M_FT_ARRAY_UINT32 = 7,
 	M_FT_ARRAY_UINT64 = 8,
-	M_FT_ARRAY_BUF = 9
+	M_FT_ARRAY_STR = 9,
+	M_FT_ARRAY_BUF = 10
 } msg_field_type;
 
 // this is somewhat of a helper, because 
@@ -63,22 +64,27 @@ typedef struct msg_field_template_t {
 typedef msg_field_template msg_template;
 
 //
+// Types for string and buffer arrays.
 //
-//
+
+typedef struct msg_str_array_s {
+	uint32_t	alloc_size;			 // number of bytes allocated
+	uint32_t	used_size;			 // bytes used in the string array
+	uint32_t	len;				 // number of string offsets
+	uint32_t	offset[];			 // array of pointers to the strings
+} msg_str_array;
 
 typedef struct msg_pbuf_s {
 	uint32_t	len;
 	uint8_t		data[];
 } msg_pbuf;
 
-
 typedef struct msg_buf_array_s {
-	uint32_t    alloc_size;          // number of bytes allocated
-	uint32_t	used_size;			 // bytes used in the buffer
-	uint32_t	len; 				 // number of string offsets
-	uint32_t    offset[];            
-} msg_buf_array; 
-
+	uint32_t	alloc_size;			 // number of bytes allocated
+	uint32_t	used_size;			 // bytes used in the buffer array
+	uint32_t	len;				 // number of string offsets
+	uint32_t	offset[];			 // array of pointers to the buffers
+} msg_buf_array;
 
 // This is a very simple linear system for representing a message
 // Insert/read efficiency is paramount, but we think messages will tend
@@ -102,6 +108,7 @@ typedef struct msg_field_t {
 		uint8_t		*buf;
 		uint32_t    *ui32_a;
 		uint64_t    *ui64_a;
+		msg_str_array *str_a;
 		msg_buf_array *buf_a;
 	} u;
 	void 		*free;  // this is a pointer that must be freed on destruction,
@@ -204,13 +211,17 @@ extern int msg_get_uint32_array_size(msg *m, int field_id, int *size);
 extern int msg_get_uint32_array(msg *m, int field_id, const int index, uint32_t *r);
 extern int msg_get_uint64_array_size(msg *m, int field_id, int *size);
 extern int msg_get_uint64_array(msg *m, int field_id, const int index, uint64_t *r);
+extern int msg_get_str_array_size(msg *m, int field_id, int *size);
+extern int msg_get_str_array(msg *m, int field_id, const int index, char **r, size_t *len, msg_get_type type);  // this length is strlen+1, the allocated size
+extern int msg_get_str_len_array(msg *m, int field_id, const int index, size_t *len);  // this length is strlen+1, the allocated size
 extern int msg_get_buf_array_size(msg *m, int field_id, int *size);
-extern int msg_get_buf_array(msg *m, int field_id, const int index, uint8_t **r, size_t *len, msg_get_type type);  // this length is strlen+1, the allocated size
-
+extern int msg_get_buf_array(msg *m, int field_id, const int index, uint8_t **r, size_t *len, msg_get_type type);
 extern int msg_set_uint32_array_size(msg *m, int field_id, const int size);
 extern int msg_set_uint32_array(msg *m, int field_id, const int index, const uint32_t v);
 extern int msg_set_uint64_array_size(msg *m, int field_id, const int size);
 extern int msg_set_uint64_array(msg *m, int field_id, const int index, const uint64_t v);
+extern int msg_set_str_array_size(msg *m, int field_id, const int size, const int total_len);
+extern int msg_set_str_array(msg *m, int field_id, const int index, const char *v);
 extern int msg_set_buf_array_size(msg *m, int field_id, const int size, const int elem_size);
 extern int msg_set_buf_array(msg *m, int field_id, const int index, const uint8_t *v, size_t len);
 

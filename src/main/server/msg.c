@@ -246,7 +246,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 					}
 					else {
 						mf->u.buf = (uint8_t *) buf; // I bless this cast
-						mf->rc_free = mf->free = 0;						
+						mf->rc_free = mf->free = 0;
 					}
 					break;
 				case M_FT_ARRAY_UINT32:
@@ -267,7 +267,7 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 					}
 					else {
 						mf->u.ui32_a = (uint32_t *) buf; // I bless this cast
-						mf->rc_free = mf->free = 0;						
+						mf->rc_free = mf->free = 0;
 					}
 					
 					break;
@@ -290,11 +290,33 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 					}
 					else {
 						mf->u.ui64_a = (uint64_t *) buf; // I bless this cast
-						mf->rc_free = mf->free = 0;						
+						mf->rc_free = mf->free = 0;
 					}
 
 					break;
-					
+
+				case M_FT_ARRAY_STR:
+					mf->field_len = flen;
+					if (copy) {
+						if (m->bytes_alloc - m->bytes_used >= flen) {
+							mf->u.str_a = (msg_str_array *) (((uint8_t *)m) + m->bytes_used);
+							m->bytes_used += flen;
+							mf->free = mf->rc_free = 0;
+						}
+						else {
+							mf->u.str_a = cf_malloc(flen);
+							cf_assert(mf->u.str_a, CF_MSG, CF_THR, CF_WARNING, "malloc");
+							mf->free = mf->u.str_a;
+							mf->rc_free = 0;
+						}
+						memcpy(mf->u.str_a, buf, flen);
+					}
+					else {
+						mf->u.str_a = (msg_str_array *) buf; // I bless this cast
+						mf->rc_free = mf->free = 0;
+					}
+					break;
+
 				case M_FT_ARRAY_BUF:
 					mf->field_len = flen;
 					if (copy) {
@@ -313,10 +335,8 @@ msg_parse(msg *m, const uint8_t *buf, const size_t buflen, bool copy)
 					}
 					else {
 						mf->u.buf_a = (msg_buf_array *) buf; // I bless this cast
-						mf->rc_free = mf->free = 0;						
+						mf->rc_free = mf->free = 0;
 					}
-					
-					
 					break;
 					
 				default:
@@ -371,6 +391,7 @@ msg_get_wire_field_size(const msg_field *mf) {
 		case M_FT_BUF:
 		case M_FT_ARRAY_UINT32:
 		case M_FT_ARRAY_UINT64:
+		case M_FT_ARRAY_STR:
 		case M_FT_ARRAY_BUF:
 			if (mf->field_len >= ( 1 << 24 ))
 				cf_debug(CF_MSG,"field length %d too long, not yet supported", mf->field_len);
@@ -434,10 +455,12 @@ msg_stamp_field(uint8_t *buf, const msg_field *mf)
 			flen = mf->field_len;
 			memcpy(buf, mf->u.str, flen); 
 			break;
+
 		case M_FT_BUF:
 			flen = mf->field_len;
 			memcpy(buf, mf->u.buf, flen); 
 			break;
+
 		case M_FT_ARRAY_UINT32:
 			flen = mf->field_len;
 			memcpy(buf, mf->u.ui32_a, flen); 
@@ -448,9 +471,14 @@ msg_stamp_field(uint8_t *buf, const msg_field *mf)
 			memcpy(buf, mf->u.ui64_a, flen); 
 			break;
 
+		case M_FT_ARRAY_STR:
+			flen = mf->field_len;
+			memcpy(buf, mf->u.str_a, flen); 
+			break;
+
 		case M_FT_ARRAY_BUF:
 			flen = mf->field_len;
-			memcpy(buf, mf->u.ui64_a, flen); 
+			memcpy(buf, mf->u.buf_a, flen); 
 			break;
 			
 		default:
@@ -1054,6 +1082,194 @@ msg_set_uint64_array(msg *m, int field_id, const int index, const uint64_t v)
 	return(0);
 }
 
+msg_str_array *
+msg_str_array_create(int n_strs, int total_len)
+{
+	int len = sizeof(msg_str_array) + n_strs * sizeof(uint32_t) + total_len;
+	msg_str_array *str_a = cf_malloc(len);
+	if (!str_a)	return(0);
+	str_a->alloc_size = len;
+	str_a->used_size = sizeof(msg_str_array) + (n_strs * sizeof(uint32_t));
+
+	str_a->len = n_strs;
+	for (int i = 0; i < n_strs ; i++)
+		str_a->offset[i] = 0;
+
+	return(str_a);
+}
+
+int
+msg_str_array_set(msg_str_array *str_a, int idx, const char *v)
+{
+	if (idx >= str_a->len) {
+		cf_info(CF_MSG, "msg_str_array: idx %u too large",idx);
+		return(-1);
+	}
+
+	size_t len = strlen(v) + 1;
+	if (str_a->used_size + len > str_a->alloc_size) {
+		cf_info(CF_MSG, "todo: allow resize of outgoing str arrays");
+		return(-1);
+	}
+
+	str_a->offset[idx] = str_a->used_size;
+	char *data = ((char *) str_a) + str_a->offset[idx];
+	strncpy(data, v, len);
+
+	str_a->used_size += len;
+
+	return(0);
+}
+
+int
+msg_str_array_get(msg_str_array *str_a, int idx, char **r, size_t *len)
+{
+	if (idx > str_a->len) {
+		cf_info(CF_MSG, "msg_str_array_get: idx %u too large",idx);
+		return(-1);
+	}
+	if (str_a->offset[idx] == 0) {
+		cf_info(CF_MSG, "msg_str_array: idx %u not set",idx);
+		return(-2);
+	}
+
+	*r = ((char *) str_a) + str_a->offset[idx];
+	*len = strlen(*r) + 1;
+
+	return(0);
+}
+
+int
+msg_get_str_array_size(msg *m, int field_id, int *size)
+{
+	VALIDATE(m, field_id, M_FT_ARRAY_STR);
+
+	msg_field *mf = &(m->f[field_id]);
+	if (mf->is_set == false) {
+		cf_info(CF_MSG, "msg_str_array: field not set");
+		return(-2);
+	}
+
+	if (mf->u.str_a == 0) {
+		cf_info(CF_MSG, "no str array");
+		return(-1);
+	}
+
+	msg_str_array *str_a = mf->u.str_a;
+
+	*size = str_a->len;
+
+	return(0);
+}
+
+int
+msg_get_str_array(msg *m, int field_id, const int index, char **r, size_t *len, msg_get_type type)  // this length is strlen+1, the allocated size
+{
+	VALIDATE(m, field_id, M_FT_ARRAY_STR);
+
+	msg_field *mf = &(m->f[field_id]);
+	if (mf->is_set == false) {
+		cf_info(CF_MSG, "msg_str_array: field not set");
+		return(-2);
+	}
+	if (mf->u.str_a == 0) {
+		cf_info(CF_MSG, "no str array");
+		return(-1);
+	}
+
+	msg_str_array *str_a = mf->u.str_a;
+
+	char *b;
+	if (0 != msg_str_array_get(str_a, index, &b, len)) return(-1);
+
+	switch (type) {
+		case MSG_GET_DIRECT:
+			*r = b;
+			break;
+		case MSG_GET_COPY_RC:
+			*r = cf_rc_alloc(*len);
+			memcpy(*r, b, *len);
+			break;
+		case MSG_GET_COPY_MALLOC:
+			*r = cf_malloc(*len);
+			memcpy(*r, b, *len);
+			break;
+	}
+
+	return(0);
+}
+
+int
+msg_get_str_len_array(msg *m, int field_id, const int index, size_t *len)  // this length is strlen+1, the allocated size
+{
+	VALIDATE(m, field_id, M_FT_ARRAY_STR);
+
+	msg_field *mf = &(m->f[field_id]);
+	if (mf->is_set == false) {
+		cf_info(CF_MSG, "msg_str_array: field not set");
+		*len = 0;
+		return(-2);
+	}
+	if (mf->u.str_a == 0) {
+		cf_info(CF_MSG, "no str array");
+		return(-1);
+	}
+	if (len) {
+		char *b = NULL;
+		if (0 != msg_str_array_get(mf->u.str_a, index, &b, len)) return(-1);
+		// (If found, value is thrown away, and length is set.)
+	}
+
+	return(0);
+}
+
+int
+msg_set_str_array_size(msg *m, int field_id, const int size, const int total_len)
+{
+	VALIDATE(m, field_id, M_FT_ARRAY_STR);
+
+	if ((size <= 0) || (total_len <= 0)) {
+		cf_warning(CF_MSG, "Illegal size parameters");
+		return(-1);
+	}
+
+	msg_field *mf = &(m->f[field_id]);
+	if (mf->is_set == false) {
+		msg_str_array *str_a = msg_str_array_create(size, total_len);
+		if (str_a == 0) return(-1);
+		mf->u.str_a = str_a;
+		mf->free = str_a;
+		mf->rc_free = 0;
+		mf->field_len = str_a->used_size;
+
+		mf->is_set = true;
+	}
+	else {
+		cf_info(CF_MSG, "msg_str_array: does not support resize");
+		return(-1);
+	}
+
+	return(0);
+}
+
+int
+msg_set_str_array(msg *m, int field_id, const int index, const char *v)
+{
+	VALIDATE(m, field_id, M_FT_ARRAY_STR);
+
+	msg_field *mf = &(m->f[field_id]);
+	if (mf->is_set == false) {
+		cf_warning(CF_MSG, "msg_str_array: must set length first");
+		return(-1);
+	}
+	msg_str_array *str_a = mf->u.str_a;
+
+	if (0 != msg_str_array_set(str_a, index, v)) return(-1);
+
+	mf->field_len = str_a->used_size;
+
+	return(0);
+}
 
 msg_buf_array *
 msg_buf_array_create(int n_bufs, int buf_len)
@@ -1072,7 +1288,7 @@ msg_buf_array_create(int n_bufs, int buf_len)
 }
 
 int
-msg_buf_array_set(msg_buf_array *buf_a, int idx, const uint8_t *v, int len )
+msg_buf_array_set(msg_buf_array *buf_a, int idx, const uint8_t *v, int len)
 {
 	if (idx >= buf_a->len) {
 		cf_info(CF_MSG, "msg_buf_array: idx %u too large",idx);
@@ -1103,7 +1319,7 @@ msg_buf_array_get(msg_buf_array *buf_a, int idx, uint8_t **r, size_t *len)
 	}
 	if (buf_a->offset[idx] == 0) {
 		cf_info(CF_MSG, "msg_buf_array: idx %u not set",idx);
-		return(-1);
+		return(-2);
 	}
 	
 	msg_pbuf *pbuf = (msg_pbuf *) (((uint8_t *) buf_a) + buf_a->offset[idx]);
@@ -1122,7 +1338,7 @@ msg_get_buf_array_size(msg *m, int field_id, int *size)
 	msg_field *mf = &(m->f[field_id]);
 	if (mf->is_set == false) {
 		cf_info(CF_MSG, "msg_buf_array: field not set");
-		return(-1);
+		return(-2);
 	}
 
 	if (mf->u.buf_a == 0) {
@@ -1145,7 +1361,7 @@ msg_get_buf_array(msg *m, int field_id, const int index, uint8_t **r, size_t *le
 	msg_field *mf = &(m->f[field_id]);	
 	if (mf->is_set == false) {
 		cf_info(CF_MSG, "msg_buf_array: field not set");
-		return(-1);
+		return(-2);
 	}
 	if (mf->u.buf_a == 0) {
 		cf_info(CF_MSG, "no buf array");
@@ -1170,8 +1386,8 @@ msg_get_buf_array(msg *m, int field_id, const int index, uint8_t **r, size_t *le
 			memcpy(*r, b, *len);
 			break;
 	}
-	return(0);
-	
+
+	return(0);	
 }
 
 int 
@@ -1194,10 +1410,9 @@ msg_set_buf_array_size(msg *m, int field_id, const int size, const int elem_size
 		mf->field_len = buf_a->used_size; 
 		
 		mf->is_set = true;
-		
 	}
 	else {
-		cf_info(CF_MSG, "msg str array: does not support resize");
+		cf_info(CF_MSG, "msg_buf_array: does not support resize");
 		return(-1);
 	}
 	
@@ -1211,7 +1426,7 @@ msg_set_buf_array(msg *m, int field_id, const int index, const uint8_t *v, size_
 	
 	msg_field *mf = &(m->f[field_id]);
 	if (mf->is_set == false) {
-		cf_warning(CF_MSG, "msg buf array: must set length first");
+		cf_warning(CF_MSG, "msg_buf_array: must set length first");
 		return(-1);
 	}
 	msg_buf_array *buf_a = mf->u.buf_a;
