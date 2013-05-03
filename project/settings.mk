@@ -9,11 +9,13 @@ export ARFLAGS =
 ###############################################################################
 ##  BUILD ENVIRONMENT                                                        ##
 ###############################################################################
+
 ifeq ($(shell git rev-parse --is-inside-work-tree),true)
 GIT = 1
 REPO = $(shell git rev-parse --show-toplevel)
 endif
 
+ROOT = .
 NAME = $(shell basename $(CURDIR))
 OS = $(shell uname)
 ARCH = $(shell arch)
@@ -23,9 +25,7 @@ MODULES = modules
 SOURCE  = src
 TARGET  = target
 
-SUBMODULES = $(filter-out .%, $(wildcard $(MODULES)/*))
-
-RULES = $(REPO)/project/rules.makefile
+MODULES = 
 
 ###############################################################################
 ##  BUILD TOOLS                                                              ##
@@ -140,7 +140,6 @@ endef
 define executable
 	@if [ ! -d `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(strip $(CC) \
-		# $(addprefix -I, $(SUBMODULES:%=%/$(TARGET_INCL))) \
 		$(addprefix -I, $(INC_PATH)) \
 		$(addprefix -L, $(SUBMODULES:%=%/$(TARGET_LIB))) \
 		$(addprefix -L, $(LIB_PATH)) \

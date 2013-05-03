@@ -21,17 +21,46 @@
  *****************************************************************************/
 #pragma once
 
-#include <msgpack.h>
-#include <aerospike/as_serializer.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
+typedef struct cf_mutex_hooks_s {
+    // Allocate and initialize new lock.
+    void *(*alloc)(void);
+    // Release all storage held in 'lock'.
+    void (*free)(void *lock);
+    // Acquire an already-allocated lock at 'lock'.
+    int (*lock)(void *lock);
+    // Release a lock at 'lock'.
+    int (*unlock)(void *lock);
+} cf_mutex_hooks;
 
-/******************************************************************************
- * FUNCTIONS
- ******************************************************************************/
+extern cf_mutex_hooks* g_mutex_hooks;
 
-as_serializer * as_msgpack_new();
+static inline void cf_hook_mutex(cf_mutex_hooks *hooks) {
+    g_mutex_hooks = hooks;
+}
 
-as_serializer * as_msgpack_init(as_serializer *);
+static inline void *  cf_hooked_mutex_alloc() {
+    return g_mutex_hooks ? g_mutex_hooks->alloc() : 0;
+}
 
-int as_msgpack_pack_val(msgpack_packer *, as_val *);
-int as_msgpack_object_to_val(msgpack_object *, as_val **);
+static inline void cf_hooked_mutex_free(void *lock) {
+    if (lock) {
+        g_mutex_hooks->free(lock);
+    }
+}
+
+static inline int cf_hooked_mutex_lock(void *lock) {
+    return lock ? g_mutex_hooks->lock(lock) : 0;
+}
+
+static inline int cf_hooked_mutex_unlock(void *lock) {
+    return lock ? g_mutex_hooks->unlock(lock) : 0;
+}
+
+#ifdef __cplusplus
+}
+#endif
+

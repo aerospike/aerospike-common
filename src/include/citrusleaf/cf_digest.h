@@ -1,29 +1,27 @@
-/*
- *      cf_digest.h
- *
+/******************************************************************************
  * Copyright 2008-2013 by Aerospike.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy 
+ * of this software and associated documentation files (the "Software"), to 
+ * deal in the Software without restriction, including without limitation the 
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
+ * sell copies of the Software, and to permit persons to whom the Software is 
+ * furnished to do so, subject to the following conditions:
  * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies or substantial portions of the Software.
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- */
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ *****************************************************************************/
+#pragma once
 
-/**
+/*
  * Cryptographic message digests
  * The intent is to provide an algorithm-neutral API for the computation of
  * cryptographic digests of arbitrary bytes.  Consequently, we define the
@@ -31,7 +29,6 @@
  * The actual computation is done in one shot by calling cf_digest_compute().
  */
 
-#pragma once
 #include <stdint.h>
 #include <stddef.h>
 #include <openssl/ripemd.h>
@@ -39,9 +36,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /******************************************************************************
  * CONSTANTS
- ******************************************************************************/
+ *****************************************************************************/
 
 // #define DEBUG_VERBOSE 1
 
@@ -51,7 +52,7 @@
 
 /******************************************************************************
  * TYPES
- ******************************************************************************/
+ *****************************************************************************/
 
 typedef struct cf_digest_s cf_digest;
 
@@ -68,28 +69,22 @@ struct cf_digest_s {
 };
 
 /******************************************************************************
+ * FUNCTIONS
+ *****************************************************************************/
+
+void cf_digest_string(cf_digest *digest, char* output);
+
+/******************************************************************************
  * INLINE FUNCTIONS
- ******************************************************************************/
+ *****************************************************************************/
 
 /**
  * cf_digest_compute
  * Compute the digest of an input 
  */
 static inline void cf_digest_compute(void *data, size_t len, cf_digest *d) {
-	RIPEMD160((const unsigned char *)data, len, (unsigned char *) d->digest);
-
-#ifdef DEBUG_VERBOSE	
-	fprintf(stderr, "digest computation: len %zu\n",len);
-	uint8_t *buf = data;
-	int i;
-	for (i=0;i<len;i++) {
-		fprintf(stderr, "%02x ",buf[i]);
-		if (i % 16 == 15) fprintf(stderr, "\n");
-	}
-	if (i % 16 != 0) fprintf(stderr, "\n");
-	
-	fprintf(stderr, "digest output : %"PRIx64"\n",*(uint64_t *)d);
-#endif	
+	RIPEMD160((const unsigned char *) data, len, (unsigned char *) d->digest);
+    char *x = (char *)d; bzero(x + 16, 4);
 }
 
 
@@ -98,32 +93,17 @@ static inline void cf_digest_compute(void *data, size_t len, cf_digest *d) {
  * (often the set and the key)
  */
 static inline void cf_digest_compute2(void *data1, size_t len1, void *data2, size_t len2, cf_digest *d) {
-	RIPEMD160_CTX c;
-	RIPEMD160_Init(&c);
-	RIPEMD160_Update(&c, data1, len1);
-	RIPEMD160_Update(&c, data2, len2);
-	RIPEMD160_Final( (unsigned char *)(d->digest), &c);
-	
-#ifdef DEBUG_VERBOSE	
-	fprintf(stderr, "digest computation2: part1 len %zu\n",len1);
-	uint8_t *buf = data1;
-	int i;
-	for (i=0;i<len1;i++) {
-		fprintf(stderr, "%02x ",buf[i]);
-		if (i % 16 == 15) fprintf(stderr, "\n");
+	if (len1 == 0) {
+		RIPEMD160((const unsigned char *) data2, len2, (unsigned char *) d->digest);
 	}
-	if (i % 16 != 0) fprintf(stderr, "\n");
-	
-	fprintf(stderr, "digest computation2: part2 len %zu\n",len2);
-	buf = data2;
-	for (i=0;i<len2;i++) {
-		fprintf(stderr, "%02x ",buf[i]);
-		if (i % 16 == 15) fprintf(stderr, "\n");
+	else {
+		RIPEMD160_CTX c;
+		RIPEMD160_Init(&c);
+		RIPEMD160_Update(&c, data1, len1);
+		RIPEMD160_Update(&c, data2, len2);
+		RIPEMD160_Final( (unsigned char *)(d->digest), &c);
 	}
-	if (i % 16 != 0) fprintf(stderr, "\n");
-	
-	fprintf(stderr, "digest output : %"PRIx64"\n",*(uint64_t *)d);
-#endif	
+    char *x = (char *)d; bzero(x + 16, 4);
 }
 
 static inline uint32_t cf_digest_gethash(cf_digest *d, uint32_t MASK)  {
@@ -157,3 +137,9 @@ static inline cl_partition_id cl_partition_getid(uint32_t n_partitions, cf_diges
 	cl_partition_id r = *d_int & (n_partitions - 1);
     return(r);
 }
+
+/*****************************************************************************/
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

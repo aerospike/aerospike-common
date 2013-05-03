@@ -1,11 +1,37 @@
+/******************************************************************************
+ * Copyright 2008-2013 by Aerospike.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy 
+ * of this software and associated documentation files (the "Software"), to 
+ * deal in the Software without restriction, including without limitation the 
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
+ * sell copies of the Software, and to permit persons to whom the Software is 
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ *****************************************************************************/
 #pragma once
 
 #include <stdlib.h>
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include <cf_atomic.h>
-#include <cf_shash.h>
+#include <citrusleaf/cf_atomic.h>
+#include <citrusleaf/cf_shash.h>
+
+
+/******************************************************************************
+ * TYPES
+ ******************************************************************************/
 
 // forward decls
 struct as_list_hooks_s;
@@ -33,15 +59,17 @@ struct as_val_s {
     cf_atomic32 count;
 };
 
-// arraylist:
-// Structure for arraylist -- note that all fields are in terms of elements,
-// not in terms of bytes.  Total size (bytes) allocated for the element
-// array is   sizeof( as_val * ) * capacity
-// The Field "block_size" is misleading -- it is NOT bytes, but it is the unit
-// of allocation to be used each time the list grows.  So, the block_size
-// might be 8 (for example), which means we'll grow by
-//   new_delta_bytes = multiplier * (sizeof( as_val *) * block_size)
-// each time we want to grow the array (with realloc).
+/*
+ * arraylist:
+ * Structure for arraylist -- note that all fields are in terms of elements,
+ * not in terms of bytes.  Total size (bytes) allocated for the element
+ * array is   sizeof( as_val * ) * capacity
+ * The Field "block_size" is misleading -- it is NOT bytes, but it is the unit
+ * of allocation to be used each time the list grows.  So, the block_size
+ * might be 8 (for example), which means we'll grow by
+ *   new_delta_bytes = multiplier * (sizeof( as_val *) * block_size)
+ * each time we want to grow the array (with realloc).
+ */
 struct as_arraylist_source_s {
     struct as_val_s **   elements; // An allocated area for ptrs to list elements
     uint32_t    size;           // The current array size (element count)
@@ -134,14 +162,8 @@ struct as_iterator_s {
     const struct as_iterator_hooks_s * hooks;
 };
 
-/******************************************************************************
- * TYPES
- ******************************************************************************/
-
 typedef enum as_val_t as_val_t;
 typedef struct as_val_s as_val;
-
-
 
 typedef void (*as_val_destroy_func) (as_val *v);
 typedef uint32_t (*as_val_hash_func) (const as_val *v);

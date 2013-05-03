@@ -1,8 +1,24 @@
-/******************************************************************************
- * Copyright 2008-2012 by Aerospike.  All rights reserved.
- * THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE.  THE COPYRIGHT NOTICE
- * ABOVE DOES NOT EVIDENCE ANY ACTUAL OR INTENDED PUBLICATION.
- ******************************************************************************/
+/*
+ * Copyright 2008-2013 by Aerospike.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 /**
  * A general purpose hashtable implementation
@@ -10,10 +26,14 @@
  * Just, hopefully, the last reasonable hash table you'll ever need
  */
 
-#include "citrusleaf/cf_shash.h"
-#include "citrusleaf/cf_alloc.h"
-#include <string.h>
+#include <pthread.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include <citrusleaf/cf_shash.h>
+#include <citrusleaf/cf_alloc.h>
 
 /******************************************************************************
  * FUNCTIONS
@@ -32,7 +52,7 @@ int shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t val
 	shash *h;
 	bool mem_tracked = !(flags & SHASH_CR_UNTRACKED);
 
-	h = (mem_tracked ? cf_malloc(sizeof(shash)) : malloc(sizeof(shash)));
+	h = (shash *) (mem_tracked ? cf_malloc(sizeof(shash)) : malloc(sizeof(shash)));
 	if (!h)	return(SHASH_ERR);
 
 	h->elements = 0;
@@ -47,7 +67,7 @@ int shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t val
 		return(SHASH_ERR);
 	}
 	
-	h->table = (mem_tracked ? cf_malloc(sz * SHASH_ELEM_SZ(h)) : malloc(sz * SHASH_ELEM_SZ(h)));
+	h->table = (shash_elem *) (mem_tracked ? cf_malloc(sz * SHASH_ELEM_SZ(h)) : malloc(sz * SHASH_ELEM_SZ(h)));
 
 	if (!h->table) {
 		if (mem_tracked) 
@@ -79,10 +99,10 @@ int shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t val
 		}
 	}
 	else
-		memset( &h->biglock, 0, sizeof( h->biglock ) );
+		memset( (void *) &h->biglock, 0, sizeof( h->biglock ) );
 	
 	if (flags & SHASH_CR_MT_MANYLOCK) {
-		h->lock_table = (mem_tracked ? cf_malloc( sizeof(pthread_mutex_t) * sz) : malloc( sizeof(pthread_mutex_t) * sz));
+		h->lock_table = (pthread_mutex_t *) (mem_tracked ? cf_malloc( sizeof(pthread_mutex_t) * sz) : malloc( sizeof(pthread_mutex_t) * sz));
 		if (! h->lock_table) {
 			if (mem_tracked)
 			  cf_free(h);
@@ -856,7 +876,7 @@ void shash_deleteall_lockfree(shash *h) {
 void shash_destroy(shash *h) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
-	shash_elem *e_table = h->table;
+	shash_elem * e_table = (shash_elem *) h->table;
 	for (uint i=0;i<h->table_len;i++) {
 		if (e_table->next) {
 			shash_elem *e = e_table->next;

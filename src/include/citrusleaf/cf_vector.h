@@ -1,27 +1,25 @@
-/*
- *      cf_vector.h
- *
+/******************************************************************************
  * Copyright 2008-2013 by Aerospike.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy of
- * this software and associated documentation files (the "Software"), to deal in
- * the Software without restriction, including without limitation the rights to
- * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
- * of the Software, and to permit persons to whom the Software is furnished to do
- * so, subject to the following conditions:
+ * Permission is hereby granted, free of charge, to any person obtaining a copy 
+ * of this software and associated documentation files (the "Software"), to 
+ * deal in the Software without restriction, including without limitation the 
+ * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
+ * sell copies of the Software, and to permit persons to whom the Software is 
+ * furnished to do so, subject to the following conditions:
  * 
- * The above copyright notice and this permission notice shall be included in all
- * copies or substantial portions of the Software.
+ * The above copyright notice and this permission notice shall be included in 
+ * all copies or substantial portions of the Software.
  * 
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- *
- */
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * IN THE SOFTWARE.
+ *****************************************************************************/
+#pragma once
 
 /*
  * A general purpose vector
@@ -32,14 +30,15 @@
  * and you can keep adding cool things to it
  */
 
-#pragma once
  
-#include "cf_types.h"
-#include <inttypes.h>
-#include <stdint.h>
 #include <pthread.h>
-#include <stdbool.h>
-#include <stdio.h>
+#include <stdint.h>
+
+#include <citrusleaf/cf_types.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /******************************************************************************
  * CONSTANTS
@@ -82,7 +81,11 @@ struct cf_vector_s {
 	uint8_t *		vector;
 	bool			stack_struct;
 	bool			stack_vector;
-	pthread_mutex_t	LOCK;
+#ifdef EXTERNAL_LOCKS
+    void *          LOCK;           // the lock object
+#else
+    pthread_mutex_t LOCK;           // the mutex lock
+#endif // EXTERNAL_LOCKS
 };
 
 /******************************************************************************
@@ -222,3 +225,9 @@ static inline int cf_vector_integer_append(cf_vector *v, int i) {
 	uint8_t cf_vector##__x[1024]; cf_vector __x; cf_vector_init_smalloc(&__x, __value_len, cf_vector##__x, sizeof(cf_vector##__x), __flags);
 
 #define cf_vector_reset( __v ) (__v)->len = 0; if ( (__v)->flags & VECTOR_FLAG_INITZERO) memset( (__v)->vector, 0, (__v)->alloc_len * (__v)->value_len);
+
+/******************************************************************************/
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

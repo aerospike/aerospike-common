@@ -21,43 +21,63 @@
  *****************************************************************************/
 #pragma once
 
-#include <aerospike/as_map.h>
-#include <aerospike/as_pair.h>
+/*
+ * A simple priority queue implementation, which is simply a set of queues
+ * underneath
+ * This currently doesn't support 'delete' and 'reduce' functionality
+ */
 
-/******************************************************************************
- * TYPES
- ******************************************************************************/
+#include "cf_queue.h"
 
-typedef struct as_hashmap_source_s as_hashmap_source;
-typedef struct as_hashmap_iterator_source_s as_hashmap_iterator_source;
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /******************************************************************************
  * CONSTANTS
  ******************************************************************************/
 
-extern const as_map_hooks      as_hashmap_map;
-extern const as_iterator_hooks as_hashmap_iterator;
+#define CF_QUEUE_PRIORITY_HIGH 1
+#define CF_QUEUE_PRIORITY_MEDIUM 2
+#define CF_QUEUE_PRIORITY_LOW 3
+
+/******************************************************************************
+ * TYPES
+ ******************************************************************************/
+
+typedef struct cf_queue_priority_s cf_queue_priority;
+
+struct cf_queue_priority_s {
+    bool            threadsafe;
+    cf_queue *      low_q;
+    cf_queue *      medium_q;
+    cf_queue *      high_q;
+#ifdef EXTERNAL_LOCKS
+    void *          LOCK;
+#else   
+    pthread_mutex_t LOCK;
+    pthread_cond_t  CV;
+#endif
+};
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-as_map *    as_hashmap_init(as_map *, uint32_t);
-as_map *    as_hashmap_new(uint32_t);
+cf_queue_priority *cf_queue_priority_create(size_t elementsz, bool threadsafe);
+void cf_queue_priority_destroy(cf_queue_priority *q);
+int cf_queue_priority_push(cf_queue_priority *q, void *ptr, int pri);
+int cf_queue_priority_pop(cf_queue_priority *q, void *buf, int mswait);
+int cf_queue_priority_sz(cf_queue_priority *q);
 
-void             as_hashmap_destroy(as_map *); 
+/******************************************************************************
+ * MACROS
+ ******************************************************************************/
 
-uint32_t		as_hashmap_hash(const as_map *m);
-int             as_hashmap_set(as_map * m, const as_val * k, const as_val * v);
-as_val *        as_hashmap_get(const as_map * m, const as_val * k);
-uint32_t        as_hashmap_size(const as_map *);
-int             as_hashmap_clear(as_map *);
+#define CF_Q_PRI_EMPTY(__q) (CF_Q_EMPTY(__q->low_q) && CF_Q_EMPTY(__q->medium_q) && CF_Q_EMPTY(__q->high_q))
+ 
+/******************************************************************************/
 
-as_iterator * as_hashmap_iterator_init(const as_map * m, as_iterator *i );
-as_iterator * as_hashmap_iterator_new(const as_map * m);
-bool as_hashmap_iterator_has_next(const as_iterator * i);
-as_val * as_hashmap_iterator_next(as_iterator * i);
-void as_hashmap_iterator_destroy(as_iterator * i);
-
-
-
+#ifdef __cplusplus
+} // end extern "C"
+#endif

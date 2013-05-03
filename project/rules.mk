@@ -1,5 +1,5 @@
 ###############################################################################
-##  COMMON TARGETS                                                           ##
+##  COMMON RULES                                                             ##
 ###############################################################################
 
 $(TARGET_PATH):
@@ -64,6 +64,10 @@ clean:
 $(TARGET_OBJ)/%.o : %.c | $(TARGET_OBJ) 
 	$(object)
 
+###############################################################################
+##  IMPLICIT RULES                                                           ##
+###############################################################################
+
 .PHONY: all
 
 .DEFAULT_GOAL := all
@@ -79,6 +83,26 @@ $(TARGET_OBJ)/%.o : %.c | $(TARGET_OBJ)
 
 %: 
 	$(executable)
+
+###############################################################################
+##  MODULE RULES                                                             ##
+###############################################################################
+
+.PHONY: modules
+modules: modules-build modules-prepare
+
+.PHONY: modules-build
+modules-build: $(MODULES:%=%-build)
+
+.PHONY: modules-prepare
+modules-prepare: $(MODULES:%=%-prepare)
+
+.PHONY: modules-clean
+modules-clean: $(MODULES:%=%-clean)
+
+###############################################################################
+##  GENERATED VERSION FILE RULES                                             ##
+###############################################################################
 
 $(TARGET_SRC)/version.c: | $(TARGET_SRC)
 	@echo "/**" >>  $@

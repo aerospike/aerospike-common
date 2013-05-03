@@ -1,14 +1,29 @@
-/******************************************************************************
- * Copyright 2008-2012 by Aerospike.  All rights reserved.
- * THIS IS UNPUBLISHED PROPRIETARY SOURCE CODE.  THE COPYRIGHT NOTICE
- * ABOVE DOES NOT EVIDENCE ANY ACTUAL OR INTENDED PUBLICATION.
- ******************************************************************************/
+/*
+ * Copyright 2008-2013 by Aerospike.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of
+ * this software and associated documentation files (the "Software"), to deal in
+ * the Software without restriction, including without limitation the rights to
+ * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
+ * of the Software, and to permit persons to whom the Software is furnished to do
+ * so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 /**
  *  double linked list functionality
  */
 
-#include "citrusleaf/cf_ll.h"
 #include <errno.h>
 #include <pthread.h>
 #include <stdarg.h>
@@ -18,6 +33,8 @@
 #include <strings.h>
 #include <time.h>
 #include <unistd.h>
+
+#include <citrusleaf/cf_ll.h>
 
 /**
  * SYNOPSIS
@@ -37,13 +54,14 @@
  ******************************************************************************/
 
 #ifdef EXTERNAL_LOCKS
-#include "client/citrusleaf/cf_hooks.h"
+#include <citrusleaf/cf_hooks.h>
 #define LL_UNLOCK(_ll) 	if ( _ll->uselock ) { cf_hooked_mutex_unlock(_ll->LOCK); }
 #define LL_LOCK(_ll) 	if ( _ll->uselock ) { cf_hooked_mutex_lock(_ll->LOCK); }
 #else
 #define LL_UNLOCK(_ll) 	if ( _ll->uselock ) { pthread_mutex_unlock(&(_ll->LOCK)); }
 #define LL_LOCK(_ll)	if ( _ll->uselock ) { pthread_mutex_lock(&(_ll->LOCK)); }
 #endif
+
 
 /******************************************************************************
  * FUNCTIONS
