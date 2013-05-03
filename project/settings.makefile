@@ -9,13 +9,14 @@ export ARFLAGS =
 ###############################################################################
 ##  BUILD ENVIRONMENT                                                        ##
 ###############################################################################
+ifeq ($(shell git rev-parse --is-inside-work-tree),true)
+GIT = 1
+REPO = $(shell git rev-parse --show-toplevel)
+endif
 
-ROOT = $(CURDIR)
-NAME = $(shell basename $(ROOT))
+NAME = $(shell basename $(CURDIR))
 OS = $(shell uname)
 ARCH = $(shell arch)
-#DISTRO_NAME = $(shell lsb_release -is)
-#DISTRO_VERS = $(shell lsb_release -rs)
 
 PROJECT = project
 MODULES = modules
@@ -23,6 +24,8 @@ SOURCE  = src
 TARGET  = target
 
 SUBMODULES = $(filter-out .%, $(wildcard $(MODULES)/*))
+
+RULES = $(REPO)/project/rules.makefile
 
 ###############################################################################
 ##  BUILD TOOLS                                                              ##
@@ -83,6 +86,7 @@ TARGET_BIN 	= $(TARGET_BASE)/bin
 TARGET_DOC 	= $(TARGET_BASE)/doc
 TARGET_LIB 	= $(TARGET_BASE)/lib
 TARGET_OBJ 	= $(TARGET_BASE)/obj
+TARGET_SRC 	= $(TARGET_BASE)/src
 TARGET_INCL = $(TARGET_BASE)/include
 
 ###############################################################################
@@ -136,7 +140,7 @@ endef
 define executable
 	@if [ ! -d `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(strip $(CC) \
-		$(addprefix -I, $(SUBMODULES:%=%/$(SOURCE_INCL))) \
+		# $(addprefix -I, $(SUBMODULES:%=%/$(TARGET_INCL))) \
 		$(addprefix -I, $(INC_PATH)) \
 		$(addprefix -L, $(SUBMODULES:%=%/$(TARGET_LIB))) \
 		$(addprefix -L, $(LIB_PATH)) \
@@ -146,7 +150,7 @@ define executable
 		$(CC_FLAGS) \
 		$(CFLAGS) \
 		-o $@ \
-		$^ \
+		$(filter %.o %.a %.so, $^) \
 	)
 endef
 
@@ -157,14 +161,13 @@ define archive
 		$(AR_FLAGS) \
 		$(ARFLAGS) \
 		$@ \
-		$^ \
+		$(filter %.o, $^) \
 	)
 endef
 
 define library
 	@if [ ! -d `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(strip $(CC) -shared \
-		$(addprefix -I, $(SUBMODULES:%=%/$(SOURCE_INCL))) \
 		$(addprefix -I, $(INC_PATH)) \
 		$(addprefix -L, $(SUBMODULES:%=%/$(TARGET_LIB))) \
 		$(addprefix -L, $(LIB_PATH)) \
@@ -172,26 +175,27 @@ define library
 		$(LD_FLAGS) \
 		$(LDFLAGS) \
 		-o $@ \
-		$^ \
+		$(filter %.o, $^) \
 	)
 endef
 
 define object
 	@if [ ! -d `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(strip $(CC) \
-		$(addprefix -I, $(SUBMODULES:%=%/$(SOURCE_INCL))) \
 		$(addprefix -I, $(INC_PATH)) \
 		$(addprefix -L, $(SUBMODULES:%=%/$(TARGET_LIB))) \
 		$(addprefix -L, $(LIB_PATH)) \
 		$(CC_FLAGS) \
 		$(CFLAGS) \
 		-o $@ \
-		-c $^ \
+		-c $(filter %.c %.cpp, $^)  \
 	)
 endef
 
 define make_each
 	@for i in $(1); do \
-		make -C $$i $(2);\
+		if [ -e "$$i/Makefile" ]; then \
+			make -C $$i $(2);\
+		fi \
 	done;
 endef
