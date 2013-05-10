@@ -4,7 +4,8 @@ include project/settings.mk
 ###############################################################################
 
 # Modules
-# MODULES = 
+MSGPACK := 
+MODULES := MSGPACK
 
 # Overrride optimizations via: make O=n
 O=3
@@ -32,7 +33,7 @@ CFLAGS = -O$(O)
 # LDFLAGS = 
 
 # Include Paths
-# INC_PATH +=
+INC_PATH += $(MSGPACK)/src
 
 # Library Paths
 # LIB_PATH +=
@@ -155,4 +156,4 @@ $(TARGET_INCL)/aerospike/%.h:: $(SOURCE_INCL)/aerospike/%.h | $(TARGET_INCL)/aer
 	cp -p $^ $(TARGET_INCL)/aerospike
 
 ###############################################################################
-include project/test.mk project/rules.mk
+include project/modules.mk project/test.mk project/rules.mk

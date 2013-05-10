@@ -15,7 +15,6 @@ GIT = 1
 REPO = $(shell git rev-parse --show-toplevel)
 endif
 
-ROOT = .
 NAME = $(shell basename $(CURDIR))
 OS = $(shell uname)
 ARCH = $(shell arch)
