@@ -27,16 +27,16 @@
 #include <citrusleaf/cf_alloc.h>
 #include <aerospike/as_boolean.h>
 
-#include "internal.h"
-
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
  
-extern inline bool as_boolean_tobool(const as_boolean * b);
-extern inline uint32_t as_boolean_hash(const as_boolean * b) ;
-extern inline as_val * as_boolean_toval(const as_boolean * b);
-extern inline as_boolean * as_boolean_fromval(const as_val * v);
+extern inline void          as_boolean_destroy(as_boolean * b);
+
+extern inline bool          as_boolean_tobool(const as_boolean * b);
+
+extern inline as_val *      as_boolean_toval(const as_boolean * b);
+extern inline as_boolean *  as_boolean_fromval(const as_val * v);
 
 /******************************************************************************
  * FUNCTIONS
@@ -55,18 +55,15 @@ as_boolean * as_boolean_new(bool b) {
     return v;
 }
 
-// helper function
-void as_boolean_destroy(as_boolean * b) {
-	as_val_val_destroy( (as_val *) b );
-    return;
-}
+
 
 void as_boolean_val_destroy(as_val *v) {
 	return;
 }
 
-uint32_t as_boolean_val_hash(const as_val * v) {
-    return as_boolean_hash((const as_boolean *)v);
+uint32_t as_boolean_val_hashcode(const as_val * v) {
+    as_boolean * b = as_boolean_fromval(v);
+    return b != NULL && b->value ? 1 : 0;
 }
 
 char * as_boolean_val_tostring(const as_val * v) {

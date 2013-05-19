@@ -26,74 +26,48 @@
 
 #include <citrusleaf/cf_alloc.h>
 #include <aerospike/as_list.h>
+#include <aerospike/as_map.h>
 #include <aerospike/as_util.h>
-
-#include "internal.h"
 
 /******************************************************************************
  * INLINE FUNCTIONS
- ******************************************************************************/
+ *****************************************************************************/
 
-extern inline uint32_t as_list_size(as_list * l) ;
-extern inline int as_list_append(as_list * l, as_val * v) ;
-extern inline int as_list_prepend(as_list * l, as_val * v) ;
-extern inline as_val * as_list_get(const as_list * l, const uint32_t i) ;
-extern inline int as_list_set(as_list * l, const uint32_t i, as_val * v) ;
-extern inline as_val * as_list_head(const as_list * l) ;
-extern inline as_list * as_list_tail(const as_list * l) ;
-extern inline as_list * as_list_drop(const as_list * l, uint32_t n) ;
-extern inline as_list * as_list_take(const as_list * l, uint32_t n) ;
-extern inline void as_list_foreach(const as_list * l, void * context, bool (* foreach)(as_val *, void *)) ;
+extern inline void          as_list_destroy(as_list * l);
+
+extern inline uint32_t      as_list_size(as_list * l);
+extern inline int           as_list_append(as_list * l, as_val * v);
+extern inline int           as_list_prepend(as_list * l, as_val * v);
+extern inline as_val *      as_list_get(const as_list * l, const uint32_t i);
+extern inline int           as_list_set(as_list * l, const uint32_t i, as_val * v);
+extern inline as_val *      as_list_head(const as_list * l);
+extern inline as_list *     as_list_tail(const as_list * l);
+extern inline as_list *     as_list_drop(const as_list * l, uint32_t n);
+extern inline as_list *     as_list_take(const as_list * l, uint32_t n);
+extern inline void          as_list_foreach(const as_list * l, void * context, bool (* foreach)(as_val *, void *));
 extern inline as_iterator * as_list_iterator_init(as_iterator *i, const as_list * l);
-extern inline as_iterator * as_list_iterator_new(const as_list * l) ;
-extern inline uint32_t as_list_hash(const as_list * l) ;
-extern inline as_val * as_list_toval(as_list * l) ;
-extern inline as_list * as_list_fromval(as_val * v) ;
+extern inline as_iterator * as_list_iterator_new(const as_list * l);
+
+extern inline int           as_list_add_string(as_list * l, const char * s);
+extern inline int           as_list_add_integer(as_list * l, int64_t i);
+extern inline int           as_list_add_list(as_list * l, as_list * l2);
+extern inline int           as_list_add_map(as_list * l, as_map * m);
+
+extern inline as_val *      as_list_toval(as_list * l);
+extern inline as_list *     as_list_fromval(as_val * v);
 
 /******************************************************************************
  * FUNCTIONS
- ******************************************************************************/
+ *****************************************************************************/
 
-as_list * as_list_init(as_list *l, void *source, const as_list_hooks *h) {
-    as_val_init(&l->_, AS_LIST, false /*is_malloc*/);
-    l->hooks = h;
-    l->u.generic = source;
-    return l;
+void as_list_val_destroy(as_val * v) {
+    as_list * l = as_list_fromval((as_val *) v);
+    as_util_hook(destroy, false, l);
 }
 
-as_list * as_list_new(void *source, const as_list_hooks *h) {
-    as_list *l = (as_list *) malloc(sizeof(as_list));
-    as_val_init(&l->_, AS_LIST, true /*is_malloc*/);
-    l->hooks = h;
-    l->u.generic = source;
-    return l;
-}
-
-//
-// helper function, call this
-void as_list_destroy(as_list *l) {
-	as_val_val_destroy( (as_val *) l );
-}
-
-void *as_list_source(const as_list *l) {
-    return( l->u.generic );
-}
-
-/******************************************************************************
- * STATIC FUNCTIONS
- ******************************************************************************/
-
-//
-// calls the implementations destroy
-// not for external use
- 
-void as_list_val_destroy(as_val *v) {
-    as_list *l = (as_list *) v;
-    as_util_hook(destroy, 1, l);
-}
- 
-uint32_t as_list_val_hash(const as_val * v) {
-    return as_list_hash((const as_list *) v);
+uint32_t as_list_val_hashcode(const as_val * v) {
+    as_list * l = as_list_fromval((as_val *) v);
+    return as_util_hook(hashcode, 0, l);
 }
 
 char * as_list_val_tostring(const as_val * v) {

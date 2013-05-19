@@ -22,40 +22,29 @@
 
 #pragma once
 
-#include <aerospike/as_val.h>
+#include <citrusleaf/cf_shash.h>
+#include <aerospike/as_hashmap.h>
 
-/*****************************************************************************
+/******************************************************************************
  * TYPES
- *****************************************************************************/
+ ******************************************************************************/
 
-struct as_list_s;
+struct as_iterator_s;
 
-/**
- * A node in a linked list. The head contains the value, 
- * the tail is the remainder of the list. The tails must be a linkedlist.
- */
-struct as_linkedlist_s {
-    as_val *            head;
-    struct as_list_s *  tail;
+struct as_hashmap_iterator_s {
+    shash * h;
+    shash_elem * curr;
+    shash_elem * next;
+    uint32_t pos;
+    uint32_t size;
 };
 
-typedef struct as_linkedlist_s as_linkedlist;
+typedef struct as_hashmap_iterator_s as_hashmap_iterator;
 
 /******************************************************************************
  * FUNCTIONS
- ******************************************************************************/
+ *****************************************************************************/
 
-/**
- * Initialize a list as a linkedlist.
- */
-struct as_list_s * as_linkedlist_init(struct as_list_s *, as_val *, struct as_list_s *);
+struct as_iterator_s * as_hashmap_iterator_new(const as_hashmap *);
 
-/**
- * Create a new list as a linkedlist.
- */
-struct as_list_s * as_linkedlist_new(as_val *, struct as_list_s *);
-
-/**
- * Free the list and associated resources.
- */
-void as_linkedlist_destroy(struct as_list_s *);
+struct as_iterator_s * as_hashmap_iterator_init(const as_hashmap *, struct as_iterator_s *);

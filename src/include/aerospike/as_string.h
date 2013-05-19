@@ -19,6 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *****************************************************************************/
+
 #pragma once
 
 #include <sys/types.h>
@@ -34,39 +35,43 @@
 typedef struct as_string_s as_string;
 
 struct as_string_s {
-    as_val _;
-    bool value_is_malloc; 
-    char * value;
-    size_t len;
+    as_val      _;
+    bool        freeable; 
+    char *      value;
+    size_t      len;
 };
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-as_string *    as_string_init(as_string *, char *s, bool is_malloc);
-as_string *   as_string_new(char *, bool is_malloc);
+as_string *     as_string_init(as_string * s, char * cstr, bool freeable);
+as_string *     as_string_new(char * cstr, bool freeable);
 
-void           as_string_destroy(as_string *);
-void    		as_string_val_destroy(as_val *v);
+size_t          as_string_len(as_string * s);
 
-uint32_t as_string_val_hash(const as_val *);
-char *as_string_val_tostring(const as_val *);
+void    		as_string_val_destroy(as_val * v);
+uint32_t        as_string_val_hashcode(const as_val * v);
+char *          as_string_val_tostring(const as_val * v);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
+inline void as_string_destroy(as_string * s) {
+    as_val_val_destroy((as_val *) s);
+}
+
+
+
 inline char * as_string_tostring(const as_string * s) {
     return (s->value);
 }
 
-size_t as_string_len(as_string * s);
 
-uint32_t as_string_hash(const as_string * s);
 
 inline as_val * as_string_toval(const as_string * s) {
-    return (as_val *)s;
+    return (as_val *) s;
 }
 
 inline as_string * as_string_fromval(const as_val * v) {

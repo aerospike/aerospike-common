@@ -45,28 +45,39 @@ INC_PATH += $(MSGPACK)/src
 AEROSPIKE =
 AEROSPIKE += as_val.o
 AEROSPIKE += as_module.o
-AEROSPIKE += as_buffer.o
 AEROSPIKE += as_nil.o
-AEROSPIKE += as_boolean.o
-AEROSPIKE += as_integer.o
-AEROSPIKE += as_string.o
-AEROSPIKE += as_bytes.o
-AEROSPIKE += as_list.o
-AEROSPIKE += as_map.o
-AEROSPIKE += as_rec.o
-AEROSPIKE += as_pair.o
-AEROSPIKE += as_linkedlist.o
-AEROSPIKE += as_arraylist.o
-AEROSPIKE += as_hashmap.o
-AEROSPIKE += as_iterator.o
 AEROSPIKE += as_stream.o
 AEROSPIKE += as_result.o
 AEROSPIKE += as_aerospike.o
-AEROSPIKE += as_serializer.o
-AEROSPIKE += as_msgpack.o
 AEROSPIKE += as_logger.o
 AEROSPIKE += as_memtracker.o
+AEROSPIKE += as_buffer.o
+
+AEROSPIKE += as_serializer.o
+AEROSPIKE += as_msgpack.o
+AEROSPIKE += as_msgpack_serializer.o
+
+AEROSPIKE += as_boolean.o
+AEROSPIKE += as_bytes.o
+AEROSPIKE += as_integer.o
+AEROSPIKE += as_list.o
+AEROSPIKE += as_map.o
+AEROSPIKE += as_string.o
+
+AEROSPIKE += as_pair.o
+AEROSPIKE += as_rec.o
+
+AEROSPIKE += as_arraylist.o
+AEROSPIKE += as_hashmap.o
+AEROSPIKE += as_linkedlist.o
+
+AEROSPIKE += as_iterator.o
+AEROSPIKE += as_linkedlist_iterator.o
+AEROSPIKE += as_arraylist_iterator.o
+AEROSPIKE += as_hashmap_iterator.o
+
 AEROSPIKE += internal.o
+
 
 CITRUSLEAF =
 CITRUSLEAF += cf_b64.o
@@ -123,10 +134,10 @@ $(TARGET_OBJ)/common/aerospike/%.o: $(SOURCE_MAIN)/aerospike/%.c $(SOURCE_INCL)/
 $(TARGET_OBJ)/common/citrusleaf/%.o: $(SOURCE_MAIN)/citrusleaf/%.c $(SOURCE_INCL)/citrusleaf/*.h | modules-prepare 
 	$(object)
 
-$(TARGET_LIB)/libaerospike-common.so: modules-prepare $(AEROSPIKE:%=$(TARGET_OBJ)/common/aerospike/%) $(CITRUSLEAF:%=$(TARGET_OBJ)/common/citrusleaf/%)
+$(TARGET_LIB)/libaerospike-common.so: $(AEROSPIKE:%=$(TARGET_OBJ)/common/aerospike/%) $(CITRUSLEAF:%=$(TARGET_OBJ)/common/citrusleaf/%) | modules-prepare 
 	$(library)
 
-$(TARGET_LIB)/libaerospike-common.a: modules-prepare $(AEROSPIKE:%=$(TARGET_OBJ)/common/aerospike/%) $(CITRUSLEAF:%=$(TARGET_OBJ)/common/citrusleaf/%)
+$(TARGET_LIB)/libaerospike-common.a: $(AEROSPIKE:%=$(TARGET_OBJ)/common/aerospike/%) $(CITRUSLEAF:%=$(TARGET_OBJ)/common/citrusleaf/%) | modules-prepare 
 	$(archive)
 
 # HOOKED COMMON
@@ -135,10 +146,10 @@ $(TARGET_OBJ)/common-hooked/citrusleaf/%.o: CC_FLAGS += -DEXTERNAL_LOCKS
 $(TARGET_OBJ)/common-hooked/citrusleaf/%.o: $(SOURCE_MAIN)/citrusleaf/%.c $(SOURCE_INCL)/citrusleaf/*.h
 	$(object)
 
-$(TARGET_LIB)/libaerospike-common-hooked.so: modules-prepare $(CITRUSLEAF:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%)
+$(TARGET_LIB)/libaerospike-common-hooked.so: $(CITRUSLEAF:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%) | modules-prepare 
 	$(library)
 
-$(TARGET_LIB)/libaerospike-common-hooked.a: modules-prepare $(CITRUSLEAF:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%)
+$(TARGET_LIB)/libaerospike-common-hooked.a: $(CITRUSLEAF:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%) | modules-prepare 
 	$(archive)
 
 # COMMON HEADERS

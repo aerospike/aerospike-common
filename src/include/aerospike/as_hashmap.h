@@ -21,43 +21,35 @@
  *****************************************************************************/
 #pragma once
 
-#include <aerospike/as_map.h>
-#include <aerospike/as_pair.h>
+#include <citrusleaf/cf_shash.h>
 
 /******************************************************************************
  * TYPES
  ******************************************************************************/
 
-typedef struct as_hashmap_source_s as_hashmap_source;
-typedef struct as_hashmap_iterator_source_s as_hashmap_iterator_source;
+struct as_map_s;
 
-/******************************************************************************
- * CONSTANTS
- ******************************************************************************/
+struct as_hashmap_s {
+    shash * h;
+};
 
-extern const as_map_hooks      as_hashmap_map;
-extern const as_iterator_hooks as_hashmap_iterator;
+typedef struct as_hashmap_s as_hashmap;
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-as_map *    as_hashmap_init(as_map *, uint32_t);
-as_map *    as_hashmap_new(uint32_t);
+/**
+ * Initialize a map as a hashmap.
+ */
+struct as_map_s * as_hashmap_init(struct as_map_s *, uint32_t);
 
-void             as_hashmap_destroy(as_map *); 
+/**
+ * Creates a new map as a hashmap.
+ */
+struct as_map_s * as_hashmap_new(uint32_t);
 
-uint32_t		as_hashmap_hash(const as_map *m);
-int             as_hashmap_set(as_map * m, const as_val * k, const as_val * v);
-as_val *        as_hashmap_get(const as_map * m, const as_val * k);
-uint32_t        as_hashmap_size(const as_map *);
-int             as_hashmap_clear(as_map *);
-
-as_iterator * as_hashmap_iterator_init(const as_map * m, as_iterator *i );
-as_iterator * as_hashmap_iterator_new(const as_map * m);
-bool as_hashmap_iterator_has_next(const as_iterator * i);
-as_val * as_hashmap_iterator_next(as_iterator * i);
-void as_hashmap_iterator_destroy(as_iterator * i);
-
-
-
+/**
+ * Free the map and associated resources.
+ */
+void as_hashmap_destroy(struct as_map_s *); 

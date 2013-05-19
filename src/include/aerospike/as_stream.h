@@ -19,29 +19,37 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *****************************************************************************/
+
 #pragma once
 
-#include <aerospike/as_iterator.h>
+#include <stdlib.h>
+
+#include <aerospike/as_val.h>
+
+/******************************************************************************
+ * MACROS
+ *****************************************************************************/
 
 #define AS_STREAM_END ((void *) 0)
 
 /******************************************************************************
  * TYPES
- ******************************************************************************/
+ *****************************************************************************/
 
-typedef struct as_stream_s as_stream;
-typedef struct as_stream_hooks_s as_stream_hooks;
+struct as_stream_hooks_s;
 
 /**
  * Stream Status Codes
  */
-typedef enum as_stream_status_e {
+enum as_stream_status_e {
     AS_STREAM_OK = 0,
     AS_STREAM_ERR = 1
-} as_stream_status;
+};
+
+typedef enum as_stream_status_e as_stream_status;
 
 /**
- * Stream Structure
+ * Stream Object
  * Contains pointer to the source of the stream and a pointer to the
  * hooks that interface with the source.
  *
@@ -49,10 +57,12 @@ typedef enum as_stream_status_e {
  * @field hooks the interface to the source
  */
 struct as_stream_s {
-    bool is_malloc;
-    void * source;
-    const as_stream_hooks * hooks;
+    bool                                is_malloc;
+    void *                              data;
+    const struct as_stream_hooks_s *    hooks;
 };
+
+typedef struct as_stream_s as_stream;
 
 /**
  * Stream Interface
@@ -64,14 +74,16 @@ struct as_stream_hooks_s {
     as_stream_status    (* write)(const as_stream *, as_val *);
 };
 
+typedef struct as_stream_hooks_s as_stream_hooks;
+
 /******************************************************************************
  * INLINE FUNCTIONS
- ******************************************************************************/
+ *****************************************************************************/
 
-inline as_stream * as_stream_init(as_stream * s, void * source, const as_stream_hooks * hooks) {
+inline as_stream * as_stream_init(as_stream * s, void * data, const as_stream_hooks * hooks) {
     if ( s == NULL ) return s;
     s->is_malloc = false;
-    s->source = source;
+    s->data = data;
     s->hooks = hooks;
     return s;
 }
@@ -82,10 +94,10 @@ inline as_stream * as_stream_init(as_stream * s, void * source, const as_stream_
  * @param source the source feeding the stream
  * @param hooks the hooks that interface with the source
  */
-inline as_stream * as_stream_new(void * source, const as_stream_hooks * hooks) {
+inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks) {
     as_stream * s = (as_stream *) malloc(sizeof(as_stream));
     s->is_malloc = true;
-    s->source = source;
+    s->data = data;
     s->hooks = hooks;
     return s;
 }
@@ -109,7 +121,7 @@ inline void as_stream_destroy(as_stream * s) {
  * @return pointer to the source of the stream
  */
 inline void * as_stream_source(const as_stream * s) {
-    return (s ? s->source : NULL);
+    return (s ? s->data : NULL);
 }
 
 /**

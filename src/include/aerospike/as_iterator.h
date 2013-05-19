@@ -26,17 +26,41 @@
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
 
+#include <aerospike/as_linkedlist_iterator.h>
+#include <aerospike/as_arraylist_iterator.h>
+#include <aerospike/as_hashmap_iterator.h>
 
 /******************************************************************************
  * TYPES
  ******************************************************************************/
 
-typedef struct as_iterator_s as_iterator;
-typedef struct as_iterator_hooks_s as_iterator_hooks;
+struct as_iterator_hooks_s;
 
 /**
- * Iterator Interface
- * Provided functions that interface with the iterators.
+ * Iterator Data
+ */
+union as_iterator_data_u {
+    as_linkedlist_iterator  linkedlist;
+    as_arraylist_iterator   arraylist;
+    as_hashmap_iterator     hashmap;
+    void *                  generic;
+};
+
+typedef union as_iterator_data_u as_iterator_data;
+
+/**
+ * Iterator Object
+ */
+struct as_iterator_s {
+    bool                                is_malloc;
+    union as_iterator_data_u            data;
+    const struct as_iterator_hooks_s *  hooks;
+};
+
+typedef struct as_iterator_s as_iterator;
+
+/**
+ * Iterator Function Hooks
  */
 struct as_iterator_hooks_s {
     void      (* const destroy)(as_iterator *);
@@ -44,14 +68,15 @@ struct as_iterator_hooks_s {
     as_val *  (* const next)(as_iterator *);
 };
 
+typedef struct as_iterator_hooks_s as_iterator_hooks;
+
 /******************************************************************************
- * INLINE FUNCTIONS
+ * FUNCTIONS
  ******************************************************************************/
 
-/*
-** initializes an iterator object on the stack
-*/
- 
+/**
+ * initializes an iterator object on the stack
+ */
 as_iterator * as_iterator_init(as_iterator * i, void * source, const as_iterator_hooks * hooks);
 
 /**
@@ -63,7 +88,15 @@ as_iterator * as_iterator_init(as_iterator * i, void * source, const as_iterator
  */
 as_iterator * as_iterator_new(void * source, const as_iterator_hooks * hooks);
 
+/**
+ * Destroys the iterator, first by calling the hooks->destroy(), then freeing the memory
+ * used by the iterator.
+ */
 void as_iterator_destroy(as_iterator * i);
+
+/******************************************************************************
+ * INLINE FUNCTIONS
+ ******************************************************************************/
 
 /**
  * Tests if there are more values available in the iterator.

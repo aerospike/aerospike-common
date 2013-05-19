@@ -20,78 +20,26 @@
  * IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <stdlib.h>
-#include <string.h>
+#pragma once
 
-#include <citrusleaf/cf_alloc.h>
-#include <aerospike/as_util.h>
-#include <aerospike/as_pair.h>
+#include <aerospike/as_linkedlist.h>
 
 /******************************************************************************
- * INLINE FUNCTIONS
+ * TYPES
  *****************************************************************************/
 
-extern inline void      as_pair_destroy(as_pair * p);
+struct as_iterator_s;
 
-extern inline as_val *  as_pair_1(as_pair * p);
-extern inline as_val *  as_pair_2(as_pair * p);
+struct as_linkedlist_iterator_s {
+    const as_linkedlist * list;
+};
 
-extern inline as_val *  as_pair_toval(const as_pair * p);
-extern inline as_pair * as_pair_fromval(const as_val * v) ;
+typedef struct as_linkedlist_iterator_s as_linkedlist_iterator;
 
 /******************************************************************************
  * FUNCTIONS
  *****************************************************************************/
 
-as_pair * as_pair_init(as_pair * p, as_val * _1, as_val * _2) {
-    as_val_init(&p->_,AS_PAIR, false /*is_rcalloc*/);
-    p->_1 = _1;
-    p->_2 = _2;
-    return p;
-}
+struct as_iterator_s * as_linkedlist_iterator_new(const as_linkedlist *);
 
-as_pair * as_pair_new(as_val * _1, as_val * _2) {
-    as_pair * p = (as_pair *) malloc(sizeof(as_pair));
-    as_val_init(&p->_,AS_PAIR, true /*is_rcalloc*/);
-    p->_1 = _1;
-    p->_2 = _2;
-    return p;
-}
-
-
-
-void as_pair_val_destroy(as_val * v) {
-	as_pair *p = (as_pair *) v;
-    if ( p->_1 ) as_val_destroy(p->_1);
-    if ( p->_2 ) as_val_destroy(p->_2);
-}
-
-uint32_t as_pair_val_hashcode(const as_val *v) {
-    return 0;
-}
-
-char *as_pair_val_tostring(const as_val * v) {
-    as_pair * p = as_pair_fromval(v);
-    if ( p == NULL ) return NULL;
-
-    char * a = as_val_tostring(p->_1);
-    size_t al = strlen(a);
-    char * b = as_val_tostring(p->_2);
-    size_t bl = strlen(b);
-    
-    size_t l = al + bl + 5;
-    char * str = (char *) malloc(sizeof(char) * l);
-
-    strcpy(str, "(");
-    strcpy(str+1, a);
-    strcpy(str+1+al,", ");
-    strcpy(str+1+al+2, b);
-    strcpy(str+1+al+2+bl,")");
-    *(str+1+al+2+bl+1) = '\0';
-    
-    free(a);
-    free(b);
-
-    return str;
-}
-
+struct as_iterator_s * as_linkedlist_iterator_init(const as_linkedlist *, struct as_iterator_s *);

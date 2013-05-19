@@ -22,40 +22,25 @@
 
 #pragma once
 
-#include <aerospike/as_val.h>
+#include <aerospike/as_arraylist.h>
 
-/*****************************************************************************
+/******************************************************************************
  * TYPES
- *****************************************************************************/
+ ******************************************************************************/
 
-struct as_list_s;
+struct as_iterator_s;
 
-/**
- * A node in a linked list. The head contains the value, 
- * the tail is the remainder of the list. The tails must be a linkedlist.
- */
-struct as_linkedlist_s {
-    as_val *            head;
-    struct as_list_s *  tail;
+struct as_arraylist_iterator_s {
+    const as_arraylist *    list;
+    uint32_t                pos;
 };
 
-typedef struct as_linkedlist_s as_linkedlist;
+typedef struct as_arraylist_iterator_s as_arraylist_iterator;
 
 /******************************************************************************
  * FUNCTIONS
- ******************************************************************************/
+ *****************************************************************************/
 
-/**
- * Initialize a list as a linkedlist.
- */
-struct as_list_s * as_linkedlist_init(struct as_list_s *, as_val *, struct as_list_s *);
+struct as_iterator_s * as_arraylist_iterator_new(const as_arraylist *);
 
-/**
- * Create a new list as a linkedlist.
- */
-struct as_list_s * as_linkedlist_new(as_val *, struct as_list_s *);
-
-/**
- * Free the list and associated resources.
- */
-void as_linkedlist_destroy(struct as_list_s *);
+struct as_iterator_s * as_arraylist_iterator_init(const as_arraylist *, struct as_iterator_s *);

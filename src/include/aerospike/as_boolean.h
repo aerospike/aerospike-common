@@ -19,6 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *****************************************************************************/
+
 #pragma once
 
 #include <stdbool.h>
@@ -26,43 +27,42 @@
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
 
-
 /******************************************************************************
  * TYPES
  ******************************************************************************/
 
-typedef struct as_boolean_s as_boolean;
-
 struct as_boolean_s {
-    as_val _;
-    bool value;
+    as_val  _;
+    bool    value;
 };
 
+typedef struct as_boolean_s as_boolean;
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-as_boolean *  as_boolean_init(as_boolean *, bool);
-as_boolean *  as_boolean_new(bool);
+as_boolean *    as_boolean_init(as_boolean * v, bool b);
+as_boolean *    as_boolean_new(bool b);
 
-void          as_boolean_destroy(as_boolean *);
-void          as_boolean_val_destroy(as_val *);
-
-uint32_t as_boolean_val_hash(const as_val * v);
-char *as_boolean_val_tostring(const as_val *v);
+void            as_boolean_val_destroy(as_val * v);
+uint32_t        as_boolean_val_hashcode(const as_val * v);
+char *          as_boolean_val_tostring(const as_val *v);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
- 
+
+inline void as_boolean_destroy(as_boolean * b) {
+    as_val_val_destroy( (as_val *) b );
+}
+
+
+
 inline bool as_boolean_tobool(const as_boolean * b) {
     return b->value;
 }
 
-inline uint32_t as_boolean_hash(const as_boolean * b) {
-    return b->value ? 1 : 0;
-}
 
 
 inline as_val * as_boolean_toval(const as_boolean * b) {

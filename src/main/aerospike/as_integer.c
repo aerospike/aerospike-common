@@ -27,16 +27,16 @@
 #include <citrusleaf/cf_alloc.h>
 #include <aerospike/as_integer.h>
 
-#include "internal.h"
-
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-extern inline int64_t as_integer_toint(const as_integer * i);
-extern inline uint32_t as_integer_hash(const as_integer * i);
-extern inline as_val * as_integer_toval(const as_integer * i) ;\
-extern inline as_integer * as_integer_fromval(const as_val * v) ;
+extern inline void          as_integer_destroy(as_integer * i);
+
+extern inline int64_t       as_integer_toint(const as_integer * i);
+
+extern inline as_val *      as_integer_toval(const as_integer * i);
+extern inline as_integer *  as_integer_fromval(const as_val * v);
 
 /******************************************************************************
  * FUNCTIONS
@@ -55,16 +55,15 @@ as_integer * as_integer_new(int64_t i) {
     return v;
 }
 
+
+
 void as_integer_val_destroy(as_val * v) {
     return;
 }
 
-void as_integer_destroy(as_integer *i) {
-	as_val_val_destroy( (as_val *) i);
-}
-
-uint32_t as_integer_val_hash(const as_val * v) {
-    return as_integer_hash((as_integer *) v);
+uint32_t as_integer_val_hashcode(const as_val * v) {
+    as_integer * i = as_integer_fromval(v);
+    return i != NULL ? i->value : 0;
 }
 
 char * as_integer_val_tostring(const as_val * v) {

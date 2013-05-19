@@ -26,48 +26,60 @@
 #include <citrusleaf/cf_alloc.h>
 #include <aerospike/as_string.h>
 
-extern inline char * as_string_tostring(const as_string * s);
-extern inline as_val * as_string_toval(const as_string * s);
-extern inline as_string * as_string_fromval(const as_val * v);
+/******************************************************************************
+ * INLINE FUNCTIONS
+ *****************************************************************************/
+
+extern inline void          as_string_destroy(as_string * s);
+
+extern inline char *        as_string_tostring(const as_string * s);
+
+extern inline as_val *      as_string_toval(const as_string * s);
+extern inline as_string *   as_string_fromval(const as_val * v);
 
 /******************************************************************************
  * FUNCTIONS
- ******************************************************************************/
+ *****************************************************************************/
 
-as_string * as_string_init(as_string * v, char * s, bool is_malloc) {
+as_string * as_string_init(as_string * v, char * s, bool freeable) {
     as_val_init(&v->_, AS_STRING, false /*is_malloc*/);
-    v->value_is_malloc = is_malloc;
+    v->freeable = freeable;
     v->value = s;
     v->len = SIZE_MAX;
     return v;
 }
 
-as_string * as_string_new(char * s, bool is_malloc) {
+as_string * as_string_new(char * s, bool freeable) {
     as_string * v = (as_string *) malloc(sizeof(as_string));
     as_val_init(&v->_, AS_STRING, true /*is_malloc*/);
-    v->value_is_malloc = is_malloc;
+    v->freeable = freeable;
     v->value = s;
     v->len = SIZE_MAX;
     return v;
 }
 
-void as_string_destroy(as_string * s) {
-	as_val_val_destroy( (as_val *) s);
-}
 
-void as_string_val_destroy(as_val * v) {
-	as_string *s = (as_string *) v;
-	if ( s->value_is_malloc && s->value ) free(s->value);
-}
 
 size_t as_string_len(as_string * s) {
-    if (s->value == NULL) return(0);
-	if (s->len == SIZE_MAX)     s->len = strlen(s->value);
-	return(s->len);
+    if (s->value == NULL) return 0;
+	if (s->len == SIZE_MAX) {
+        s->len = strlen(s->value);
+    }
+	return s->len;
 }
 
-uint32_t as_string_hash(const as_string * s) {
-    if (s->value == NULL) return(0);
+
+
+void as_string_val_destroy(as_val * v) {
+    as_string * s = as_string_fromval(v);
+    if ( s && s->value && s->freeable ) {
+        free(s->value);
+    }
+}
+
+uint32_t as_string_val_hashcode(const as_val * v) {
+    as_string * s = as_string_fromval(v);
+    if ( s == NULL || s->value == NULL) return 0;
     uint32_t hash = 0;
     int c;
     char * str = s->value;
@@ -75,10 +87,6 @@ uint32_t as_string_hash(const as_string * s) {
         hash = c + (hash << 6) + (hash << 16) - hash;
     }
     return hash;
-}
-
-uint32_t as_string_val_hash(const as_val * v) {
-    return as_string_hash((as_string *) v);
 }
 
 char * as_string_val_tostring(const as_val * v) {

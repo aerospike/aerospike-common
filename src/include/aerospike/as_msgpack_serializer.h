@@ -19,43 +19,21 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *****************************************************************************/
-
 #pragma once
 
-#include <aerospike/as_val.h>
-
-/*****************************************************************************
- * TYPES
- *****************************************************************************/
-
-struct as_list_s;
-
-/**
- * A node in a linked list. The head contains the value, 
- * the tail is the remainder of the list. The tails must be a linkedlist.
- */
-struct as_linkedlist_s {
-    as_val *            head;
-    struct as_list_s *  tail;
-};
-
-typedef struct as_linkedlist_s as_linkedlist;
+#include <aerospike/as_msgpack.h>
+#include <aerospike/as_serializer.h>
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
 /**
- * Initialize a list as a linkedlist.
+ * Creates a new serializer for msgpack.
  */
-struct as_list_s * as_linkedlist_init(struct as_list_s *, as_val *, struct as_list_s *);
+as_serializer * as_msgpack_new();
 
 /**
- * Create a new list as a linkedlist.
+ * Initializes a serializer for msgpack.
  */
-struct as_list_s * as_linkedlist_new(as_val *, struct as_list_s *);
-
-/**
- * Free the list and associated resources.
- */
-void as_linkedlist_destroy(struct as_list_s *);
+as_serializer * as_msgpack_init(as_serializer *);

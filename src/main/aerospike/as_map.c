@@ -36,31 +36,32 @@
  * INLINES
  ******************************************************************************/
 
-extern inline uint32_t as_map_size(const as_map * m);
-extern inline as_val * as_map_get(const as_map * m, const as_val * k);
-extern inline int as_map_set(as_map * m, const as_val * k, const as_val * v);
-extern inline int as_map_clear(as_map * m);
+extern inline void          as_map_destroy(as_map * m);
+
+extern inline uint32_t      as_map_size(const as_map * m);
+extern inline as_val *      as_map_get(const as_map * m, const as_val * k);
+extern inline int           as_map_set(as_map * m, const as_val * k, const as_val * v);
+extern inline int           as_map_clear(as_map * m);
+
+extern inline void          as_map_foreach(const as_map * m, void * udata, as_map_foreach_callback callback);
 extern inline as_iterator * as_map_iterator_init(as_iterator *i, const as_map * m);
 extern inline as_iterator * as_map_iterator_new(const as_map * m);
-extern inline int as_map_hash(as_map * m);
-extern inline as_val * as_map_toval(const as_map * m) ;
-extern inline as_map * as_map_fromval(const as_val * v);
+
+extern inline as_val *      as_map_toval(const as_map * m) ;
+extern inline as_map *      as_map_fromval(const as_val * v);
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-void as_map_destroy(as_map * m) {
-    as_val_val_destroy( (as_val *) m );
+void as_map_val_destroy(as_val * v) {
+    as_map * m = as_map_fromval(v);
+    as_util_hook(destroy, false, m);
 }
 
-void as_map_val_destroy(as_val *v) {
-	as_map *m = (as_map *) v;
-    as_util_hook(destroy, 1, m);
-}
-
-uint32_t as_map_val_hash(const as_val * v) {
-    return as_val_type(v) == AS_MAP ? as_map_hash((as_map *) v) : 0;
+uint32_t as_map_val_hashcode(const as_val *v) {
+    as_map * m = as_map_fromval(v);
+    return as_util_hook(hashcode, 0, m);
 }
 
 char * as_map_val_tostring(const as_val * v) {

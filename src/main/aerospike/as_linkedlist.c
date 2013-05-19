@@ -24,21 +24,20 @@
 #include <stdio.h>
 
 #include <citrusleaf/cf_alloc.h>
-#include <aerospike/as_linkedlist.h>
 
-#include "internal.h"
+#include <aerospike/as_linkedlist.h>
+#include <aerospike/as_linkedlist_iterator.h>
+#include <aerospike/as_list.h>
 
 /******************************************************************************
  * STATIC FUNCTIONS
  ******************************************************************************/
 
-static as_list * as_linkedlist_end(as_list *);
+static as_list *        as_linkedlist_end(as_list *);
 
-//
-// as_list Implementation
-//
-static void             as_linkedlist_list_destroy(as_list *);
+static bool             as_linkedlist_list_destroy(as_list *);
 static uint32_t         as_linkedlist_list_hash(const as_list *);
+
 static uint32_t         as_linkedlist_list_size(const as_list *);
 static int              as_linkedlist_list_append(as_list *, as_val *);
 static int              as_linkedlist_list_prepend(as_list *, as_val *);
@@ -46,30 +45,21 @@ static as_val *         as_linkedlist_list_get(const as_list *, const uint32_t);
 static int              as_linkedlist_list_set(as_list *, const uint32_t, as_val *);
 static as_val *         as_linkedlist_list_head(const as_list *);
 static as_list *        as_linkedlist_list_tail(const as_list *);
-static as_list *        as_linkedlist_list_drop(const as_list *, uint32_t n);
-static as_list *        as_linkedlist_list_take(const as_list *, uint32_t n);
+static as_list *        as_linkedlist_list_drop(const as_list *, uint32_t);
+static as_list *        as_linkedlist_list_take(const as_list *, uint32_t);
 
-static bool             as_linkedlist_list_foreach(const as_list * l, void * udata, bool (*foreach)(as_val * val, void * udata));
-
+static bool             as_linkedlist_list_foreach(const as_list *, void *, as_list_foreach_callback);
 static as_iterator *    as_linkedlist_list_iterator_init(const as_list *, as_iterator *);
 static as_iterator *    as_linkedlist_list_iterator_new(const as_list *);
-//
-// as_iterator Implementation
-//
-static void       as_linkedlist_iterator_destroy(as_iterator *);
-static bool       as_linkedlist_iterator_has_next(const as_iterator *);
-static as_val *   as_linkedlist_iterator_next(as_iterator *);
 
 /******************************************************************************
  * VARIABLES
  ******************************************************************************/
 
-//
-// as_list Interface
-//
 const as_list_hooks as_linkedlist_list_hooks = {
     .destroy        = as_linkedlist_list_destroy,
-    .hash           = as_linkedlist_list_hash,
+    .hashcode       = as_linkedlist_list_hash,
+
     .size           = as_linkedlist_list_size,
     .append         = as_linkedlist_list_append,
     .prepend        = as_linkedlist_list_prepend,
@@ -79,18 +69,10 @@ const as_list_hooks as_linkedlist_list_hooks = {
     .tail           = as_linkedlist_list_tail,
     .drop           = as_linkedlist_list_drop,
     .take           = as_linkedlist_list_take,
+    
     .foreach        = as_linkedlist_list_foreach,
     .iterator_init  = as_linkedlist_list_iterator_init,
-    .iterator_new   = as_linkedlist_list_iterator_new    
-};
-
-//
-// as_iterator Interface
-//
-const as_iterator_hooks as_linkedlist_iterator_hooks = {
-    .destroy       = as_linkedlist_iterator_destroy,
-    .has_next   = as_linkedlist_iterator_has_next,
-    .next       = as_linkedlist_iterator_next
+    .iterator_new   = as_linkedlist_list_iterator_new
 };
 
 /******************************************************************************
@@ -98,81 +80,61 @@ const as_iterator_hooks as_linkedlist_iterator_hooks = {
  ******************************************************************************/
 
 as_list * as_linkedlist_init(as_list * l, as_val * head, as_list * tail) {
-    as_val_init(&l->_, AS_LIST, false /*is_malloc*/);
+    as_val_init(&l->_, AS_LIST, false);
     l->hooks = &as_linkedlist_list_hooks;
-    l->u.linkedlist.head = head;
-    l->u.linkedlist.tail = tail;
+    l->data.linkedlist.head = head;
+    l->data.linkedlist.tail = tail;
     return l;
 }
 
 as_list * as_linkedlist_new(as_val * head, as_list * tail) {
     as_list * l = (as_list *) malloc(sizeof(as_list));
-    as_val_init(&l->_, AS_LIST, true /*is_malloc*/);
+    as_val_init(&l->_, AS_LIST, true);
     l->hooks = &as_linkedlist_list_hooks;
-    l->u.linkedlist.head = head;
-    l->u.linkedlist.tail = tail;
+    l->data.linkedlist.head = head;
+    l->data.linkedlist.tail = tail;
     return l;
 }
 
-// external, call this
 void as_linkedlist_destroy(as_list *l) {
     as_val_val_destroy( (as_val *) l);
 }
-
-void as_linkedlist_list_destroy(as_list * l) {
-    as_linkedlist_source *ll = &l->u.linkedlist;
-    if ( ll->head ) as_val_val_destroy(ll->head);
-    if ( ll->tail ) as_val_val_destroy((as_val *)ll->tail);
-}
-
-#if 1
-void linkedlist_dump(const char *msg, const as_list *l) {
-    int i=0;
-    fprintf(stderr, "%s: linkedlist dump:\n",msg);
-    while (l) {
-        const as_linkedlist_source *s = & (l->u.linkedlist);
-        char *c = as_val_tostring(s->head);
-        fprintf(stderr, "linkedlist: e %d list %p val %s\n",i,l,c);
-        free(c);
-        i++;
-        l = s->tail;
-    }
-}
-#endif
 
 /******************************************************************************
  * STATIC FUNCTIONS
  ******************************************************************************/
 
-//static uint32_t as_linkedlist_size(as_list * l) {
-//    as_linkedlist_source *ll = &l->u.linkedlist;
-//    return (ll->head ? 1 : 0) + (ll->tail ? as_linkedlist_size(ll->tail) : 0);
-//}
-
-//
-// recurse through the link to find the end
-// likely to pop the stack and crash
+/**
+ * recurse through the link to find the end
+ */
 static as_list * as_linkedlist_end(as_list * l) {
-    as_linkedlist_source *ll = &l->u.linkedlist;
-    if (ll->tail == 0)  return(l);
+    as_linkedlist * ll = &l->data.linkedlist;
+    if (ll->tail == 0)  return l;
     return as_linkedlist_end(ll->tail);
 }
 
 
+static bool as_linkedlist_list_destroy(as_list * l) {
+    as_linkedlist * ll = &l->data.linkedlist;
+    if ( ll->head ) as_val_val_destroy(ll->head);
+    if ( ll->tail ) as_val_val_destroy((as_val *)ll->tail);
+    return true;
+}
 
 static uint32_t as_linkedlist_list_hash(const as_list * l) {
     return 0;
 }
 
 static uint32_t as_linkedlist_list_size(const as_list * l) {
-    const as_linkedlist_source *ll = &l->u.linkedlist;
+    const as_linkedlist * ll = &l->data.linkedlist;
     return (ll->head ? 1 : 0) + (ll->tail ? as_linkedlist_list_size(ll->tail) : 0);
 }
 
 static int as_linkedlist_list_append(as_list * l, as_val * v) {
 
-    as_list * le  = as_linkedlist_end(l);
-    as_linkedlist_source *lle = &le->u.linkedlist;
+    as_list *       le  = as_linkedlist_end(l);
+    as_linkedlist * lle = &le->data.linkedlist;
+    
     if ( !lle ) return 2;
 
     if ( lle->tail ) return 3;
@@ -188,7 +150,7 @@ static int as_linkedlist_list_append(as_list * l, as_val * v) {
 }
 
 static int as_linkedlist_list_prepend(as_list * l, as_val * v) {
-    as_linkedlist_source *ll = &l->u.linkedlist;
+    as_linkedlist * ll = &l->data.linkedlist;
     as_list * tl  = as_linkedlist_new(ll->head, ll->tail);
     ll->head = v;
     ll->tail = tl;
@@ -197,22 +159,22 @@ static int as_linkedlist_list_prepend(as_list * l, as_val * v) {
 }
 
 static as_val * as_linkedlist_list_get(const as_list * l, const uint32_t i) {
-    const as_linkedlist_source *ll = &l->u.linkedlist;
+    const as_linkedlist * ll = &l->data.linkedlist;
     for (int j = 0; j < i && ll != NULL; j++) {
         if (ll->tail == 0) return(0); // ith not available
-        ll = &(ll->tail->u.linkedlist);
+        ll = &(ll->tail->data.linkedlist);
     }
     return (ll->head);
 }
 
 static int as_linkedlist_list_set(as_list * l, const uint32_t i, as_val * v) {
     
-    as_linkedlist_source *ll = &l->u.linkedlist;
+    as_linkedlist * ll = &l->data.linkedlist;
     for (int j = 0; j < i ; j++) {
         if (ll->tail == 0) {
             return(1);
         }
-        ll = &(ll->tail->u.linkedlist);
+        ll = &(ll->tail->data.linkedlist);
     }
 
     as_val_destroy(ll->head);
@@ -222,30 +184,35 @@ static int as_linkedlist_list_set(as_list * l, const uint32_t i, as_val * v) {
 }
 
 static as_val * as_linkedlist_list_head(const as_list * l) {
-    const as_linkedlist_source *ll = &l->u.linkedlist;
+    const as_linkedlist * ll = &l->data.linkedlist;
     as_val_reserve(ll->head);
     return ll->head;
 }
 
-// this is not the _tail_ this is the non-head component
+/**
+ * Return the all elements except the head element.
+ */
 static as_list * as_linkedlist_list_tail(const as_list * l) {
-    const as_linkedlist_source *ll = &l->u.linkedlist;
+    const as_linkedlist * ll = &l->data.linkedlist;
     as_list * tl  = ll->tail;
-    cf_rc_reserve(tl);
+    as_val_reserve(tl);
     return(tl);
 }
 
-// create a duplicate list from element n forward
-// the values are _shared_ with the parent
+/**
+ * Create a list by taking all elements after the first n elements.
+ * The elements are ref-counted, so, the new list will share a reference
+ * with the original list.
+ */
 static as_list * as_linkedlist_list_drop(const as_list * l, uint32_t n) {
-    const as_linkedlist_source *ll = &l->u.linkedlist;
+    const as_linkedlist * ll = &l->data.linkedlist;
 
     as_list * h = 0;
     as_list * t = 0;
 
     for (int i = 0; i < n; i++ ) {
         if (0 == ll->tail) return(0);
-        ll = &(ll->tail->u.linkedlist);
+        ll = &(ll->tail->data.linkedlist);
     }
 
     while (ll) {
@@ -253,25 +220,28 @@ static as_list * as_linkedlist_list_drop(const as_list * l, uint32_t n) {
         if (h == 0) {
             h = t = as_linkedlist_new(ll->head, 0);;
         } else {
-            t->u.linkedlist.tail = as_linkedlist_new(ll->head,NULL);
-            t = t->u.linkedlist.tail;
+            t->data.linkedlist.tail = as_linkedlist_new(ll->head,NULL);
+            t = t->data.linkedlist.tail;
         }
 
         if (0 == ll->tail) break;
-        ll = &(ll->tail->u.linkedlist);
+        ll = &(ll->tail->data.linkedlist);
     }
     
     return h;
 }
 
+/**
+ * Create a list by taking the first n elements.
+ * The elements are ref-counted, so, the new list will share a reference
+ * with the original list.
+ */
 static as_list * as_linkedlist_list_take(const as_list * l, uint32_t n) {
     
-    const as_linkedlist_source *ll = &l->u.linkedlist;
+    const as_linkedlist * ll = &l->data.linkedlist;
 
     as_list * h = 0;
     as_list * t = 0;
-
-//    linkedlist_dump("TAKE start", l);
     
     int i = 1;
     while (ll) {
@@ -279,67 +249,41 @@ static as_list * as_linkedlist_list_take(const as_list * l, uint32_t n) {
         if (h == 0) {
             h = t = as_linkedlist_new(ll->head, 0);;
         } else {
-            t->u.linkedlist.tail = as_linkedlist_new(ll->head,NULL);
-            t = t->u.linkedlist.tail;
+            t->data.linkedlist.tail = as_linkedlist_new(ll->head,NULL);
+            t = t->data.linkedlist.tail;
         }
-        ll = &(ll->tail->u.linkedlist);
+        ll = &(ll->tail->data.linkedlist);
         if (i++ >= n) break;
     }
 
-//    linkedlist_dump("TAKE end", h);
-    return(h);
+    return h;
 }
 
 
+/** 
+ * Call the callback function for each element in the list.
+ */
 static bool as_linkedlist_list_foreach(const as_list * l, void * udata, bool (*foreach)(as_val * val, void * udata)) {
-    const as_linkedlist_source * ll = (as_linkedlist_source *)&l->u.arraylist;
+    const as_linkedlist * ll = (as_linkedlist *) &l->data.linkedlist;
     while ( ll != NULL && ll->head != NULL ) {
         if ( foreach(ll->head, udata) == false ) {
             return false;
         }
-        ll = &(ll->tail->u.linkedlist);
+        ll = &(ll->tail->data.linkedlist);
     }
     return true;
 }
 
+/**
+ * Initializes an iterator for this list
+ */
 static as_iterator * as_linkedlist_list_iterator_init(const as_list * l, as_iterator *i) {
-    i->is_malloc = false;
-    i->hooks = &as_linkedlist_iterator_hooks;
-    const as_linkedlist_source *ll = &l->u.linkedlist;
-    i->u.linkedlist.list = ll;
-    return i;
+    return as_linkedlist_iterator_init(&l->data.linkedlist, i);
 }
 
-
+/**
+ * Creates a new iterator for this list
+ */
 static as_iterator * as_linkedlist_list_iterator_new(const as_list * l) {
-    as_iterator * i = (as_iterator *) malloc(sizeof(as_iterator));
-    i->is_malloc = true;
-    i->hooks = &as_linkedlist_iterator_hooks;
-    const as_linkedlist_source *ll = &l->u.linkedlist;
-    i->u.linkedlist.list = ll;
-    return i;
-}
-
-static bool as_linkedlist_iterator_has_next(const as_iterator * i) {
-    as_linkedlist_iterator_source * source = (as_linkedlist_iterator_source *) &(i->u.linkedlist);
-    return source->list && source->list->head;
-}
-
-static as_val * as_linkedlist_iterator_next(as_iterator * i) {
-    as_linkedlist_iterator_source * source = (as_linkedlist_iterator_source *) &(i->u.linkedlist);
-    as_val * head = NULL;
-    if ( source->list ) {
-        head = source->list->head;
-        if ( source->list->tail) {
-            source->list = &(source->list->tail->u.linkedlist);
-        }
-        else {
-            source->list = 0;
-        }
-    }
-    return head;
-}
-
-static void as_linkedlist_iterator_destroy(as_iterator * i) {
-    return;
+    return as_linkedlist_iterator_new(&l->data.linkedlist);
 }

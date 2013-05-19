@@ -20,72 +20,74 @@
  * IN THE SOFTWARE.
  *****************************************************************************/
 
-#pragma once
-
-#include <stdlib.h>
-#include <inttypes.h>
 #include <stdbool.h>
+#include <stdlib.h>
 
-#include <citrusleaf/cf_atomic.h>
-#include <citrusleaf/cf_shash.h>
+#include <citrusleaf/cf_alloc.h>
+
+#include <aerospike/as_arraylist.h>
+#include <aerospike/as_arraylist_iterator.h>
+#include <aerospike/as_iterator.h>
 
 /******************************************************************************
- * TYPES
+ * STATIC FUNCTIONS
  *****************************************************************************/
 
-enum as_val_t {
-    AS_UNKNOWN      = 0,
-    AS_NIL          = 1,
-    AS_BOOLEAN      = 2,
-    AS_INTEGER      = 3,
-    AS_STRING       = 4,
-    AS_LIST         = 5,
-    AS_MAP          = 6,
-    AS_REC          = 7,
-    AS_PAIR         = 8,
-    AS_BYTES        = 9
-} __attribute__((packed));
+static void     as_arraylist_iterator_destroy(as_iterator *);
+static bool     as_arraylist_iterator_has_next(const as_iterator *);
+static as_val * as_arraylist_iterator_next(as_iterator *);
 
-typedef enum as_val_t as_val_t;
+/******************************************************************************
+ * CONSTANTS
+ *****************************************************************************/
 
-struct as_val_s {
-    enum as_val_t 	type;
-    bool            is_malloc;
-    cf_atomic32     count;
+const as_iterator_hooks as_arraylist_iterator_hooks = {
+    .destroy    = as_arraylist_iterator_destroy,
+    .has_next   = as_arraylist_iterator_has_next,
+    .next       = as_arraylist_iterator_next
 };
-
-typedef struct as_val_s as_val;
-
-/******************************************************************************
- * MACROS
- *****************************************************************************/
- 
-#define as_val_type(__v)     (((as_val *)__v)->type)
-
-#define as_val_reserve(__v) ( as_val_val_reserve((as_val *)__v) )
-
-#define as_val_destroy(__v) ( as_val_val_destroy((as_val *)__v) )
-
-#define as_val_hashcode(__v) ( as_val_val_hashcode((as_val *)__v) )
-
-#define as_val_tostring(__v) ( as_val_val_tostring((as_val *)__v) )
 
 /******************************************************************************
  * FUNCTIONS
  *****************************************************************************/
 
-as_val *    as_val_val_reserve(as_val *);
-as_val *    as_val_val_destroy(as_val *);
-uint32_t    as_val_val_hashcode(const as_val *);
-char *      as_val_val_tostring(const as_val *);
+as_iterator * as_arraylist_iterator_new(const as_arraylist * l) {
+    as_iterator * i = (as_iterator *) malloc(sizeof(as_iterator));
+    i->is_malloc = true;
+    i->hooks = &as_arraylist_iterator_hooks;
+    i->data.arraylist.list = l;
+    i->data.arraylist.pos = 0;
+    return i;
+}
+
+as_iterator * as_arraylist_iterator_init(const as_arraylist * l, as_iterator * i) {
+    i->is_malloc = false;
+    i->hooks = &as_arraylist_iterator_hooks;
+    i->data.arraylist.list = l;
+    i->data.arraylist.pos = 0;
+    return i;
+}
 
 /******************************************************************************
- * INLINE FUNCTIONS
+ * STATIC FUNCTIONS
  *****************************************************************************/
 
-inline void as_val_init(as_val * v, as_val_t type, bool is_malloc) {
-    v->type = type; 
-    v->is_malloc = is_malloc; 
-    v->count = 1;
+static void as_arraylist_iterator_destroy(as_iterator * i) {
+    return;
+}
+
+static bool as_arraylist_iterator_has_next(const as_iterator * i) {
+    const as_arraylist_iterator * it = &i->data.arraylist;
+    return it->pos < it->list->size;
+}
+
+static as_val * as_arraylist_iterator_next(as_iterator * i) {
+    as_arraylist_iterator * it = &i->data.arraylist;
+    if ( it->pos < it->list->size ) {
+        as_val * val = *(it->list->elements + it->pos);
+        it->pos++;
+        return val;
+    }
+    return NULL;
 }
 

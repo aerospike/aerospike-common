@@ -19,34 +19,51 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *****************************************************************************/
+
 #pragma once
 
-#include <aerospike/as_list.h>
+#include <aerospike/as_val.h>
 
-/******************************************************************************
+/*****************************************************************************
  * TYPES
- ******************************************************************************/
+ *****************************************************************************/
 
-typedef struct as_arraylist_source_s as_arraylist_source;
-typedef struct as_arraylist_iterator_source_s as_arraylist_iterator_source;
+struct as_list_s;
 
-enum as_arraylist_status {
+struct as_arraylist_s {
+    as_val **   elements;       // An allocated area for ptrs to list elements
+    uint32_t    size;           // The current array size (element count)
+    uint32_t    capacity;       // The total array size (max element count)
+    uint32_t    block_size;     // The unit of allocation (e.g. 8 elements)
+                                // Note that block_size == 0 means no more
+                                // can be allocated
+};
+
+typedef struct as_arraylist_s as_arraylist;
+
+enum as_arraylist_status_e {
     AS_ARRAYLIST_OK         = 0,
     AS_ARRAYLIST_ERR_ALLOC  = 1,
     AS_ARRAYLIST_ERR_MAX    = 2
 };
 
-/******************************************************************************
- * CONSTANTS
- ******************************************************************************/
-
-extern const as_list_hooks      as_arraylist_list_hooks;
-extern const as_iterator_hooks  as_arraylist_iterator_hooks;
+typedef enum as_arraylist_status_e as_arraylist_status;
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-as_list *    	as_arraylist_init(as_list *, uint32_t capacity, uint32_t block_size);
-as_list *    	as_arraylist_new(uint32_t capacity, uint32_t block_size);
-void               as_arraylist_destroy(as_list *);
+/**
+ * Initialize a list as a dynamic array.
+ */
+struct as_list_s * as_arraylist_init(struct as_list_s *, uint32_t capacity, uint32_t block_size);
+
+/**
+ * Create a new list as a dynamic array.
+ */
+struct as_list_s * as_arraylist_new(uint32_t capacity, uint32_t block_size);
+
+/**
+ * Free the list and associated resources.
+ */
+void as_arraylist_destroy(struct as_list_s *);

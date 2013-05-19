@@ -23,99 +23,124 @@
 #include <stdlib.h>
 
 #include <citrusleaf/cf_alloc.h>
-#include <aerospike/as_val.h>
-#include <aerospike/as_nil.h>
+
 #include <aerospike/as_boolean.h>
-#include <aerospike/as_integer.h>
-#include <aerospike/as_string.h>
 #include <aerospike/as_bytes.h>
+#include <aerospike/as_integer.h>
 #include <aerospike/as_list.h>
 #include <aerospike/as_map.h>
-#include <aerospike/as_rec.h>
+#include <aerospike/as_nil.h>
 #include <aerospike/as_pair.h>
+#include <aerospike/as_rec.h>
+#include <aerospike/as_string.h>
+#include <aerospike/as_val.h>
 
-#include "internal.h"
+/******************************************************************************
+ * TYPES
+ *****************************************************************************/
+
+typedef void        (* as_val_destroy_callback)(as_val * v);
+typedef uint32_t    (* as_val_hashcode_callback)(const as_val * v);
+typedef char *      (* as_val_tostring_callback)(const as_val * v);
+
+/******************************************************************************
+ * INLINE FUNCTIONS
+ *****************************************************************************/
 
 extern inline void as_val_init(as_val *v, as_val_t type, bool is_rcalloc);
 
 /******************************************************************************
- * FUNCTIONS
- ******************************************************************************/
+ * STATIC FUNCTIONS
+ *****************************************************************************/
 
-void as_val_destroy_null_func(as_val *v) { return; }
-uint32_t as_val_hash_null_func(const as_val *v) { return(0); }
-char * as_val_tostring_null_func(const as_val *v) { return(0); }
+static void     as_val_destroy_noop(as_val *);
+static uint32_t as_val_hashcode_noop(const as_val *);
+static char *   as_val_tostring_noop(const as_val *);
 
 /******************************************************************************
  * VARIABLES
- ******************************************************************************/
+ *****************************************************************************/
 
-as_val_destroy_func g_as_val_destroy_func_table[] = {
-	[AS_UNKNOWN] 	= as_val_destroy_null_func,
-	[AS_NIL] 		= as_val_destroy_null_func,
-	[AS_BOOLEAN] 	= as_val_destroy_null_func,
-	[AS_INTEGER] 	= as_integer_val_destroy,
-	[AS_STRING] 	= as_string_val_destroy,
-	[AS_BYTES] 		= as_bytes_val_destroy,
-	[AS_LIST] 		= as_list_val_destroy,
-	[AS_MAP] 		= as_map_val_destroy,
-	[AS_REC] 		= as_rec_val_destroy,
-	[AS_PAIR] 		= as_pair_val_destroy
+static const as_val_destroy_callback as_val_destroy_callbacks[] = {
+    [AS_UNKNOWN]    = as_val_destroy_noop,
+    [AS_NIL]        = as_val_destroy_noop,
+    [AS_BOOLEAN]    = as_val_destroy_noop,
+    [AS_INTEGER]    = as_integer_val_destroy,
+    [AS_STRING]     = as_string_val_destroy,
+    [AS_BYTES]      = as_bytes_val_destroy,
+    [AS_LIST]       = as_list_val_destroy,
+    [AS_MAP]        = as_map_val_destroy,
+    [AS_REC]        = as_rec_val_destroy,
+    [AS_PAIR]       = as_pair_val_destroy
 };
 
-as_val_hash_func g_as_val_hash_func_table[] = {
-	[AS_UNKNOWN] 	= as_val_hash_null_func,
-	[AS_NIL] 		= as_val_hash_null_func,
-	[AS_BOOLEAN] 	= as_boolean_val_hash,
-	[AS_INTEGER] 	= as_integer_val_hash,
-	[AS_STRING] 	= as_string_val_hash,
-	[AS_BYTES] 		= as_bytes_val_hash,
-	[AS_LIST] 		= as_list_val_hash,
-	[AS_MAP] 		= as_map_val_hash,
-	[AS_REC] 		= as_rec_val_hash,
-	[AS_PAIR] 		= as_pair_val_hash
+static const as_val_tostring_callback as_val_tostring_callbacks[] = {
+    [AS_UNKNOWN]    = as_val_tostring_noop,
+    [AS_NIL]        = as_nil_val_tostring,
+    [AS_BOOLEAN]    = as_boolean_val_tostring,
+    [AS_INTEGER]    = as_integer_val_tostring,
+    [AS_STRING]     = as_string_val_tostring,
+    [AS_BYTES]      = as_bytes_val_tostring,
+    [AS_LIST]       = as_list_val_tostring,
+    [AS_MAP]        = as_map_val_tostring,
+    [AS_REC]        = as_rec_val_tostring,
+    [AS_PAIR]       = as_pair_val_tostring
 };
 
-as_val_tostring_func g_as_val_tostring_func_table[] = {
-	[AS_UNKNOWN] 	= as_val_tostring_null_func,
-	[AS_NIL] 		= as_nil_val_tostring,
-	[AS_BOOLEAN] 	= as_boolean_val_tostring,
-	[AS_INTEGER] 	= as_integer_val_tostring,
-	[AS_STRING] 	= as_string_val_tostring,
-	[AS_BYTES] 		= as_bytes_val_tostring,
-	[AS_LIST] 		= as_list_val_tostring,
-	[AS_MAP] 		= as_map_val_tostring,
-	[AS_REC] 		= as_rec_val_tostring,
-	[AS_PAIR] 		= as_pair_val_tostring
+static const as_val_hashcode_callback as_val_hashcode_callbacks[] = {
+    [AS_UNKNOWN]    = as_val_hashcode_noop,
+    [AS_NIL]        = as_nil_val_hashcode,
+    [AS_BOOLEAN]    = as_boolean_val_hashcode,
+    [AS_INTEGER]    = as_integer_val_hashcode,
+    [AS_STRING]     = as_string_val_hashcode,
+    [AS_BYTES]      = as_bytes_val_hashcode,
+    [AS_LIST]       = as_list_val_hashcode,
+    [AS_MAP]        = as_map_val_hashcode,
+    [AS_REC]        = as_rec_val_hashcode,
+    [AS_PAIR]       = as_pair_val_hashcode
 };
+
+/******************************************************************************
+ * FUNCTIONS
+ *****************************************************************************/
+
+static void as_val_destroy_noop(as_val * v) { 
+}
+
+static uint32_t as_val_hashcode_noop(const as_val * v) { 
+    return 0;
+}
+
+static char * as_val_tostring_noop(const as_val * v) { 
+    return 0;
+}
 
 as_val * as_val_val_reserve(as_val *v) {
-	if (v == 0) return(0);
-	cf_atomic32_add(&(v->count),1);
-	return( v );
+    if (v == 0) return(0);
+    cf_atomic32_add(&(v->count),1);
+    return v;
 }
 
-void as_val_val_destroy(as_val *v) {
-	if (v == 0)	return;
-	// if we reach the last reference, call the destructor, and free
-	if ( 0 == cf_atomic32_decr(&(v->count)) ) {
-		g_as_val_destroy_func_table[ v->type ](v);		
-		if (v->is_malloc) {
-        	free(v);
+as_val * as_val_val_destroy(as_val * v) {
+    if ( v == NULL ) return v;
+    // if we reach the last reference, call the destructor, and free
+    if ( 0 == cf_atomic32_decr(&(v->count)) ) {
+        as_val_destroy_callbacks[ v->type ](v);     
+        if ( v->is_malloc ) {
+            free(v);
         }
+        v = NULL;
     }
-	return;
+    return v;
 }
 
-uint32_t as_val_val_hash(const as_val *v) {
-	if (v == 0)	return(0);
-	uint32_t hv = g_as_val_hash_func_table[ v->type ](v);
-	return(hv);
+uint32_t as_val_val_hashcode(const as_val * v) {
+    if (v == 0) return 0;
+    return as_val_hashcode_callbacks[ v->type ](v);
 }
 
-char * as_val_val_tostring(const as_val *v) {
-	if (v == 0)	return(0);
-	char *s = g_as_val_tostring_func_table[ v->type ](v);
-	return(s);
+char * as_val_val_tostring(const as_val * v) {
+    if (v == 0) return 0;
+    return as_val_tostring_callbacks[ v->type ](v);
 }
 

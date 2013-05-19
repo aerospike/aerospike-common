@@ -20,72 +20,79 @@
  * IN THE SOFTWARE.
  *****************************************************************************/
 
-#pragma once
+#include <msgpack.h>
 
-#include <stdlib.h>
-#include <inttypes.h>
-#include <stdbool.h>
-
-#include <citrusleaf/cf_atomic.h>
-#include <citrusleaf/cf_shash.h>
+#include <aerospike/as_msgpack.h>
+#include <aerospike/as_msgpack_serializer.h>
+#include <aerospike/as_serializer.h>
+#include <aerospike/as_types.h>
 
 /******************************************************************************
- * TYPES
+ * STATIC FUNCTIONS
  *****************************************************************************/
 
-enum as_val_t {
-    AS_UNKNOWN      = 0,
-    AS_NIL          = 1,
-    AS_BOOLEAN      = 2,
-    AS_INTEGER      = 3,
-    AS_STRING       = 4,
-    AS_LIST         = 5,
-    AS_MAP          = 6,
-    AS_REC          = 7,
-    AS_PAIR         = 8,
-    AS_BYTES        = 9
-} __attribute__((packed));
+static void as_msgpack_serializer_destroy(as_serializer *);
+static int  as_msgpack_serializer_serialize(as_serializer *, as_val *, as_buffer *);
+static int  as_msgpack_serializer_deserialize(as_serializer *, as_buffer *, as_val **);
 
-typedef enum as_val_t as_val_t;
+/******************************************************************************
+ * VARIABLES
+ *****************************************************************************/
 
-struct as_val_s {
-    enum as_val_t 	type;
-    bool            is_malloc;
-    cf_atomic32     count;
+static const as_serializer_hooks as_msgpack_serializer_hooks = {
+    .destroy        = as_msgpack_serializer_destroy,
+    .serialize      = as_msgpack_serializer_serialize,
+    .deserialize    = as_msgpack_serializer_deserialize
 };
-
-typedef struct as_val_s as_val;
-
-/******************************************************************************
- * MACROS
- *****************************************************************************/
- 
-#define as_val_type(__v)     (((as_val *)__v)->type)
-
-#define as_val_reserve(__v) ( as_val_val_reserve((as_val *)__v) )
-
-#define as_val_destroy(__v) ( as_val_val_destroy((as_val *)__v) )
-
-#define as_val_hashcode(__v) ( as_val_val_hashcode((as_val *)__v) )
-
-#define as_val_tostring(__v) ( as_val_val_tostring((as_val *)__v) )
 
 /******************************************************************************
  * FUNCTIONS
  *****************************************************************************/
 
-as_val *    as_val_val_reserve(as_val *);
-as_val *    as_val_val_destroy(as_val *);
-uint32_t    as_val_val_hashcode(const as_val *);
-char *      as_val_val_tostring(const as_val *);
-
-/******************************************************************************
- * INLINE FUNCTIONS
- *****************************************************************************/
-
-inline void as_val_init(as_val * v, as_val_t type, bool is_malloc) {
-    v->type = type; 
-    v->is_malloc = is_malloc; 
-    v->count = 1;
+as_serializer * as_msgpack_new() {
+    return as_serializer_new(NULL, &as_msgpack_serializer_hooks);
 }
 
+as_serializer * as_msgpack_init(as_serializer * s)
+ {
+    as_serializer_init(s, NULL, &as_msgpack_serializer_hooks);
+    return s;
+}
+
+/******************************************************************************
+ * STATIC FUNCTIONS
+ *****************************************************************************/
+
+static void as_msgpack_serializer_destroy(as_serializer * s) {
+    return;
+}
+
+static int as_msgpack_serializer_serialize(as_serializer * s, as_val * v, as_buffer * buff) {
+    msgpack_sbuffer sbuf;
+    msgpack_packer  pk;
+
+    msgpack_sbuffer_init(&sbuf);
+    msgpack_packer_init(&pk, &sbuf, msgpack_sbuffer_write);
+
+    as_msgpack_pack_val(&pk, v);
+
+    buff->data = sbuf.data;
+    buff->size = sbuf.size;
+    buff->capacity = sbuf.alloc;
+
+    return 0;
+}
+
+static int as_msgpack_serializer_deserialize(as_serializer * s, as_buffer * buff, as_val ** v) {
+    msgpack_unpacked msg;
+    msgpack_unpacked_init(&msg);
+
+    size_t offset = 0;
+
+    if ( msgpack_unpack_next(&msg, buff->data, buff->size, &offset) ) {
+        as_msgpack_object_to_val(&msg.data, v);
+    }
+
+    msgpack_unpacked_destroy(&msg);
+    return 0;
+}

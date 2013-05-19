@@ -19,6 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *****************************************************************************/
+
 #pragma once
 
 #include <aerospike/as_util.h>
@@ -27,10 +28,9 @@
 
 /******************************************************************************
  * TYPES
- ******************************************************************************/
+ *****************************************************************************/
 
-typedef struct as_rec_s as_rec;
-typedef struct as_rec_hooks_s as_rec_hooks;
+struct as_rec_hooks_s;
 
 /**
  * Record Structure
@@ -41,17 +41,21 @@ typedef struct as_rec_hooks_s as_rec_hooks;
  * @field hooks contains the record interface that works with the source.
  */
 struct as_rec_s {
-    as_val                  _;
-    void *                  source;
-    const as_rec_hooks *    hooks;
+    as_val                          _;
+    void *                          data;
+    const struct as_rec_hooks_s *   hooks;
 };
+
+typedef struct as_rec_s as_rec;
 
 /**
  * Record Interface.
  * Provided functions that interface with the records.
  */
 struct as_rec_hooks_s {
-    int         (* destroy)(as_rec *);
+    bool        (* destroy)(as_rec *);
+    uint32_t    (* hashcode)(const as_rec *);
+
     as_val *    (* get)(const as_rec *, const char *);
     int         (* set)(const as_rec *, const char *, const as_val *);
     int         (* remove)(const as_rec *, const char *);
@@ -59,46 +63,30 @@ struct as_rec_hooks_s {
     uint16_t    (* gen)(const as_rec *);
     uint16_t    (* numbins)(const as_rec *);
     as_bytes *  (* digest)(const as_rec *);
-    uint32_t    (* hash)(as_rec *);
 };
 
-/******************************************************************************
- * CONSTANTS
- ******************************************************************************/
-
-extern const as_val as_rec_val;
+typedef struct as_rec_hooks_s as_rec_hooks;
 
 /******************************************************************************
  * FUNCTIONS
- ******************************************************************************/
+ *****************************************************************************/
 
 as_rec *  as_rec_init(as_rec *, void *, const as_rec_hooks *);
 as_rec *  as_rec_new(void *, const as_rec_hooks *);
 
-inline void	  as_rec_destroy(as_rec *);
 void      as_rec_val_destroy(as_val *);
-
-
-uint32_t  as_rec_val_hash(const as_val *v);
+uint32_t  as_rec_val_hashcode(const as_val *v);
 char *    as_rec_val_tostring(const as_val *v);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-
-inline void * as_rec_source(const as_rec * r) {
-    return (r ? r->source : NULL);
-}
-
-inline uint32_t as_rec_hash(as_rec * r) {
-    return as_util_hook(hash, 0, r);
-}
-
-// equivilent to as_val_destroy, used externally
 inline void as_rec_destroy(as_rec *r) {
-	as_val_val_destroy( (as_val *) r );
+	as_val_val_destroy((as_val *) r);
 }
+
+
 
 /**
  * Get a bin value by name.
@@ -140,17 +128,12 @@ inline int as_rec_remove(const as_rec * r, const char * name) {
     return as_util_hook(remove, 1, r, name);
 }
 
-
 inline uint32_t as_rec_ttl(const as_rec * r) {
     return as_util_hook(ttl, 0, r);
 }
 
 inline uint16_t as_rec_gen(const as_rec * r) {
     return as_util_hook(gen, 0, r);
-}
-
-inline as_val * as_rec_toval(const as_rec * r) {
-    return (as_val *) r;
 }
 
 inline uint16_t as_rec_numbins(const as_rec * r) {
@@ -161,6 +144,11 @@ inline as_bytes * as_rec_digest(const as_rec * r) {
     return as_util_hook(digest, 0, r);
 }
 
+
+
+inline as_val * as_rec_toval(const as_rec * r) {
+    return (as_val *) r;
+}
 
 inline as_rec * as_rec_fromval(const as_val * v) {
     return as_util_fromval(v, AS_REC, as_rec);

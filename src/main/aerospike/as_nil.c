@@ -22,40 +22,30 @@
 
 #include <string.h>
 
-#include <citrusleaf/cf_alloc.h>
 #include <aerospike/as_val.h>
 #include <aerospike/as_nil.h>
 
-#include "internal.h"
+/******************************************************************************
+ * CONSTANTS
+ *****************************************************************************/
+
+const as_val as_nil = {
+    .type = AS_NIL,
+    .is_malloc = false
+};
 
 /******************************************************************************
- * VARIABLES
- ******************************************************************************/
-
-as_nil * as_nil_init(as_nil * n) {
-    as_val_init(&n->_, AS_NIL, false/*is_malloc*/);
-    return n;
-}
-
-as_nil * as_nil_new() {
-    as_nil * n = (as_nil *) malloc(sizeof(as_nil));
-    as_val_init(&n->_, AS_NIL, true/*is_malloc*/);
-    return n;
-}
-
-void as_nil_destroy(as_nil * n) {
-	as_val_val_destroy( (as_val *) n);
-    return;
-}
+ * FUNCTIONS
+ *****************************************************************************/
 
 void as_nil_val_destroy(as_val * v) {
     return;
 }
 
-uint32_t as_nil_hash(const as_nil * v) {
-	return(0);
+uint32_t as_nil_val_hashcode(const as_val * v) {
+	return 0;
 }
 
-char *as_nil_val_tostring(const as_val *v) {
-	return(strdup("NIL"));
+char * as_nil_val_tostring(const as_val * v) {
+	return strdup("NIL");
 }

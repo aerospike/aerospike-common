@@ -29,38 +29,72 @@
 
 /******************************************************************************
  * TYPES
- ******************************************************************************/
+ *****************************************************************************/
+
+struct as_map_hooks_s;
+
+/**
+ * Callback function for as_map_foreach()
+ */
+typedef bool (* as_map_foreach_callback) (const as_val *, const as_val *, void *);
+
+/**
+ * Map Data
+ */
+union as_map_data_u {
+    as_hashmap  hashmap;
+    void *      generic;
+};
+
+typedef union as_map_data_u as_map_data;
+
+/**
+ * Map Object
+ */
+struct as_map_s {
+    as_val                          _;
+    as_map_data                     data;
+    const struct as_map_hooks_s *   hooks;
+};
 
 typedef struct as_map_s as_map;
-typedef struct as_map_hooks_s as_map_hooks;
 
+/**
+ * Map Function Hooks
+ */
 struct as_map_hooks_s {
-    void         (* destroy)(as_map *);
+    bool            (* destroy)(as_map *);
+    uint32_t        (* hashcode)(const as_map *);
     
-    uint32_t    (* hash)(const as_map *);
-    
-    uint32_t    (* size)(const as_map *);
-    int         (* set)(as_map *, const as_val *, const as_val *);
-    as_val *    (* get)(const as_map *, const as_val *);
-    int         (* clear)(as_map *);
+    uint32_t        (* size)(const as_map *);
+    int             (* set)(as_map *, const as_val *, const as_val *);
+    as_val *        (* get)(const as_map *, const as_val *);
+    int             (* clear)(as_map *);
 
-    as_iterator * (*iterator_init)(const as_map *, as_iterator *);
-    as_iterator * (*iterator_new)(const as_map *);
+    bool            (* foreach)(const as_map *, void *, as_map_foreach_callback);
+    as_iterator *   (* iterator_init)(const as_map *, as_iterator *);
+    as_iterator *   (* iterator_new)(const as_map *);
 };
+
+typedef struct as_map_hooks_s as_map_hooks;
 
 /******************************************************************************
  * FUNCTIONS
- ******************************************************************************/
- 
-void          as_map_destroy(as_map *);     // use this
-void		  as_map_val_destroy(as_val *); // internal
+ *****************************************************************************/
 
-uint32_t	  as_map_val_hash(const as_val *);
-char *		  as_map_val_tostring(const as_val *);
+void        as_map_val_destroy(as_val * v);
+uint32_t    as_map_val_hashcode(const as_val * v);
+char *		as_map_val_tostring(const as_val * v);
 
-//******************************************************************************
-//* INLINE FUNCTIONS
-//******************************************************************************
+/******************************************************************************
+ * INLINE FUNCTIONS
+ *****************************************************************************/
+
+inline void as_map_destroy(as_map * m) {
+    as_val_val_destroy((as_val *) m);
+}
+
+
 
 inline uint32_t as_map_size(const as_map * m) {
     return as_util_hook(size, 0, m);
@@ -78,6 +112,12 @@ inline int as_map_clear(as_map * m) {
     return as_util_hook(clear, 1, m);
 }
 
+
+
+inline void as_map_foreach(const as_map * m, void * udata, as_map_foreach_callback callback) {
+    as_util_hook(foreach, false, m, udata, callback);
+}
+
 inline as_iterator * as_map_iterator_init(as_iterator *i, const as_map * m) {
     return as_util_hook(iterator_init, NULL, m, i);
 }
@@ -86,9 +126,7 @@ inline as_iterator * as_map_iterator_new(const as_map * m) {
     return as_util_hook(iterator_new, NULL, m);
 }
 
-inline int as_map_hash(as_map * m) {
-    return as_util_hook(hash, 0, m);
-}
+
 
 inline as_val * as_map_toval(const as_map * m) {
     return (as_val *) m;
