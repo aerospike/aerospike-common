@@ -13,7 +13,7 @@ $(warning ***************************************************************)
 $(error )
 endif
 
-ifeq ($(wildcard $(MSGPACK)/configure),) 
+ifeq ($(wildcard $(MSGPACK)/configure.in),) 
 $(warning ***************************************************************)
 $(warning *)
 $(warning *  MSGPACK is '$(MSGPACK)')
