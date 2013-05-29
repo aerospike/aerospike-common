@@ -128,28 +128,28 @@ libaerospike-common-hooked.so: $(TARGET_LIB)/libaerospike-common-hooked.so
 
 # COMMON
 
-$(TARGET_OBJ)/common/aerospike/%.o: $(SOURCE_MAIN)/aerospike/%.c $(SOURCE_INCL)/aerospike/*.h | modules-prepare 
+$(TARGET_OBJ)/common/aerospike/%.o: $(SOURCE_MAIN)/aerospike/%.c $(SOURCE_INCL)/aerospike/*.h | modules 
 	$(object)
 
-$(TARGET_OBJ)/common/citrusleaf/%.o: $(SOURCE_MAIN)/citrusleaf/%.c $(SOURCE_INCL)/citrusleaf/*.h | modules-prepare 
+$(TARGET_OBJ)/common/citrusleaf/%.o: $(SOURCE_MAIN)/citrusleaf/%.c $(SOURCE_INCL)/citrusleaf/*.h | modules 
 	$(object)
 
-$(TARGET_LIB)/libaerospike-common.so: $(AEROSPIKE:%=$(TARGET_OBJ)/common/aerospike/%) $(CITRUSLEAF:%=$(TARGET_OBJ)/common/citrusleaf/%) | modules-prepare 
+$(TARGET_LIB)/libaerospike-common.so: $(AEROSPIKE:%=$(TARGET_OBJ)/common/aerospike/%) $(CITRUSLEAF:%=$(TARGET_OBJ)/common/citrusleaf/%) | modules 
 	$(library)
 
-$(TARGET_LIB)/libaerospike-common.a: $(AEROSPIKE:%=$(TARGET_OBJ)/common/aerospike/%) $(CITRUSLEAF:%=$(TARGET_OBJ)/common/citrusleaf/%) | modules-prepare 
+$(TARGET_LIB)/libaerospike-common.a: $(AEROSPIKE:%=$(TARGET_OBJ)/common/aerospike/%) $(CITRUSLEAF:%=$(TARGET_OBJ)/common/citrusleaf/%) | modules 
 	$(archive)
 
 # HOOKED COMMON
 
 $(TARGET_OBJ)/common-hooked/citrusleaf/%.o: CC_FLAGS += -DEXTERNAL_LOCKS
-$(TARGET_OBJ)/common-hooked/citrusleaf/%.o: $(SOURCE_MAIN)/citrusleaf/%.c $(SOURCE_INCL)/citrusleaf/*.h
+$(TARGET_OBJ)/common-hooked/citrusleaf/%.o: $(SOURCE_MAIN)/citrusleaf/%.c $(SOURCE_INCL)/citrusleaf/*.h | modules
 	$(object)
 
-$(TARGET_LIB)/libaerospike-common-hooked.so: $(CITRUSLEAF:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%) | modules-prepare 
+$(TARGET_LIB)/libaerospike-common-hooked.so: $(CITRUSLEAF:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%) | modules 
 	$(library)
 
-$(TARGET_LIB)/libaerospike-common-hooked.a: $(CITRUSLEAF:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%) | modules-prepare 
+$(TARGET_LIB)/libaerospike-common-hooked.a: $(CITRUSLEAF:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%) | modules 
 	$(archive)
 
 # COMMON HEADERS
