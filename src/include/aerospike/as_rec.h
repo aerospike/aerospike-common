@@ -82,8 +82,12 @@ char *    as_rec_val_tostring(const as_val *v);
  * INLINE FUNCTIONS
  ******************************************************************************/
 
+inline void * as_rec_source(as_rec * r) {
+    return r ? r->data : NULL;
+}
+
 inline void as_rec_destroy(as_rec *r) {
-	as_val_val_destroy((as_val *) r);
+    as_val_val_destroy((as_val *) r);
 }
 
 

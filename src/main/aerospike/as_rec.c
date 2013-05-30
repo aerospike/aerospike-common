@@ -32,6 +32,7 @@
  * INLINES
  ******************************************************************************/
 
+extern inline void *    as_rec_source(as_rec *r);
 extern inline void      as_rec_destroy(as_rec *r);
 
 extern inline as_val *  as_rec_get(const as_rec * r, const char * name) ;
@@ -64,8 +65,6 @@ as_rec * as_rec_new(void * data, const as_rec_hooks * hooks) {
     r->hooks = hooks;
     return r;
 }
-
-
 
 void as_rec_val_destroy(as_val *v) {
     as_rec * r = as_rec_fromval(v);
