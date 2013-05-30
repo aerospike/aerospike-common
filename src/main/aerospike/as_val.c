@@ -63,7 +63,7 @@ static char *   as_val_tostring_noop(const as_val *);
 
 static const as_val_destroy_callback as_val_destroy_callbacks[] = {
     [AS_UNKNOWN]    = as_val_destroy_noop,
-    [AS_NIL]        = as_val_destroy_noop,
+    [AS_NIL]        = as_nil_val_destroy,
     [AS_BOOLEAN]    = as_val_destroy_noop,
     [AS_INTEGER]    = as_integer_val_destroy,
     [AS_STRING]     = as_string_val_destroy,
@@ -122,7 +122,7 @@ as_val * as_val_val_reserve(as_val *v) {
 }
 
 as_val * as_val_val_destroy(as_val * v) {
-    if ( v == NULL ) return v;
+    if ( v == NULL || !v->count ) return v;
     // if we reach the last reference, call the destructor, and free
     if ( 0 == cf_atomic32_decr(&(v->count)) ) {
         as_val_destroy_callbacks[ v->type ](v);     
