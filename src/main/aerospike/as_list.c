@@ -62,7 +62,7 @@ extern inline as_list *     as_list_fromval(as_val * v);
 
 as_list * as_list_init(as_list * l, void * data, const as_list_hooks * hooks) {
     if ( !l ) return l;
-    as_val_init(&l->_, AS_LIST, true);
+    as_val_init(&l->_, AS_LIST, false);
     l->data.generic = data;
     l->hooks = hooks;
     return l;
