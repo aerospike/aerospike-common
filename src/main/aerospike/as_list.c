@@ -60,6 +60,22 @@ extern inline as_list *     as_list_fromval(as_val * v);
  * FUNCTIONS
  *****************************************************************************/
 
+as_list * as_list_init(as_list * l, void * data, const as_list_hooks * hooks) {
+    if ( !l ) return l;
+    as_val_init(&l->_, AS_LIST, true);
+    l->data.generic = data;
+    l->hooks = hooks;
+    return l;
+}
+
+as_list * as_list_new(void * data, const as_list_hooks * hooks) {
+    as_list * l = (as_list *) malloc(sizeof(as_list));
+    as_val_init(&l->_, AS_LIST, true);
+    l->data.generic = data;
+    l->hooks = hooks;
+    return l;
+}
+
 void as_list_val_destroy(as_val * v) {
     as_list * l = as_list_fromval((as_val *) v);
     as_util_hook(destroy, false, l);

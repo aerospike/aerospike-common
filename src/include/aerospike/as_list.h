@@ -97,6 +97,9 @@ typedef struct as_list_hooks_s as_list_hooks;
  * FUNCTIONS
  ******************************************************************************/
 
+as_list *   as_list_init(as_list *, void *, const as_list_hooks *);
+as_list *   as_list_new(void *, const as_list_hooks *);
+
 void        as_list_val_destroy(as_val * v);
 uint32_t    as_list_val_hashcode(const as_val * v);
 char *      as_list_val_tostring(const as_val * v);
