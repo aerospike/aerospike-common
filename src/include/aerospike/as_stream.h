@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include <aerospike/as_val.h>
+#include <aerospike/as_util.h>
 
 /******************************************************************************
  * MACROS
