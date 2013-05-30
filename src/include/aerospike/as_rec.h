@@ -82,7 +82,7 @@ char *    as_rec_val_tostring(const as_val *v);
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline void * as_rec_source(as_rec * r) {
+inline void * as_rec_source(const as_rec * r) {
     return r ? r->data : NULL;
 }
 

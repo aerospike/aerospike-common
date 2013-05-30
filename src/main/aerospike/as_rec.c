@@ -32,7 +32,7 @@
  * INLINES
  ******************************************************************************/
 
-extern inline void *    as_rec_source(as_rec *r);
+extern inline void *    as_rec_source(const as_rec *r);
 extern inline void      as_rec_destroy(as_rec *r);
 
 extern inline as_val *  as_rec_get(const as_rec * r, const char * name) ;
