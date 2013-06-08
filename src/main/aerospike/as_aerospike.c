@@ -41,8 +41,12 @@ extern inline int as_aerospike_log(const as_aerospike * a, const char * name,
 
 extern inline as_rec *as_aerospike_crec_create(const as_aerospike * a, const as_rec * r);
 extern inline as_rec *as_aerospike_crec_open(const as_aerospike * a, const as_rec *r, const char *);
-extern inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec * r, const as_rec *cr);
-extern inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec * r, const as_rec *cr);
+
+// Change crec_update and crec_close so that it no longer requires the top_rec parameter (6/13:tjl)
+//extern inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec * r, const as_rec *cr);
+//extern inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec * r, const as_rec *cr);
+extern inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec *cr);
+extern inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec *cr);
 
 /******************************************************************************
  * FUNCTIONS

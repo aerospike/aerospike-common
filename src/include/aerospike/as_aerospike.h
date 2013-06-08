@@ -48,8 +48,11 @@ struct as_aerospike_hooks_s {
 	// Chunk record related interfaces. Specific to Large Stack Objects
     as_rec *(*create_subrec)(const as_aerospike *, const as_rec *);
     as_rec *(*open_subrec)(const as_aerospike *, const as_rec *, const char *);
-    int (*update_subrec)(const as_aerospike *, const as_rec *, const as_rec *);
-    int (*close_subrec)(const as_aerospike *, const as_rec *, const as_rec *);
+    // Change Update and Close to no longer require the TOP RECORD parm
+//    int (*update_subrec)(const as_aerospike *, const as_rec *, const as_rec *);
+//    int (*close_subrec)(const as_aerospike *, const as_rec *, const as_rec *);
+    int (*update_subrec)(const as_aerospike *, const as_rec *);
+    int (*close_subrec)(const as_aerospike *, const as_rec *);
 };
 
 /******************************************************************************
@@ -80,12 +83,18 @@ inline as_rec *as_aerospike_crec_create(const as_aerospike * a, const as_rec * r
     return as_util_hook(create_subrec, NULL, a, r);
 }
 
-inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec * r, const as_rec * cr) {
-    return as_util_hook(update_subrec, 1, a, r, cr);
+// Change crec_update and crec_close so that it no longer requires the top_rec parameter (6/13:tjl)
+// Comment out OLD line to compare
+//inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec * r, const as_rec * cr)
+inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec * cr)
+{
+    return as_util_hook(update_subrec, 1, a, cr);
 }
-
-inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec * r, const as_rec * cr) {
-    return as_util_hook(close_subrec, 1, a, r, cr);
+// Comment out OLD line to compare
+//inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec * r, const as_rec * cr)
+inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec * cr)
+{
+    return as_util_hook(close_subrec, 1, a, cr);
 }
 
 inline as_rec * as_aerospike_crec_open(const as_aerospike * a, const as_rec * r, const char *dig) {
