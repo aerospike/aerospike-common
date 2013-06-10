@@ -37,11 +37,12 @@ extern inline void      as_rec_destroy(as_rec *r);
 
 extern inline as_val *  as_rec_get(const as_rec * r, const char * name) ;
 extern inline int       as_rec_set(const as_rec * r, const char * name, const as_val * value) ;
-extern inline int       as_rec_remove(const as_rec * r, const char * name) ;
+extern inline int 		as_rec_remove(const as_rec * r, const char * name) ;
 extern inline uint32_t  as_rec_ttl(const as_rec * r);
 extern inline uint16_t  as_rec_gen(const as_rec * r) ;
 extern inline as_bytes *as_rec_digest(const as_rec * r) ;
 extern inline uint16_t  as_rec_numbins(const as_rec * r) ;
+extern inline int  		as_rec_set_flags(const as_rec * r, const char * name, uint8_t flags);
 
 extern inline as_val *  as_rec_toval(const as_rec * r) ;
 extern inline as_rec *  as_rec_fromval(const as_val * v) ;
