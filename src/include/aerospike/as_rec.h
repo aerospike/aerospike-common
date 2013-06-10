@@ -64,6 +64,7 @@ struct as_rec_hooks_s {
     uint16_t    (* numbins)(const as_rec *);
     as_bytes *  (* digest)(const as_rec *);
     int         (* set_flags)(const as_rec*, const char *, uint8_t );
+    int         (* set_type)(const as_rec*,  uint8_t );
 };
 
 typedef struct as_rec_hooks_s as_rec_hooks;
@@ -150,8 +151,13 @@ inline as_bytes * as_rec_digest(const as_rec * r) {
 }
 
 inline int  as_rec_set_flags(const as_rec * r, const char * name, uint8_t flags) {
-	// name, default return, record, name, flags
+	// name, default return, record, bin_name, flags
     return as_util_hook(set_flags, 0, r, name, flags);
+}
+
+inline int  as_rec_set_type(const as_rec * r, uint8_t rec_type) {
+	// name, default return, record, rec_type
+    return as_util_hook(set_type, 0, r, rec_type);
 }
 
 inline as_val * as_rec_toval(const as_rec * r) {
