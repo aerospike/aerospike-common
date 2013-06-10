@@ -43,6 +43,7 @@ extern inline uint16_t  as_rec_gen(const as_rec * r) ;
 extern inline as_bytes *as_rec_digest(const as_rec * r) ;
 extern inline uint16_t  as_rec_numbins(const as_rec * r) ;
 extern inline int  		as_rec_set_flags(const as_rec * r, const char * name, uint8_t flags);
+extern inline int  		as_rec_set_type(const as_rec * r, uint8_t rec_type);
 
 extern inline as_val *  as_rec_toval(const as_rec * r) ;
 extern inline as_rec *  as_rec_fromval(const as_val * v) ;
