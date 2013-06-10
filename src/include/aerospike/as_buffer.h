@@ -21,12 +21,7 @@
  *****************************************************************************/
 #pragma once
 
-#include <stdlib.h>
-
-/*
-** an as_buffer is not a subtype of as_val and can't be used in any as_val functions,
-** thus I suspect we need to remove it
-*/
+#include <stdint.h>
 
 /******************************************************************************
  * TYPES
@@ -35,14 +30,21 @@
 typedef struct as_buffer_s as_buffer;
 
 struct as_buffer_s {
-    size_t  capacity;
-    size_t  size;
-    char *  data;
+    uint32_t 	capacity;
+    uint32_t 	size;
+    uint8_t *  	data;
 };
 
 /******************************************************************************
  * INLINE FUNCTION DEFINITIONS
  ******************************************************************************/
 
+/**
+ * Initialize the buffer to default values.
+ */
 int as_buffer_init(as_buffer * b);
+
+/**
+ * Free the resources allocated to the buffer.
+ */
 void as_buffer_destroy(as_buffer * b);
