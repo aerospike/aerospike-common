@@ -76,7 +76,7 @@ static int as_msgpack_serializer_serialize(as_serializer * s, as_val * v, as_buf
 
     as_msgpack_pack_val(&pk, v);
 
-    buff->data = sbuf.data;
+    buff->data = (uint8_t *) sbuf.data;
     buff->size = sbuf.size;
     buff->capacity = sbuf.alloc;
 
@@ -89,7 +89,7 @@ static int as_msgpack_serializer_deserialize(as_serializer * s, as_buffer * buff
 
     size_t offset = 0;
 
-    if ( msgpack_unpack_next(&msg, buff->data, buff->size, &offset) ) {
+    if ( msgpack_unpack_next(&msg, (uint8_t *) buff->data, buff->size, &offset) ) {
         as_msgpack_object_to_val(&msg.data, v);
     }
 
