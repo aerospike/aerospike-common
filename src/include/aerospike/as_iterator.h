@@ -101,8 +101,6 @@ void as_iterator_destroy(as_iterator * i);
 /**
  * Tests if there are more values available in the iterator.
  *
- * Proxies to `i->hooks->has_next(i)`
- *
  * @param i the iterator to be tested.
  * @return true if there are more values, otherwise false.
  */
@@ -113,8 +111,6 @@ inline bool as_iterator_has_next(const as_iterator * i) {
 /**
  * Attempts to get the next value from the iterator.
  * This will return the next value, and iterate past the value.
- *
- * Proxies to `i->hooks->next(i)`
  *
  * @param i the iterator to get the next value from.
  * @return the next value available in the iterator.

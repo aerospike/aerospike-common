@@ -34,6 +34,9 @@
 
 typedef struct as_string_s as_string;
 
+/**
+ * String value
+ */
 struct as_string_s {
 	as_val      _;
 	bool        free; 

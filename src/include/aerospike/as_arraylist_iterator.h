@@ -34,8 +34,16 @@ struct as_iterator_s;
  * Iterator for as_arraylist.
  */
 struct as_arraylist_iterator_s {
-	const as_arraylist *    list;
-	uint32_t                pos;
+
+	/**
+	 * The as_arraylist being iterated over
+	 */
+	const as_arraylist * list;
+
+	/**
+	 * The current position of the iteration
+	 */
+	uint32_t pos;
 };
 
 typedef struct as_arraylist_iterator_s as_arraylist_iterator;

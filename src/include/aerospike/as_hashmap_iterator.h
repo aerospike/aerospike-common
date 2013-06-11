@@ -31,11 +31,34 @@
 
 struct as_iterator_s;
 
+/**
+ * Iterator for as_hashmap
+ */
 struct as_hashmap_iterator_s {
+
+	/**
+	 * The hashmap
+	 */
     shash * h;
+
+    /**
+     * Current entry
+     */
     shash_elem * curr;
+
+    /**
+     * Next entry
+     */
     shash_elem * next;
+
+    /**
+     * Position
+     */
     uint32_t pos;
+
+    /**
+     * Number of entries
+     */
     uint32_t size;
 };
 
@@ -45,6 +68,12 @@ typedef struct as_hashmap_iterator_s as_hashmap_iterator;
  * FUNCTIONS
  *****************************************************************************/
 
-struct as_iterator_s * as_hashmap_iterator_new(const as_hashmap *);
+/**
+ * Creates a heap allocated as_iterator for the given as_hashmap.
+ */
+struct as_iterator_s * as_hashmap_iterator_new(const as_hashmap * map);
 
-struct as_iterator_s * as_hashmap_iterator_init(const as_hashmap *, struct as_iterator_s *);
+/**
+ * Initializes a stack allocated as_iterator for the given as_hashmap.
+ */
+struct as_iterator_s * as_hashmap_iterator_init(const as_hashmap * map, struct as_iterator_s * iterator);

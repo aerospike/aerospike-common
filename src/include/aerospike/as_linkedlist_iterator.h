@@ -30,8 +30,16 @@
 
 struct as_iterator_s;
 
+/**
+ * Iterator for as_linkedlist
+ */
 struct as_linkedlist_iterator_s {
-    const as_linkedlist * list;
+
+	/**
+	 * The current list
+	 * Iterating moves to the next tail.
+	 */
+	const as_linkedlist * list;
 };
 
 typedef struct as_linkedlist_iterator_s as_linkedlist_iterator;
@@ -40,6 +48,12 @@ typedef struct as_linkedlist_iterator_s as_linkedlist_iterator;
  * FUNCTIONS
  *****************************************************************************/
 
-struct as_iterator_s * as_linkedlist_iterator_new(const as_linkedlist *);
+/**
+ * Creates a new heap allocated as_iterator for the given as_linkedlist.
+ */
+struct as_iterator_s * as_linkedlist_iterator_new(const as_linkedlist * list);
 
-struct as_iterator_s * as_linkedlist_iterator_init(const as_linkedlist *, struct as_iterator_s *);
+/**
+ * Initializes a stack allocated as_iterator for the given as_linkedlist.
+ */
+struct as_iterator_s * as_linkedlist_iterator_init(const as_linkedlist * list, struct as_iterator_s * iterator);

@@ -19,6 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *****************************************************************************/
+
 #pragma once
 
 #include <citrusleaf/cf_shash.h>
@@ -30,7 +31,7 @@
 struct as_map_s;
 
 struct as_hashmap_s {
-    shash * h;
+	shash * h;
 };
 
 typedef struct as_hashmap_s as_hashmap;

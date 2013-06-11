@@ -31,6 +31,9 @@
  * TYPES
  ******************************************************************************/
 
+/**
+ * Integer value
+ */
 struct as_integer_s {
     as_val  _;
     int64_t value;
@@ -42,33 +45,66 @@ typedef struct as_integer_s as_integer;
  * FUNCTIONS
  ******************************************************************************/
 
-as_integer *    as_integer_init(as_integer * v, int64_t i);
-as_integer *    as_integer_new(int64_t i);
+/**
+ * Initializes a stack allocated as_integer.
+ */
+as_integer * as_integer_init(as_integer * v, int64_t i);
 
-void            as_integer_val_destroy(as_val *v);
-uint32_t        as_integer_val_hashcode(const as_val *v);
-char *          as_integer_val_tostring(const as_val *v);
+/**
+ * Creates a new heap allocated as_integer.
+ */
+as_integer * as_integer_new(int64_t i);
+
+/**
+ * PRIVATE:
+ * Internal helper function for destroying an as_val.
+ */
+void as_integer_val_destroy(as_val * v);
+
+/**
+ * PRIVATE:
+ * Internal helper function for getting the hashcode of an as_val.
+ */
+uint32_t as_integer_val_hashcode(const as_val * v);
+
+/**
+ * PRIVATE:
+ * Internal helper function for getting the string representation of an as_val.
+ */
+char * as_integer_val_tostring(const as_val * v);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
+/**
+ * Destroy the as_integer and associated resources.
+ */
 inline void as_integer_destroy(as_integer * i) {
     as_val_val_destroy((as_val *) i);
 }
 
-
-
+/**
+ * Get the int64_t value.
+ */
 inline int64_t as_integer_toint(const as_integer * i) {
     return i ? i->value : 0;
 }
 
+/******************************************************************************
+ * CONVERSION FUNCTIONS
+ ******************************************************************************/
 
-
+/**
+ * Convert to an as_val.
+ */
 inline as_val * as_integer_toval(const as_integer * i) {
     return (as_val *) i;
 }
 
+/**
+ * Convert from an as_val.
+ */
 inline as_integer * as_integer_fromval(const as_val * v) {
     return as_util_fromval(v, AS_INTEGER, as_integer);
 }

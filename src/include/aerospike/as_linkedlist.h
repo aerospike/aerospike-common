@@ -35,8 +35,16 @@ struct as_list_s;
  * the tail is the remainder of the list. The tails must be a linkedlist.
  */
 struct as_linkedlist_s {
-    as_val *            head;
-    struct as_list_s *  tail;
+	
+	/**
+	 * The first value
+	 */
+	as_val * head;
+	
+	/**
+	 * The remaining list
+	 */
+	struct as_list_s * tail;
 };
 
 typedef struct as_linkedlist_s as_linkedlist;
