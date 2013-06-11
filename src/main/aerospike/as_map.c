@@ -90,17 +90,16 @@ char * as_map_val_tostring(const as_val * v) {
 
         char * valstr = as_val_tostring(as_pair_2(pair));
         size_t vallen = strlen(valstr);
+        if ( sep ) {
+            strcpy(buf + pos, ", ");
+            pos += 2;
+        }
 
         if ( pos + keylen + 2 + vallen + 2 >= cap ) {
             uint32_t adj = keylen+2+vallen+2 > blk ? keylen+2+vallen+2 : blk;
             buf = realloc(buf, sizeof(char) * (cap + adj));
             bzero(buf+cap, sizeof(char)*adj);
             cap += adj;
-        }
-
-        if ( sep ) {
-            strcpy(buf + pos, ", ");
-            pos += 2;
         }
 
         strncpy(buf + pos, keystr, keylen);
@@ -118,6 +117,7 @@ char * as_map_val_tostring(const as_val * v) {
     as_iterator_destroy(&i);
 
     strcpy(buf + pos, ")");
+    buf[pos + 1] = 0;
     
     return buf;
 }
