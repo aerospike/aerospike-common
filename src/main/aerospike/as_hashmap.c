@@ -46,7 +46,7 @@ static int              as_hashmap_map_set(as_map *, const as_val *, const as_va
 static as_val *         as_hashmap_map_get(const as_map *, const as_val *);
 static int              as_hashmap_map_clear(as_map *);
 
-static bool             as_hashmap_map_foreach(const as_map *, void *, as_map_foreach_callback);
+static bool             as_hashmap_map_foreach(const as_map *, as_map_foreach_callback, void *);
 static as_iterator *    as_hashmap_map_iterator_init(const as_map *, as_iterator *);
 static as_iterator *    as_hashmap_map_iterator_new(const as_map *);
 
@@ -188,7 +188,7 @@ static int as_hashmap_map_clear(as_map * m) {
 /**
  * Calls the callback function for each (key,value) pair in the map.
  */
-static bool as_hashmap_map_foreach(const as_map * m, void * udata, as_map_foreach_callback callback) {
+static bool as_hashmap_map_foreach(const as_map * m, as_map_foreach_callback callback, void * udata) {
     as_hashmap * s = (as_hashmap *) &(m->data.hashmap);
     as_hashmap_shash_foreach_context ctx = {
         .udata = udata,

@@ -28,13 +28,31 @@
 #include <aerospike/as_boolean.h>
 
 /******************************************************************************
+ * CONSTANTS
+ *****************************************************************************/
+
+const as_boolean as_true = {
+	._ = { 
+		.type = AS_BOOLEAN, 
+		.free = false, 
+		.count = 0
+	},
+	.value = true
+};
+
+const as_boolean as_false = {
+	._.type = AS_BOOLEAN,
+	._.free = false,
+	._.count = 0,
+	.value = false
+};
+
+/******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
  
 extern inline void          as_boolean_destroy(as_boolean * b);
-
 extern inline bool          as_boolean_tobool(const as_boolean * b);
-
 extern inline as_val *      as_boolean_toval(const as_boolean * b);
 extern inline as_boolean *  as_boolean_fromval(const as_val * v);
 
@@ -54,8 +72,6 @@ as_boolean * as_boolean_new(bool b) {
     v->value = b;
     return v;
 }
-
-
 
 void as_boolean_val_destroy(as_val *v) {
 	return;

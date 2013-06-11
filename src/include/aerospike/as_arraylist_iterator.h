@@ -30,9 +30,12 @@
 
 struct as_iterator_s;
 
+/**
+ * Iterator for as_arraylist.
+ */
 struct as_arraylist_iterator_s {
-    const as_arraylist *    list;
-    uint32_t                pos;
+	const as_arraylist *    list;
+	uint32_t                pos;
 };
 
 typedef struct as_arraylist_iterator_s as_arraylist_iterator;
@@ -41,6 +44,12 @@ typedef struct as_arraylist_iterator_s as_arraylist_iterator;
  * FUNCTIONS
  *****************************************************************************/
 
+/**
+ * Creates a new heap allocated as_iterator for as_arraylist.
+ */
 struct as_iterator_s * as_arraylist_iterator_new(const as_arraylist *);
 
+/**
+ * Initializes a stack allocated as_iterator for as_arraylist.
+ */
 struct as_iterator_s * as_arraylist_iterator_init(const as_arraylist *, struct as_iterator_s *);

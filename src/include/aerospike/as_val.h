@@ -33,6 +33,9 @@
  * TYPES
  *****************************************************************************/
 
+/**
+ * as_val types
+ */
 enum as_val_t {
     AS_UNKNOWN      = 0,
     AS_NIL          = 1,
@@ -48,10 +51,27 @@ enum as_val_t {
 
 typedef enum as_val_t as_val_t;
 
+/**
+ * Represents a value
+ */
 struct as_val_s {
-    enum as_val_t 	type;
-    bool            is_malloc;
-    cf_atomic32     count;
+
+	/**
+	 * Value type
+	 */
+    enum as_val_t type;
+
+    /**
+     * Value can be freed.
+     * Should be false for stack allocated values.
+     */
+    bool free;
+
+    /**
+     * Reference count
+     * Values are ref counted.
+     */
+    cf_atomic32 count;
 };
 
 typedef struct as_val_s as_val;
@@ -60,7 +80,7 @@ typedef struct as_val_s as_val;
  * MACROS
  *****************************************************************************/
  
-#define as_val_type(__v)     (((as_val *)__v)->type)
+#define as_val_type(__v) (((as_val *)__v)->type)
 
 #define as_val_reserve(__v) ( as_val_val_reserve((as_val *)__v) )
 
@@ -74,18 +94,42 @@ typedef struct as_val_s as_val;
  * FUNCTIONS
  *****************************************************************************/
 
-as_val *    as_val_val_reserve(as_val *);
-as_val *    as_val_val_destroy(as_val *);
-uint32_t    as_val_val_hashcode(const as_val *);
-char *      as_val_val_tostring(const as_val *);
+/**
+ * PRIVATE:
+ * Helper function for incrementing the count of a value.
+ */
+as_val * as_val_val_reserve(as_val *);
+
+/**
+ * PRIVATE:
+ * Helper function for decrementing the count of a value,
+ * and if count==0 and free==true, then free the value.
+ */
+as_val * as_val_val_destroy(as_val *);
+
+/**
+ * PRIVATE:
+ * Helper function for calculating the hash value.
+ */
+uint32_t as_val_val_hashcode(const as_val *);
+
+/**
+ * PRIVATE:
+ * Helper function for generating the string representation.
+ */
+char * as_val_val_tostring(const as_val *);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  *****************************************************************************/
 
-inline void as_val_init(as_val * v, as_val_t type, bool is_malloc) {
+/**
+ * Initializes as_val types.
+ */
+inline void as_val_init(as_val * v, as_val_t type, bool free) 
+{
     v->type = type; 
-    v->is_malloc = is_malloc; 
+    v->free = free; 
     v->count = 1;
 }
 

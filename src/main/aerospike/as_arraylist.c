@@ -50,7 +50,7 @@ static as_list *        as_arraylist_list_tail(const as_list *);
 static as_list *        as_arraylist_list_drop(const as_list *, uint32_t);
 static as_list *        as_arraylist_list_take(const as_list *, uint32_t);
 
-static bool             as_arraylist_list_foreach(const as_list *, void *, bool (*foreach)(as_val *, void *));
+static bool             as_arraylist_list_foreach(const as_list *, bool (*foreach)(as_val *, void *), void *);
 static as_iterator *    as_arraylist_list_iterator_init(const as_list *, as_iterator *);
 static as_iterator *    as_arraylist_list_iterator_new(const as_list *);
 
@@ -357,7 +357,7 @@ static as_list * as_arraylist_list_take(const as_list * l, uint32_t n) {
 /** 
  * Call the callback function for each element in the list.
  */
-static bool as_arraylist_list_foreach(const as_list * l, void * udata, as_list_foreach_callback callback) {
+static bool as_arraylist_list_foreach(const as_list * l, as_list_foreach_callback callback, void * udata) {
     const as_arraylist * a = &l->data.arraylist;
     for(int i = 0; i < a->size; i++ ) {
         if ( callback(a->elements[i], udata) == false ) {

@@ -30,21 +30,46 @@
 
 struct as_list_s;
 
+/**
+ * An dynamic array implementation for as_list.
+ */
 struct as_arraylist_s {
-    as_val **   elements;       // An allocated area for ptrs to list elements
-    uint32_t    size;           // The current array size (element count)
-    uint32_t    capacity;       // The total array size (max element count)
-    uint32_t    block_size;     // The unit of allocation (e.g. 8 elements)
-                                // Note that block_size == 0 means no more
-                                // can be allocated
+	/**
+	 * The elements of the list
+	 */
+	as_val ** elements;
+	/**
+	 * The number of slots containing elements
+	 */
+	uint32_t size;
+
+	/**
+	 * The total number of slots
+	 */
+	uint32_t capacity;
+
+	/**
+	 * Number of elements to add, when capacity is reached.
+	 * If 0 (zero), then capacity can't be expanded.
+	 */
+	uint32_t block_size;
 };
 
 typedef struct as_arraylist_s as_arraylist;
 
+/**
+ * Status codes for various as_arraylist operations.
+ */
 enum as_arraylist_status_e {
-    AS_ARRAYLIST_OK         = 0,
-    AS_ARRAYLIST_ERR_ALLOC  = 1,
-    AS_ARRAYLIST_ERR_MAX    = 2
+	
+	// Normal operation
+	AS_ARRAYLIST_OK         = 0,
+
+	// Unable to expand capacity: allocation failed
+	AS_ARRAYLIST_ERR_ALLOC  = 1,
+
+	// Unable to expand capacity: block_size==0
+	AS_ARRAYLIST_ERR_MAX    = 2
 };
 
 typedef enum as_arraylist_status_e as_arraylist_status;

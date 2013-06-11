@@ -19,6 +19,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *****************************************************************************/
+
 #pragma once
 
 #include <sys/types.h>
@@ -31,36 +32,42 @@
  * TYPES
  *****************************************************************************/
 
+/**
+ * Types of as_bytes
+ */
 enum as_bytes_type_e {
-    AS_BYTES_TYPE_NULL = 0,
-    AS_BYTES_TYPE_INTEGER = 1,
-    AS_BYTES_TYPE_FLOAT = 2,
-    AS_BYTES_TYPE_STRING = 3,
-    AS_BYTES_TYPE_BLOB = 4,
-    AS_BYTES_TYPE_TIMESTAMP = 5,
-    AS_BYTES_TYPE_DIGEST = 6,
-    AS_BYTES_TYPE_JAVA_BLOB = 7,
-    AS_BYTES_TYPE_CSHARP_BLOB = 8,
-    AS_BYTES_TYPE_PYTHON_BLOB = 9,
-    AS_BYTES_TYPE_RUBY_BLOB = 10,
-    AS_BYTES_TYPE_ERLANG_BLOB = 11,
-    AS_BYTES_TYPE_APPEND = 12,
-    AS_BYTES_TYPE_LUA_BLOB = 13,
-    AS_BYTES_TYPE_JSON_BLOB = 14,
-    AS_BYTES_TYPE_MAP = 15,
-    AS_BYTES_TYPE_LIST = 16,
-    AS_BYTES_TYPE_MAX = 17
+	AS_BYTES_TYPE_NULL = 0,
+	AS_BYTES_TYPE_INTEGER = 1,
+	AS_BYTES_TYPE_FLOAT = 2,
+	AS_BYTES_TYPE_STRING = 3,
+	AS_BYTES_TYPE_BLOB = 4,
+	AS_BYTES_TYPE_TIMESTAMP = 5,
+	AS_BYTES_TYPE_DIGEST = 6,
+	AS_BYTES_TYPE_JAVA_BLOB = 7,
+	AS_BYTES_TYPE_CSHARP_BLOB = 8,
+	AS_BYTES_TYPE_PYTHON_BLOB = 9,
+	AS_BYTES_TYPE_RUBY_BLOB = 10,
+	AS_BYTES_TYPE_ERLANG_BLOB = 11,
+	AS_BYTES_TYPE_APPEND = 12,
+	AS_BYTES_TYPE_LUA_BLOB = 13,
+	AS_BYTES_TYPE_JSON_BLOB = 14,
+	AS_BYTES_TYPE_MAP = 15,
+	AS_BYTES_TYPE_LIST = 16,
+	AS_BYTES_TYPE_MAX = 17
 };
 
 typedef enum as_bytes_type_e as_bytes_type;
 
+/**
+ * Represents a sequence of bytes
+ */
 struct as_bytes_s {
-    as_val          _;
-    bool            freeable; 
-    as_bytes_type   type;
-    uint8_t *       value;
-    size_t          len;
-    size_t          capacity;
+	as_val          _;
+	as_bytes_type   type;
+	bool            free;
+	uint32_t        capacity;
+	uint32_t        len;
+	uint8_t *       value;
 };
 
 typedef struct as_bytes_s as_bytes;
@@ -69,77 +76,138 @@ typedef struct as_bytes_s as_bytes;
  * FUNCTIONS
  *****************************************************************************/
 
-as_bytes *  as_bytes_init(as_bytes *, uint8_t *s, size_t len, bool freeable);
-as_bytes *  as_bytes_empty_init(as_bytes *, size_t len);
-as_bytes *  as_bytes_new(uint8_t *, size_t len, bool freeable);
-as_bytes *	as_bytes_empty_new(size_t len);
+/**
+ * Initializes a stack allocated as_bytes, filled with specified bytes.
+ */
+as_bytes * as_bytes_init(as_bytes * b, uint8_t * raw, uint32_t len, bool free);
 
+/**
+ * Initializes a stack allocated as_bytes, as an empty buffer of len size.
+ */
+as_bytes * as_bytes_empty_init(as_bytes * b, uint32_t len);
 
-size_t as_bytes_len(as_bytes * s);
+/**
+ * Creates a new heap allocated as_bytes, filled with specified bytes.
+ */
+as_bytes * as_bytes_new(uint8_t * raw, uint32_t len, bool free);
 
-uint32_t as_bytes_hash(const as_bytes * s);
+/**
+ * Creates a new heap allocated as_bytes, as an empty buffer of len size.
+ */
+as_bytes * as_bytes_empty_new(uint32_t len);
 
-as_bytes_type as_bytes_get_type(const as_bytes * s);
+/**
+ * The length of the buffer.
+ */
+uint32_t as_bytes_len(as_bytes * s);
 
-void as_bytes_set_type(as_bytes *s, as_bytes_type t);
+/**
+ * Get the type of bytes.
+ */
+as_bytes_type as_bytes_get_type(const as_bytes * b);
+
+/**
+ * Set the type of bytes.
+ */
+void as_bytes_set_type(as_bytes * b, as_bytes_type t);
 
 /** 
  * Copy from as_bytes to a buf
  */
-int as_bytes_get(const as_bytes * s, int index, uint8_t * buf, int buf_len);
+int as_bytes_get(const as_bytes * b, uint32_t index, uint8_t * buf, uint32_t len);
 
 /**
  * Copy from buf to as_bytes
  */
-int as_bytes_set(as_bytes * s, int index, const uint8_t * buf, int buf_len);
+int as_bytes_set(as_bytes * b, uint32_t index, const uint8_t * buf, uint32_t len);
 
 /**
- * Creates a new as_bytes from a slice of the source
+ * Creates a new as_bytes from a slice of the source.
  */
-as_bytes *as_bytes_slice_new(const as_bytes * src, int start_index, int end_index);
+as_bytes * as_bytes_slice_new(const as_bytes * b, uint32_t start, uint32_t end);
 
 /**
- * Initializes an as_bytes from a slice of the source
+ * Initializes an as_bytes from a slice of the source.
  */
-as_bytes * as_bytes_slice_init(as_bytes * dst, const as_bytes * src, int start_index, int end_index);
+as_bytes * as_bytes_slice_init(as_bytes * dest, const as_bytes * src, uint32_t start, uint32_t end);
 
-int as_bytes_append(as_bytes * b, const uint8_t * buf, int buf_len);
+/**
+ * Append specified bytes
+ */
+int as_bytes_append(as_bytes * b, const uint8_t * buf, uint32_t buf_len);
 
+/**
+ * Append another as_bytes.
+ */
 int as_bytes_append_bytes(as_bytes * b, as_bytes * s);
 
-int as_bytes_delete(as_bytes * b, int pos, int len);
+/**
+ * Remove bytes from pos of given len.
+ */
+int as_bytes_delete(as_bytes * b, uint32_t pos, uint32_t len);
 
 /**
- * changes length. Truncates if new length shorter.
- * extends with 0 if new length longer.
+ * Changes length of the buffer. 
+ * If the new length is shorter than the current length, then the buffer is truncated.
+ * If the new length is longer than the current length, then the buffer is expanded and new 
+ * space is fille with 0 (zero).
  */
-int as_bytes_set_len(as_bytes *s, int len);
+int as_bytes_set_len(as_bytes *s, uint32_t len);
 
+/**
+ * PRIVATE:
+ * Internal helper function for destroying an as_val.
+ */
+void as_bytes_val_destroy(as_val * v);
 
-void    	as_bytes_val_destroy(as_val * v);
-uint32_t    as_bytes_val_hashcode(const as_val * v);
-char *      as_bytes_val_tostring(const as_val * v);
+/**
+ * PRIVATE:
+ * Internal helper function for getting the hashcode of an as_val.
+ */
+uint32_t as_bytes_val_hashcode(const as_val * v);
+
+/**
+ * PRIVATE:
+ * Internal helper function for getting the string representation of an as_val.
+ */
+char * as_bytes_val_tostring(const as_val * v);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  *****************************************************************************/
 
-inline void as_bytes_destroy(as_bytes * s) {
-    as_val_val_destroy( (as_val *)s );
+/**
+ * Destroy the as_bytes and associated resources.
+ */
+inline void as_bytes_destroy(as_bytes * b) 
+{
+	as_val_val_destroy( (as_val *) b );
 }
 
-
-
-inline uint8_t * as_bytes_tobytes(const as_bytes * s) {
-    return (s->value);
+/**
+ * Get the bytes value.
+ */
+inline uint8_t * as_bytes_tobytes(const as_bytes * b) 
+{
+	return b ? b->value : NULL;
 }
 
+/******************************************************************************
+ * CONVERSION FUNCTIONS
+ *****************************************************************************/
 
-
-inline as_val * as_bytes_toval(const as_bytes * s) {
-    return (as_val *)s;
+/**
+ * Convert to an as_val.
+ */
+inline as_val * as_bytes_toval(const as_bytes * b) 
+{
+	return (as_val *) b;
 }
 
-inline as_bytes * as_bytes_fromval(const as_val * v) {
-    return as_util_fromval(v, AS_BYTES, as_bytes);
+/**
+ * Convert from an as_val.
+ */
+inline as_bytes * as_bytes_fromval(const as_val * v) 
+{
+	return as_util_fromval(v, AS_BYTES, as_bytes);
 }

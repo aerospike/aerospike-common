@@ -36,6 +36,9 @@
  * TYPES
  ******************************************************************************/
 
+/**
+ * A Pair of values: (_1,_2)
+ */
 struct as_pair_s {
     as_val      _;
     as_val *    _1;
@@ -48,37 +51,78 @@ typedef struct as_pair_s as_pair;
  * FUNCTIONS
  ******************************************************************************/
 
-as_pair *   as_pair_new(as_val *, as_val *);
-as_pair *   as_pair_init(as_pair *, as_val *, as_val *);
+/**
+ * Create a new heap allocated as_pair.
+ */
+as_pair * as_pair_new(as_val *, as_val *);
 
-void        as_pair_val_destroy(as_val *);
-uint32_t    as_pair_val_hashcode(const as_val *);
-char *	    as_pair_val_tostring(const as_val *);
+/**
+ * Initializes a stack allocated as_pair.
+ */
+as_pair * as_pair_init(as_pair *, as_val *, as_val *);
+
+/**
+ * PRIVATE:
+ * Internal helper function for destroying an as_val.
+ */
+void as_pair_val_destroy(as_val *);
+
+/**
+ * PRIVATE:
+ * Internal helper function for getting the hashcode of an as_val.
+ */
+uint32_t as_pair_val_hashcode(const as_val *);
+
+/**
+ * PRIVATE:
+ * Internal helper function for getting the string representation of an as_val.
+ */
+char * as_pair_val_tostring(const as_val *);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline void as_pair_destroy(as_pair * p) {
+/**
+ * Destroy the as_pair and associated resources.
+ */
+inline void as_pair_destroy(as_pair * p)
+{
     as_val_val_destroy((as_val *)p);
 }
 
-
-
-inline as_val * as_pair_1(as_pair * p) {
+/**
+ * Get the first value of the pair
+ */
+inline as_val * as_pair_1(as_pair * p) 
+{
     return p->_1;
 }
 
-inline as_val * as_pair_2(as_pair * p) {
+/**
+ * Get the second value of the pair
+ */
+inline as_val * as_pair_2(as_pair * p) 
+{
     return p->_2;
 }
 
+/******************************************************************************
+ * CONVERSION FUNCTIONS
+ *****************************************************************************/
 
-
-inline as_val * as_pair_toval(const as_pair * p) {
+/**
+ * Convert to an as_val.
+ */
+inline as_val * as_pair_toval(const as_pair * p) 
+{
     return (as_val *)p;
 }
 
-inline as_pair * as_pair_fromval(const as_val * v) {
+/**
+ * Convert from an as_val.
+ */
+inline as_pair * as_pair_fromval(const as_val * v) 
+{
     return as_util_fromval(v, AS_PAIR, as_pair);
 }

@@ -60,7 +60,7 @@ inline void as_integer_destroy(as_integer * i) {
 
 
 inline int64_t as_integer_toint(const as_integer * i) {
-    return i->value;
+    return i ? i->value : 0;
 }
 
 

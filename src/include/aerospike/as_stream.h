@@ -81,6 +81,12 @@ typedef struct as_stream_hooks_s as_stream_hooks;
  * INLINE FUNCTIONS
  *****************************************************************************/
 
+/**
+ * Initializes a stack allocated as_stream for a given source and hooks.
+ *
+ * @param source the source feeding the stream
+ * @param hooks the hooks that interface with the source
+ */
 inline as_stream * as_stream_init(as_stream * s, void * data, const as_stream_hooks * hooks) {
     if ( s == NULL ) return s;
     s->is_malloc = false;
@@ -90,7 +96,7 @@ inline as_stream * as_stream_init(as_stream * s, void * data, const as_stream_ho
 }
 
 /**
- * Creates a new stream for a given source and hooks.
+ * Creates a new heap allocated as_stream for a given source and hooks.
  *
  * @param source the source feeding the stream
  * @param hooks the hooks that interface with the source

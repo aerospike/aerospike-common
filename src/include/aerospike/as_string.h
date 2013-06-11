@@ -35,45 +35,105 @@
 typedef struct as_string_s as_string;
 
 struct as_string_s {
-    as_val      _;
-    bool        freeable; 
-    char *      value;
-    size_t      len;
+	as_val      _;
+	bool        free; 
+	char *      value;
+	size_t      len;
 };
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-as_string *     as_string_init(as_string * s, char * cstr, bool freeable);
-as_string *     as_string_new(char * cstr, bool freeable);
+/**
+ * Initialize a stack allocated as_string.
+ *
+ * If free is true, then the string value will be freed when the as_string is destroyed.
+ *
+ * @param s 		- the stack allocated as_string to initialize
+ * @param value 	- the NULL terminated string of character.
+ * @param free 		- if true, then the value will be freed when as_string is destroyed.
+ *
+ * @return the initialized as_string on success, otherwise NULL.
+ */
+as_string * as_string_init(as_string * s, char * value, bool free);
 
-size_t          as_string_len(as_string * s);
+/**
+ * Creates a new heap allocated as_string.
+ *
+ * If free is true, then the string value will be freed when the as_string is destroyed.
+ *
+ * @param s 		- the stack allocated as_string to initialize
+ * @param value 	- the NULL terminated string of character.
+ * @param free 		- if true, then the value will be freed when as_string is destroyed.
+ *
+ * @return the newly allocated as_string on success, otherwise NULL.
+ */
+as_string * as_string_new(char * value, bool free);
 
-void    		as_string_val_destroy(as_val * v);
-uint32_t        as_string_val_hashcode(const as_val * v);
-char *          as_string_val_tostring(const as_val * v);
+/**
+ * The length of the string
+ *
+ * @param s - the string to get the length of. 
+ *
+ * @return the length of the string in bytes.
+ */
+size_t as_string_len(as_string * s);
+
+/**
+ * PRIVATE:
+ * Internal helper function for destroying an as_val.
+ */
+void as_string_val_destroy(as_val * v);
+
+/**
+ * PRIVATE:
+ * Internal helper function for getting the hashcode of an as_val.
+ */
+uint32_t as_string_val_hashcode(const as_val * v);
+
+/**
+ * PRIVATE:
+ * Internal helper function for getting the string representation of an as_val.
+ */
+char * as_string_val_tostring(const as_val * v);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline void as_string_destroy(as_string * s) {
-    as_val_val_destroy((as_val *) s);
+/**
+ * Destroy the as_string and associated resources.
+ */
+inline void as_string_destroy(as_string * s) 
+{
+	as_val_val_destroy((as_val *) s);
 }
 
-
-
-inline char * as_string_tostring(const as_string * s) {
-    return (s->value);
+/**
+ * Get the string value.
+ */
+inline char * as_string_tostring(const as_string * s) 
+{
+	return s ? s->value : NULL;
 }
 
+/******************************************************************************
+ * CONVERSION FUNCTIONS
+ ******************************************************************************/
 
-
-inline as_val * as_string_toval(const as_string * s) {
-    return (as_val *) s;
+/**
+ * Convert to an as_val.
+ */
+inline as_val * as_string_toval(const as_string * s) 
+{
+	return (as_val *) s;
 }
 
-inline as_string * as_string_fromval(const as_val * v) {
-    return as_util_fromval(v, AS_STRING, as_string);
+/**
+ * Convert from an as_val.
+ */
+inline as_string * as_string_fromval(const as_val * v) 
+{
+	return as_util_fromval(v, AS_STRING, as_string);
 }

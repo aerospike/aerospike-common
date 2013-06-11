@@ -28,12 +28,29 @@
  * CONSTANTS
  *****************************************************************************/
 
+/**
+ * Global NIL value
+ */
 extern const as_val as_nil;
 
 /******************************************************************************
  * FUNCTIONS
  *****************************************************************************/
 
-void        as_nil_val_destroy(as_val * v);
-uint32_t    as_nil_val_hashcode(const as_val * v);
-char *      as_nil_val_tostring(const as_val * v);
+/**
+ * PRIVATE:
+ * Internal helper function for destroying an as_val.
+ */
+void as_nil_val_destroy(as_val * v);
+
+/**
+ * PRIVATE:
+ * Internal helper function for getting the hashcode of an as_val.
+ */
+uint32_t as_nil_val_hashcode(const as_val * v);
+
+/**
+ * PRIVATE:
+ * Internal helper function for getting the string representation of an as_val.
+ */
+char * as_nil_val_tostring(const as_val * v);
