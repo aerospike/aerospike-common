@@ -27,13 +27,28 @@
  * TYPES
  ******************************************************************************/
 
-typedef struct as_buffer_s as_buffer;
-
+/**
+ * Byte Buffer.
+ */
 struct as_buffer_s {
-    uint32_t 	capacity;
-    uint32_t 	size;
-    uint8_t *  	data;
+
+	/**
+	 * Number of bytes allocated to the buffer
+	 */
+	uint32_t capacity;
+
+	/**
+	 * Number of bytes used
+	 */
+	uint32_t size;
+
+	/**
+	 * Bytes of the buffer
+	 */
+	uint8_t * data;
 };
+
+typedef struct as_buffer_s as_buffer;
 
 /******************************************************************************
  * INLINE FUNCTION DEFINITIONS
