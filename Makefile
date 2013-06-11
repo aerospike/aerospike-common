@@ -70,6 +70,7 @@ AEROSPIKE += as_rec.o
 AEROSPIKE += as_arraylist.o
 AEROSPIKE += as_hashmap.o
 AEROSPIKE += as_linkedlist.o
+AEROSPIKE += as_stringmap.o
 
 AEROSPIKE += as_iterator.o
 AEROSPIKE += as_linkedlist_iterator.o

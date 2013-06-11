@@ -23,6 +23,8 @@
 #pragma once
 
 #include <stdbool.h>
+#include <stdint.h>
+#include <string.h>
 
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
@@ -41,7 +43,7 @@
  */
 inline int as_stringmap_set(as_map * m, const char * k, as_val * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(dup(k),true), v);
+	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), v);
 }
 
 /**
@@ -49,7 +51,7 @@ inline int as_stringmap_set(as_map * m, const char * k, as_val * v)
  */
 inline int as_stringmap_set_int64(as_map * m, const char * k, int64_t v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(dup(k),true), as_integer_new(v));
+	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) as_integer_new(v));
 }
 
 /**
@@ -57,7 +59,7 @@ inline int as_stringmap_set_int64(as_map * m, const char * k, int64_t v)
  */
 inline int as_stringmap_set_str(as_map * m, const char * k, const char * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(dup(k),true), (as_val *) as_string_new(dup(v),true));
+	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) as_string_new(strdup(v),true));
 }
 
 /**
@@ -65,7 +67,7 @@ inline int as_stringmap_set_str(as_map * m, const char * k, const char * v)
  */
 inline int as_stringmap_set_integer(as_map * m, const char * k, as_integer * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(dup(k),true), (as_val *) v);
+	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) v);
 }
 
 /**
@@ -73,7 +75,7 @@ inline int as_stringmap_set_integer(as_map * m, const char * k, as_integer * v)
  */
 inline int as_stringmap_set_string(as_map * m, const char * k, as_string * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(dup(k),true), (as_val *) v);
+	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) v);
 }
 
 /**
@@ -81,7 +83,7 @@ inline int as_stringmap_set_string(as_map * m, const char * k, as_string * v)
  */
 inline int as_stringmap_set_bytes(as_map * m, const char * k, as_bytes * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(dup(k),true), (as_val *) v);
+	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) v);
 }
 
 /**
@@ -89,15 +91,15 @@ inline int as_stringmap_set_bytes(as_map * m, const char * k, as_bytes * v)
  */
 inline int as_stringmap_set_list(as_map * m, const char * k, as_list * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(dup(k),true), (as_val *) v);
+	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) v);
 }
+
 /**
  * Set the specified key's value to an as_map.
  */
-
 inline int as_stringmap_set_map(as_map * m, const char * k, as_map * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(dup(k),true), (as_val *) v);
+	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) v);
 }
 
 /******************************************************************************
@@ -110,17 +112,17 @@ inline int as_stringmap_set_map(as_map * m, const char * k, as_map * v)
 inline as_val * as_stringmap_get(as_map * m, const char * k) 
 {
 	as_string key;
-	as_val * v = as_util_hook(get, 1, m, (as_val *) as_string_init(&key, k, false));
+	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
 	return v;
 }
 
 /**
  * Get the specified key's value as an int64_t.
  */
-inline int as_stringmap_set_int64(as_map * m, const char * k, int64_t v) 
+inline int as_stringmap_get_int64(as_map * m, const char * k) 
 {
 	as_string key;
-	as_val * v = as_util_hook(get, 1, m, (as_val *) as_string_init(&key, k, false));
+	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
 	as_integer * i = as_integer_fromval(v);
 	return i ? as_integer_toint(i) : 0;
 }
@@ -128,10 +130,10 @@ inline int as_stringmap_set_int64(as_map * m, const char * k, int64_t v)
 /**
  * Get the specified key's value as a NULL terminated string.
  */
-inline char * as_stringmap_set_str(as_map * m, const char * k) 
+inline char * as_stringmap_get_str(as_map * m, const char * k) 
 {
 	as_string key;
-	as_val * v = as_util_hook(get, 1, m, (as_val *) as_string_init(&key, k, false));
+	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
 	as_string * s = as_string_fromval(v);
 	return s ? as_string_tostring(s) : NULL;
 }
@@ -139,40 +141,40 @@ inline char * as_stringmap_set_str(as_map * m, const char * k)
 /**
  * Get the specified key's value as an as_integer.
  */
-inline as_integer * as_stringmap_set_integer(as_map * m, const char * k) 
+inline as_integer * as_stringmap_get_integer(as_map * m, const char * k) 
 {
 	as_string key;
-	as_val * v = as_util_hook(get, 1, m, (as_val *) as_string_init(&key, k, false));
+	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
 	return as_integer_fromval(v);
 }
 
 /**
  * Get the specified key's value as an as_string.
  */
-inline as_string * as_stringmap_set_string(as_map * m, const char * k) 
+inline as_string * as_stringmap_get_string(as_map * m, const char * k) 
 {
 	as_string key;
-	as_val * v = as_util_hook(get, 1, m, (as_val *) as_string_init(&key, k, false));
+	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
 	return as_string_fromval(v);
 }
 
 /**
  * Get the specified key's value as an as_bytes.
  */
-inline as_bytes * as_stringmap_set_bytes(as_map * m, const char * k) 
+inline as_bytes * as_stringmap_get_bytes(as_map * m, const char * k) 
 {
 	as_string key;
-	as_val * v = as_util_hook(get, 1, m, (as_val *) as_string_init(&key, k, false));
+	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
 	return as_bytes_fromval(v);
 }
 
 /**
  * Get the specified key's value as an as_list.
  */
-inline as_list * as_stringmap_set_list(as_map * m, const char * k) 
+inline as_list * as_stringmap_get_list(as_map * m, const char * k) 
 {
 	as_string key;
-	as_val * v = as_util_hook(get, 1, m, (as_val *) as_string_init(&key, k, false));
+	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
 	return as_list_fromval(v);
 }
 
@@ -182,7 +184,7 @@ inline as_list * as_stringmap_set_list(as_map * m, const char * k)
 inline as_map * as_stringmap_get_map(as_map * m, const char * k) 
 {
 	as_string key;
-	as_val * v = as_util_hook(get, 1, m, (as_val *) as_string_init(&key, k, false));
+	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
 	return as_map_fromval(v);
 }
 
