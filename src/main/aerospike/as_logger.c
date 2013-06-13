@@ -82,14 +82,14 @@ int as_logger_destroy(as_logger * logger) {
  *   }
  *
  */
-bool as_logger_enabled(const as_logger * logger, const as_log_level level) {
+bool as_logger_is_enabled(const as_logger * logger, const as_logger_level level) {
     return as_util_hook(enabled, false, logger, level);
 }
 
 /**
  * Get the current log level for the logger.
  */
-as_log_level as_logger_level(const as_logger * logger) {
+as_logger_level as_logger_get_level(const as_logger * logger) {
     return as_util_hook(level, 1, logger);
 }
 
@@ -107,7 +107,7 @@ as_log_level as_logger_level(const as_logger * logger) {
  *   as_logger_log(logger, AS_LOG_DEBUG, __FILE__, __LINE__, "Hello %s", "Bob");
  *
  */
-int as_logger_log(const as_logger * logger, const as_log_level level, const char * file, const int line, const char * format, ...) {
+int as_logger_log(const as_logger * logger, const as_logger_level level, const char * file, const int line, const char * format, ...) {
     va_list args;
     va_start(args, format);
     int rc = as_util_hook(log, 1, logger, level, file, line, format, args);

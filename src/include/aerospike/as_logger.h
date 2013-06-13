@@ -33,62 +33,62 @@
  * Test if logging of AS_LOG_TRACE message is enabled
  */
 #define as_logger_trace_enabled(__logger) \
-    as_logger_enabled(__logger, AS_LOG_TRACE)
+    as_logger_enabled(__logger, AS_LOGGER_LEVEL_TRACE)
 
 /**
  * Test if logging of AS_LOG_DEBUG message is enabled
  */
 #define as_logger_debug_enabled(__logger) \
-    as_logger_enabled(__logger, AS_LOG_DEBUG)
+    as_logger_enabled(__logger, AS_LOGGER_LEVEL_DEBUG)
 
 /**
  * Test if logging of AS_LOG_INFO message is enabled
  */
 #define as_logger_info_enabled(__logger) \
-    as_logger_enabled(__logger, AS_LOG_INFO)
+    as_logger_enabled(__logger, AS_LOGGER_LEVEL_INFO)
 
 /**
  * Test if logging of AS_LOG_WARN message is enabled
  */
 #define as_logger_warn_enabled(__logger) \
-    as_logger_enabled(__logger, AS_LOG_WARN)
+    as_logger_enabled(__logger, AS_LOGGER_LEVEL_WARN)
 
 /**
  * Test if logging of AS_LOG_ERROR message is enabled
  */
 #define as_logger_error_enabled(__logger) \
-    as_logger_enabled(__logger, AS_LOG_ERROR)
+    as_logger_enabled(__logger, AS_LOGGER_LEVEL_ERROR)
 
 
 /**
  * Log an AS_LOG_ERROR message
  */
 #define as_logger_trace(__logger, __message, __args...) \
-    as_logger_log(__logger, AS_LOG_TRACE, __FILE__, __LINE__, __message, ##__args)
+    as_logger_log(__logger, AS_LOGGER_LEVEL_TRACE, __FILE__, __LINE__, __message, ##__args)
 
 /**
  * Log an AS_LOG_DEBUG message
  */
 #define as_logger_debug(__logger, __message, __args...) \
-    as_logger_log(__logger, AS_LOG_DEBUG, __FILE__, __LINE__, __message, ##__args)
+    as_logger_log(__logger, AS_LOGGER_LEVEL_DEBUG, __FILE__, __LINE__, __message, ##__args)
 
 /**
  * Log an AS_LOG_INFO message
  */
 #define as_logger_info(__logger, __message, __args...) \
-    as_logger_log(__logger, AS_LOG_INFO, __FILE__, __LINE__, __message, ##__args)
+    as_logger_log(__logger, AS_LOGGER_LEVEL_INFO, __FILE__, __LINE__, __message, ##__args)
 
 /**
  * Log an AS_LOG_WARN message
  */
 #define as_logger_warn(__logger, __message, __args...) \
-    as_logger_log(__logger, AS_LOG_WARN, __FILE__, __LINE__, __message, ##__args)
+    as_logger_log(__logger, AS_LOGGER_LEVEL_WARN, __FILE__, __LINE__, __message, ##__args)
 
 /**
  * Log an AS_LOG_ERROR message
  */
 #define as_logger_error(__logger, __message, __args...) \
-    as_logger_log(__logger, AS_LOG_ERROR, __FILE__, __LINE__, __message, ##__args)
+    as_logger_log(__logger, AS_LOGGER_LEVEL_ERROR, __FILE__, __LINE__, __message, ##__args)
 
 /*****************************************************************************
  * TYPES
@@ -97,15 +97,15 @@
 /**
  * The supported logging levels
  */
-enum as_log_level_e {
-    AS_LOG_TRACE     = 0,
-    AS_LOG_DEBUG     = 1,
-    AS_LOG_INFO      = 2,
-    AS_LOG_WARN      = 3,
-    AS_LOG_ERROR     = 4
+enum as_logger_level_e {
+    AS_LOGGER_LEVEL_TRACE     = 0,
+    AS_LOGGER_LEVEL_DEBUG     = 1,
+    AS_LOGGER_LEVEL_INFO      = 2,
+    AS_LOGGER_LEVEL_WARN      = 3,
+    AS_LOGGER_LEVEL_ERROR     = 4
 };
 
-typedef enum as_log_level_e as_log_level;
+typedef enum as_logger_level_e as_logger_level;
 typedef struct as_logger_hooks_s as_logger_hooks;
 typedef struct as_logger_s as_logger;
 
@@ -123,17 +123,17 @@ struct as_logger_hooks_s {
     /**
      * Test if the log level is enabled for the logger.
      */
-    int (* enabled)(const as_logger *, const as_log_level);
+    int (* enabled)(const as_logger *, const as_logger_level);
 
     /**
      * Get the current log level of the logger.
      */
-    as_log_level (* level)(const as_logger *);
+    as_logger_level (* level)(const as_logger *);
 
     /**
      * Log a message using the logger.
      */
-    int (* log)(const as_logger *, const as_log_level, const char *, const int, const char *, va_list);
+    int (* log)(const as_logger *, const as_logger_level, const char *, const int, const char *, va_list);
 };
 
 
@@ -188,12 +188,12 @@ int as_logger_destroy(as_logger * logger);
  *   }
  *
  */
-bool as_logger_enabled(const as_logger * logger, const as_log_level level);
+bool as_logger_is_enabled(const as_logger * logger, const as_logger_level level);
 
 /**
  * Get the current log level for the logger.
  */
-as_log_level as_logger_level(const as_logger * logger);
+as_logger_level as_logger_get_level(const as_logger * logger);
 
 /**
  * Log a message using the logger.
@@ -209,4 +209,4 @@ as_log_level as_logger_level(const as_logger * logger);
  *   as_logger_log(logger, AS_LOG_DEBUG, __FILE__, __LINE__, "Hello %s", "Bob");
  *
  */
-int as_logger_log(const as_logger * logger, const as_log_level level, const char * file, const int line, const char * format, ...);
+int as_logger_log(const as_logger * logger, const as_logger_level level, const char * file, const int line, const char * format, ...);
