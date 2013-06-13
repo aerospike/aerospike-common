@@ -97,22 +97,30 @@
 /**
  * The supported logging levels
  */
-enum as_logger_level_e {
+typedef enum as_logger_level_e {
     AS_LOGGER_LEVEL_TRACE     = 0,
     AS_LOGGER_LEVEL_DEBUG     = 1,
     AS_LOGGER_LEVEL_INFO      = 2,
     AS_LOGGER_LEVEL_WARN      = 3,
     AS_LOGGER_LEVEL_ERROR     = 4
-};
+} as_logger_level;
 
-typedef enum as_logger_level_e as_logger_level;
-typedef struct as_logger_hooks_s as_logger_hooks;
-typedef struct as_logger_s as_logger;
+struct as_logger_hooks_s;
+
+/**
+ * Logger handle
+ */
+typedef struct as_logger_s {
+    bool                    is_malloc;
+    void *                  source;
+    const struct as_logger_hooks_s * hooks;
+} as_logger;
+
 
 /**
  * The interface which all loggers should implement.
  */
-struct as_logger_hooks_s {
+typedef struct as_logger_hooks_s {
 
     /**
      * The destroy should free resources associated with the logger's source.
@@ -134,18 +142,9 @@ struct as_logger_hooks_s {
      * Log a message using the logger.
      */
     int (* log)(const as_logger *, const as_logger_level, const char *, const int, const char *, va_list);
-};
+} as_logger_hooks;
 
 
-
-/**
- * Logger handle
- */
-struct as_logger_s {
-    bool                    is_malloc;
-    void *                  source;
-    const as_logger_hooks * hooks;
-};
 
 
 /*****************************************************************************
