@@ -145,7 +145,7 @@ bool cf_base64_validate_input(const uint8_t *b, const int len)
 // use this function to make sure you're allocating enough space to the encode function
 int cf_base64_encode_maxlen(int len)
 {
-	len = (len / 3) + 1;
+	len = (len + 2) / 3;
 	len <<= 2;
 	return(len+1);
 }
