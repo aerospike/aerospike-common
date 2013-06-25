@@ -55,158 +55,174 @@ static as_iterator *    as_hashmap_map_iterator_new(const as_map *);
  ******************************************************************************/
 
 const as_map_hooks as_hashmap_map_hooks = {
-    .destroy        = as_hashmap_map_destroy,
-    .hashcode       = as_hashmap_map_hashcode,
+	.destroy        = as_hashmap_map_destroy,
+	.hashcode       = as_hashmap_map_hashcode,
 
-    .size           = as_hashmap_map_size,
-    .set            = as_hashmap_map_set,
-    .get            = as_hashmap_map_get,
-    .clear          = as_hashmap_map_clear,
-    
-    .foreach        = as_hashmap_map_foreach,
-    .iterator_init  = as_hashmap_map_iterator_init,
-    .iterator_new   = as_hashmap_map_iterator_new
+	.size           = as_hashmap_map_size,
+	.set            = as_hashmap_map_set,
+	.get            = as_hashmap_map_get,
+	.clear          = as_hashmap_map_clear,
+	
+	.foreach        = as_hashmap_map_foreach,
+	.iterator_init  = as_hashmap_map_iterator_init,
+	.iterator_new   = as_hashmap_map_iterator_new
 };
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-as_map * as_hashmap_init(as_map * m, uint32_t capacity) {
-    as_val_init(&m->_, AS_MAP, false);
-    m->hooks = &as_hashmap_map_hooks;
-    shash_create(&(m->data.hashmap.h), as_hashmap_shash_hash, sizeof(uint32_t), sizeof(as_pair *), capacity, SHASH_CR_MT_BIGLOCK | SHASH_CR_RESIZE);
-    return m;
+as_map * as_hashmap_init(as_map * m, uint32_t capacity)
+{
+	as_val_init(&m->_, AS_MAP, false);
+	m->hooks = &as_hashmap_map_hooks;
+	shash_create((shash **) &(m->data.hashmap.htable), as_hashmap_shash_hash, sizeof(uint32_t), sizeof(as_pair *), capacity, SHASH_CR_MT_BIGLOCK | SHASH_CR_RESIZE);
+	return m;
 }
 
-as_map * as_hashmap_new(uint32_t capacity) {
-    as_map *m = (as_map *) malloc(sizeof(as_map));
-    as_val_init(&m->_, AS_MAP, true);
-    m->hooks = &as_hashmap_map_hooks;
-    shash_create(&(m->data.hashmap.h), as_hashmap_shash_hash, sizeof(uint32_t), sizeof(as_pair *), capacity, SHASH_CR_MT_BIGLOCK | SHASH_CR_RESIZE);
-    return m;
+as_map * as_hashmap_new(uint32_t capacity)
+{
+	as_map *m = (as_map *) malloc(sizeof(as_map));
+	as_val_init(&m->_, AS_MAP, true);
+	m->hooks = &as_hashmap_map_hooks;
+	shash_create((shash **) &(m->data.hashmap.htable), as_hashmap_shash_hash, sizeof(uint32_t), sizeof(as_pair *), capacity, SHASH_CR_MT_BIGLOCK | SHASH_CR_RESIZE);
+	return m;
 }
 
-void as_hashmap_destroy(as_map * m) {
-  as_val_val_destroy( (as_val *) m );
+void as_hashmap_destroy(as_map * m)
+{
+	as_val_val_destroy( (as_val *) m );
 }
 
 /******************************************************************************
  * STATIC FUNCTIONS
  ******************************************************************************/
 
-static uint32_t as_hashmap_shash_hash(void * k) {
-    return *((uint32_t *) k);
+static uint32_t as_hashmap_shash_hash(void * k)
+{
+	return *((uint32_t *) k);
 }
 
-static int as_hashmap_shash_clear(void * key, void * data, void * udata) {
-    as_pair * pair = *((as_pair **) data);
-    as_pair_destroy(pair);
-    return SHASH_REDUCE_DELETE;
+static int as_hashmap_shash_clear(void * key, void * data, void * udata)
+{
+	as_pair * pair = *((as_pair **) data);
+	as_pair_destroy(pair);
+	return SHASH_REDUCE_DELETE;
 }
 
-static int as_hashmap_shash_destroy(void * key, void * data, void * udata) {
-    as_pair * pair = *((as_pair **) data);
-    as_pair_destroy(pair);
-    return 0;
+static int as_hashmap_shash_destroy(void * key, void * data, void * udata)
+{
+	as_pair * pair = *((as_pair **) data);
+	as_pair_destroy(pair);
+	return 0;
 }
 
 typedef struct {
-    void *                  udata;
-    as_map_foreach_callback callback;
+	void *                  udata;
+	as_map_foreach_callback callback;
 } as_hashmap_shash_foreach_context;
 
-static int as_hashmap_shash_foreach(void * key, void * data, void * udata) {
-    as_hashmap_shash_foreach_context * ctx = (as_hashmap_shash_foreach_context *) udata;
-    as_pair * pair = *((as_pair **) data);
-    return ctx->callback(as_pair_1(pair), as_pair_2(pair), ctx->udata);
+static int as_hashmap_shash_foreach(void * key, void * data, void * udata)
+{
+	as_hashmap_shash_foreach_context * ctx = (as_hashmap_shash_foreach_context *) udata;
+	as_pair * pair = *((as_pair **) data);
+	return ctx->callback(as_pair_1(pair), as_pair_2(pair), ctx->udata);
 }
 
-static bool as_hashmap_map_destroy(as_map * m) {
-    as_hashmap * s = &(m->data.hashmap);
-    shash_reduce(s->h, as_hashmap_shash_destroy, NULL);
-    shash_destroy(s->h);
-    return true;
+static bool as_hashmap_map_destroy(as_map * m)
+{
+	as_hashmap * s = &(m->data.hashmap);
+	shash_reduce((shash *) s->htable, as_hashmap_shash_destroy, NULL);
+	shash_destroy((shash *) s->htable);
+	return true;
 }
 
 /**
  * @TODO fillout with appropriate algo.
  */
-static uint32_t as_hashmap_map_hashcode(const as_map *m) {
-    return 1;
+static uint32_t as_hashmap_map_hashcode(const as_map *m)
+{
+	return 1;
 }
 
 /**
  * Set the value for the given key
  */
-static int as_hashmap_map_set(as_map * m, const as_val * k, const as_val * v) {
+static int as_hashmap_map_set(as_map * m, const as_val * k, const as_val * v)
+{
 
-    as_hashmap * s = &(m->data.hashmap);
-    uint32_t h = as_val_hashcode(k);
-    as_pair * p = NULL;
+	as_hashmap * s = &(m->data.hashmap);
+	uint32_t h = as_val_hashcode(k);
+	as_pair * p = NULL;
 
-    if ( shash_get(s->h, &h, &p) == SHASH_OK ) {
-        as_val_destroy((as_val *)p);
-        p = NULL;
-    }
-    p = pair_new(k,v);
-    return shash_put(s->h, &h, &p);
+	if ( shash_get((shash *) s->htable, &h, &p) == SHASH_OK ) {
+		as_val_destroy((as_val *)p);
+		p = NULL;
+	}
+	p = pair_new(k,v);
+	return shash_put((shash *) s->htable, &h, &p);
 }
 
 /**
  * Get the value for the given key
  */
-static as_val * as_hashmap_map_get(const as_map * m, const as_val * k) {
-    const as_hashmap * s = &(m->data.hashmap);
-    uint32_t h = as_val_hashcode(k);
-    as_pair * p = NULL;
+static as_val * as_hashmap_map_get(const as_map * m, const as_val * k)
+{
+	const as_hashmap * s = &(m->data.hashmap);
+	uint32_t h = as_val_hashcode(k);
+	as_pair * p = NULL;
 
-    if ( shash_get(s->h, &h, &p) != SHASH_OK ) {
-        return NULL;
-    }
-    as_val *v = as_pair_2(p);
-    return v;
+	if ( shash_get((shash *) s->htable, &h, &p) != SHASH_OK ) {
+		return NULL;
+	}
+	as_val *v = as_pair_2(p);
+	return v;
 }
 
 /**
  * Get the number of entries in the map.
  */
-static uint32_t as_hashmap_map_size(const as_map * m) {
-    const as_hashmap * s = &(m->data.hashmap);
-    return shash_get_size(s->h);
+static uint32_t as_hashmap_map_size(const as_map * m)
+{
+	const as_hashmap * s = &(m->data.hashmap);
+	return shash_get_size((shash *) s->htable);
 }
 
 /**
  * Removes all entries from the map.
  */
-static int as_hashmap_map_clear(as_map * m) {
-    as_hashmap * s = &(m->data.hashmap);
-    shash_reduce_delete(s->h, as_hashmap_shash_clear, NULL);
-    return 0;
+static int as_hashmap_map_clear(as_map * m)
+{
+	as_hashmap * s = &(m->data.hashmap);
+	shash_reduce_delete((shash *) s->htable, as_hashmap_shash_clear, NULL);
+	return 0;
 }
 
 /**
  * Calls the callback function for each (key,value) pair in the map.
  */
-static bool as_hashmap_map_foreach(const as_map * m, as_map_foreach_callback callback, void * udata) {
-    as_hashmap * s = (as_hashmap *) &(m->data.hashmap);
-    as_hashmap_shash_foreach_context ctx = {
-        .udata = udata,
-        .callback = callback
-    };
-    return shash_reduce_delete(s->h, as_hashmap_shash_foreach, &ctx) == TRUE;
+static bool as_hashmap_map_foreach(const as_map * m, as_map_foreach_callback callback, void * udata)
+{
+	as_hashmap * s = (as_hashmap *) &(m->data.hashmap);
+	as_hashmap_shash_foreach_context ctx = {
+		.udata = udata,
+		.callback = callback
+	};
+	return shash_reduce_delete((shash *) s->htable, as_hashmap_shash_foreach, &ctx) == TRUE;
 }
 
 /**
  * Initializes an iterator over the (key,value) pairs in the map.
  */
-static as_iterator * as_hashmap_map_iterator_init(const as_map * m, as_iterator * i) {
-    return as_hashmap_iterator_init(&m->data.hashmap, i);
+static as_iterator * as_hashmap_map_iterator_init(const as_map * m, as_iterator * i)
+{
+	return as_hashmap_iterator_init(&m->data.hashmap, i);
 }
 
 /**
  * Creates a new iterator over the (key,value) pairs in the map.
  */
-static as_iterator * as_hashmap_map_iterator_new(const as_map * m) {
-    return as_hashmap_iterator_new(&m->data.hashmap);
+static as_iterator * as_hashmap_map_iterator_new(const as_map * m)
+{
+	return as_hashmap_iterator_new(&m->data.hashmap);
 }

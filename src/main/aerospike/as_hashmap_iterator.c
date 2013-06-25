@@ -52,25 +52,31 @@ const as_iterator_hooks as_hashmap_iterator_hooks = {
  * FUNCTIONS
  *****************************************************************************/
 
-as_iterator * as_hashmap_iterator_new(const as_hashmap * m) {
+as_iterator * as_hashmap_iterator_new(const as_hashmap * m)
+{
     as_iterator * i = (as_iterator *) malloc(sizeof(as_iterator));
-    i->is_malloc = true;
+    if ( !i ) return i;
+
+    i->free = true;
     i->hooks = &as_hashmap_iterator_hooks;
-    i->data.hashmap.h = m->h;
+    i->data.hashmap.htable = m->htable;
     i->data.hashmap.curr = NULL;
     i->data.hashmap.next = NULL;
-    i->data.hashmap.size = (uint32_t) m->h->table_len;
+    i->data.hashmap.size = (uint32_t) ((shash *) m->htable)->table_len;
     i->data.hashmap.pos = 0;
     return i;
 }
 
-as_iterator * as_hashmap_iterator_init(const as_hashmap * m, as_iterator * i) {
-    i->is_malloc = false;
+as_iterator * as_hashmap_iterator_init(const as_hashmap * m, as_iterator * i)
+{
+    if ( !i ) return i;
+
+    i->free = false;
     i->hooks = &as_hashmap_iterator_hooks;
-    i->data.hashmap.h = m->h;
+    i->data.hashmap.htable = m->htable;
     i->data.hashmap.curr = NULL;
     i->data.hashmap.next = NULL;
-    i->data.hashmap.size = (uint32_t) m->h->table_len;
+    i->data.hashmap.size = (uint32_t) ((shash *) m->htable)->table_len;
     i->data.hashmap.pos = 0;
     return i;
 }
@@ -79,74 +85,96 @@ as_iterator * as_hashmap_iterator_init(const as_hashmap * m, as_iterator * i) {
  * STATIC FUNCTIONS
  *****************************************************************************/
 
-static bool as_hashmap_iterator_seek(as_hashmap_iterator * it) {
+static bool as_hashmap_iterator_seek(as_hashmap_iterator * it)
+{
+	shash * htable = (shash *) it->htable;
+	shash_elem * curr = (shash_elem *) it->curr;
+	shash_elem * next = (shash_elem *) it->next;
+	uint32_t pos = it->pos;
+	uint32_t size = it->size;
 
     // We no longer have slots in the table
-    if ( it->pos > it->size ) return false;
+    if ( pos > size ) return false;
 
     // If curr is set, that means we have a value ready to be read.
-    if ( it->curr != NULL ) return true;
+    if ( curr != NULL ) return true;
 
     // If next is set, that means we have something to iterate to.
-    if ( it->next != NULL ) {
-        if ( it->next->in_use ) {
-            it->curr = it->next;
-            it->next = it->curr->next;
-            if ( !it->next ) {
-                it->pos++;
+    if ( next != NULL ) {
+        if ( next->in_use ) {
+            curr = next;
+            next = curr->next;
+
+            if ( !next ) {
+                pos++;
             }
+
+            it->curr = curr;
+            it->next = next;
+            it->pos = pos;
             return true;
         }
         else {
-            it->pos++;
-            it->next = NULL;
+            pos++;
+            next = NULL;
         }
     }
 
     // Iterate over the slots in the table
-    for( ; it->pos < it->size; it->pos++ ) {
+    for( ; pos < size; pos++ ) {
 
         // Get the bucket in the current slot
-        it->curr = (shash_elem *) (((byte *) it->h->table) + (SHASH_ELEM_SZ(it->h) * it->pos));
-
+        curr = (shash_elem *) (((byte *) htable->table) + (SHASH_ELEM_SZ(htable) * pos));
+        
         // If the bucket has a value, then return true
-        if ( it->curr && it->curr->in_use ) {
+        if ( curr && curr->in_use ) {
             
             // we set next, so we have the next item in the bucket
-            it->next = it->curr->next;
+            next = curr->next;
 
             // if next is empty, then we will move to the next bucket
-            if ( !it->next ) it->pos++;
+            if ( !next ) pos++;
 
+            it->curr = curr;
+            it->next = next;
+            it->pos = pos;
             return true;
         }
         else {
-            it->curr = NULL;
-            it->next = NULL;
+            curr = NULL;
+            next = NULL;
         }
     }
     
-    it->curr = NULL;
-    it->next = NULL;
-    it->pos = it->size;
+    curr = NULL;
+    next = NULL;
+    pos = it->size;
+    
+    it->curr = curr;
+    it->next = next;
+    it->pos = pos;
+    
     return false;
 }
 
-static void as_hashmap_iterator_destroy(as_iterator * i) {
+static void as_hashmap_iterator_destroy(as_iterator * i)
+{
     return;
 }
 
-static bool as_hashmap_iterator_has_next(const as_iterator * i) {
+static bool as_hashmap_iterator_has_next(const as_iterator * i)
+{
     as_hashmap_iterator * it = (as_hashmap_iterator *) &i->data.hashmap;
     return as_hashmap_iterator_seek(it);
 }
 
-static as_val * as_hashmap_iterator_next(as_iterator * i) {
+static as_val * as_hashmap_iterator_next(as_iterator * i)
+{
     as_hashmap_iterator * it = (as_hashmap_iterator *) &i->data.hashmap;
 
     if ( !as_hashmap_iterator_seek(it) ) return NULL;
 
-    shash *         h   = it->h;
+    shash *         h   = it->htable;
     shash_elem *    e   = it->curr;
     as_pair **      p   = (as_pair **) SHASH_ELEM_VALUE_PTR(h, e);
     

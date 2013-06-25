@@ -19,7 +19,10 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *****************************************************************************/
+
 #pragma once
+
+#include <stddef.h>
 
 /******************************************************************************
  * MACROS
@@ -30,10 +33,10 @@
  * If hook not found, then return the default value.
  */
 #define as_util_hook(hook,default,object,args...) \
-   (object && object->hooks && object->hooks->hook ? object->hooks->hook(object, ## args) : default)
+	(object && object->hooks && object->hooks->hook ? object->hooks->hook(object, ## args) : default)
 
 /**
  * Converts from an as_val.
  */
 #define as_util_fromval(object,type_id,type) \
-    (object && as_val_type(object) == type_id ? (type *) object : NULL)
+	(object && as_val_type(object) == type_id ? (type *) object : NULL)

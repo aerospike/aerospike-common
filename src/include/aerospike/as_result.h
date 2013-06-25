@@ -30,14 +30,12 @@
  * TYPES
  ******************************************************************************/
 
-typedef struct as_result_s as_result;
-
-struct as_result_s {
+typedef struct as_result_s {
     bool        is_malloc;
     cf_atomic32 count;
     bool is_success;
     as_val * value;
-};
+} as_result;
 
 /******************************************************************************
  * FUNCTIONS

@@ -1,116 +1,164 @@
 /******************************************************************************
- * Copyright 2008-2013 by Aerospike.
+ *	Copyright 2008-2013 by Aerospike.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy 
- * of this software and associated documentation files (the "Software"), to 
- * deal in the Software without restriction, including without limitation the 
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
- * sell copies of the Software, and to permit persons to whom the Software is 
- * furnished to do so, subject to the following conditions:
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy 
+ *	of this software and associated documentation files (the "Software"), to 
+ *	deal in the Software without restriction, including without limitation the 
+ *	rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
+ *	sell copies of the Software, and to permit persons to whom the Software is 
+ *	furnished to do so, subject to the following conditions:
  * 
- * The above copyright notice and this permission notice shall be included in 
- * all copies or substantial portions of the Software.
+ *	The above copyright notice and this permission notice shall be included in 
+ *	all copies or substantial portions of the Software.
  * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ *	FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *	IN THE SOFTWARE.
  *****************************************************************************/
 
 #pragma once
 
-#include <aerospike/as_util.h>
-#include <aerospike/as_val.h>
 #include <aerospike/as_integer.h>
-#include <aerospike/as_string.h>
 #include <aerospike/as_bytes.h>
 #include <aerospike/as_list.h>
 #include <aerospike/as_map.h>
+#include <aerospike/as_string.h>
+#include <aerospike/as_util.h>
+#include <aerospike/as_val.h>
+
+#include <stdbool.h>
+#include <stdint.h>
 
 /******************************************************************************
- * TYPES
+ *	TYPES
  *****************************************************************************/
 
 struct as_rec_hooks_s;
 
 /**
- * Record Structure
- * Contains a pointer to the source of the record and 
- * hooks that interface with the source.
+ *	Record Interface
  *
- * @field source contains record specific data.
- * @field hooks contains the record interface that works with the source.
+ *	To use the record interface, you will need to create an instance 
+ *	via one of the implementations.
  */
-struct as_rec_s {
-	as_val                          _;
-	void *                          data;
-	const struct as_rec_hooks_s *   hooks;
-};
+typedef struct as_rec_s {
 
-typedef struct as_rec_s as_rec;
+	/**
+	 *	@private
+	 *	as_boolean is a subtype of as_val.
+	 *	You can cast as_boolean to as_val.
+	 */
+	as_val _;
+
+	/**
+	 *	Data provided by the implementation of `as_rec`.
+	 */
+	void * data;
+
+	/**
+	 *	Hooks provided by the implementation of `as_rec`.
+	 */
+	const struct as_rec_hooks_s * hooks;
+
+} as_rec;
 
 /**
- * Record Interface.
- * Provided functions that interface with the records.
+ *	Record Hooks.
+ *
+ *	An implementation of `as_rec` should provide implementations for each
+ *	of the hooks.
  */
-struct as_rec_hooks_s {
-	bool        (* destroy)(as_rec *);
-	uint32_t    (* hashcode)(const as_rec *);
+typedef struct as_rec_hooks_s {
 
-	as_val *    (* get)(const as_rec *, const char *);
-	int         (* set)(const as_rec *, const char *, const as_val *);
-	int         (* remove)(const as_rec *, const char *);
-	uint32_t    (* ttl)(const as_rec *);
-	uint16_t    (* gen)(const as_rec *);
-	uint16_t    (* numbins)(const as_rec *);
-	as_bytes *  (* digest)(const as_rec *);
-	int         (* set_flags)(const as_rec*, const char *, uint8_t );
-	int         (* set_type)(const as_rec*,  uint8_t );
-};
+	/**
+	 *	Destroy the record.
+	 */
+	bool (* destroy)(as_rec * r);
 
-typedef struct as_rec_hooks_s as_rec_hooks;
+	/**
+	 *	Get the hashcode of the record.
+	 */
+	uint32_t (* hashcode)(const as_rec * r);
+
+	/**
+	 *	Get the value of the bin in the record.
+	 */
+	as_val * (* get)(const as_rec * r, const char * name);
+
+	/**
+	 *	Set the value of the bin in the record.
+	 */
+	int (* set)(const as_rec * r, const char * name, const as_val * value);
+
+	/**
+	 *	Remove the bin from the record.	
+	 */
+	int (* remove)(const as_rec * r, const char * bin);
+
+	/**
+	 *	Get the ttl value of the record.
+	 */
+	uint32_t (* ttl)(const as_rec  * r);
+
+	/**
+	 *	Get the generation value of the record.
+	 */
+	uint16_t (* gen)(const as_rec * r);
+
+	/**
+	 *	Get the number of bins of the record.
+	 */
+	uint16_t (* numbins)(const as_rec * r);
+
+	/**
+	 *	Get the digest of the record.
+	 */
+	as_bytes * (* digest)(const as_rec * r);
+
+	/**
+	 *	Set flags on a bin.
+	 */
+	int (* set_flags)(const as_rec * r, const char * bin, uint8_t flags);
+
+	/**
+	 *	Set the type of record.
+	 */
+	int (* set_type)(const as_rec * r,  uint8_t type);
+
+} as_rec_hooks;
 
 /******************************************************************************
- * FUNCTIONS
+ *	INSTANCE FUNCTIONS
  *****************************************************************************/
 
 /**
- * Initialize an as_rec allocated on the stack.
+ *	Initialize an as_rec allocated on the stack.
  */
-as_rec *  as_rec_init(as_rec *, void *, const as_rec_hooks *);
+as_rec *  as_rec_init(as_rec * r, void * data, const as_rec_hooks * hooks);
 
 /**
- * Creates a new as_rec allocated on the heap.
+ *	Creates a new as_rec allocated on the heap.
  */
-as_rec *  as_rec_new(void *, const as_rec_hooks *);
+as_rec *  as_rec_new(void * data, const as_rec_hooks * hooks);
 
 /**
- * PRIVATE:
- * Internal helper function for destroying an as_val.
+ *	Destroy the record.
  */
-void as_rec_val_destroy(as_val *);
-
-/**
- * PRIVATE:
- * Internal helper function for getting the hashcode of an as_val.
- */
-uint32_t as_rec_val_hashcode(const as_val *v);
-
-/**
- * PRIVATE:
- * Internal helper function for getting the string representation of an as_val.
- */
-char * as_rec_val_tostring(const as_val *v);
+inline void as_rec_destroy(as_rec *r) 
+{
+	as_val_val_destroy((as_val *) r);
+}
 
 /******************************************************************************
- * INLINE FUNCTIONS
+ *	INLINE FUNCTIONS
  ******************************************************************************/
 
 /**
- * Get the data source for the record.
+ *	Get the data source for the record.
  */
 inline void * as_rec_source(const as_rec * r) 
 {
@@ -118,20 +166,12 @@ inline void * as_rec_source(const as_rec * r)
 }
 
 /**
- * Destroy the record.
- */
-inline void as_rec_destroy(as_rec *r) 
-{
-	as_val_val_destroy((as_val *) r);
-}
-
-/**
- * Remove a bin from a record.
+ *	Remove a bin from a record.
  *
- * @param r 	- the record to remove the bin from.
- * @param name 	- the name of the bin to remove.
+ *	@param r		The record to remove the bin from.
+ *	@param name 	The name of the bin to remove.
  *
- * @return 0 on success, otherwise an error occurred.
+ *	@return 0 on success, otherwise an error occurred.
  */
 inline int as_rec_remove(const as_rec * r, const char * name) 
 {
@@ -139,7 +179,7 @@ inline int as_rec_remove(const as_rec * r, const char * name)
 }
 
 /**
- * Get the ttl for the record.
+ *	Get the ttl for the record.
  */
 inline uint32_t as_rec_ttl(const as_rec * r) 
 {
@@ -147,7 +187,7 @@ inline uint32_t as_rec_ttl(const as_rec * r)
 }
 
 /**
- * Get the generation of the record
+ *	Get the generation of the record
  */
 inline uint16_t as_rec_gen(const as_rec * r) 
 {
@@ -155,7 +195,7 @@ inline uint16_t as_rec_gen(const as_rec * r)
 }
 
 /**
- * Get the number of bins in the record.
+ *	Get the number of bins in the record.
  */
 inline uint16_t as_rec_numbins(const as_rec * r) 
 {
@@ -163,7 +203,7 @@ inline uint16_t as_rec_numbins(const as_rec * r)
 }
 
 /**
- * Get the digest of the record.
+ *	Get the digest of the record.
  */
 inline as_bytes * as_rec_digest(const as_rec * r) 
 {
@@ -171,7 +211,7 @@ inline as_bytes * as_rec_digest(const as_rec * r)
 }
 
 /**
- * Set flags on a bin.
+ *	Set flags on a bin.
  */
 inline int  as_rec_set_flags(const as_rec * r, const char * name, uint8_t flags) 
 {
@@ -179,24 +219,24 @@ inline int  as_rec_set_flags(const as_rec * r, const char * name, uint8_t flags)
 }
 
 /**
- * Set the record type.
+ *	Set the record type.
  */
-inline int  as_rec_set_type(const as_rec * r, uint8_t rec_type) 
+inline int as_rec_set_type(const as_rec * r, uint8_t rec_type) 
 {
 	return as_util_hook(set_type, 0, r, rec_type);
 }
 
 /******************************************************************************
- * BIN GETTER FUNCTIONS
+ *	BIN GETTER FUNCTIONS
  ******************************************************************************/
 
 /**
- * Get a bin's value.
+ *	Get a bin's value.
  *
- * @param r 	- the as_rec to read the bin value from.
- * @param name 	- the name of the bin.
+ *	@param r		The as_rec to read the bin value from.
+ *	@param name 	The name of the bin.
  *
- * @return the value of the bin if successful. Otherwise NULL.
+ *	@return On success, the value of the bin. Otherwise NULL.
  */
 inline as_val * as_rec_get(const as_rec * r, const char * name) 
 {
@@ -204,12 +244,12 @@ inline as_val * as_rec_get(const as_rec * r, const char * name)
 }
 
 /**
- * Get a bin's value as an int64_t.
+ *	Get a bin's value as an int64_t.
  *
- * @param r 	- the as_rec to read the bin value from.
- * @param name 	- the name of the bin.
+ *	@param r		The as_rec to read the bin value from.
+ *	@param name 	The name of the bin.
  *
- * @return the value of the bin if successful. Otherwise 0.
+ *	@return On success, the value of the bin. Otherwise 0.
  */
 inline int64_t as_rec_get_int64(const as_rec * r, const char * name) 
 {
@@ -219,12 +259,12 @@ inline int64_t as_rec_get_int64(const as_rec * r, const char * name)
 }
 
 /**
- * Get a bin's value as a NULL terminated string.
+ *	Get a bin's value as a NULL terminated string.
  *
- * @param r 	- the as_rec to read the bin value from.
- * @param name 	- the name of the bin.
+ *	@param r		The as_rec to read the bin value from.
+ *	@param name 	The name of the bin.
  *
- * @return the value of the bin if successful. Otherwise NULL.
+ *	@return On success, the value of the bin. Otherwise NULL.
  */
 inline char * as_rec_get_str(const as_rec * r, const char * name) 
 {
@@ -234,12 +274,12 @@ inline char * as_rec_get_str(const as_rec * r, const char * name)
 }
 
 /**
- * Get a bin's value as an as_integer.
+ *	Get a bin's value as an as_integer.
  *
- * @param r 	- the as_rec to read the bin value from.
- * @param name 	- the name of the bin.
+ *	@param r		The as_rec to read the bin value from.
+ *	@param name 	The name of the bin.
  *
- * @return the value of the bin if successful. Otherwise NULL.
+ *	@return On success, the value of the bin. Otherwise NULL.
  */
 inline as_integer * as_rec_get_integer(const as_rec * r, const char * name) 
 {
@@ -248,12 +288,12 @@ inline as_integer * as_rec_get_integer(const as_rec * r, const char * name)
 }
 
 /**
- * Get a bin's value as an as_string.
+ *	Get a bin's value as an as_string.
  *
- * @param r 	- the as_rec to read the bin value from.
- * @param name 	- the name of the bin.
+ *	@param r		The as_rec to read the bin value from.
+ *	@param name		The name of the bin.
  *
- * @return the value of the bin if successful. Otherwise NULL.
+ *	@return On success, the value of the bin. Otherwise NULL.
  */
 inline as_string * as_rec_get_string(const as_rec * r, const char * name) 
 {
@@ -262,12 +302,12 @@ inline as_string * as_rec_get_string(const as_rec * r, const char * name)
 }
 
 /**
- * Get a bin's value as an as_bytes.
+ *	Get a bin's value as an as_bytes.
  *
- * @param r 	- the as_rec to read the bin value from.
- * @param name 	- the name of the bin.
+ *	@param r		The as_rec to read the bin value from.
+ *	@param name 	The name of the bin.
  *
- * @return the value of the bin if successful. Otherwise NULL.
+ *	@return On success, the value of the bin. Otherwise NULL.
  */
 inline as_bytes * as_rec_get_bytes(const as_rec * r, const char * name) 
 {
@@ -276,12 +316,12 @@ inline as_bytes * as_rec_get_bytes(const as_rec * r, const char * name)
 }
 
 /**
- * Get a bin's value as an as_list.
+ *	Get a bin's value as an as_list.
  *
- * @param r 	- the as_rec to read the bin value from.
- * @param name 	- the name of the bin.
+ *	@param r		The as_rec to read the bin value from.
+ *	@param name 	The name of the bin.
  *
- * @return the value of the bin if successful. Otherwise NULL.
+ *	@return On success, the value of the bin. Otherwise NULL.
  */
 inline as_list * as_rec_get_list(const as_rec * r, const char * name) 
 {
@@ -290,12 +330,12 @@ inline as_list * as_rec_get_list(const as_rec * r, const char * name)
 }
 
 /**
- * Get a bin's value as an as_map.
+ *	Get a bin's value as an as_map.
  *
- * @param r 	- the as_rec to read the bin value from.
- * @param name 	- the name of the bin.
+ *	@param r		The as_rec to read the bin value from.
+ *	@param name 	The name of the bin.
  *
- * @return the value of the bin if successful. Otherwise NULL.
+ *	@return On success, the value of the bin. Otherwise NULL.
  */
 inline as_map * as_rec_get_map(const as_rec * r, const char * name) 
 {
@@ -304,15 +344,17 @@ inline as_map * as_rec_get_map(const as_rec * r, const char * name)
 }
 
 /******************************************************************************
- * BIN SETTER FUNCTIONS
+ *	BIN SETTER FUNCTIONS
  ******************************************************************************/
 
 /**
- * Set the bin's value to an as_val.
+ *	Set the bin's value to an as_val.
  *
- * @param r the as_rec to write the bin value to - CONSUMES REFERENCE
- * @param name the name of the bin.
- * @param value the value of the bin.
+ *	@param r 		The as_rec to write the bin value to - CONSUMES REFERENCE
+ *	@param name 	The name of the bin.
+ *	@param value 	The value of the bin.
+ *
+ *	@return On success, 0. Otherwise an error occurred.
  */
 inline int as_rec_set(const as_rec * r, const char * name, const as_val * value) 
 {
@@ -320,11 +362,13 @@ inline int as_rec_set(const as_rec * r, const char * name, const as_val * value)
 }
 
 /**
- * Set the bin's value to an int64_t.
+ *	Set the bin's value to an int64_t.
  *
- * @param r 	- the as_rec storing the bin.
- * @param name 	- the name of the bin.
- * @param value	- the value of the bin.
+ *	@param r		The as_rec storing the bin.
+ *	@param name 	The name of the bin.
+ *	@param value	The value of the bin.
+ *
+ *	@return On success, 0. Otherwise an error occurred.
  */
 inline int as_rec_set_int64(const as_rec * r, const char * name, int64_t value) 
 {
@@ -332,11 +376,13 @@ inline int as_rec_set_int64(const as_rec * r, const char * name, int64_t value)
 }
 
 /**
- * Set the bin's value to a NULL terminated string.
+ *	Set the bin's value to a NULL terminated string.
  *
- * @param r 	- the as_rec storing the bin.
- * @param name 	- the name of the bin.
- * @param value	- the value of the bin.
+ *	@param r		The as_rec storing the bin.
+ *	@param name 	The name of the bin.
+ *	@param value	The value of the bin.
+ *
+ *	@return On success, 0. Otherwise an error occurred.
  */
 inline int as_rec_set_str(const as_rec * r, const char * name, const char * value) 
 {
@@ -344,11 +390,13 @@ inline int as_rec_set_str(const as_rec * r, const char * name, const char * valu
 }
 
 /**
- * Set the bin's value to an as_integer.
+ *	Set the bin's value to an as_integer.
  *
- * @param r 	- the as_rec storing the bin.
- * @param name 	- the name of the bin.
- * @param value	- the value of the bin.
+ *	@param r		The as_rec storing the bin.
+ *	@param name 	The name of the bin.
+ *	@param value	The value of the bin.
+ *
+ *	@return On success, 0. Otherwise an error occurred.
  */
 inline int as_rec_set_integer(const as_rec * r, const char * name, const as_integer * value) 
 {
@@ -356,11 +404,13 @@ inline int as_rec_set_integer(const as_rec * r, const char * name, const as_inte
 }
 
 /**
- * Set the bin's value to an as_string.
+ *	Set the bin's value to an as_string.
  *
- * @param r 	- the as_rec storing the bin.
- * @param name 	- the name of the bin.
- * @param value	- the value of the bin.
+ *	@param r		The as_rec storing the bin.
+ *	@param name 	The name of the bin.
+ *	@param value	The value of the bin.
+ *
+ *	@return On success, 0. Otherwise an error occurred.
  */
 inline int as_rec_set_string(const as_rec * r, const char * name, const as_string * value) 
 {
@@ -368,11 +418,13 @@ inline int as_rec_set_string(const as_rec * r, const char * name, const as_strin
 }
 
 /**
- * Set the bin's value to an as_bytes.
+ *	Set the bin's value to an as_bytes.
  *
- * @param r 	- the as_rec storing the bin.
- * @param name 	- the name of the bin.
- * @param value	- the value of the bin.
+ *	@param r		The as_rec storing the bin.
+ *	@param name 	The name of the bin.
+ *	@param value	The value of the bin.
+ *
+ *	@return On success, 0. Otherwise an error occurred.
  */
 inline int as_rec_set_bytes(const as_rec * r, const char * name, const as_bytes * value) 
 {
@@ -380,11 +432,13 @@ inline int as_rec_set_bytes(const as_rec * r, const char * name, const as_bytes 
 }
 
 /**
- * Set the bin's value to an as_list.
+ *	Set the bin's value to an as_list.
  *
- * @param r 	- the as_rec storing the bin.
- * @param name 	- the name of the bin.
- * @param value	- the value of the bin.
+ *	@param r		The as_rec storing the bin.
+ *	@param name 	The name of the bin.
+ *	@param value	The value of the bin.
+ *
+ *	@return On success, 0. Otherwise an error occurred.
  */
 inline int as_rec_set_list(const as_rec * r, const char * name, const as_list * value) 
 {
@@ -392,11 +446,13 @@ inline int as_rec_set_list(const as_rec * r, const char * name, const as_list * 
 }
 
 /**
- * Set the bin's value to an as_map.
+ *	Set the bin's value to an as_map.
  *
- * @param r 	- the as_rec storing the bin.
- * @param name 	- the name of the bin.
- * @param value	- the value of the bin.
+ *	@param r		The as_rec storing the bin.
+ *	@param name 	The name of the bin.
+ *	@param value	The value of the bin.
+ *
+ *	@return On success, 0. Otherwise an error occurred.
  */
 inline int as_rec_set_map(const as_rec * r, const char * name, const as_map * value) 
 {
@@ -404,11 +460,11 @@ inline int as_rec_set_map(const as_rec * r, const char * name, const as_map * va
 }
 
 /******************************************************************************
- * CONVERSION FUNCTIONS
+ *	CONVERSION FUNCTIONS
  ******************************************************************************/
 
 /**
- * Convert to an as_val.
+ *	Convert to an as_val.
  */
 inline as_val * as_rec_toval(const as_rec * r) 
 {
@@ -416,9 +472,31 @@ inline as_val * as_rec_toval(const as_rec * r)
 }
 
 /**
- * Convert from an as_val.
+ *	Convert from an as_val.
  */
 inline as_rec * as_rec_fromval(const as_val * v) 
 {
 	return as_util_fromval(v, AS_REC, as_rec);
 }
+
+/******************************************************************************
+ *	CONVERSION FUNCTIONS
+ ******************************************************************************/
+
+/**
+ *	@private
+ *	Internal helper function for destroying an as_val.
+ */
+void as_rec_val_destroy(as_val *);
+
+/**
+ *	@private
+ *	Internal helper function for getting the hashcode of an as_val.
+ */
+uint32_t as_rec_val_hashcode(const as_val *v);
+
+/**
+ *	@private
+ *	Internal helper function for getting the string representation of an as_val.
+ */
+char * as_rec_val_tostring(const as_val *v);

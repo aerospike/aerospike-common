@@ -20,9 +20,10 @@
  * IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <stdlib.h>
 
 #include <aerospike/as_iterator.h>
+
+#include <stdlib.h>
 
 #include "internal.h"
 
@@ -36,8 +37,11 @@ extern inline const as_val * as_iterator_next(as_iterator * i) ;
  * FUNCTIONS
  ******************************************************************************/
 
-void as_iterator_destroy(as_iterator * i) {
+void as_iterator_destroy(as_iterator * i)
+{
     as_util_hook(destroy, 1, i);
-    if (i->is_malloc) free(i);
+    if ( i->free) {
+    	free(i);
+    }
 }
 
