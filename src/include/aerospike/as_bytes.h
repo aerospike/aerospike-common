@@ -57,7 +57,7 @@ typedef enum as_bytes_type_e {
 } as_bytes_type;
 
 /**
- *	A sequence of bytes.
+ *	Byte Array value
  *
  *	The `as_bytes` can be allocated on the stack or the heap.
  *	In either case, the `as_bytes` can be initialized with a value or
@@ -66,6 +66,7 @@ typedef enum as_bytes_type_e {
  *	To initialize a stack allocated `as_bytes` with a value, use 
  *	`as_bytes_init()`
  *	
+ *	@extends as_val
  */
 typedef struct as_bytes_s {
 
@@ -165,8 +166,7 @@ as_bytes * as_bytes_new(uint8_t * raw, uint32_t len, bool free);
  *	~~~~~~~~~~{.c}
  *	as_bytes * bytes = as_bytes_new_empty(10);
  *	~~~~~~~~~~
- *
- *	@param b 		The bytes to initialize.
+ *	
  *	@param len		The number of bytes to allocate.
  *
  *	@return On success, the initializes bytes. Otherwise NULL.

@@ -54,7 +54,9 @@ struct as_list_s;
  *	as_list_destroy(list);
  *	~~~~~~~~~~
  *
- *	@see `as_list`
+ *	@see as_list
+ *
+ *	@implements as_list
  */
 typedef struct as_linkedlist_s {
 	
@@ -81,7 +83,7 @@ typedef struct as_linkedlist_s {
  *	@param head		The head value of the list.
  *	@param tail 	The tail of the list.
  *
- *	@return On success, the initializes list. Otherwise NULL.
+ *	@return On success, the initialized list. Otherwise NULL.
  */
 struct as_list_s * as_linkedlist_init(struct as_list_s * list, as_val * head, struct as_list_s * tail);
 
@@ -91,12 +93,12 @@ struct as_list_s * as_linkedlist_init(struct as_list_s * list, as_val * head, st
  *	@param head		The head value of the list.
  *	@param tail 	The tail of the list.
  *
- *	@return On success, the initializes list. Otherwise NULL.
+ *	@return On success, the new list. Otherwise NULL.
  */
 struct as_list_s * as_linkedlist_new(as_val * head, struct as_list_s * tail);
 
 /**
- *	Destroy the `as_list` and release resources.
+ *	Destroy the `as_linkedlist` and release resources.
  *
  *	~~~~~~~~~~{.c}
  *	as_linkedlist_destroy(list);
@@ -104,4 +106,4 @@ struct as_list_s * as_linkedlist_new(as_val * head, struct as_list_s * tail);
  *
  *	@param list	The list to destroy.
  */
-void as_linkedlist_destroy(struct as_list_s *);
+void as_linkedlist_destroy(struct as_list_s * list);

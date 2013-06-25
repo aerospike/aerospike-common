@@ -59,10 +59,12 @@ typedef union as_list_data_u {
 } as_list_data;
 
 /**
- *	List Interface
+ *	List value.
  *
  *	To use the list interface, you will need to create an instance 
  *	via one of the implementations.
+ *
+ *	@extends as_val
  */
 typedef struct as_list_s {
 
@@ -242,14 +244,14 @@ as_list * as_list_init(as_list * list, void * data, const as_list_hooks * hooks)
  *
  *	@return On succes, a new list. Otherwise NULL.
  */
-as_list * as_list_new(void *, const as_list_hooks *);
+as_list * as_list_new(void * data, const as_list_hooks * hooks);
 
 /**
  *	Destroy the list and associated resources.
  */
-inline void as_list_destroy(as_list * l) 
+inline void as_list_destroy(as_list * list) 
 {
-	as_val_val_destroy((as_val *) l);
+	as_val_val_destroy((as_val *) list);
 }
 
 /******************************************************************************

@@ -63,7 +63,8 @@ struct as_iterator_s;
  *	as_iterator_destroy(it);
  *	~~~~~~~~~~
  *	
- *	@see `as_iterator`
+ *	@see as_iterator
+ *	@implements as_iterator
  */
 typedef struct as_arraylist_iterator_s {
 

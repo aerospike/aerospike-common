@@ -36,13 +36,33 @@
 typedef struct as_string_s as_string;
 
 /**
- *	String value
+ *	String value.
+ *
+ *	@extends as_val
  */
 struct as_string_s {
-	as_val      _;
-	bool        free; 
-	char *      value;
-	size_t      len;
+	
+	/**
+	 *	@private
+	 *	as_boolean is a subtype of as_val.
+	 *	You can cast as_boolean to as_val.
+	 */
+	as_val _;
+
+	/**
+	 *	If true, then `as_string.value` can be freed.
+	 */
+	bool free;
+
+	/**
+	 *	The string value.
+	 */
+	char * value;
+
+	/**
+	 *	The length of the string.
+	 */
+	size_t len;
 };
 
 /******************************************************************************
@@ -50,7 +70,7 @@ struct as_string_s {
  ******************************************************************************/
 
 /**
- *	Initialize a stack allocated as_string.
+ *	Initialize a stack allocated `as_string`.
  *
  *	If free is true, then the string value will be freed when the as_string is destroyed.
  *
@@ -58,20 +78,19 @@ struct as_string_s {
  *	@param value 	The NULL terminated string of character.
  *	@param free		If true, then the value will be freed when as_string is destroyed.
  *
- *	@return the initialized as_string on success, otherwise NULL.
+ *	@return On success, the initialized string. Otherwise NULL.
  */
 as_string * as_string_init(as_string * s, char * value, bool free);
 
 /**
- *	Creates a new heap allocated as_string.
+ *	Create and initialize a new heap allocated `as_string`.
  *
  *	If free is true, then the string value will be freed when the as_string is destroyed.
  *
- *	@param s 		The stack allocated as_string to initialize
  *	@param value 	The NULL terminated string of character.
  *	@param free		If true, then the value will be freed when as_string is destroyed.
  *
- *	@return the newly allocated as_string on success, otherwise NULL.
+ *	@return On success, the new string. Otherwise NULL.
  */
 as_string * as_string_new(char * value, bool free);
 

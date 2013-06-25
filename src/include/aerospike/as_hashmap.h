@@ -52,7 +52,8 @@ struct as_map_s;
  *	as_map_destroy(map);
  *	~~~~~~~~~~
  *
- *	@see `as_map`
+ *	@see as_map
+ *	@implements as_map
  */
 typedef struct as_hashmap_s {
 

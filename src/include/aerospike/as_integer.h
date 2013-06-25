@@ -32,7 +32,9 @@
  ******************************************************************************/
 
 /**
- *	Integer
+ *	Integer value.
+ *
+ *	@extends as_val
  */
 typedef struct as_integer_s {
 

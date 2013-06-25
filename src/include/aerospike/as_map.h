@@ -50,10 +50,12 @@ typedef union as_map_data_u {
 } as_map_data;
 
 /**
- *	Map Interface.
+ *	Map value.
  *
  *	To use the map interface, you will need to create an instance 
  *	via one of the implementations.
+ *
+ *	@extends as_val
  */
 typedef struct as_map_s {
 
@@ -81,13 +83,15 @@ typedef struct as_map_s {
  *
  *	An implementation of `as_map` should provide implementations for each
  *	of the hooks.
+ *
+ *	@relates as_map
  */
 typedef struct as_map_hooks_s {
 
 	/**
 	 *	Destroy the map.
 	 *
-	 *	@retun true on success. Otherwise false.
+	 *	@return true on success. Otherwise false.
 	 */
 	bool (* destroy)(as_map * map);
 

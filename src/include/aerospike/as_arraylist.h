@@ -54,7 +54,9 @@ struct as_list_s;
  *	as_list_destroy(list);
  *	~~~~~~~~~~
  *
- *	@see `as_list`
+ *	@see as_list
+ *
+ *	@implements as_list
  */
 typedef struct as_arraylist_s {
 
@@ -128,7 +130,7 @@ typedef enum as_arraylist_status_e {
  *	@param block_size	The number of elements to grow the list by, when the 
  *						capacity has been reached.
  *
- *	@return On success, the initialize list. Otherwise NULL.
+ *	@return On success, the initialized list. Otherwise NULL.
  */
 struct as_list_s * as_arraylist_init(struct as_list_s * list, uint32_t capacity, uint32_t block_size);
 
@@ -146,7 +148,6 @@ struct as_list_s * as_arraylist_init(struct as_list_s * list, uint32_t capacity,
  *	as_list_destroy(list);
  *	~~~~~~~~~~
  *
- *	@param list 		The as_list to initialize
  *	@param capacity		The number of elements to allocate to the list.
  *	@param block_size	The number of elements to grow the list by, when the 
  *						capacity has been reached.

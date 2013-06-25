@@ -105,45 +105,46 @@ typedef struct as_stream_hooks_s {
 /**
  *	Initializes a stack allocated as_stream for a given source and hooks.
  *
+ *	@param stream	The stream to initialize.
  *	@param data		The source feeding the stream
- *	@param Hooks	The hooks that interface with the source
+ *	@param hooks	The hooks that interface with the source
  *
  *	@return On success, the initialized stream. Otherwise NULL.
  */
-inline as_stream * as_stream_init(as_stream * s, void * data, const as_stream_hooks * hooks) {
-	if ( s == NULL ) return s;
-	s->free = false;
-	s->data = data;
-	s->hooks = hooks;
-	return s;
+inline as_stream * as_stream_init(as_stream * stream, void * data, const as_stream_hooks * hooks) {
+	if ( stream == NULL ) return stream;
+	stream->free = false;
+	stream->data = data;
+	stream->hooks = hooks;
+	return stream;
 }
 
 /**
  *	Creates a new heap allocated as_stream for a given source and hooks.
  *
- *	@param source	The source feeding the stream
+ *	@param data		The source feeding the stream
  *	@param hooks	The hooks that interface with the source
  *
- *	@return On success, the initialized stream. Otherwise NULL.
+ *	@return On success, a new stream. Otherwise NULL.
  */
 inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks) {
-	as_stream * s = (as_stream *) malloc(sizeof(as_stream));
-	s->free = true;
-	s->data = data;
-	s->hooks = hooks;
-	return s;
+	as_stream * stream = (as_stream *) malloc(sizeof(as_stream));
+	stream->free = true;
+	stream->data = data;
+	stream->hooks = hooks;
+	return stream;
 }
 
 /**
  *	Destroy the as_stream and associated resources.
  *
- *	@param s 	The stream to destroy.
+ *	@param stream 	The stream to destroy.
  *
  *	@return 0 on success, otherwise 1.
  */
-inline void as_stream_destroy(as_stream * s) {
-	as_util_hook(destroy, 1, s);
-	if ( s && s->free ) free(s);
+inline void as_stream_destroy(as_stream * stream) {
+	as_util_hook(destroy, 1, stream);
+	if ( stream && stream->free ) free(stream);
 }
 
 /**
@@ -153,52 +154,52 @@ inline void as_stream_destroy(as_stream * s) {
  *
  *	@return pointer to the source of the stream
  */
-inline void * as_stream_source(const as_stream * s) {
-	return (s ? s->data : NULL);
+inline void * as_stream_source(const as_stream * stream) {
+	return (stream ? stream->data : NULL);
 }
 
 /**
  *	Reads a value from the stream
  *
- *	@param s 	The stream to be read.
+ *	@param stream 	The stream to be read.
  *
  *	@return the element read from the stream or STREAM_END
  */
-inline as_val * as_stream_read(const as_stream * s) {
-	return as_util_hook(read, NULL, s);
+inline as_val * as_stream_read(const as_stream * stream) {
+	return as_util_hook(read, NULL, stream);
 }
 
 /**
  *	Is the stream readable? Tests whether the stream has a read function.
  *
- *	@param s the stream to test.
+ *	@param stream 	The stream to test.
  *
  *	@return true if the stream can be read from
  */
-inline bool as_stream_readable(const as_stream * s) {
-	return s != NULL && s->hooks != NULL && s->hooks->read;
+inline bool as_stream_readable(const as_stream * stream) {
+	return stream != NULL && stream->hooks != NULL && stream->hooks->read;
 }
 
 /**
  *	Write a value to the stream
  *
- *	@param s	The stream to write to.
- *	@param v	The element to write to the stream.
+ *	@param stream	The stream to write to.
+ *	@param value	The element to write to the stream.
  *
  *	@return AS_STREAM_OK on success, otherwise is failure.
  */
-inline as_stream_status as_stream_write(const as_stream * s, as_val * v) {
-	return as_util_hook(write, AS_STREAM_ERR, s, v);
+inline as_stream_status as_stream_write(const as_stream * stream, as_val * value) {
+	return as_util_hook(write, AS_STREAM_ERR, stream, value);
 }
 
 
 /**
  *	Is the stream writable? Tests whether the stream has a write function.
  *
- *	@param s 	The stream to test.
+ *	@param stream 	The stream to test.
  *
  *	@return true if the stream can be written to.
  */
-inline bool as_stream_writable(const as_stream * s) {
-	return s != NULL && s->hooks != NULL && s->hooks->write;
+inline bool as_stream_writable(const as_stream * stream) {
+	return stream != NULL && stream->hooks != NULL && stream->hooks->write;
 }

@@ -32,7 +32,7 @@
  ******************************************************************************/
 
 /**
- *	Boolean
+ *	Boolean value.
  *
  *	To use the boolean value, you should use one of the two constants:
  *
@@ -40,6 +40,8 @@
  *		as_boolean as_false;
  *	
  *	Both `as_boolean_init()` and `as_boolean_new()` should be used sparingly.
+ *
+ *	@extends as_val
  */
 typedef struct as_boolean_s {
 
