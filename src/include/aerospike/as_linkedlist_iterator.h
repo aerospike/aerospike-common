@@ -22,51 +22,77 @@
 
 #pragma once
 
+#include <aerospike/as_iterator.h>
 #include <aerospike/as_linkedlist.h>
 
+#include <stdbool.h>
+ 
 /******************************************************************************
  *	TYPES
  *****************************************************************************/
 
-struct as_iterator_s;
-
 /**
- *	Iterator for `as_linkedlist`.
+ *	Iterator for as_linkedlist
  *
  *	To use the iterator, you can either intialize a stack allocated variable,
  *	using `as_linkedlist_iterator_init()`:
  *
  *	~~~~~~~~~~{.c}
- *	as_iterator it;
- *	as_linkedlist_iterator_init(&list, &it);
+ *		as_linkedlist_iterator it;
+ *		as_linkedlist_iterator_init(&it, &list);
  *	~~~~~~~~~~
  * 
- *	Or you can create a new heap allocated variable, using 
+ *	Or you can create a new heap allocated variable using 
  *	`as_linkedlist_iterator_new()`:
  *
  *	~~~~~~~~~~{.c}
- *	as_iterator * it = as_linkedlist_iterator_new(&list);
+ *		as_linkedlist_iterator * it = as_linkedlist_iterator_new(&list);
  *	~~~~~~~~~~
  *
- *	To iterate, use `as_iterator_has_next()` and `as_iterator_next()`:
+ *	To iterate, use `as_linkedlist_iterator_has_next()` and 
+ *	`as_linkedlist_iterator_next()`:
  *
  *	~~~~~~~~~~{.c}
- *	while ( as_iterator_has_next(&it) ) {
- *		const as_val * val = as_iterator_next(&it);
- *	}
+ *		while ( as_linkedlist_iterator_has_next(&it) ) {
+ *			const as_val * val = as_linkedlist_iterator_next(&it);
+ *		}
  *	~~~~~~~~~~
  *
  *	When you are finished using the iterator, then you should release the 
  *	iterator and associated resources:
- *
+ *	
  *	~~~~~~~~~~{.c}
- *	as_iterator_destroy(it);
+ *		as_linkedlist_iterator_destroy(it);
  *	~~~~~~~~~~
  *	
- *	@see as_iterator
- *	@implements as_iterator
+ *
+ *	The `as_linkedlist_iterator` is a subtype of  `as_iterator`. This allows you
+ *	to alternatively use `as_iterator` functions, by typecasting 
+ *	`as_linkedlist_iterator` to `as_iterator`.
+ *
+ *	~~~~~~~~~~{.c}
+ *		as_linkedlist_iterator it;
+ *		as_iterator * i = (as_iterator *) as_linkedlist_iterator_init(&it, &list);
+ *
+ *		while ( as_iterator_has_next(i) ) {
+ *			const as_val * as_iterator_next(i);
+ *		}
+ *
+ *		as_iterator_destroy(i);
+ *	~~~~~~~~~~
+ *
+ *	Each of the `as_iterator` functions proxy to the `as_linkedlist_iterator`
+ *	functions. So, calling `as_iterator_destroy()` is equivalent to calling
+ *	`as_linkedlist_iterator_destroy()`.
+ *
  */
 typedef struct as_linkedlist_iterator_s {
+
+	/**
+	 *	as_linkedlist_iterator is an as_iterator.
+	 *	You can cast as_linkedlist_iterator to as_iterator.
+	 */
+	as_iterator _;
 
 	/**
 	 *	The current list
@@ -77,47 +103,54 @@ typedef struct as_linkedlist_iterator_s {
 } as_linkedlist_iterator;
 
 /******************************************************************************
- *	FUNCTIONS
+ *	INSTANCE FUNCTIONS
  *****************************************************************************/
 
 /**
- *	Initialize a stack allocated `as_iterator` for the given `as_linkedlist`.
+ *	Initializes a stack allocated as_iterator for the given as_linkedlist.
  *
- *	~~~~~~~~~~{.c}
- *	as_iterator it;
- *	as_linkedlist_iterator_init(&list, &it);
- *	~~~~~~~~~~
- *
- *	When you are finished with the iterator, you should release the resources
- *	via `as_iterator_destroy()`:
- *
- *	~~~~~~~~~~{.c}
- *	as_iterator_destroy(&it);
- *	~~~~~~~~~~
- *
- *	@param list 		The list to iterate.
  *	@param iterator 	The iterator to initialize.
+ *	@param list 		The list to iterate.
  *
  *	@return On success, the initialized iterator. Otherwise NULL.
  */
-struct as_iterator_s * as_linkedlist_iterator_init(const as_linkedlist * list, struct as_iterator_s * iterator);
+as_linkedlist_iterator * as_linkedlist_iterator_init(as_linkedlist_iterator * iterator, const as_linkedlist * list);
 
 /**
- *	Creates a new heap allocated `as_iterator` for the given `as_linkedlist`.
- *
- *	~~~~~~~~~~{.c}
- *	as_iterator * it = as_linkedlist_iterator_new(&list);
- *	~~~~~~~~~~
- *
- *	When you are finished with the iterator, you should release the resources
- *	via `as_iterator_destroy()`:
- *
- *	~~~~~~~~~~{.c}
- *	as_iterator_destroy(&it);
- *	~~~~~~~~~~
+ *	Creates a new heap allocated as_iterator for the given as_linkedlist.
  *
  *	@param list 		The list to iterate.
  *
  *	@return On success, the new iterator. Otherwise NULL.
  */
-struct as_iterator_s * as_linkedlist_iterator_new(const as_linkedlist * list);
+as_linkedlist_iterator * as_linkedlist_iterator_new(const as_linkedlist * list);
+
+/**
+ *	Destroy the iterator and releases resources used by the iterator.
+ *
+ *	@param iterator 	The iterator to release
+ */
+void as_linkedlist_iterator_destroy(as_linkedlist_iterator * iterator);
+
+/******************************************************************************
+ *	ITERATOR FUNCTIONS
+ *****************************************************************************/
+
+/**
+ *	Tests if there are more values available in the iterator.
+ *
+ *	@param iterator 	The iterator to be tested.
+ *
+ *	@return true if there are more values. Otherwise false.
+ */
+bool as_linkedlist_iterator_has_next(const as_linkedlist_iterator * i);
+
+/**
+ *	Attempts to get the next value from the iterator.
+ *	This will return the next value, and iterate past the value.
+ *
+ *	@param iterator 	The iterator to get the next value from.
+ *
+ *	@return The next value in the list if available. Otherwise NULL.
+ */
+const as_val * as_linkedlist_iterator_next(as_linkedlist_iterator * i);

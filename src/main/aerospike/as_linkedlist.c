@@ -1,289 +1,257 @@
 /******************************************************************************
- * Copyright 2008-2013 by Aerospike.
+ *	Copyright 2008-2013 by Aerospike.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy 
- * of this software and associated documentation files (the "Software"), to 
- * deal in the Software without restriction, including without limitation the 
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
- * sell copies of the Software, and to permit persons to whom the Software is 
- * furnished to do so, subject to the following conditions:
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy 
+ *	of this software and associated documentation files (the "Software"), to 
+ *	deal in the Software without restriction, including without limitation the 
+ *	rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
+ *	sell copies of the Software, and to permit persons to whom the Software is 
+ *	furnished to do so, subject to the following conditions:
  * 
- * The above copyright notice and this permission notice shall be included in 
- * all copies or substantial portions of the Software.
+ *	The above copyright notice and this permission notice shall be included in 
+ *	all copies or substantial portions of the Software.
  * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ *	FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *	IN THE SOFTWARE.
  *****************************************************************************/
-
-#include <stdlib.h>
-#include <stdio.h>
-
-#include <citrusleaf/cf_alloc.h>
 
 #include <aerospike/as_linkedlist.h>
 #include <aerospike/as_linkedlist_iterator.h>
 #include <aerospike/as_list.h>
 
-/******************************************************************************
- * STATIC FUNCTIONS
+#include <stdlib.h>
+#include <stdio.h>
+
+#include "internal.h"
+
+/*******************************************************************************
+ *	EXTERNS
  ******************************************************************************/
 
-static as_list *        as_linkedlist_end(as_list *);
-
-static bool             as_linkedlist_list_destroy(as_list *);
-static uint32_t         as_linkedlist_list_hash(const as_list *);
-
-static uint32_t         as_linkedlist_list_size(const as_list *);
-static int              as_linkedlist_list_append(as_list *, as_val *);
-static int              as_linkedlist_list_prepend(as_list *, as_val *);
-static as_val *         as_linkedlist_list_get(const as_list *, const uint32_t);
-static int              as_linkedlist_list_set(as_list *, const uint32_t, as_val *);
-static as_val *         as_linkedlist_list_head(const as_list *);
-static as_list *        as_linkedlist_list_tail(const as_list *);
-static as_list *        as_linkedlist_list_drop(const as_list *, uint32_t);
-static as_list *        as_linkedlist_list_take(const as_list *, uint32_t);
-
-static bool             as_linkedlist_list_foreach(const as_list *, as_list_foreach_callback, void *);
-static as_iterator *    as_linkedlist_list_iterator_init(const as_list *, as_iterator *);
-static as_iterator *    as_linkedlist_list_iterator_new(const as_list *);
+extern const as_list_hooks as_linkedlist_list_hooks;
 
 /******************************************************************************
- * VARIABLES
+ *	INSTANCE FUNCTIONS
  ******************************************************************************/
 
-const as_list_hooks as_linkedlist_list_hooks = {
-    .destroy        = as_linkedlist_list_destroy,
-    .hashcode       = as_linkedlist_list_hash,
+as_linkedlist * as_linkedlist_init(as_linkedlist * list, as_val * head, as_linkedlist * tail)
+{
+	if ( !list ) return list;
 
-    .size           = as_linkedlist_list_size,
-    .append         = as_linkedlist_list_append,
-    .prepend        = as_linkedlist_list_prepend,
-    .get            = as_linkedlist_list_get,
-    .set            = as_linkedlist_list_set,
-    .head           = as_linkedlist_list_head,
-    .tail           = as_linkedlist_list_tail,
-    .drop           = as_linkedlist_list_drop,
-    .take           = as_linkedlist_list_take,
-    
-    .foreach        = as_linkedlist_list_foreach,
-    .iterator_init  = as_linkedlist_list_iterator_init,
-    .iterator_new   = as_linkedlist_list_iterator_new
-};
+	as_list_init((as_list *) list, false, NULL, &as_linkedlist_list_hooks);
+	list->head = head;
+	list->tail = tail;
+	return list;
+}
 
-/******************************************************************************
- * FUNCTIONS
+as_linkedlist * as_linkedlist_new(as_val * head, as_linkedlist * tail) 
+{
+	as_linkedlist * list = (as_linkedlist *) malloc(sizeof(as_linkedlist));
+	if ( !list ) return list;
+
+	as_list_init((as_list *) list, true, NULL, &as_linkedlist_list_hooks);
+	list->head = head;
+	list->tail = tail;
+	return list;
+}
+
+bool as_linkedlist_release(as_linkedlist * list)
+{
+	if ( list->head ) as_val_destroy(list->head);
+	if ( list->tail ) as_linkedlist_destroy(list->tail);
+	return true;
+}
+
+void as_linkedlist_destroy(as_linkedlist * list)
+{
+	as_list_destroy((as_list *) list);
+}
+
+/*******************************************************************************
+ *	INFO FUNCTIONS
  ******************************************************************************/
 
-as_list * as_linkedlist_init(as_list * l, as_val * head, as_list * tail) {
-    as_val_init(&l->_, AS_LIST, false);
-    l->hooks = &as_linkedlist_list_hooks;
-    l->data.linkedlist.head = head;
-    l->data.linkedlist.tail = tail;
-    return l;
+uint32_t as_linkedlist_hashcode(const as_linkedlist * list) 
+{
+	return 0;
 }
 
-as_list * as_linkedlist_new(as_val * head, as_list * tail) {
-    as_list * l = (as_list *) malloc(sizeof(as_list));
-    as_val_init(&l->_, AS_LIST, true);
-    l->hooks = &as_linkedlist_list_hooks;
-    l->data.linkedlist.head = head;
-    l->data.linkedlist.tail = tail;
-    return l;
+uint32_t as_linkedlist_size(const as_linkedlist * list) 
+{
+	return !list ? 0 : 
+		(list->head ? 1 : 0) + 
+		(list->tail ? as_linkedlist_size(list->tail) : 0);
 }
 
-void as_linkedlist_destroy(as_list *l) {
-    as_val_val_destroy( (as_val *) l);
-}
-
-/******************************************************************************
- * STATIC FUNCTIONS
+/*******************************************************************************
+ *	ACCESSOR & MODIFICATION FUNCTIONS
  ******************************************************************************/
 
 /**
- * recurse through the link to find the end
+ *	Recurse through the link to find the last entry
  */
-static as_list * as_linkedlist_end(as_list * l) {
-    as_linkedlist * ll = &l->data.linkedlist;
-    if (ll->tail == 0)  return l;
-    return as_linkedlist_end(ll->tail);
+as_linkedlist * as_linkedlist_last(as_linkedlist * list) 
+{
+	if ( !list ) return list;
+	if ( list->tail == 0 ) return list;
+	return as_linkedlist_last(list->tail);
 }
 
 
-static bool as_linkedlist_list_destroy(as_list * l) {
-    as_linkedlist * ll = &l->data.linkedlist;
-    if ( ll->head ) as_val_val_destroy(ll->head);
-    if ( ll->tail ) as_val_val_destroy((as_val *)ll->tail);
-    return true;
+int as_linkedlist_append(as_linkedlist * list, as_val * value) 
+{
+	as_linkedlist * last = as_linkedlist_last(list);
+	
+	if ( !last ) return 2;
+
+	if ( last->tail ) return 3;
+
+	if ( !last->head ) {
+		last->head = value;
+	}
+	else {
+		last->tail = as_linkedlist_new(value, NULL);
+	}
+
+	return 0;
 }
 
-static uint32_t as_linkedlist_list_hash(const as_list * l) {
-    return 0;
+int as_linkedlist_prepend(as_linkedlist * list, as_val * value) 
+{
+	as_linkedlist * tail  = as_linkedlist_new(list->head, list->tail);
+	list->head = value;
+	list->tail = tail;
+	return 0;
 }
 
-static uint32_t as_linkedlist_list_size(const as_list * l) {
-    const as_linkedlist * ll = &l->data.linkedlist;
-    return (ll->head ? 1 : 0) + (ll->tail ? as_linkedlist_list_size(ll->tail) : 0);
+as_val * as_linkedlist_get(const as_linkedlist * list, const uint32_t i) 
+{
+	for (int j = 0; j < i && list != NULL; j++) {
+		if (list->tail == 0) {
+			return NULL;
+		}
+		list = list->tail;
+	}
+	return list->head;
 }
 
-static int as_linkedlist_list_append(as_list * l, as_val * v) {
+int as_linkedlist_set(as_linkedlist * list, const uint32_t i, as_val * value) 
+{
+	for (int j = 0; j < i ; j++) {
+		if (list->tail == 0) {
+			return(1);
+		}
+		list = list->tail;
+	}
 
-    as_list *       le  = as_linkedlist_end(l);
-    as_linkedlist * lle = &le->data.linkedlist;
-    
-    if ( !lle ) return 2;
+	as_val_destroy(list->head);
+	list->head = value;
 
-    if ( lle->tail ) return 3;
-
-    if ( !lle->head ) {
-        lle->head = v;
-    }
-    else {
-        lle->tail = as_linkedlist_new(v, NULL);
-    }
-
-    return 0;
+	return 0;
 }
 
-static int as_linkedlist_list_prepend(as_list * l, as_val * v) {
-    as_linkedlist * ll = &l->data.linkedlist;
-    as_list * tl  = as_linkedlist_new(ll->head, ll->tail);
-    ll->head = v;
-    ll->tail = tl;
-
-    return 0;
-}
-
-static as_val * as_linkedlist_list_get(const as_list * l, const uint32_t i) {
-    const as_linkedlist * ll = &l->data.linkedlist;
-    for (int j = 0; j < i && ll != NULL; j++) {
-        if (ll->tail == 0) return(0); // ith not available
-        ll = &(ll->tail->data.linkedlist);
-    }
-    return (ll->head);
-}
-
-static int as_linkedlist_list_set(as_list * l, const uint32_t i, as_val * v) {
-    
-    as_linkedlist * ll = &l->data.linkedlist;
-    for (int j = 0; j < i ; j++) {
-        if (ll->tail == 0) {
-            return(1);
-        }
-        ll = &(ll->tail->data.linkedlist);
-    }
-
-    as_val_destroy(ll->head);
-    ll->head = v;
-
-    return 0;
-}
-
-static as_val * as_linkedlist_list_head(const as_list * l) {
-    const as_linkedlist * ll = &l->data.linkedlist;
-    as_val_reserve(ll->head);
-    return ll->head;
+as_val * as_linkedlist_head(const as_linkedlist * list) 
+{
+	as_val_reserve(list->head);
+	return list->head;
 }
 
 /**
- * Return the all elements except the head element.
+ *	Return the all elements except the head element.
  */
-static as_list * as_linkedlist_list_tail(const as_list * l) {
-    const as_linkedlist * ll = &l->data.linkedlist;
-    as_list * tl  = ll->tail;
-    as_val_reserve(tl);
-    return(tl);
+as_linkedlist * as_linkedlist_tail(const as_linkedlist * list) 
+{
+	as_linkedlist * tail  = list->tail;
+	as_val_reserve(tail);
+	return tail;
 }
 
 /**
- * Create a list by taking all elements after the first n elements.
- * The elements are ref-counted, so, the new list will share a reference
- * with the original list.
+ *	Create a list by taking all elements after the first n elements.
+ *	The elements are ref-counted, so, the new list will share a reference
+ *	with the original list.
  */
-static as_list * as_linkedlist_list_drop(const as_list * l, uint32_t n) {
-    const as_linkedlist * ll = &l->data.linkedlist;
+as_linkedlist * as_linkedlist_drop(const as_linkedlist * list, uint32_t n) 
+{
+	as_linkedlist * first = NULL;
+	as_linkedlist * last = NULL;
 
-    as_list * h = 0;
-    as_list * t = 0;
+	for (int i = 0; i < n; i++ ) {
+		if ( !list->tail ) return 0;
+		list = list->tail;
+	}
 
-    for (int i = 0; i < n; i++ ) {
-        if (0 == ll->tail) return(0);
-        ll = &(ll->tail->data.linkedlist);
-    }
+	while (list) {
+		as_val_reserve(list->head);
+		if ( !first ) {
+			first = last = as_linkedlist_new(list->head, NULL);
+		} 
+		else {
+			last->tail = as_linkedlist_new(list->head, NULL);
+			last = last->tail;
+		}
 
-    while (ll) {
-        as_val_reserve(ll->head);
-        if (h == 0) {
-            h = t = as_linkedlist_new(ll->head, 0);;
-        } else {
-            t->data.linkedlist.tail = as_linkedlist_new(ll->head,NULL);
-            t = t->data.linkedlist.tail;
-        }
+		if ( !list->tail ) {
+			break;
+		}
 
-        if (0 == ll->tail) break;
-        ll = &(ll->tail->data.linkedlist);
-    }
-    
-    return h;
+		list = list->tail;
+	}
+	
+	return first;
 }
 
 /**
- * Create a list by taking the first n elements.
- * The elements are ref-counted, so, the new list will share a reference
- * with the original list.
+ *	Create a list by taking the first n elements.
+ *	The elements are ref-counted, so, the new list will share a reference
+ *	with the original list.
  */
-static as_list * as_linkedlist_list_take(const as_list * l, uint32_t n) {
-    
-    const as_linkedlist * ll = &l->data.linkedlist;
+as_linkedlist * as_linkedlist_take(const as_linkedlist * list, uint32_t n) 
+{
+	as_linkedlist * first = NULL;
+	as_linkedlist * last = NULL;
+	
+	int i = 1;
+	while (list) {
+		as_val_reserve(list->head);
 
-    as_list * h = 0;
-    as_list * t = 0;
-    
-    int i = 1;
-    while (ll) {
-        as_val_reserve(ll->head);
-        if (h == 0) {
-            h = t = as_linkedlist_new(ll->head, 0);;
-        } else {
-            t->data.linkedlist.tail = as_linkedlist_new(ll->head,NULL);
-            t = t->data.linkedlist.tail;
-        }
-        ll = &(ll->tail->data.linkedlist);
-        if (i++ >= n) break;
-    }
+		if ( !first ) {
+			first = last = as_linkedlist_new(list->head, 0);;
+		} 
+		else {
+			last->tail = as_linkedlist_new(list->head,NULL);
+			last = last->tail;
+		}
 
-    return h;
+		list = list->tail;
+
+		if ( i++ >= n ) {
+			break;
+		}
+	}
+
+	return first;
 }
 
+/******************************************************************************
+ *	ITERATION FUNCTIONS
+ ******************************************************************************/
 
 /** 
- * Call the callback function for each element in the list.
+ *	Call the callback function for each element in the list.
  */
-static bool as_linkedlist_list_foreach(const as_list * l, bool (*foreach)(as_val * val, void * udata), void * udata) {
-    const as_linkedlist * ll = (as_linkedlist *) &l->data.linkedlist;
-    while ( ll != NULL && ll->head != NULL ) {
-        if ( foreach(ll->head, udata) == false ) {
-            return false;
-        }
-        ll = &(ll->tail->data.linkedlist);
-    }
-    return true;
-}
-
-/**
- * Initializes an iterator for this list
- */
-static as_iterator * as_linkedlist_list_iterator_init(const as_list * l, as_iterator *i) {
-    return as_linkedlist_iterator_init(&l->data.linkedlist, i);
-}
-
-/**
- * Creates a new iterator for this list
- */
-static as_iterator * as_linkedlist_list_iterator_new(const as_list * l) {
-    return as_linkedlist_iterator_new(&l->data.linkedlist);
+bool as_linkedlist_foreach(const as_linkedlist * list, as_list_foreach_callback callback, void * udata) 
+{
+	while ( list != NULL && list->head != NULL ) {
+		if ( callback(list->head, udata) == false ) {
+			return false;
+		}
+		list = list->tail;
+	}
+	return true;
 }

@@ -20,36 +20,22 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <string.h>
+#pragma once
 
-#include <aerospike/as_val.h>
-#include <aerospike/as_nil.h>
-
-/******************************************************************************
- *	CONSTANTS
- *****************************************************************************/
-
-const as_val as_nil = {
-	.type = AS_NIL,
-	.free = false,
-	.count = 0
-};
+#include <aerospike/as_arraylist_iterator.h>
+#include <aerospike/as_linkedlist_iterator.h>
 
 /******************************************************************************
- *	as_val FUNCTIONS
+ *	TYPES
  *****************************************************************************/
 
-void as_nil_val_destroy(as_val * v) 
-{
-	return;
-}
+/**
+ *	Union of standard list iterators
+ */
+typedef union as_list_iterator_u {
+	
+	as_arraylist_iterator 	arraylist;
+	as_linkedlist_iterator	linkedlist;
 
-uint32_t as_nil_val_hashcode(const as_val * v) 
-{
-	return 0;
-}
+} as_list_iterator;
 
-char * as_nil_val_tostring(const as_val * v) 
-{
-	return strdup("NIL");
-}

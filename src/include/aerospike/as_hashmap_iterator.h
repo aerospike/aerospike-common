@@ -23,50 +23,72 @@
 #pragma once
 
 #include <aerospike/as_hashmap.h>
+#include <aerospike/as_iterator.h>
+
+#include <stdbool.h>
 
 /******************************************************************************
  *	TYPES
  ******************************************************************************/
 
-struct as_iterator_s;
-
 /**
- *	Iterator for `as_hashmap`.
+ *	Iterator for as_hashmap.
  *
  *	To use the iterator, you can either intialize a stack allocated variable,
- *	using `as_arraylist_iterator_init()`:
+ *	use `as_hashmap_iterator_init()`:
  *
  *	~~~~~~~~~~{.c}
- *	as_iterator it;
- *	as_hashmap_iterator_init(&map, &it);
+ *		as_hashmap_iterator it;
+ *		as_hashmap_iterator_init(&it, &map);
  *	~~~~~~~~~~
  * 
- *	Or you can create a new heap allocated variable, using 
+ *	Or you can create a new heap allocated variable using 
  *	`as_hashmap_iterator_new()`:
  *
  *	~~~~~~~~~~{.c}
- *	as_iterator * it = as_hashmap_iterator_new(&map);
+ *		as_hashmap_iterator * it = as_hashmap_iterator_new(&map);
  *	~~~~~~~~~~
- *
- *	To iterate, use `as_iterator_has_next()` and `as_iterator_next()`:
+ *	
+ *	To iterate, use `as_hashmap_iterator_has_next()` and 
+ *	`as_hashmap_iterator_next()`:
  *
  *	~~~~~~~~~~{.c}
- *	while ( as_iterator_has_next(&it) ) {
- *		const as_val * val = as_iterator_next(&it);
- *	}
+ *		while ( as_hashmap_iterator_has_next(&it) ) {
+ *			const as_val * val = as_hashmap_iterator_next(&it);
+ *		}
  *	~~~~~~~~~~
  *
  *	When you are finished using the iterator, then you should release the 
  *	iterator and associated resources:
- *
+ *	
  *	~~~~~~~~~~{.c}
- *	as_iterator_destroy(it);
+ *		as_hashmap_iterator_destroy(it);
  *	~~~~~~~~~~
  *	
- *	@see as_iterator
- *	@implements as_iterator
+ *
+ *	The `as_hashmap_iterator` is a subtype of  `as_iterator`. This allows you
+ *	to alternatively use `as_iterator` functions, by typecasting 
+ *	`as_hashmap_iterator` to `as_iterator`.
+ *
+ *	~~~~~~~~~~{.c}
+ *		as_hashmap_iterator it;
+ *		as_iterator * i = (as_iterator *) as_hashmap_iterator_init(&it, &map);
+ *
+ *		while ( as_iterator_has_next(i) ) {
+ *			const as_val * as_iterator_next(i);
+ *		}
+ *
+ *		as_iterator_destroy(i);
+ *	~~~~~~~~~~
+ *	
+ *	Each of the `as_iterator` functions proxy to the `as_hashmap_iterator`
+ *	functions. So, calling `as_iterator_destroy()` is equivalent to calling
+ *	`as_hashmap_iterator_destroy()`.
+ *
  */
 typedef struct as_hashmap_iterator_s {
+
+	as_iterator _;
 
 	/**
 	 *	The hashmap
@@ -100,43 +122,51 @@ typedef struct as_hashmap_iterator_s {
  *****************************************************************************/
 
 /**
- *	Initializes a stack allocated `as_iterator` for the given `as_hashmap`.
+ *	Initializes a stack allocated as_iterator for the given as_hashmap.
  *
- *	~~~~~~~~~~{.c}
- *	as_iterator it;
- *	as_hashmap_iterator_init(&map, &it);
- *	~~~~~~~~~~
- *
- *	When you are finished with the iterator, you should release the resources
- *	via `as_iterator_destroy()`:
- *
- *	~~~~~~~~~~{.c}
- *	as_iterator_destroy(&it);
- *	~~~~~~~~~~
- *
- *	@param map			The map to iterate.
  *	@param iterator 	The iterator to initialize.
+ *	@param map			The map to iterate.
  *
  *	@return On success, the initialized iterator. Otherwise NULL.
  */
-struct as_iterator_s * as_hashmap_iterator_init(const as_hashmap * map, struct as_iterator_s * iterator);
+as_hashmap_iterator * as_hashmap_iterator_init(as_hashmap_iterator * iterator, const as_hashmap * map);
 
 /**
- *	Creates a heap allocated `as_iterator` for the given `as_hashmap`.
+ *	Creates a heap allocated as_iterator for the given as_hashmap.
  *
- *	~~~~~~~~~~{.c}
- *	as_iterator * it = as_arraylist_iterator_new(&list);
- *	~~~~~~~~~~
- *
- *	When you are finished with the iterator, you should release the resources
- *	via `as_iterator_destroy()`:
- *
- *	~~~~~~~~~~{.c}
- *	as_iterator_destroy(&it);
- *	~~~~~~~~~~
- *
- *	@param map			The map to iterate.
+ *	@param map 			The map to iterate.
  *
  *	@return On success, the new iterator. Otherwise NULL.
  */
-struct as_iterator_s * as_hashmap_iterator_new(const as_hashmap * map);
+as_hashmap_iterator * as_hashmap_iterator_new(const as_hashmap * map);
+
+/**
+ *	Destroy the iterator and releases resources used by the iterator.
+ *
+ *	@param iterator 	The iterator to release
+ */
+void as_hashmap_iterator_destroy(as_hashmap_iterator * iterator);
+
+
+/******************************************************************************
+ *	ITERATOR FUNCTIONS
+ *****************************************************************************/
+
+/**
+ *	Tests if there are more values available in the iterator.
+ *
+ *	@param iterator 	The iterator to be tested.
+ *
+ *	@return true if there are more values. Otherwise false.
+ */
+bool as_hashmap_iterator_has_next(const as_hashmap_iterator * iterator);
+
+/**
+ *	Attempts to get the next value from the iterator.
+ *	This will return the next value, and iterate past the value.
+ *
+ *	@param iterator 	The iterator to get the next value from.
+ *
+ *	@return The next value in the list if available. Otherwise NULL.
+ */
+const as_val * as_hashmap_iterator_next(as_hashmap_iterator * iterator);

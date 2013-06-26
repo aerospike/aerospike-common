@@ -22,74 +22,183 @@
 
 #pragma once
 
+#include <aerospike/as_map.h>
+
+#include <stdbool.h>
+#include <stdint.h>
+
 /******************************************************************************
  *	TYPES
  ******************************************************************************/
 
-struct as_map_s;
-
 /**
- *	A hashmap implementation for `as_map`.
+ *	A hashtable based implementation of `as_map`.
  *
  *	To use the map, you can either initialize a stack allocated map, 
  *	using `as_hashmap_init()`:
  *
  *	~~~~~~~~~~{.c}
- *	as_map map;
+ *	as_hashmap map;
  *	as_hashmap_init(&map, 32);
  *	~~~~~~~~~~
  *
- *	Or you can create a new heap allocated map using `as_hashmap_new()`:
+ *	Or you can create a new heap allocated map using 
+ *	`as_hashmap_new()`:
  *
  *	~~~~~~~~~~{.c}
- *	as_map * map = as_hashmap_new(32);
+ *	as_hashmap * map = as_hashmap_new(32);
  *	~~~~~~~~~~
  *
- *	When you are finished using the map, then you should release the map and
- *	associated resources, using `as_map_destroy()`:
+ *	When you are finished using the map, then you should release the 
+ *	map and associated resources, using `as_hashmap_destroy()`:
  *	
  *	~~~~~~~~~~{.c}
- *	as_map_destroy(map);
+ *	as_hashmap_destroy(list);
  *	~~~~~~~~~~
  *
- *	@see as_map
- *	@implements as_map
+ *
+ *	The `as_hashmap` is a subtype of `as_map`. This allows you to alternatively
+ *	use `as_map` functions, by typecasting `as_hashmap` to `as_map`.
+ *
+ *	~~~~~~~~~~{.c}
+ *	as_hashmap map;
+ *	as_map * l = (as_list *) as_hashmap_init(&map, 32);
+ *	as_stringmap_set_int64(l, "a", 1);
+ *	as_stringmap_set_int64(l, "b", 2);
+ *	as_stringmap_set_int64(l, "c", 3);
+ *	as_map_destroy(l);
+ *	~~~~~~~~~~
+ *	
+ *	The `as_stringmap` functions are simplified functions for using string key.
+ *	
+ *	Each of the `as_map` functions proxy to the `as_hashmap` functions.
+ *	So, calling `as_map_destroy()` is equivalent to calling 
+ *	`as_hashmap_destroy()`.
+ *
  */
 typedef struct as_hashmap_s {
+	
+	/**
+	 *	@private
+	 *	as_hashmap is an as_map.
+	 *	You can cast as_hashmap to as_map.
+	 */
+	as_map _;
 
 	/**
-	 *	Hashtable value
+	 *	Hashtable
 	 */
 	void * htable;
 
 } as_hashmap;
 
-/******************************************************************************
- *	FUNCTIONS
+/*******************************************************************************
+ *	INSTANCE FUNCTIONS
  ******************************************************************************/
 
 /**
- *	Initialize a stack allocated `as_map` as an `as_hashmap`.
+ *	Initialize a stack allocated hashmap.
  *
- *	@param map		The map to initialize.
- *	@param buckets	The number of hash buckets to allocate.
+ *	@param map 			The map to initialize.
+ *	@param buckets		The number of hash buckets to allocate.
  *
  *	@return On success, the initialized map. Otherwise NULL.
  */
-struct as_map_s * as_hashmap_init(struct as_map_s * map, uint32_t buckets);
+as_hashmap * as_hashmap_init(as_hashmap * map, uint32_t buckets);
 
 /**
- *	Creates a new heap allocated `as_map` as an `as_hashmap`.
+ *	Creates a new map as a hashmap.
  *
- *	@param buckets	The number of hash buckets to allocate.
+ *	@param buckets		The number of hash buckets to allocate.
  *
- *	@return On success, the initialized map. Otherwise NULL.
+ *	@return On success, the new map. Otherwise NULL.
  */
-struct as_map_s * as_hashmap_new(uint32_t buckets);
+as_hashmap * as_hashmap_new(uint32_t buckets);
+
+/**
+ *	@private
+ *	Release resources allocated to the list.
+ *
+ *	@param map	The map to release.
+ *
+ *	@return On success, true. Otherwise false.
+ */
+bool as_hashmap_release(as_hashmap * map);
 
 /**
  *	Free the map and associated resources.
  *
- *	@param map		The map to destroy.
+ *	@param map 	The map to destroy.
  */
-void as_hashmap_destroy(struct as_map_s * map); 
+void as_hashmap_destroy(as_hashmap * map);
+
+/*******************************************************************************
+ *	INFO FUNCTIONS
+ ******************************************************************************/
+
+/**
+ *	The hash value of the map.
+ *
+ *	@param map 	The list.
+ *
+ *	@return The hash value of the list.
+ */
+uint32_t as_hashmap_hashcode(const as_hashmap * map);
+
+/**
+ *	Get the number of entries in the map.
+ *
+ *	@param map 	The map.
+ *
+ *	@return The number of entries in the map.
+ */
+uint32_t as_hashmap_size(const as_hashmap * map);
+
+/*******************************************************************************
+ *	ACCESSOR AND MODIFIER FUNCTIONS
+ ******************************************************************************/
+
+/**
+ *	Get the value for specified key.
+ *
+ *	@param map 		The map.
+ *	@param key		The key.
+ *
+ *	@return The value for the specified key. Otherwise NULL.
+ */
+as_val * as_hashmap_get(const as_hashmap * map, const as_val * key);
+
+/**
+ *	Set the value for specified key.
+ *
+ *	@param map 		The map.
+ *	@param key		The key.
+ *	@param val		The value for the given key.
+ *
+ *	@return 0 on success. Otherwise an error occurred.
+ */
+int as_hashmap_set(as_hashmap * map, const as_val * key, const as_val * val);
+
+/**
+ *	Remove all entries from the map.
+ *
+ *	@param map		The map.
+ *
+ *	@return 0 on success. Otherwise an error occurred.
+ */
+int as_hashmap_clear(as_hashmap * map);
+
+/******************************************************************************
+ *	ITERATION FUNCTIONS
+ *****************************************************************************/
+
+/**
+ *	Call the callback function for each entry in the map.
+ *
+ *	@param map		The map.
+ *	@param callback	The function to call for each entry.
+ *	@param udata	User-data to be passed to the callback.
+ *	
+ *	@return TRUE on success. Otherwise an error occurred.
+ */
+bool as_hashmap_foreach(const as_hashmap * map, as_map_foreach_callback callback, void * udata);

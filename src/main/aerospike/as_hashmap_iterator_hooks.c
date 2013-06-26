@@ -20,36 +20,44 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <string.h>
-
+#include <aerospike/as_hashmap_iterator.h>
+#include <aerospike/as_iterator.h>
 #include <aerospike/as_val.h>
-#include <aerospike/as_nil.h>
+
+#include <stdbool.h>
+#include <stdint.h>
 
 /******************************************************************************
- *	CONSTANTS
+ *	EXTERN FUNCTIONS
  *****************************************************************************/
 
-const as_val as_nil = {
-	.type = AS_NIL,
-	.free = false,
-	.count = 0
+extern bool as_hashmap_iterator_release(as_hashmap_iterator * iterator);
+
+/******************************************************************************
+ *	FUNCTIONS
+ *****************************************************************************/
+
+static bool _as_hashmap_iterator_destroy(as_iterator * i) 
+{
+	return as_hashmap_iterator_release((as_hashmap_iterator *) i);
+}
+
+static bool _as_hashmap_iterator_has_next(const as_iterator * i) 
+{
+	return as_hashmap_iterator_has_next((const as_hashmap_iterator *) i);
+}
+
+static const as_val * _as_hashmap_iterator_next(as_iterator * i) 
+{
+	return as_hashmap_iterator_next((as_hashmap_iterator *) i);
+}
+
+/******************************************************************************
+ *	HOOKS
+ *****************************************************************************/
+
+const as_iterator_hooks as_hashmap_iterator_hooks = {
+	.destroy    = _as_hashmap_iterator_destroy,
+	.has_next   = _as_hashmap_iterator_has_next,
+	.next       = _as_hashmap_iterator_next
 };
-
-/******************************************************************************
- *	as_val FUNCTIONS
- *****************************************************************************/
-
-void as_nil_val_destroy(as_val * v) 
-{
-	return;
-}
-
-uint32_t as_nil_val_hashcode(const as_val * v) 
-{
-	return 0;
-}
-
-char * as_nil_val_tostring(const as_val * v) 
-{
-	return strdup("NIL");
-}

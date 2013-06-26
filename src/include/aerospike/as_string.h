@@ -33,14 +33,12 @@
  *	TYPES
  ******************************************************************************/
 
-typedef struct as_string_s as_string;
-
 /**
  *	String value.
  *
  *	@extends as_val
  */
-struct as_string_s {
+typedef struct as_string_s {
 	
 	/**
 	 *	@private
@@ -63,7 +61,8 @@ struct as_string_s {
 	 *	The length of the string.
 	 */
 	size_t len;
-};
+
+} as_string;
 
 /******************************************************************************
  *	INSTANCE FUNCTIONS
@@ -74,13 +73,13 @@ struct as_string_s {
  *
  *	If free is true, then the string value will be freed when the as_string is destroyed.
  *
- *	@param s		The stack allocated as_string to initialize
+ *	@param string	The stack allocated as_string to initialize
  *	@param value 	The NULL terminated string of character.
  *	@param free		If true, then the value will be freed when as_string is destroyed.
  *
  *	@return On success, the initialized string. Otherwise NULL.
  */
-as_string * as_string_init(as_string * s, char * value, bool free);
+as_string * as_string_init(as_string * string, char * value, bool free);
 
 /**
  *	Create and initialize a new heap allocated `as_string`.
@@ -97,9 +96,9 @@ as_string * as_string_new(char * value, bool free);
 /**
  *	Destroy the as_string and associated resources.
  */
-inline void as_string_destroy(as_string * s) 
+inline void as_string_destroy(as_string * string) 
 {
-	as_val_val_destroy((as_val *) s);
+	as_val_destroy((as_val *) string);
 }
 
 /******************************************************************************
@@ -113,14 +112,31 @@ inline void as_string_destroy(as_string * s)
  *
  *	@return the length of the string in bytes.
  */
-size_t as_string_len(as_string * s);
+size_t as_string_len(as_string * string);
+
+/**
+ *	Get the string value. If string is NULL, then return the fallback value.
+ */
+inline char * as_string_getorelse(const as_string * string, char * fallback) 
+{
+	return string ? string->value : fallback;
+}
 
 /**
  *	Get the string value.
  */
-inline char * as_string_tostring(const as_string * s) 
+inline char * as_string_get(const as_string * string) 
 {
-	return s ? s->value : NULL;
+	return as_string_getorelse(string, NULL);
+}
+
+/**
+ *	Get the string value.
+ *	@deprecated Use `as_string_get()` instead
+ */
+inline char * as_string_tostring(const as_string * string) 
+{
+	return as_string_getorelse(string, NULL);
 }
 
 /******************************************************************************

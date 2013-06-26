@@ -77,57 +77,57 @@ typedef struct as_rec_hooks_s {
 	/**
 	 *	Destroy the record.
 	 */
-	bool (* destroy)(as_rec * r);
+	bool (* destroy)(as_rec * rec);
 
 	/**
 	 *	Get the hashcode of the record.
 	 */
-	uint32_t (* hashcode)(const as_rec * r);
+	uint32_t (* hashcode)(const as_rec * rec);
 
 	/**
 	 *	Get the value of the bin in the record.
 	 */
-	as_val * (* get)(const as_rec * r, const char * name);
+	as_val * (* get)(const as_rec * rec, const char * name);
 
 	/**
 	 *	Set the value of the bin in the record.
 	 */
-	int (* set)(const as_rec * r, const char * name, const as_val * value);
+	int (* set)(const as_rec * rec, const char * name, const as_val * value);
 
 	/**
 	 *	Remove the bin from the record.	
 	 */
-	int (* remove)(const as_rec * r, const char * bin);
+	int (* remove)(const as_rec * rec, const char * bin);
 
 	/**
 	 *	Get the ttl value of the record.
 	 */
-	uint32_t (* ttl)(const as_rec  * r);
+	uint32_t (* ttl)(const as_rec  * rec);
 
 	/**
 	 *	Get the generation value of the record.
 	 */
-	uint16_t (* gen)(const as_rec * r);
+	uint16_t (* gen)(const as_rec * rec);
 
 	/**
 	 *	Get the number of bins of the record.
 	 */
-	uint16_t (* numbins)(const as_rec * r);
+	uint16_t (* numbins)(const as_rec * rec);
 
 	/**
 	 *	Get the digest of the record.
 	 */
-	as_bytes * (* digest)(const as_rec * r);
+	as_bytes * (* digest)(const as_rec * rec);
 
 	/**
 	 *	Set flags on a bin.
 	 */
-	int (* set_flags)(const as_rec * r, const char * bin, uint8_t flags);
+	int (* set_flags)(const as_rec * rec, const char * bin, uint8_t flags);
 
 	/**
 	 *	Set the type of record.
 	 */
-	int (* set_type)(const as_rec * r,  uint8_t type);
+	int (* set_type)(const as_rec * rec,  uint8_t type);
 
 } as_rec_hooks;
 
@@ -138,7 +138,7 @@ typedef struct as_rec_hooks_s {
 /**
  *	Initialize an as_rec allocated on the stack.
  */
-as_rec *  as_rec_init(as_rec * r, void * data, const as_rec_hooks * hooks);
+as_rec *  as_rec_init(as_rec * rec, void * data, const as_rec_hooks * hooks);
 
 /**
  *	Creates a new as_rec allocated on the heap.
@@ -148,9 +148,9 @@ as_rec *  as_rec_new(void * data, const as_rec_hooks * hooks);
 /**
  *	Destroy the record.
  */
-inline void as_rec_destroy(as_rec *r) 
+inline void as_rec_destroy(as_rec * rec) 
 {
-	as_val_val_destroy((as_val *) r);
+	as_val_destroy((as_val *) rec);
 }
 
 /******************************************************************************
@@ -160,70 +160,70 @@ inline void as_rec_destroy(as_rec *r)
 /**
  *	Get the data source for the record.
  */
-inline void * as_rec_source(const as_rec * r) 
+inline void * as_rec_source(const as_rec * rec) 
 {
-	return r ? r->data : NULL;
+	return rec ? rec->data : NULL;
 }
 
 /**
  *	Remove a bin from a record.
  *
- *	@param r		The record to remove the bin from.
+ *	@param rec		The record to remove the bin from.
  *	@param name 	The name of the bin to remove.
  *
  *	@return 0 on success, otherwise an error occurred.
  */
-inline int as_rec_remove(const as_rec * r, const char * name) 
+inline int as_rec_remove(const as_rec * rec, const char * name) 
 {
-	return as_util_hook(remove, 1, r, name);
+	return as_util_hook(remove, 1, rec, name);
 }
 
 /**
  *	Get the ttl for the record.
  */
-inline uint32_t as_rec_ttl(const as_rec * r) 
+inline uint32_t as_rec_ttl(const as_rec * rec) 
 {
-	return as_util_hook(ttl, 0, r);
+	return as_util_hook(ttl, 0, rec);
 }
 
 /**
  *	Get the generation of the record
  */
-inline uint16_t as_rec_gen(const as_rec * r) 
+inline uint16_t as_rec_gen(const as_rec * rec) 
 {
-	return as_util_hook(gen, 0, r);
+	return as_util_hook(gen, 0, rec);
 }
 
 /**
  *	Get the number of bins in the record.
  */
-inline uint16_t as_rec_numbins(const as_rec * r) 
+inline uint16_t as_rec_numbins(const as_rec * rec) 
 {
-	return as_util_hook(numbins, 0, r);
+	return as_util_hook(numbins, 0, rec);
 }
 
 /**
  *	Get the digest of the record.
  */
-inline as_bytes * as_rec_digest(const as_rec * r) 
+inline as_bytes * as_rec_digest(const as_rec * rec) 
 {
-	return as_util_hook(digest, 0, r);
+	return as_util_hook(digest, 0, rec);
 }
 
 /**
  *	Set flags on a bin.
  */
-inline int  as_rec_set_flags(const as_rec * r, const char * name, uint8_t flags) 
+inline int  as_rec_set_flags(const as_rec * rec, const char * name, uint8_t flags) 
 {
-	return as_util_hook(set_flags, 0, r, name, flags);
+	return as_util_hook(set_flags, 0, rec, name, flags);
 }
 
 /**
  *	Set the record type.
  */
-inline int as_rec_set_type(const as_rec * r, uint8_t rec_type) 
+inline int as_rec_set_type(const as_rec * rec, uint8_t rec_type) 
 {
-	return as_util_hook(set_type, 0, r, rec_type);
+	return as_util_hook(set_type, 0, rec, rec_type);
 }
 
 /******************************************************************************
@@ -233,27 +233,27 @@ inline int as_rec_set_type(const as_rec * r, uint8_t rec_type)
 /**
  *	Get a bin's value.
  *
- *	@param r		The as_rec to read the bin value from.
+ *	@param rec		The as_rec to read the bin value from.
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
  */
-inline as_val * as_rec_get(const as_rec * r, const char * name) 
+inline as_val * as_rec_get(const as_rec * rec, const char * name) 
 {
-	return as_util_hook(get, NULL, r, name);
+	return as_util_hook(get, NULL, rec, name);
 }
 
 /**
  *	Get a bin's value as an int64_t.
  *
- *	@param r		The as_rec to read the bin value from.
+ *	@param rec		The as_rec to read the bin value from.
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise 0.
  */
-inline int64_t as_rec_get_int64(const as_rec * r, const char * name) 
+inline int64_t as_rec_get_int64(const as_rec * rec, const char * name) 
 {
-	as_val * v = as_util_hook(get, NULL, r, name);
+	as_val * v = as_util_hook(get, NULL, rec, name);
 	as_integer * i = as_integer_fromval(v);
 	return i ? as_integer_toint(i) : 0;
 }
@@ -261,14 +261,14 @@ inline int64_t as_rec_get_int64(const as_rec * r, const char * name)
 /**
  *	Get a bin's value as a NULL terminated string.
  *
- *	@param r		The as_rec to read the bin value from.
+ *	@param rec		The as_rec to read the bin value from.
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
  */
-inline char * as_rec_get_str(const as_rec * r, const char * name) 
+inline char * as_rec_get_str(const as_rec * rec, const char * name) 
 {
-	as_val * v = as_util_hook(get, NULL, r, name);
+	as_val * v = as_util_hook(get, NULL, rec, name);
 	as_string * s = as_string_fromval(v);
 	return s ? as_string_tostring(s) : 0;
 }
@@ -276,70 +276,70 @@ inline char * as_rec_get_str(const as_rec * r, const char * name)
 /**
  *	Get a bin's value as an as_integer.
  *
- *	@param r		The as_rec to read the bin value from.
+ *	@param rec		The as_rec to read the bin value from.
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
  */
-inline as_integer * as_rec_get_integer(const as_rec * r, const char * name) 
+inline as_integer * as_rec_get_integer(const as_rec * rec, const char * name) 
 {
-	as_val * v = as_util_hook(get, NULL, r, name);
+	as_val * v = as_util_hook(get, NULL, rec, name);
 	return as_integer_fromval(v);
 }
 
 /**
  *	Get a bin's value as an as_string.
  *
- *	@param r		The as_rec to read the bin value from.
+ *	@param rec		The as_rec to read the bin value from.
  *	@param name		The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
  */
-inline as_string * as_rec_get_string(const as_rec * r, const char * name) 
+inline as_string * as_rec_get_string(const as_rec * rec, const char * name) 
 {
-	as_val * v = as_util_hook(get, NULL, r, name);
+	as_val * v = as_util_hook(get, NULL, rec, name);
 	return as_string_fromval(v);
 }
 
 /**
  *	Get a bin's value as an as_bytes.
  *
- *	@param r		The as_rec to read the bin value from.
+ *	@param rec		The as_rec to read the bin value from.
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
  */
-inline as_bytes * as_rec_get_bytes(const as_rec * r, const char * name) 
+inline as_bytes * as_rec_get_bytes(const as_rec * rec, const char * name) 
 {
-	as_val * v = as_util_hook(get, NULL, r, name);
+	as_val * v = as_util_hook(get, NULL, rec, name);
 	return as_bytes_fromval(v);
 }
 
 /**
  *	Get a bin's value as an as_list.
  *
- *	@param r		The as_rec to read the bin value from.
+ *	@param rec		The as_rec to read the bin value from.
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
  */
-inline as_list * as_rec_get_list(const as_rec * r, const char * name) 
+inline as_list * as_rec_get_list(const as_rec * rec, const char * name) 
 {
-	as_val * v = as_util_hook(get, NULL, r, name);
+	as_val * v = as_util_hook(get, NULL, rec, name);
 	return as_list_fromval(v);
 }
 
 /**
  *	Get a bin's value as an as_map.
  *
- *	@param r		The as_rec to read the bin value from.
+ *	@param rec		The as_rec to read the bin value from.
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
  */
-inline as_map * as_rec_get_map(const as_rec * r, const char * name) 
+inline as_map * as_rec_get_map(const as_rec * rec, const char * name) 
 {
-	as_val * v = as_util_hook(get, NULL, r, name);
+	as_val * v = as_util_hook(get, NULL, rec, name);
 	return as_map_fromval(v);
 }
 
@@ -350,113 +350,113 @@ inline as_map * as_rec_get_map(const as_rec * r, const char * name)
 /**
  *	Set the bin's value to an as_val.
  *
- *	@param r 		The as_rec to write the bin value to - CONSUMES REFERENCE
+ *	@param rec 		The as_rec to write the bin value to - CONSUMES REFERENCE
  *	@param name 	The name of the bin.
  *	@param value 	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
  */
-inline int as_rec_set(const as_rec * r, const char * name, const as_val * value) 
+inline int as_rec_set(const as_rec * rec, const char * name, const as_val * value) 
 {
-	return as_util_hook(set, 1, r, name, value);
+	return as_util_hook(set, 1, rec, name, value);
 }
 
 /**
  *	Set the bin's value to an int64_t.
  *
- *	@param r		The as_rec storing the bin.
+ *	@param rec		The as_rec storing the bin.
  *	@param name 	The name of the bin.
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
  */
-inline int as_rec_set_int64(const as_rec * r, const char * name, int64_t value) 
+inline int as_rec_set_int64(const as_rec * rec, const char * name, int64_t value) 
 {
-	return as_util_hook(set, 1, r, name, (as_val *) as_integer_new(value));
+	return as_util_hook(set, 1, rec, name, (as_val *) as_integer_new(value));
 }
 
 /**
  *	Set the bin's value to a NULL terminated string.
  *
- *	@param r		The as_rec storing the bin.
+ *	@param rec		The as_rec storing the bin.
  *	@param name 	The name of the bin.
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
  */
-inline int as_rec_set_str(const as_rec * r, const char * name, const char * value) 
+inline int as_rec_set_str(const as_rec * rec, const char * name, const char * value) 
 {
-	return as_util_hook(set, 1, r, name, (as_val *) as_string_new(strdup(value), true));
+	return as_util_hook(set, 1, rec, name, (as_val *) as_string_new(strdup(value), true));
 }
 
 /**
  *	Set the bin's value to an as_integer.
  *
- *	@param r		The as_rec storing the bin.
+ *	@param rec		The as_rec storing the bin.
  *	@param name 	The name of the bin.
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
  */
-inline int as_rec_set_integer(const as_rec * r, const char * name, const as_integer * value) 
+inline int as_rec_set_integer(const as_rec * rec, const char * name, const as_integer * value) 
 {
-	return as_util_hook(set, 1, r, name, (as_val *) value);
+	return as_util_hook(set, 1, rec, name, (as_val *) value);
 }
 
 /**
  *	Set the bin's value to an as_string.
  *
- *	@param r		The as_rec storing the bin.
+ *	@param rec		The as_rec storing the bin.
  *	@param name 	The name of the bin.
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
  */
-inline int as_rec_set_string(const as_rec * r, const char * name, const as_string * value) 
+inline int as_rec_set_string(const as_rec * rec, const char * name, const as_string * value) 
 {
-	return as_util_hook(set, 1, r, name, (as_val *) value);
+	return as_util_hook(set, 1, rec, name, (as_val *) value);
 }
 
 /**
  *	Set the bin's value to an as_bytes.
  *
- *	@param r		The as_rec storing the bin.
+ *	@param rec		The as_rec storing the bin.
  *	@param name 	The name of the bin.
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
  */
-inline int as_rec_set_bytes(const as_rec * r, const char * name, const as_bytes * value) 
+inline int as_rec_set_bytes(const as_rec * rec, const char * name, const as_bytes * value) 
 {
-	return as_util_hook(set, 1, r, name, (as_val *) value);
+	return as_util_hook(set, 1, rec, name, (as_val *) value);
 }
 
 /**
  *	Set the bin's value to an as_list.
  *
- *	@param r		The as_rec storing the bin.
+ *	@param rec		The as_rec storing the bin.
  *	@param name 	The name of the bin.
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
  */
-inline int as_rec_set_list(const as_rec * r, const char * name, const as_list * value) 
+inline int as_rec_set_list(const as_rec * rec, const char * name, const as_list * value) 
 {
-	return as_util_hook(set, 1, r, name, (as_val *) value);
+	return as_util_hook(set, 1, rec, name, (as_val *) value);
 }
 
 /**
  *	Set the bin's value to an as_map.
  *
- *	@param r		The as_rec storing the bin.
+ *	@param rec		The as_rec storing the bin.
  *	@param name 	The name of the bin.
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
  */
-inline int as_rec_set_map(const as_rec * r, const char * name, const as_map * value) 
+inline int as_rec_set_map(const as_rec * rec, const char * name, const as_map * value) 
 {
-	return as_util_hook(set, 1, r, name, (as_val *) value);
+	return as_util_hook(set, 1, rec, name, (as_val *) value);
 }
 
 /******************************************************************************
@@ -466,9 +466,9 @@ inline int as_rec_set_map(const as_rec * r, const char * name, const as_map * va
 /**
  *	Convert to an as_val.
  */
-inline as_val * as_rec_toval(const as_rec * r) 
+inline as_val * as_rec_toval(const as_rec * rec) 
 {
-	return (as_val *) r;
+	return (as_val *) rec;
 }
 
 /**
@@ -480,7 +480,7 @@ inline as_rec * as_rec_fromval(const as_val * v)
 }
 
 /******************************************************************************
- *	CONVERSION FUNCTIONS
+ *	as_val FUNCTIONS
  ******************************************************************************/
 
 /**

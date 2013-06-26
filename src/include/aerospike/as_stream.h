@@ -99,7 +99,7 @@ typedef struct as_stream_hooks_s {
 } as_stream_hooks;
 
 /******************************************************************************
- *	INLINE FUNCTIONS
+ *	INSTANCE FUNCTIONS
  *****************************************************************************/
 
 /**
@@ -111,8 +111,10 @@ typedef struct as_stream_hooks_s {
  *
  *	@return On success, the initialized stream. Otherwise NULL.
  */
-inline as_stream * as_stream_init(as_stream * stream, void * data, const as_stream_hooks * hooks) {
-	if ( stream == NULL ) return stream;
+inline as_stream * as_stream_init(as_stream * stream, void * data, const as_stream_hooks * hooks) 
+{
+	if ( !stream ) return stream;
+
 	stream->free = false;
 	stream->data = data;
 	stream->hooks = hooks;
@@ -127,8 +129,11 @@ inline as_stream * as_stream_init(as_stream * stream, void * data, const as_stre
  *
  *	@return On success, a new stream. Otherwise NULL.
  */
-inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks) {
+inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks)
+{
 	as_stream * stream = (as_stream *) malloc(sizeof(as_stream));
+	if ( !stream ) return stream;
+
 	stream->free = true;
 	stream->data = data;
 	stream->hooks = hooks;
@@ -142,10 +147,15 @@ inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks) {
  *
  *	@return 0 on success, otherwise 1.
  */
-inline void as_stream_destroy(as_stream * stream) {
+inline void as_stream_destroy(as_stream * stream)
+{
 	as_util_hook(destroy, 1, stream);
 	if ( stream && stream->free ) free(stream);
 }
+
+/******************************************************************************
+ *	VALUE FUNCTIONS
+ *****************************************************************************/
 
 /**
  *	Get the source for the stream
@@ -154,7 +164,8 @@ inline void as_stream_destroy(as_stream * stream) {
  *
  *	@return pointer to the source of the stream
  */
-inline void * as_stream_source(const as_stream * stream) {
+inline void * as_stream_source(const as_stream * stream)
+{
 	return (stream ? stream->data : NULL);
 }
 
@@ -165,7 +176,8 @@ inline void * as_stream_source(const as_stream * stream) {
  *
  *	@return the element read from the stream or STREAM_END
  */
-inline as_val * as_stream_read(const as_stream * stream) {
+inline as_val * as_stream_read(const as_stream * stream)
+{
 	return as_util_hook(read, NULL, stream);
 }
 
@@ -176,7 +188,8 @@ inline as_val * as_stream_read(const as_stream * stream) {
  *
  *	@return true if the stream can be read from
  */
-inline bool as_stream_readable(const as_stream * stream) {
+inline bool as_stream_readable(const as_stream * stream)
+{
 	return stream != NULL && stream->hooks != NULL && stream->hooks->read;
 }
 
@@ -188,7 +201,8 @@ inline bool as_stream_readable(const as_stream * stream) {
  *
  *	@return AS_STREAM_OK on success, otherwise is failure.
  */
-inline as_stream_status as_stream_write(const as_stream * stream, as_val * value) {
+inline as_stream_status as_stream_write(const as_stream * stream, as_val * value)
+{
 	return as_util_hook(write, AS_STREAM_ERR, stream, value);
 }
 
@@ -200,6 +214,7 @@ inline as_stream_status as_stream_write(const as_stream * stream, as_val * value
  *
  *	@return true if the stream can be written to.
  */
-inline bool as_stream_writable(const as_stream * stream) {
+inline bool as_stream_writable(const as_stream * stream)
+{
 	return stream != NULL && stream->hooks != NULL && stream->hooks->write;
 }

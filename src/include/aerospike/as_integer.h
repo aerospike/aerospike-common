@@ -71,12 +71,12 @@ typedef struct as_integer_s {
  *	as_integer_destroy(&i);
  *	~~~~~~~~~~
  *
- *	@param v		The `as_integer` to initialize.
- *	@param i		The integer value.
+ *	@param integer		The `as_integer` to initialize.
+ *	@param value		The integer value.
  *
  *	@return On succes, the initialized value. Otherwise NULL.
  */
-as_integer * as_integer_init(as_integer * v, int64_t i);
+as_integer * as_integer_init(as_integer * integer, int64_t value);
 
 /**
  *	Creates a new heap allocated as_integer.
@@ -92,11 +92,11 @@ as_integer * as_integer_init(as_integer * v, int64_t i);
  *	as_integer_destroy(&i);
  *	~~~~~~~~~~
  *
- *	@param i		The integer value.
+ *	@param value		The integer value.
  *
  *	@return On succes, the initialized value. Otherwise NULL.
  */
-as_integer * as_integer_new(int64_t i);
+as_integer * as_integer_new(int64_t value);
 
 /**
  *	Destroy the `as_integer` and release resources.
@@ -107,8 +107,8 @@ as_integer * as_integer_new(int64_t i);
  *
  *	@param i	The integer to destroy.
  */
-inline void as_integer_destroy(as_integer * i) {
-	as_val_val_destroy((as_val *) i);
+inline void as_integer_destroy(as_integer * integer) {
+	as_val_destroy((as_val *) integer);
 }
 
 /******************************************************************************
@@ -116,10 +116,25 @@ inline void as_integer_destroy(as_integer * i) {
  ******************************************************************************/
 
 /**
+ *	Get the int64_t value. If integer is NULL, then return the fallback value.
+ */
+inline int64_t as_integer_getorelse(const as_integer * integer, int64_t fallback) {
+	return integer ? integer->value : fallback;
+}
+
+/**
  *	Get the int64_t value.
  */
-inline int64_t as_integer_toint(const as_integer * i) {
-	return i ? i->value : 0;
+inline int64_t as_integer_get(const as_integer * integer) {
+	return as_integer_getorelse(integer, 0);
+}
+
+/**
+ *	Get the int64_t value.
+ *	@deprecated Use `as_integer_get()` instead.
+ */
+inline int64_t as_integer_toint(const as_integer * integer) {
+	return as_integer_getorelse(integer, 0);
 }
 
 /******************************************************************************

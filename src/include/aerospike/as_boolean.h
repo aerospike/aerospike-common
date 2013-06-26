@@ -86,30 +86,30 @@ extern const as_boolean as_false;
 /**
  *	Initialize a stack allocated `as_boolean` with the given boolean value.
  *
- *	@param v		The `as_boolean` to initialize.
- *	@param b		The bool value.
+ *	@param boolean	The `as_boolean` to initialize.
+ *	@param value	The bool value.
  *
  *	@return On succes, the initialized value. Otherwise NULL.
  */
-as_boolean * as_boolean_init(as_boolean * v, bool b);
+as_boolean * as_boolean_init(as_boolean * boolean, bool value);
 
 /**
  *	Creates a new heap allocated `as_boolean` and initializes with
  *	the given boolean value.
  *
- *	@param b		The bool value.
+ *	@param value	The bool value.
  *
  *	@return On succes, the newly allocated value. Otherwise NULL.
  */
-as_boolean * as_boolean_new(bool b);
+as_boolean * as_boolean_new(bool value);
 
 /**
  *	Destroy the `as_boolean` and release associated resources.
  *
- *	@param b 		The `as_boolean` to destroy.
+ *	@param boolean 	The `as_boolean` to destroy.
  */
-inline void as_boolean_destroy(as_boolean * b) {
-	as_val_val_destroy( (as_val *) b );
+inline void as_boolean_destroy(as_boolean * boolean) {
+	as_val_destroy((as_val *) boolean);
 }
 
 /******************************************************************************
@@ -117,10 +117,25 @@ inline void as_boolean_destroy(as_boolean * b) {
  ******************************************************************************/
 
 /**
+ *	Get the bool value. If boolean is NULL, then return the fallback value.
+ */
+inline bool as_boolean_getorelse(const as_boolean * boolean, bool fallback) {
+	return boolean ? boolean->value : fallback;
+}
+
+/**
  *	Get the bool value.
  */
-inline bool as_boolean_tobool(const as_boolean * b) {
-	return b->value;
+inline bool as_boolean_get(const as_boolean * boolean) {
+	return as_boolean_getorelse(boolean, false);
+}
+
+/**
+ *	Get the bool value.
+ *	@deprecated Use `as_boolean_get()` instead.
+ */
+inline bool as_boolean_tobool(const as_boolean * boolean) {
+	return as_boolean_getorelse(boolean, false);
 }
 
 /******************************************************************************
@@ -130,8 +145,8 @@ inline bool as_boolean_tobool(const as_boolean * b) {
 /**
  *	Convert to an as_val.
  */
-inline as_val * as_boolean_toval(const as_boolean * b) {
-	return (as_val *) b;
+inline as_val * as_boolean_toval(const as_boolean * boolean) {
+	return (as_val *) boolean;
 }
 
 /**
@@ -161,4 +176,4 @@ uint32_t as_boolean_val_hashcode(const as_val * v);
  *	@private
  *	Internal helper function for getting the string representation of an as_val.
  */
-char * as_boolean_val_tostring(const as_val *v);
+char * as_boolean_val_tostring(const as_val * v);

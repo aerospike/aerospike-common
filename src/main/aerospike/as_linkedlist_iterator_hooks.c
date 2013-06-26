@@ -27,62 +27,37 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/*******************************************************************************
- *	EXTERNS
- ******************************************************************************/
-
-extern const as_iterator_hooks as_linkedlist_iterator_hooks;
-
 /******************************************************************************
- *	FUNCTIONS
+ *	EXTERN FUNCTIONS
  *****************************************************************************/
 
-as_linkedlist_iterator * as_linkedlist_iterator_init(as_linkedlist_iterator * iterator, const as_linkedlist * l)
+extern bool as_linkedlist_iterator_release(as_linkedlist_iterator * iterator);
+
+/******************************************************************************
+ *	STATIC FUNCTIONS
+ *****************************************************************************/
+
+static bool _as_linkedlist_iterator_destroy(as_iterator * i)
 {
-	if ( !iterator ) return iterator;
-	
-	as_iterator_init((as_iterator *) iterator, false, NULL, &as_linkedlist_iterator_hooks);
-	iterator->list = l;
-	return iterator;
+	return as_linkedlist_iterator_release((as_linkedlist_iterator *) i);
 }
 
-as_linkedlist_iterator * as_linkedlist_iterator_new(const as_linkedlist * l) 
+static bool _as_linkedlist_iterator_has_next(const as_iterator * i)
 {
-	as_linkedlist_iterator * iterator = (as_linkedlist_iterator *) malloc(sizeof(as_linkedlist_iterator));
-	if ( !iterator ) return iterator;
-
-	as_iterator_init((as_iterator *) iterator, true, NULL, &as_linkedlist_iterator_hooks);
-	iterator->list = l;
-	return iterator;
+	return as_linkedlist_iterator_has_next((const as_linkedlist_iterator *) i);
 }
 
-bool as_linkedlist_iterator_release(as_linkedlist_iterator * iterator) 
+static const as_val * _as_linkedlist_iterator_next(as_iterator * i)
 {
-	iterator->list = NULL;
-	return true;
+	return as_linkedlist_iterator_next((as_linkedlist_iterator *) i);
 }
 
-void as_linkedlist_iterator_destroy(as_linkedlist_iterator * iterator) 
-{
-	as_iterator_destroy((as_iterator *) iterator);
-}
+/******************************************************************************
+ *	HOOKS
+ *****************************************************************************/
 
-bool as_linkedlist_iterator_has_next(const as_linkedlist_iterator * iterator) 
-{
-	return iterator && iterator->list && iterator->list->head;
-}
-
-const as_val * as_linkedlist_iterator_next(as_linkedlist_iterator * iterator) 
-{
-	as_val * head = NULL;
-	if ( iterator->list ) {
-		head = iterator->list->head;
-		if ( iterator->list->tail ) {
-			iterator->list = iterator->list->tail;
-		}
-		else {
-			iterator->list = 0;
-		}
-	}
-	return head;
-}
+const as_iterator_hooks as_linkedlist_iterator_hooks = {
+	.destroy    = _as_linkedlist_iterator_destroy,
+	.has_next   = _as_linkedlist_iterator_has_next,
+	.next       = _as_linkedlist_iterator_next
+};
