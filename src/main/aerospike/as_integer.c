@@ -44,23 +44,24 @@ extern inline as_integer *	as_integer_fromval(const as_val * v);
  *	INSTANCE FUNCTIONS
  ******************************************************************************/
 
-as_integer * as_integer_init(as_integer * integer, int64_t value)
+static as_integer * as_integer_cons(as_integer * integer, bool free, int64_t value)
 {
 	if ( !integer ) return integer;
 
-	as_val_init((as_val *) integer, AS_INTEGER, false);
+	as_val_cons((as_val *) integer, AS_INTEGER, free);
 	integer->value = value;
 	return integer;
+}
+
+as_integer * as_integer_init(as_integer * integer, int64_t value)
+{
+	return as_integer_cons(integer, false, value);
 }
 
 as_integer * as_integer_new(int64_t value)
 {
 	as_integer * integer = (as_integer *) malloc(sizeof(as_integer));
-	if ( !integer ) return integer;
-
-	as_val_init((as_val *) integer, AS_INTEGER, true);
-	integer->value = value;
-	return integer;
+	return as_integer_cons(integer, true, value);
 }
 
 /******************************************************************************

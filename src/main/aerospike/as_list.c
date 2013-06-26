@@ -95,14 +95,32 @@ extern inline as_list *		as_list_fromval(as_val * v);
  *	Initialize an instance of as_list.
  *	This should only be called from subtypes of as_list during initialization.
  */
-as_list * as_list_init(as_list * list, bool free, void * data, const as_list_hooks * hooks) 
+as_list * as_list_cons(as_list * list, bool free, void * data, const as_list_hooks * hooks) 
 {
 	if ( !list ) return list;
 
-	as_val_init((as_val *) list, AS_LIST, free);
+	as_val_cons((as_val *) list, AS_LIST, free);
 	list->data = data;
 	list->hooks = hooks;
 	return list;
+}
+/**
+ *	Initialize an instance of as_list.
+ *	This should only be called from subtypes of as_list during initialization.
+ */
+as_list * as_list_init(as_list * list, void * data, const as_list_hooks * hooks) 
+{
+	return as_list_cons(list, false, data, hooks);
+}
+
+/**
+ *	Initialize an instance of as_list.
+ *	This should only be called from subtypes of as_list during initialization.
+ */
+as_list * as_list_new(void * data, const as_list_hooks * hooks) 
+{
+	as_list * list = (as_list *) malloc(sizeof(as_list));
+	return as_list_cons(list, true, data, hooks);
 }
 
 /******************************************************************************

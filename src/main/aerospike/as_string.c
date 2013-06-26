@@ -43,27 +43,26 @@ extern inline as_string *	as_string_fromval(const as_val * v);
  *	INSTANCE FUNCTIONS
  *****************************************************************************/
 
-as_string * as_string_init(as_string * string, char * value, bool free)
+static inline as_string * as_string_cons(as_string * string, bool free, char * value, bool value_free)
 {
 	if ( !string ) return string;
 
-	as_val_init((as_val *) string, AS_STRING, false);
-	string->free = free;
+	as_val_cons((as_val *) string, AS_STRING, free);
+	string->free = value_free;
 	string->value = value;
 	string->len = SIZE_MAX;
 	return string;
 }
 
+as_string * as_string_init(as_string * string, char * value, bool free)
+{
+	return as_string_cons(string, false, value, free);
+}
+
 as_string * as_string_new(char * value, bool free)
 {
 	as_string * string = (as_string *) malloc(sizeof(as_string));
-	if ( !string ) return string;
-
-	as_val_init((as_val *) string, AS_STRING, true);
-	string->free = free;
-	string->value = value;
-	string->len = SIZE_MAX;
-	return string;
+	return as_string_cons(string, true, value, free);
 }
 
 /******************************************************************************

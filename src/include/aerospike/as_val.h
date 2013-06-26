@@ -164,11 +164,28 @@ char * as_val_val_tostring(const as_val *);
  *	@private
  *	Initialize an as_val. 
  *	Should only be used by subtypes.
+ *	@deprecated Use `as_val_cons()` instead.
  */
 inline void as_val_init(as_val * v, as_val_t type, bool free) 
 {
     v->type = type; 
     v->free = free; 
     v->count = 1;
+}
+
+
+/**
+ *	@private
+ *	Initialize an as_val. 
+ *	Should only be used by subtypes.
+ */
+inline as_val * as_val_cons(as_val * val, as_val_t type, bool free) 
+{
+	if ( !val ) return val;
+
+    val->type = type; 
+    val->free = free; 
+    val->count = 1;
+    return val;
 }
 

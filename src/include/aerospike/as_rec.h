@@ -136,14 +136,38 @@ typedef struct as_rec_hooks_s {
  *****************************************************************************/
 
 /**
- *	Initialize an as_rec allocated on the stack.
+ *	@private
+ *	Utilized by subtypes of as_rec to initialize the parent.
+ *
+ *	@param rec		The record to initialize
+ *	@param free 	If TRUE, then as_rec_destory() will free the record.
+ *	@param data		Data for the map.
+ *	@param hooks	Implementaton for the map interface.
+ *	
+ *	@return The initialized as_map on success. Otherwise NULL.
  */
-as_rec *  as_rec_init(as_rec * rec, void * data, const as_rec_hooks * hooks);
+as_rec * as_rec_cons(as_rec * rec, bool free, void * data, const as_rec_hooks * hooks);
 
 /**
- *	Creates a new as_rec allocated on the heap.
+ *	Initialize a stack allocated record.
+ *
+ *	@param rec		Stack allocated record to initialize.
+ *	@param data		Data for the record.
+ *	@param hooks	Implementaton for the record interface.
+ *	
+ *	@return On success, the initialized record. Otherwise NULL.
  */
-as_rec *  as_rec_new(void * data, const as_rec_hooks * hooks);
+as_rec * as_rec_init(as_rec * rec, void * data, const as_rec_hooks * hooks);
+
+/**
+ *	Create and initialize a new heap allocated record.
+ *	
+ *	@param data		Data for the record.
+ *	@param hooks	Implementaton for the record interface.
+ *	
+ *	@return On succes, a new record. Otherwise NULL.
+ */
+as_rec * as_rec_new(void * data, const as_rec_hooks * hooks);
 
 /**
  *	Destroy the record.

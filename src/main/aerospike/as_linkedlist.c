@@ -43,7 +43,7 @@ as_linkedlist * as_linkedlist_init(as_linkedlist * list, as_val * head, as_linke
 {
 	if ( !list ) return list;
 
-	as_list_init((as_list *) list, false, NULL, &as_linkedlist_list_hooks);
+	as_list_cons((as_list *) list, false, NULL, &as_linkedlist_list_hooks);
 	list->head = head;
 	list->tail = tail;
 	return list;
@@ -54,7 +54,7 @@ as_linkedlist * as_linkedlist_new(as_val * head, as_linkedlist * tail)
 	as_linkedlist * list = (as_linkedlist *) malloc(sizeof(as_linkedlist));
 	if ( !list ) return list;
 
-	as_list_init((as_list *) list, true, NULL, &as_linkedlist_list_hooks);
+	as_list_cons((as_list *) list, true, NULL, &as_linkedlist_list_hooks);
 	list->head = head;
 	list->tail = tail;
 	return list;

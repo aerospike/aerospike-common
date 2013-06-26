@@ -195,16 +195,37 @@ typedef struct as_map_hooks_s {
 
 /**
  *	@private
- *	Initialize an as_map. 
- *	Should only be used by subtypes.
+ *	Utilized by subtypes of as_map to initialize the parent.
  *
  *	@param map		The map to initialize
- *	@param free 	If TRUE, then as_map_destory() will free this instance.
- *	@param hooks	Hooks for implementation of as_map.
+ *	@param free 	If TRUE, then as_map_destory() will free the map.
+ *	@param data		Data for the map.
+ *	@param hooks	Implementaton for the map interface.
  *	
  *	@return The initialized as_map on success. Otherwise NULL.
  */
-as_map * as_map_init(as_map * map, bool free, void * data, const as_map_hooks * hooks);
+as_map * as_map_cons(as_map * map, bool free, void * data, const as_map_hooks * hooks);
+
+/**
+ *	Initialize a stack allocated map.
+ *
+ *	@param map		Stack allocated map to initialize.
+ *	@param data		Data for the map.
+ *	@param hooks	Implementaton for the map interface.
+ *	
+ *	@return On success, the initialized map. Otherwise NULL.
+ */
+as_map * as_map_init(as_map * map, void * data, const as_map_hooks * hooks);
+
+/**
+ *	Create and initialize a new heap allocated map.
+ *	
+ *	@param data		Data for the list.
+ *	@param hooks	Implementaton for the list interface.
+ *	
+ *	@return On succes, a new list. Otherwise NULL.
+ */
+as_map * as_map_new(void * data, const as_map_hooks * hooks);
 
 /**
  *	Destroy the as_map and associated resources.

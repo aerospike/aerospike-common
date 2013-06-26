@@ -64,23 +64,24 @@ extern inline as_boolean *  as_boolean_fromval(const as_val * v);
  *	INSTANCE FUNCTIONS
  ******************************************************************************/
 
-as_boolean * as_boolean_init(as_boolean * boolean, bool value)
+static inline as_boolean * as_boolean_cons(as_boolean * boolean, bool free, bool value)
 {
 	if ( !boolean ) return boolean;
 
-	as_val_init((as_val *) boolean, AS_BOOLEAN, false);
+	as_val_cons((as_val *) boolean, free, AS_BOOLEAN);
 	boolean->value = value;
 	return boolean;
+}
+
+as_boolean * as_boolean_init(as_boolean * boolean, bool value)
+{
+	return as_boolean_cons(boolean, false, value);
 }
 
 as_boolean * as_boolean_new(bool value)
 {
 	as_boolean * boolean = (as_boolean *) malloc(sizeof(as_boolean));
-	if ( !boolean ) return boolean;
-	
-	as_val_init((as_val *) boolean, AS_BOOLEAN, false);
-	boolean->value = value;
-	return boolean;
+	return as_boolean_cons(boolean, true, value);
 }
 
 /******************************************************************************

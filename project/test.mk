@@ -42,7 +42,7 @@ test: test-build
 
 .PHONY: test-valgrind
 test-valgrind: test-build
-	valgrind $(TEST_VALGRIND) $(TARGET_BIN)/test/test 1>&2 2>test-valgrind
+	valgrind $(TEST_VALGRIND) $(TARGET_BIN)/test/common 1>&2 2>test-valgrind
 
 .PHONY: test-build
 test-build: test/common

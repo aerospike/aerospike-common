@@ -22,18 +22,16 @@ TEST( types_hashmap_ops, "as_hashmap ops" ) {
 	as_val * a = (as_val *) as_string_new(strdup("a"), true);
 	as_val * b = (as_val *) as_string_new(strdup("b"), true);
 	as_val * c = (as_val *) as_string_new(strdup("c"), true);
+
 	as_integer * v = NULL;
 
 	as_hashmap * m = as_hashmap_new(10);
 	assert_int_eq( as_hashmap_size(m), 0 );
 
-	// Setting the values
-	as_val_reserve(a);
-	as_val_reserve(b);
-	as_val_reserve(c);
-	as_hashmap_set(m, a, (as_val *) as_integer_new(1));
-	as_hashmap_set(m, b, (as_val *) as_integer_new(2));
-	as_hashmap_set(m, c, (as_val *) as_integer_new(3));
+	as_hashmap_set(m, as_val_reserve(a), (as_val *) as_integer_new(1));
+	as_hashmap_set(m, as_val_reserve(b), (as_val *) as_integer_new(2));
+	as_hashmap_set(m, as_val_reserve(c), (as_val *) as_integer_new(3));
+
 	assert_int_eq( as_hashmap_size(m), 3 );
 
 	// check individual values
@@ -41,10 +39,10 @@ TEST( types_hashmap_ops, "as_hashmap ops" ) {
 	v = (as_integer *) as_hashmap_get(m, a);
 	assert_int_eq( v->value, 1 );
 
-	v = (as_integer *) as_map_get((as_map *) m, b);
+	v = (as_integer *) as_hashmap_get(m, b);
 	assert_int_eq( v->value, 2 );
 
-	v = (as_integer *) as_map_get((as_map *) m, c);
+	v = (as_integer *) as_hashmap_get(m, c);
 	assert_int_eq( v->value, 3 );
 
 	// Resetting the values
@@ -90,6 +88,10 @@ TEST( types_hashmap_ops, "as_hashmap ops" ) {
 	assert_int_eq( v->value, 9 );
 
 	as_hashmap_destroy(m);
+
+	as_val_destroy(a);
+	as_val_destroy(b);
+	as_val_destroy(c);
 }
 
 TEST( types_hashmap_map_ops, "as_hashmap w/ as_map ops" ) {
@@ -165,6 +167,10 @@ TEST( types_hashmap_map_ops, "as_hashmap w/ as_map ops" ) {
 	assert_int_eq( v->value, 9 );
 
 	as_map_destroy((as_map *) m);
+
+	as_val_destroy(a);
+	as_val_destroy(b);
+	as_val_destroy(c);
 }
 
 

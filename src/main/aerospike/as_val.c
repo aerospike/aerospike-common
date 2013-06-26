@@ -48,6 +48,7 @@ typedef char *	(* as_val_tostring_callback)(const as_val * v);
  *****************************************************************************/
 
 extern inline void as_val_init(as_val *v, as_val_t type, bool free);
+extern inline as_val * as_val_cons(as_val * val, as_val_t type, bool free);
 
 /******************************************************************************
  *	STATIC FUNCTIONS

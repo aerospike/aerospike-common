@@ -53,19 +53,25 @@ extern inline as_map *			as_map_fromval(const as_val * v);
  *	FUNCTIONS
  *****************************************************************************/
 
-/**
- *	@private
- *	Initialize an as_map. 
- *	Should only be used by subtypes.
- */
-as_map * as_map_init(as_map * map, bool free, void * data, const as_map_hooks * hooks) 
+as_map * as_map_cons(as_map * map, bool free, void * data, const as_map_hooks * hooks) 
 {
 	if ( !map ) return map;
 
-	as_val_init((as_val *) map, AS_MAP, free);
+	as_val_cons((as_val *) map, AS_MAP, free);
 	map->data = data;
 	map->hooks = hooks;
 	return map;
+}
+
+as_map * as_map_init(as_map * map, void * data, const as_map_hooks * hooks) 
+{
+	return as_map_cons(map, false, data, hooks);
+}
+
+as_map * as_map_new(void * data, const as_map_hooks * hooks) 
+{
+	as_map * map = (as_map *) malloc(sizeof(as_map));
+	return as_map_cons(map, true, data, hooks);
 }
 
 /******************************************************************************
@@ -106,8 +112,10 @@ static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, 
 		data->pos += 2;
 	}
 
-	if ( data->pos + keylen + 2 + vallen + 2 >= data->cap ) {
-		uint32_t adj = keylen+2+vallen+2 > data->blk ? keylen+2+vallen+2 : data->blk;
+	size_t entlen = keylen + 2 + vallen + 2;
+
+	if ( data->pos + entlen >= data->cap ) {
+		uint32_t adj = entlen > data->blk ? entlen : data->blk;
 		data->buf = realloc(data->buf, sizeof(char) * (data->cap + adj));
 		bzero(data->buf + data->cap, sizeof(char) * adj);
 		data->cap += adj;
@@ -119,7 +127,7 @@ static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, 
 	strcpy(data->buf + data->pos, "->");
 	data->pos += 2;
 
-	strncpy(data->buf + data->pos + keylen + 2, valstr, vallen);
+	strncpy(data->buf + data->pos, valstr, vallen);
 	data->pos += vallen;
 
 	data->sep = true;
@@ -135,7 +143,6 @@ static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, 
 
 char * as_map_val_tostring(const as_val * v)
 {
-
 	as_map_val_tostring_data data = {
 		.buf = NULL,
 		.blk = 256,
@@ -147,7 +154,7 @@ char * as_map_val_tostring(const as_val * v)
 	data.buf = (char *) calloc(data.cap, sizeof(char));
 
 	strcpy(data.buf, "Map(");
-	data.buf += 4;
+	data.pos += 4;
 	
 	if ( v ) {
 		as_map_foreach((as_map *) v, as_map_val_tostring_foreach, &data);

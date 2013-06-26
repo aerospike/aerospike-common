@@ -83,7 +83,7 @@ as_hashmap * as_hashmap_init(as_hashmap * map, uint32_t capacity)
 {
 	if ( !map ) return map;
 
-	as_map_init((as_map *) map, false, NULL, &as_hashmap_map_hooks);
+	as_map_cons((as_map *) map, false, NULL, &as_hashmap_map_hooks);
 	shash_create((shash **) &(map->htable), as_hashmap_shash_hash, sizeof(uint32_t), sizeof(as_pair *), capacity, SHASH_CR_MT_BIGLOCK | SHASH_CR_RESIZE);
 	return map;
 }
@@ -93,7 +93,7 @@ as_hashmap * as_hashmap_new(uint32_t capacity)
 	as_hashmap * map = (as_hashmap *) malloc(sizeof(as_hashmap));
 	if ( !map ) return map;
 
-	as_map_init((as_map *) map, true, NULL, &as_hashmap_map_hooks);
+	as_map_cons((as_map *) map, true, NULL, &as_hashmap_map_hooks);
 	shash_create((shash **) &(map->htable), as_hashmap_shash_hash, sizeof(uint32_t), sizeof(as_pair *), capacity, SHASH_CR_MT_BIGLOCK | SHASH_CR_RESIZE);
 	return map;
 }
@@ -151,7 +151,7 @@ as_val * as_hashmap_get(const as_hashmap * map, const as_val * k)
 	if ( shash_get((shash *) map->htable, &h, &p) != SHASH_OK ) {
 		return NULL;
 	}
-	as_val *v = as_pair_2(p);
+	as_val * v = as_pair_2(p);
 	return v;
 }
 
@@ -171,5 +171,5 @@ bool as_hashmap_foreach(const as_hashmap * map, as_map_foreach_callback callback
 		.udata = udata,
 		.callback = callback
 	};
-	return shash_reduce_delete((shash *) map->htable, as_hashmap_shash_foreach, &ctx) == TRUE;
+	return shash_reduce((shash *) map->htable, as_hashmap_shash_foreach, &ctx) == TRUE;
 }

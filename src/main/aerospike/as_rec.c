@@ -68,25 +68,25 @@ extern inline as_rec *		as_rec_fromval(const as_val * v);
  *	INSTANCE FUNCTIONS
  ******************************************************************************/
 
-as_rec * as_rec_init(as_rec * rec, void * data, const as_rec_hooks * hooks) 
+as_rec * as_rec_cons(as_rec * rec, bool free, void * data, const as_rec_hooks * hooks) 
 {
 	if ( !rec ) return rec;
 	
-	as_val_init((as_val *) rec, AS_REC, false);
+	as_val_init((as_val *) rec, AS_REC, free);
 	rec->data = data;
 	rec->hooks = hooks;
 	return rec;
 }
 
+as_rec * as_rec_init(as_rec * rec, void * data, const as_rec_hooks * hooks) 
+{
+	return as_rec_cons(rec, false, data, hooks);
+}
+
 as_rec * as_rec_new(void * data, const as_rec_hooks * hooks) 
 {
 	as_rec * rec = (as_rec *) malloc(sizeof(as_rec));
-	if ( !rec ) return rec;
-	
-	as_val_init((as_val *) rec, AS_REC, true);
-	rec->data = data;
-	rec->hooks = hooks;
-	return rec;
+	return as_rec_cons(rec, true, data, hooks);
 }
 
 /******************************************************************************

@@ -46,76 +46,82 @@ static const char hex_chars[] = "0123456789ABCDEF";
  * FUNCTIONS
  ******************************************************************************/
 
-as_bytes * as_bytes_init(as_bytes * v, uint8_t * s, uint32_t len, bool free) {
-    as_val_init(&v->_, AS_BYTES, false /*is_malloc*/);
-    v->free = free;
-    v->type = AS_BYTES_TYPE_BLOB;
-    v->value = s;
-    v->len = len;
-    v->capacity = len;
-    return v;
+static inline as_bytes * as_bytes_cons(as_bytes * bytes, bool free, uint8_t * value, uint32_t len, bool value_free)
+{
+	if ( !bytes ) return bytes;
+
+    as_val_cons((as_val *) bytes, AS_BYTES, free);
+
+    bytes->free = value_free;
+    bytes->type = AS_BYTES_TYPE_BLOB;
+    bytes->len = len;
+    bytes->capacity = len;
+
+    if ( len > 0 && value == NULL ) {
+	    bytes->value = malloc(len);
+	    memset(bytes->value, 0, len);
+    }
+    else {
+    	bytes->value = value;	
+    }
+
+    return bytes;
 }
 
-as_bytes * as_bytes_empty_init(as_bytes * v, uint32_t len) {
-    as_val_init(&v->_, AS_BYTES, false /*is_malloc*/);
-    v->free = true;
-    v->type = AS_BYTES_TYPE_BLOB;
-    v->value = malloc(len);
-    memset(v->value, 0, len);
-    v->len = len;
-    v->capacity = len;
-    return v;
+as_bytes * as_bytes_init(as_bytes * bytes, uint8_t * value, uint32_t len, bool free)
+{
+	return as_bytes_cons(bytes, false, value, len, free);
 }
 
-as_bytes * as_bytes_new(uint8_t * s, uint32_t len, bool free) {
-    as_bytes * v = (as_bytes *) malloc(sizeof(as_bytes));
-    as_val_init(&v->_, AS_BYTES, true /*is_malloc*/);
-    v->free = free;
-    v->type = AS_BYTES_TYPE_BLOB;
-    v->value = s;
-    v->len = len;
-    v->capacity = len;
-    return v;
+as_bytes * as_bytes_empty_init(as_bytes * bytes, uint32_t len)
+{
+	return as_bytes_cons(bytes, false, NULL, len, true);
 }
 
-as_bytes * as_bytes_empty_new(uint32_t len) {
-    as_bytes * v = (as_bytes *) malloc(sizeof(as_bytes));
-    as_val_init(&v->_, AS_BYTES, true /*is_malloc*/);
-    v->free = true;
-    v->type = AS_BYTES_TYPE_BLOB;
-    v->value = malloc(len);
-    memset(v->value, 0, len);
-    v->len = len;
-    v->capacity = len;
-    return v;
+as_bytes * as_bytes_new(uint8_t * value, uint32_t len, bool free)
+{
+    as_bytes * bytes = (as_bytes *) malloc(sizeof(as_bytes));
+	return as_bytes_cons(bytes, true, value, len, free);
 }
 
-uint32_t as_bytes_len(as_bytes * s) {
+as_bytes * as_bytes_empty_new(uint32_t len)
+{
+    as_bytes * bytes = (as_bytes *) malloc(sizeof(as_bytes));
+	return as_bytes_cons(bytes, true, NULL, len, true);
+}
+
+uint32_t as_bytes_len(as_bytes * s)
+{
 	return s->len;
 }
 
-as_bytes_type as_bytes_get_type(const as_bytes * s) {
+as_bytes_type as_bytes_get_type(const as_bytes * s)
+{
     return s->type;
 }
 
-void as_bytes_set_type(as_bytes *s, as_bytes_type t) {
+void as_bytes_set_type(as_bytes *s, as_bytes_type t)
+{
     s->type = t;
 }
 
-int as_bytes_get(const as_bytes * s, uint32_t index, uint8_t * buf, uint32_t buf_len) {
+int as_bytes_get(const as_bytes * s, uint32_t index, uint8_t * buf, uint32_t buf_len)
+{
     if ((index < 0) || (index + buf_len > s->len)) return(-1);
     memcpy(buf, &s->value[index], buf_len);
     return 0;
 }
 
-int as_bytes_set(as_bytes * s, uint32_t index, const uint8_t * buf, uint32_t buf_len) {
+int as_bytes_set(as_bytes * s, uint32_t index, const uint8_t * buf, uint32_t buf_len)
+{
     if ((index < 0) || (index + buf_len > s->len)) return(-1);
     memcpy(&s->value[index], buf, buf_len);
     return 0;
 }
 
 // create a new as_bytes, a substring of the source
-as_bytes * as_bytes_slice_new(const as_bytes * src, uint32_t start, uint32_t end) {
+as_bytes * as_bytes_slice_new(const as_bytes * src, uint32_t start, uint32_t end)
+{
     if ( start > src->len || end > src->len ) {
     	return 0;
     }
@@ -132,7 +138,8 @@ as_bytes * as_bytes_slice_new(const as_bytes * src, uint32_t start, uint32_t end
 }
 
 // create a new as_bytes, a substring of the source
-as_bytes * as_bytes_slice_init(as_bytes * dest, const as_bytes * src, uint32_t start, uint32_t end) {
+as_bytes * as_bytes_slice_init(as_bytes * dest, const as_bytes * src, uint32_t start, uint32_t end)
+{
     if ( start > src->len || end > src->len ) {
     	return 0;
     }
@@ -147,7 +154,8 @@ as_bytes * as_bytes_slice_init(as_bytes * dest, const as_bytes * src, uint32_t s
     return dest;
 }
 
-int as_bytes_append(as_bytes * v, const uint8_t * buf, uint32_t buf_len)  {
+int as_bytes_append(as_bytes * v, const uint8_t * buf, uint32_t buf_len)
+{
     if (buf_len < 0) return(-1);
     // not enough capacity? increase
     if (v->len + buf_len > v->capacity) {
@@ -174,7 +182,8 @@ int as_bytes_append(as_bytes * v, const uint8_t * buf, uint32_t buf_len)  {
     return 0;
 }
 
-int as_bytes_append_bytes(as_bytes * s1, as_bytes * s2) {
+int as_bytes_append_bytes(as_bytes * s1, as_bytes * s2)
+{
     // not enough capacity? increase
     if (s1->len + s2->len > s1->capacity) {
         uint8_t *t;
@@ -200,7 +209,8 @@ int as_bytes_append_bytes(as_bytes * s1, as_bytes * s2) {
     return 0;
 }
 
-int as_bytes_delete(as_bytes * v, uint32_t pos, uint32_t len) {
+int as_bytes_delete(as_bytes * v, uint32_t pos, uint32_t len)
+{
     if ((pos < 0) || (pos > v->len)) {
     	return -1;
     }
@@ -215,7 +225,8 @@ int as_bytes_delete(as_bytes * v, uint32_t pos, uint32_t len) {
     return 0;
 }
 
-int as_bytes_set_len(as_bytes * v, uint32_t len) {
+int as_bytes_set_len(as_bytes * v, uint32_t len)
+{
     if (v->len == len) return(0);
     if (len > v->len) {
         if (len > v->capacity) {
@@ -232,14 +243,16 @@ int as_bytes_set_len(as_bytes * v, uint32_t len) {
 
 
 
-void as_bytes_val_destroy(as_val * v) {
+void as_bytes_val_destroy(as_val * v)
+{
     as_bytes * b = as_bytes_fromval(v);
     if ( b && b->free && b->value ) {
         free(b->value);
     }
 }
 
-uint32_t as_bytes_val_hashcode(const as_val * v) {
+uint32_t as_bytes_val_hashcode(const as_val * v)
+{
     as_bytes * bytes = as_bytes_fromval(v);
     if ( bytes == NULL || bytes->value == NULL ) return 0;
     uint32_t hash = 0;
@@ -252,7 +265,8 @@ uint32_t as_bytes_val_hashcode(const as_val * v) {
     return hash;
 }
 
-char * as_bytes_val_tostring(const as_val * v) {
+char * as_bytes_val_tostring(const as_val * v)
+{
     as_bytes * s = (as_bytes *) v;
     if (s->value == NULL) return(NULL);
     uint32_t sl = as_bytes_len(s);

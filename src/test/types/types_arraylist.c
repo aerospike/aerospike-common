@@ -35,42 +35,44 @@ TEST( types_arraylist_cap10_blk0, "as_arraylist w/ capacity 10, block_size 0" ) 
     assert_int_eq( l.block_size, 0 );
     assert_int_eq( l.size, 0 );
 
-    // as_list l;
-    // as_list_init(&l, &a, &as_arraylist_list);
-
     assert( l.size == as_list_size((as_list *) &l) );
     assert_int_eq( l.size, 0 );
 
     for ( int i = 1; i < 6; i++) {
-        rc = as_list_append((as_list *) &l, (as_val *) as_integer_new(i));
+        rc = as_arraylist_append_integer(&l, as_integer_new(i));
         assert_int_eq( rc, AS_ARRAYLIST_OK );
-        assert( l.size == as_list_size((as_list *) &l) );
+        assert( l.size == as_arraylist_size(&l) );
         assert_int_eq( l.size, i );
         assert_int_eq( l.capacity, 10);
     }
 
     for ( int i = 6; i < 11; i++) {
-        rc = as_list_prepend((as_list *) &l, (as_val *) as_integer_new(i));
+        rc = as_arraylist_append_integer(&l, as_integer_new(i));
         assert_int_eq( rc, AS_ARRAYLIST_OK );
-        assert( l.size == as_list_size((as_list *) &l) );
+        assert( l.size == as_arraylist_size(&l) );
         assert_int_eq( l.size, i );
         assert_int_eq( l.capacity, 10);
     }
 
-    rc = as_list_append((as_list *) &l, (as_val *) as_integer_new(11));
+    as_integer * i11 = as_integer_new(11);
+
+    rc = as_arraylist_append_integer(&l, i11);
     assert_int_ne( rc, AS_ARRAYLIST_OK );
-    assert( l.size == as_list_size((as_list *) &l) );
+    assert( l.size == as_arraylist_size(&l) );
     assert_int_eq( l.size, 10);
     assert_int_eq( l.capacity, 10);
 
-    rc = as_list_prepend((as_list *) &l, (as_val *) as_integer_new(12));
+    as_integer * i12 = as_integer_new(12);
+
+    rc = as_arraylist_append_integer(&l, i12);
     assert_int_ne( rc, AS_ARRAYLIST_OK );
-    assert( l.size == as_list_size((as_list *) &l));
+    assert( l.size == as_arraylist_size(&l) );
     assert_int_eq( l.size, 10);
     assert_int_eq( l.capacity, 10);
     
-    as_list_destroy((as_list *) &l);
-
+    as_arraylist_destroy(&l);
+    as_integer_destroy(i11);
+    as_integer_destroy(i12);
 }
 
 TEST( types_arraylist_cap10_blk10, "as_arraylist w/ capacity 10, block_size 10" ) {
@@ -88,7 +90,7 @@ TEST( types_arraylist_cap10_blk10, "as_arraylist w/ capacity 10, block_size 10" 
     assert_int_eq( l.size, 0 );
 
     for ( int i = 1; i < 6; i++) {
-        rc = as_list_append((as_list *) &l, (as_val *) as_integer_new(i));
+        rc = as_arraylist_append(&l, (as_val *) as_integer_new(i));
         assert_int_eq( rc, AS_ARRAYLIST_OK );
         assert( l.size == as_list_size((as_list *) &l) );
         assert_int_eq( l.size, i );
@@ -96,26 +98,26 @@ TEST( types_arraylist_cap10_blk10, "as_arraylist w/ capacity 10, block_size 10" 
     }
 
     for ( int i = 6; i < 11; i++) {
-        rc = as_list_prepend((as_list *) &l, (as_val *) as_integer_new(i));
+        rc = as_arraylist_append(&l, (as_val *) as_integer_new(i));
         assert_int_eq( rc, AS_ARRAYLIST_OK );
         assert( l.size == as_list_size((as_list *) &l) );
         assert_int_eq( l.size, i );
         assert_int_eq( l.capacity, 10);
     }
 
-    rc = as_list_append((as_list *) &l, (as_val *) as_integer_new(11));
+    rc = as_arraylist_append(&l, (as_val *) as_integer_new(11));
     assert_int_eq( rc, AS_ARRAYLIST_OK );
     assert( l.size == as_list_size((as_list *) &l) );
     assert_int_eq( l.size, 11);
     assert_int_eq( l.capacity, 20);
 
-    rc = as_list_prepend((as_list *) &l, (as_val *) as_integer_new(12));
+    rc = as_arraylist_append(&l, (as_val *) as_integer_new(12));
     assert_int_eq( rc, AS_ARRAYLIST_OK );
     assert( l.size == as_list_size((as_list *) &l));
     assert_int_eq( l.size, 12);
     assert_int_eq( l.capacity, 20);
     
-    as_list_destroy((as_list *) &l);
+    as_arraylist_destroy(&l);
 
 }
 
@@ -289,6 +291,8 @@ TEST( types_arraylist_iterator, "as_arraylist w/ as_iterator ops" ) {
     assert_false( as_iterator_has_next(i) );
 
     as_iterator_destroy(i);
+
+    as_arraylist_destroy(&l);
 }
 /******************************************************************************
  * TEST SUITE

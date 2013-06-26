@@ -272,3 +272,42 @@ as_linkedlist * as_linkedlist_take(const as_linkedlist * list, uint32_t n);
  *	@param TRUE on success. Otherwise FALSE.
  */
 bool as_linkedlist_foreach(const as_linkedlist * list, as_list_foreach_callback callback, void * udata);
+
+/******************************************************************************
+ *	MACROS
+ ******************************************************************************/
+
+#define as_linkedlist_get_int64(__list, __i) 		as_list_get_int64(((as_list *) (__list)), __i)
+#define as_linkedlist_get_str(__list, __i) 			as_list_get_str(((as_list *) (__list)), __i)
+#define as_linkedlist_get_integer(__list, __i) 		as_list_get_integer(((as_list *) (__list)), __i)
+#define as_linkedlist_get_string(__list, __i) 		as_list_get_string(((as_list *) (__list)), __i)
+#define as_linkedlist_get_bytes(__list, __i) 		as_list_get_bytes(((as_list *) (__list)), __i)
+#define as_linkedlist_get_list(__list, __i) 		as_list_get_list(((as_list *) (__list)), __i)
+#define as_linkedlist_get_map(__list, __i) 			as_list_get_map(((as_list *) (__list)), __i)
+
+#define as_linkedlist_set_int64(__list, __i, __v) 	as_list_set_int64(((as_list *) (__list)), __i, __v)
+#define as_linkedlist_set_str(__list, __i, __v) 	as_list_set_str(((as_list *) (__list)), __i, __v)
+#define as_linkedlist_set_integer(__list, __i, __v) as_list_set_integer(((as_list *) (__list)), __i, __v)
+#define as_linkedlist_set_string(__list, __i, __v) 	as_list_set_string(((as_list *) (__list)), __i, __v)
+#define as_linkedlist_set_bytes(__list, __i, __v) 	as_list_set_bytes(((as_list *) (__list)), __i, __v)
+#define as_linkedlist_set_list(__list, __i, __v) 	as_list_set_list(((as_list *) (__list)), __i, __v)
+#define as_linkedlist_set_map(__list, __i, __v) 	as_list_set_map(((as_list *) (__list)), __i, __v)
+
+#define as_linkedlist_append_int64(__list, __v) 	as_list_append_int64(((as_list *) (__list)), __v)
+#define as_linkedlist_append_str(__list, __v) 		as_list_append_str(((as_list *) (__list)), __v)
+#define as_linkedlist_append_integer(__list, __v) 	as_list_append_integer(((as_list *) (__list)), __v)
+#define as_linkedlist_append_string(__list, __v) 	as_list_append_string(((as_list *) (__list)), __v)
+#define as_linkedlist_append_bytes(__list, __v) 	as_list_append_bytes(((as_list *) (__list)), __v)
+#define as_linkedlist_append_list(__list, __v) 		as_list_append_list(((as_list *) (__list)), __v)
+#define as_linkedlist_append_map(__list, __v) 		as_list_append_map(((as_list *) (__list)), __v)
+
+#define as_linkedlist_prepend_int64(__list, __v) 	as_list_prepend_int64(((as_list *) (__list)), __v)
+#define as_linkedlist_prepend_str(__list, __v) 		as_list_prepend_str(((as_list *) (__list)), __v)
+#define as_linkedlist_prepend_integer(__list, __v) 	as_list_prepend_integer(((as_list *) (__list)), __v)
+#define as_linkedlist_prepend_string(__list, __v) 	as_list_prepend_string(((as_list *) (__list)), __v)
+#define as_linkedlist_prepend_bytes(__list, __v) 	as_list_prepend_bytes(((as_list *) (__list)), __v)
+#define as_linkedlist_prepend_list(__list, __v) 	as_list_prepend_list(((as_list *) (__list)), __v)
+#define as_linkedlist_prepend_map(__list, __v) 		as_list_prepend_map(((as_list *) (__list)), __v)
+
+
+

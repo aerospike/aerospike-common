@@ -55,7 +55,7 @@ TEST( types_linkedlist_1, "as_linkedlist ops" ) {
 
     assert( as_integer_toint(t_head) == as_integer_toint(l_head) );
 
-    as_linkedlist_destroy((as_list *) t);
+    as_linkedlist_destroy(t);
     
     as_linkedlist * d = as_linkedlist_drop(&l, 5);
     assert_int_eq( as_linkedlist_size(d), 5 );
