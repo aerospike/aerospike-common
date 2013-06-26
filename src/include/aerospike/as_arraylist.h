@@ -158,16 +158,6 @@ as_arraylist * as_arraylist_init(as_arraylist * list, uint32_t capacity, uint32_
 as_arraylist * as_arraylist_new(uint32_t capacity, uint32_t block_size);
 
 /**
- *	@private
- *	Release resources allocated to the list.
- *
- *	@param list	The list.
- *
- *	@return On success, true. Otherwise false.
- */
-bool as_arraylist_release(as_arraylist * list);
-
-/**
  *	Destoy the list and release resources.
  *
  *	@param list	The list to destroy.

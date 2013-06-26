@@ -127,16 +127,6 @@ as_linkedlist * as_linkedlist_init(as_linkedlist * list, as_val * head, as_linke
 as_linkedlist * as_linkedlist_new(as_val * head, as_linkedlist * tail);
 
 /**
- *	@private
- *	Release resources allocated to the list.
- *
- *	@param list		The list to release.
- *
- *	@return On success, true. Otherwise false.
- */
-bool as_linkedlist_release(as_linkedlist * list);
-
-/**
  *	Destroy the list and release associated resources.
  *
  *	@param list 	The list to destroy.

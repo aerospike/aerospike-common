@@ -116,16 +116,6 @@ as_hashmap * as_hashmap_init(as_hashmap * map, uint32_t buckets);
 as_hashmap * as_hashmap_new(uint32_t buckets);
 
 /**
- *	@private
- *	Release resources allocated to the list.
- *
- *	@param map	The map to release.
- *
- *	@return On success, true. Otherwise false.
- */
-bool as_hashmap_release(as_hashmap * map);
-
-/**
  *	Free the map and associated resources.
  *
  *	@param map 	The map to destroy.
