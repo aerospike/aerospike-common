@@ -6,6 +6,9 @@
 #include <aerospike/as_map.h>
 #include <aerospike/as_pair.h>
 #include <aerospike/as_string.h>
+#include <aerospike/as_stringmap.h>
+#include <aerospike/as_msgpack.h>
+#include <aerospike/as_serializer.h>
 
 /******************************************************************************
  * TEST CASES
@@ -179,9 +182,9 @@ TEST( types_hashmap_iterator, "as_hashmap w/ as_iterator ops" ) {
 	as_hashmap * m = as_hashmap_new(10);
 	assert_int_eq( as_map_size((as_map *) m), 0 );
 
-	as_map_set((as_map *) m, (as_val *) as_string_new(strdup("a"), true), (as_val *) as_integer_new(1));
-	as_map_set((as_map *) m, (as_val *) as_string_new(strdup("b"), true), (as_val *) as_integer_new(2));
-	as_map_set((as_map *) m, (as_val *) as_string_new(strdup("c"), true), (as_val *) as_integer_new(3));
+	as_hashmap_set(m, (as_val *) as_string_new(strdup("a"), true), (as_val *) as_integer_new(1));
+	as_hashmap_set(m, (as_val *) as_string_new(strdup("b"), true), (as_val *) as_integer_new(2));
+	as_hashmap_set(m, (as_val *) as_string_new(strdup("c"), true), (as_val *) as_integer_new(3));
 	assert_int_eq( as_map_size((as_map *) m), 3 );
 
 	as_iterator * i = (as_iterator *) as_hashmap_iterator_new(m);
@@ -197,9 +200,74 @@ TEST( types_hashmap_iterator, "as_hashmap w/ as_iterator ops" ) {
 
 	as_iterator_destroy(i);
 
-	assert_int_eq( as_map_size((as_map *) m), count );
+	assert_int_eq( as_hashmap_size(m), count );
 
-	as_map_destroy((as_map *) m);
+	as_hashmap_destroy(m);
+}
+
+
+bool types_hashmap_foreach_callback(const as_val * key, const as_val * val, void * udata)
+{
+	int * sum = (int *) udata;
+	as_integer * i = as_integer_fromval(val);
+	if ( i ) {
+		(*sum) = (*sum) + as_integer_get(i);
+	}
+	return true;
+}
+
+TEST( types_hashmap_foreach, "as_hashmap_foreach" ) {
+
+	int sum = 0;
+
+	as_hashmap * m = as_hashmap_new(10);
+	as_stringmap_set_int64((as_map *) m, "a", 1);
+	as_stringmap_set_int64((as_map *) m, "b", 2);
+	as_stringmap_set_int64((as_map *) m, "c", 3);
+
+	as_hashmap_foreach(m, types_hashmap_foreach_callback, &sum);
+
+	assert_int_eq( sum, 6 );
+
+	as_hashmap_destroy(m);
+}
+
+
+TEST( types_hashmap_msgpack, "as_hashmap msgpack" ) {
+
+	as_hashmap * m1 = as_hashmap_new(10);
+	as_stringmap_set_int64((as_map *) m1, "a", 1);
+	as_stringmap_set_int64((as_map *) m1, "b", 2);
+	as_stringmap_set_int64((as_map *) m1, "c", 3);
+
+	assert_int_eq( as_hashmap_size(m1), 3 );
+	assert_int_eq( as_stringmap_get_int64((as_map *) m1, "a"), 1);
+	assert_int_eq( as_stringmap_get_int64((as_map *) m1, "b"), 2);
+	assert_int_eq( as_stringmap_get_int64((as_map *) m1, "c"), 3);
+	
+    as_serializer ser;
+    as_msgpack_init(&ser);
+
+    as_buffer b;
+    as_buffer_init(&b);
+
+    as_serializer_serialize(&ser, (as_val *) m1, &b);
+
+	as_val * v2 = NULL;
+    as_serializer_deserialize(&ser, &b, &v2);
+
+    assert_not_null( v2 );
+    assert_int_eq( as_val_type(v2), AS_MAP );
+
+    as_map * m2 = as_map_fromval(v2);
+	assert_int_eq( as_map_size(m2), as_hashmap_size(m1) );
+
+	assert_int_eq( as_stringmap_get_int64(m2, "a"), 1);
+	assert_int_eq( as_stringmap_get_int64(m2, "b"), 2);
+	assert_int_eq( as_stringmap_get_int64(m2, "c"), 3);
+	
+	as_map_destroy(m2);
+	as_hashmap_destroy(m1);
 }
 
 /******************************************************************************
@@ -211,4 +279,6 @@ SUITE( types_hashmap, "as_hashmap" ) {
 	suite_add( types_hashmap_ops );
 	suite_add( types_hashmap_map_ops );
 	suite_add( types_hashmap_iterator );
+	suite_add( types_hashmap_foreach );
+	suite_add( types_hashmap_msgpack );
 }

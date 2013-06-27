@@ -26,6 +26,10 @@
 // logging
 //
 
+#define LOG_ENABLED 0
+
+#if LOG_ENABLED == 1
+
 #define LOG(fmt, args...) \
     __log_append(__FILE__, __LINE__, fmt, ## args);
 
@@ -33,3 +37,9 @@ void __log_append(const char * file, int line, const char * fmt, ...);
 
 #define DO_PRAGMA(x) _Pragma (#x)
 #define TODO(x) DO_PRAGMA(message ("TODO - " #x))
+
+#else
+
+#define LOG(fmt, args...) 
+
+#endif

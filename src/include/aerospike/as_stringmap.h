@@ -119,7 +119,7 @@ inline as_val * as_stringmap_get(as_map * m, const char * k)
 /**
  *	Get the specified key's value as an int64_t.
  */
-inline int as_stringmap_get_int64(as_map * m, const char * k) 
+inline int64_t as_stringmap_get_int64(as_map * m, const char * k) 
 {
 	as_string key;
 	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));

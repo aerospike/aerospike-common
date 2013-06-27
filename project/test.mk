@@ -10,8 +10,9 @@ TEST_CFLAGS += -I$(TARGET_INCL)
 TEST_LDFLAGS = -lssl -lcrypto -llua -lpthread -lm -lrt 
 
 TEST_DEPS =
-TEST_DEPS += $(MSGPACK)/src/.libs/libmsgpackc.a
+# TEST_DEPS += $(MSGPACK)/src/.libs/libmsgpackc.a
 TEST_DEPS += $(TARGET_LIB)/libaerospike-common.a
+TEST_DEPS += $(addprefix $(MSGPACK)/src/.libs/, unpack.o objectc.o version.o vrefbuffer.o zone.o)
 
 ###############################################################################
 ##  TEST OBJECTS                                                       		 ##

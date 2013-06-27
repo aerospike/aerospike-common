@@ -5,6 +5,9 @@
 #include <aerospike/as_linkedlist.h>
 #include <aerospike/as_linkedlist_iterator.h>
 #include <aerospike/as_list.h>
+#include <aerospike/as_list_iterator.h>
+#include <aerospike/as_msgpack.h>
+#include <aerospike/as_serializer.h>
 
 /******************************************************************************
  * TEST CASES
@@ -159,6 +162,47 @@ TEST( types_linkedlist_3, "as_linkedlist w/ as_iterator ops" ) {
     as_list_destroy((as_list *) &l);
 }
 
+TEST( types_linkedlist_msgpack, "as_linkedlist msgpack" ) {
+
+    as_linkedlist l1;
+    as_linkedlist_init(&l1,NULL,NULL);
+    as_linkedlist_append_int64(&l1, 123);
+    as_linkedlist_append_int64(&l1, 456);
+    as_linkedlist_append_int64(&l1, 789);
+    as_linkedlist_append_str(&l1, "abc");
+    as_linkedlist_append_str(&l1, "def");
+    as_linkedlist_append_str(&l1, "ghi");
+    
+    assert_int_eq( as_linkedlist_size(&l1), 6 );
+
+    as_serializer ser;
+    as_msgpack_init(&ser);
+
+    as_buffer b;
+    as_buffer_init(&b);
+
+    as_serializer_serialize(&ser, (as_val *) &l1, &b);
+
+    as_val * v2 = NULL;
+
+    as_serializer_deserialize(&ser, &b, &v2);
+
+    assert_not_null( v2 );
+    assert_int_eq( as_val_type(v2), AS_LIST );
+
+    as_list * l2 = as_list_fromval(v2);
+
+    assert_int_eq( as_linkedlist_size(&l1), as_list_size(l2) );
+    assert_int_eq( as_linkedlist_get_int64(&l1, 0), 123 );
+    assert_int_eq( as_linkedlist_get_int64(&l1, 1), 456 );
+    assert_int_eq( as_linkedlist_get_int64(&l1, 2), 789 );
+    assert_string_eq( as_linkedlist_get_str(&l1, 3), "abc" );
+    assert_string_eq( as_linkedlist_get_str(&l1, 4), "def" );
+    assert_string_eq( as_linkedlist_get_str(&l1, 5), "ghi" );
+
+    as_linkedlist_destroy(&l1);
+    as_list_destroy(l2);
+}
 /******************************************************************************
  * TEST SUITE
  *****************************************************************************/
@@ -168,4 +212,5 @@ SUITE( types_linkedlist, "as_linkedlist" ) {
     suite_add( types_linkedlist_1 );
     suite_add( types_linkedlist_2 );
     suite_add( types_linkedlist_3 );
+    suite_add( types_linkedlist_msgpack );
 }

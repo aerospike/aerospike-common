@@ -72,7 +72,7 @@ static int as_hashmap_shash_destroy(void * key, void * data, void * udata) {
 static int as_hashmap_shash_foreach(void * key, void * data, void * udata) {
 	as_hashmap_shash_foreach_context * ctx = (as_hashmap_shash_foreach_context *) udata;
 	as_pair * pair = *((as_pair **) data);
-	return ctx->callback(as_pair_1(pair), as_pair_2(pair), ctx->udata);
+	return ctx->callback(as_pair_1(pair), as_pair_2(pair), ctx->udata) ? 0 : 1;
 }
 
 /******************************************************************************

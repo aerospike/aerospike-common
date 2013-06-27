@@ -25,6 +25,8 @@
 
 #include "internal.h"
 
+#ifdef LOG_ENABLED
+
 void __log_append(const char * file, int line, const char * fmt, ...) {
     char msg[1024] = {0};
     va_list ap;
@@ -33,3 +35,5 @@ void __log_append(const char * file, int line, const char * fmt, ...) {
     va_end(ap);
     printf("%s:%d – %s\n",file,line,msg);
 }
+
+#endif

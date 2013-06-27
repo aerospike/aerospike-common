@@ -4,6 +4,9 @@
 #include <aerospike/as_arraylist_iterator.h>
 #include <aerospike/as_integer.h>
 #include <aerospike/as_list.h>
+#include <aerospike/as_list_iterator.h>
+#include <aerospike/as_msgpack.h>
+#include <aerospike/as_serializer.h>
 
 /******************************************************************************
  * TEST CASES
@@ -294,6 +297,49 @@ TEST( types_arraylist_iterator, "as_arraylist w/ as_iterator ops" ) {
 
     as_arraylist_destroy(&l);
 }
+
+TEST( types_arraylist_msgpack, "as_arraylist msgpack" ) {
+
+    as_arraylist l1;
+    as_arraylist_init(&l1,10,0);
+    as_arraylist_append_int64(&l1, 123);
+    as_arraylist_append_int64(&l1, 456);
+    as_arraylist_append_int64(&l1, 789);
+    as_arraylist_append_str(&l1, "abc");
+    as_arraylist_append_str(&l1, "def");
+    as_arraylist_append_str(&l1, "ghi");
+    
+    assert_int_eq( as_arraylist_size(&l1), 6 );
+
+    as_serializer ser;
+    as_msgpack_init(&ser);
+
+    as_buffer b;
+    as_buffer_init(&b);
+
+    as_serializer_serialize(&ser, (as_val *) &l1, &b);
+
+    as_val * v2 = NULL;
+
+    as_serializer_deserialize(&ser, &b, &v2);
+
+    assert_not_null( v2 );
+    assert_int_eq( as_val_type(v2), AS_LIST );
+
+    as_list * l2 = as_list_fromval(v2);
+
+    assert_int_eq( as_arraylist_size(&l1), as_list_size(l2) );
+    assert_int_eq( as_arraylist_get_int64(&l1, 0), 123 );
+    assert_int_eq( as_arraylist_get_int64(&l1, 1), 456 );
+    assert_int_eq( as_arraylist_get_int64(&l1, 2), 789 );
+    assert_string_eq( as_arraylist_get_str(&l1, 3), "abc" );
+    assert_string_eq( as_arraylist_get_str(&l1, 4), "def" );
+    assert_string_eq( as_arraylist_get_str(&l1, 5), "ghi" );
+
+    as_arraylist_destroy(&l1);
+    as_list_destroy(l2);
+}
+
 /******************************************************************************
  * TEST SUITE
  *****************************************************************************/
@@ -305,4 +351,5 @@ SUITE( types_arraylist, "as_arraylist" ) {
     suite_add( types_arraylist_1 );
     suite_add( types_arraylist_list );
     suite_add( types_arraylist_iterator );
+    suite_add( types_arraylist_msgpack );
 }

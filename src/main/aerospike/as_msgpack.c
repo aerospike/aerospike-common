@@ -26,6 +26,8 @@
 #include <aerospike/as_serializer.h>
 #include <aerospike/as_types.h>
 
+#include "internal.h"
+
 /******************************************************************************
  * STATIC FUNCTIONS
  ******************************************************************************/
@@ -50,7 +52,9 @@ static int as_msgpack_map_to_val(msgpack_object_map *, as_val **);
  ******************************************************************************/
 
 int as_msgpack_pack_val(msgpack_packer * pk, as_val * v) {
+	LOG("packing val := %p", v);
 	if ( v == NULL ) return 1;
+	LOG("packing val type := %d", as_val_type(v) );
 	switch( as_val_type(v) ) {
 		case AS_BOOLEAN : return as_msgpack_pack_boolean(pk, (as_boolean *) v);
 		case AS_INTEGER : return as_msgpack_pack_integer(pk, (as_integer *) v);
@@ -73,12 +77,6 @@ int as_msgpack_object_to_val(msgpack_object * object, as_val ** val) {
 		case MSGPACK_OBJECT_RAW                 : return as_msgpack_raw_to_val(&object->via.raw, val);
 		case MSGPACK_OBJECT_ARRAY               : return as_msgpack_array_to_val(&object->via.array, val);
 		case MSGPACK_OBJECT_MAP                 : return as_msgpack_map_to_val(&object->via.map, val);
-		// case MSGPACK_OBJECT_POSITIVE_INTEGER    : {
-			// The assumption is that uint is used as an identifier for a specific type of object.
-			// So we will read the uint and baed on the value, deserialize to that object.        
-			// case AS_REC     : return as_msgpack_unpack_rec      (buff, msg, offset, (as_rec **) v);
-			// case AS_PAIR    : return as_msgpack_unpack_pair     (buff, msg, offset, (as_pair **) v);
-		// }
 		default                                 : return 2;
 	}
 }
@@ -94,85 +92,183 @@ static int as_msgpack_pack_boolean(msgpack_packer * pk, as_boolean * b)
 
 static int as_msgpack_pack_integer(msgpack_packer * pk, as_integer * i)
 {
-	return msgpack_pack_int64(pk, as_integer_toint(i));
+	LOG("as_msgpack_pack_integer : start");
+
+	char * v = as_val_tostring(i);
+	LOG("packing integer %s",v);
+	free(v);
+
+	int rc = msgpack_pack_int64(pk, as_integer_toint(i));
+	if ( rc ) {
+		LOG("as_msgpack_pack_string > %d",rc);
+		return rc;
+	}
+	return rc;
 }
 
 static int as_msgpack_pack_string(msgpack_packer * pk, as_string * s)
 {
+	LOG("as_msgpack_pack_string : start");
+	int rc = 0;
+	
+	char * v = as_val_tostring(s);
+	LOG("packing string %s",v);
+	free(v);
+
 	int len = as_string_len(s) + 1;
 	uint8_t tbuf[len];
 	tbuf[0] = AS_BYTES_TYPE_STRING;
 	memcpy(tbuf+1, as_string_tostring(s),len-1);
 
-	int rc = msgpack_pack_raw(pk, len);
-	if ( rc ) return rc;
-	return msgpack_pack_raw_body(pk, tbuf, len);
+	rc = msgpack_pack_raw(pk, len);
+	if ( rc ) {
+		LOG("msgpack_pack_raw > %d",rc);
+		return rc;
+	}
+
+	rc = msgpack_pack_raw_body(pk, tbuf, len);
+	if ( rc ) {
+		LOG("msgpack_pack_raw_body > %d",rc);
+		return rc;
+	}
+	
+	return rc;
 }
 
 static int as_msgpack_pack_bytes(msgpack_packer * pk, as_bytes * b)
 {
+	LOG("as_msgpack_pack_bytes : start");
+	int rc = 0;
+
 	int len = as_bytes_len(b) + 1;
 	uint8_t tbuf[len];
 	tbuf[0] = as_bytes_get_type(b);
 	memcpy(tbuf+1, as_bytes_tobytes(b),len-1);
 
-	int rc = msgpack_pack_raw(pk, len);
-	if ( rc ) return rc;
-	return msgpack_pack_raw_body(pk, tbuf, len);
+	rc = msgpack_pack_raw(pk, len);
+	if ( rc ) {
+		LOG("msgpack_pack_raw > %d",rc);
+		return rc;
+	}
+
+	rc = msgpack_pack_raw_body(pk, tbuf, len);
+	if ( rc ) {
+		LOG("msgpack_pack_raw_body > %d",rc);
+		return rc;
+	}
+
+	return rc;
 }
 
 static bool as_msgpack_pack_list_foreach(as_val * val, void * udata)
 {
+	LOG("as_msgpack_pack_list_foreach : start");
+	int rc = 0;
+
+	char * v = as_val_tostring(val);
+	LOG("packing list entry %s",v);
+	free(v);
+	
 	msgpack_packer * pk = (msgpack_packer *) udata;
-	if ( as_msgpack_pack_val(pk, val) ) {
+
+	rc = as_msgpack_pack_val(pk, val);
+	if ( rc ) {
+		LOG("as_msgpack_pack_val > %d",rc);
 		return false;
 	}
+
 	return true;
 }
 
 static int as_msgpack_pack_list(msgpack_packer * pk, as_list * l)
 {
-	if ( msgpack_pack_array(pk, as_list_size(l)) ) {
-		return 2;
+	LOG("as_msgpack_pack_list : start");
+	int rc = 0;
+
+	rc = msgpack_pack_array(pk, as_list_size(l));
+	if ( rc ) {
+		LOG("msgpack_pack_array > %d",rc);
+		return rc;
 	}
 	
 	as_list_foreach(l, as_msgpack_pack_list_foreach, pk);
-	return 0;
+	return rc;
 }
 
 static bool as_msgpack_pack_map_foreach(const as_val * key, const as_val * val, void * udata)
 {
+	LOG("as_msgpack_pack_map_foreach : start");
+	int rc = 0;
+
+	char * k = as_val_tostring(key);
+	char * v = as_val_tostring(val);
+	LOG("packing map entry %s=%s",k,v);
+	free(k);
+	free(v);
+
 	msgpack_packer * pk = (msgpack_packer *) udata;
-	if ( as_msgpack_pack_val(pk, (as_val *) key) ) {
+
+	rc = as_msgpack_pack_val(pk, (as_val *) key);
+	if ( rc ) {
+		LOG("as_msgpack_pack_val > %d",rc);
 		return false;
 	}
-	if (  as_msgpack_pack_val(pk, (as_val *) val) ) {
+
+	rc = as_msgpack_pack_val(pk, (as_val *) val);
+	if ( rc ) {
+		LOG("as_msgpack_pack_val > %d",rc);
 		return false;
 	}
+
+	LOG("as_msgpack_pack_map_foreach : end");
 	return true;
 }
 
 static int as_msgpack_pack_map(msgpack_packer * pk, as_map * m)
 {
-	if ( msgpack_pack_map(pk, as_map_size(m)) ) {
-		return 2;
+	LOG("as_msgpack_pack_map : start %d", as_map_size(m));
+	int rc = 0;
+
+	rc = msgpack_pack_map(pk, as_map_size(m));
+	if ( rc ) {
+		LOG("msgpack_pack_map > %d",rc);
+		return rc;
 	}
-	as_map_foreach(m, as_msgpack_pack_map_foreach, pk);
+
+	bool rb = as_map_foreach(m, as_msgpack_pack_map_foreach, pk);
+	LOG("as_map_foreach > %s", rb ? "true" : "false");
 	return 0;
 }
 
 static int as_msgpack_pack_rec(msgpack_packer * pk, as_rec * r)
 {
+	LOG("as_msgpack_pack_rec : start");
 	return 1;
 }
 
 static int as_msgpack_pack_pair(msgpack_packer * pk, as_pair * p)
 {
-	int rc = msgpack_pack_array(pk, 2);
-	if ( rc ) return rc;
+	LOG("as_msgpack_pack_pair : start");
+	int rc = 0;
+
+	rc = msgpack_pack_array(pk, 2);
+	if ( rc ) {
+		LOG("msgpack_pack_array > %d",rc);
+		return rc;
+	}
+
 	rc = as_msgpack_pack_val(pk, as_pair_1(p));
-	if ( rc ) return rc;
+	if ( rc ) {
+		LOG("as_msgpack_pack_val > %d",rc);
+		return rc;
+	}
+
 	rc = as_msgpack_pack_val(pk, as_pair_2(p));
+	if ( rc ) {
+		LOG("as_msgpack_pack_val > %d",rc);
+		return rc;
+	}
+
 	return rc;
 }
 

@@ -56,7 +56,12 @@ as_arraylist * as_arraylist_init(as_arraylist * list, uint32_t capacity, uint32_
 	list->block_size = block_size;
 	list->capacity = capacity;
 	list->size = 0;
-	list->elements = (as_val **) calloc( capacity, sizeof(as_val *) );
+	if ( list->capacity > 0 ) {
+		list->elements = (as_val **) calloc( capacity, sizeof(as_val *) );
+	}
+	else {
+		list->elements = NULL;
+	}
 	return list;
 }
 
@@ -74,7 +79,12 @@ as_arraylist * as_arraylist_new(uint32_t capacity, uint32_t block_size)
 	list->block_size = block_size;
 	list->capacity = capacity;
 	list->size = 0;
-	list->elements = (as_val **) calloc( capacity, sizeof(as_val *) );
+	if ( list->capacity > 0 ) {
+		list->elements = (as_val **) calloc( capacity, sizeof(as_val *) );
+	}
+	else {
+		list->elements = NULL;
+	}
 	return list;
 }
 

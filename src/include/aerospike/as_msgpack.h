@@ -19,11 +19,12 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *****************************************************************************/
+
 #pragma once
 
-#include <msgpack.h>
 #include <aerospike/as_serializer.h>
 
+#include <msgpack.h>
 
 /******************************************************************************
  * FUNCTIONS

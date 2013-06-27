@@ -88,7 +88,7 @@ extern inline as_val * as_stringmap_get(as_map * m, const char * k);
 /**
  * Get the specified key's value as an int64_t.
  */
-extern inline int as_stringmap_get_int64(as_map * m, const char * k);
+extern inline int64_t as_stringmap_get_int64(as_map * m, const char * k);
 
 /**
  * Get the specified key's value as a NULL terminated string.
