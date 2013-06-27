@@ -234,10 +234,10 @@ static int as_msgpack_pack_map(msgpack_packer * pk, as_map * m)
 		LOG("msgpack_pack_map > %d",rc);
 		return rc;
 	}
-
+	
 	bool rb = as_map_foreach(m, as_msgpack_pack_map_foreach, pk);
 	LOG("as_map_foreach > %s", rb ? "true" : "false");
-	return 0;
+	return rb ? 0 : 1;
 }
 
 static int as_msgpack_pack_rec(msgpack_packer * pk, as_rec * r)

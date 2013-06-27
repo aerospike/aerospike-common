@@ -23,7 +23,6 @@
 #pragma once
 
 #include <citrusleaf/cf_atomic.h>
-#include <citrusleaf/cf_shash.h>
 
 #include <stdbool.h>
 #include <stdint.h>

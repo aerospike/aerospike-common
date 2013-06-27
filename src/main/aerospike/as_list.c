@@ -27,8 +27,9 @@
 #include <aerospike/as_util.h>
 
 #include <string.h>
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
 
 #include "internal.h"
 

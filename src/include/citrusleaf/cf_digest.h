@@ -82,7 +82,7 @@ void cf_digest_string(cf_digest *digest, char* output);
  * cf_digest_compute
  * Compute the digest of an input 
  */
-static inline void cf_digest_compute(void *data, size_t len, cf_digest *d) {
+static inline void cf_digest_compute(const void *data, size_t len, cf_digest *d) {
 	RIPEMD160((const unsigned char *) data, len, (unsigned char *) d->digest);
 }
 
@@ -91,7 +91,7 @@ static inline void cf_digest_compute(void *data, size_t len, cf_digest *d) {
  * Compute a digest of two parts
  * (often the set and the key)
  */
-static inline void cf_digest_compute2(void *data1, size_t len1, void *data2, size_t len2, cf_digest *d) {
+static inline void cf_digest_compute2(const void *data1, size_t len1, const void *data2, size_t len2, cf_digest *d) {
 	if (len1 == 0) {
 		RIPEMD160((const unsigned char *) data2, len2, (unsigned char *) d->digest);
 	}
