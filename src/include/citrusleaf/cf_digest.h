@@ -104,11 +104,11 @@ static inline void cf_digest_compute2(const void *data1, size_t len1, const void
 	}
 }
 
-static inline uint32_t cf_digest_gethash(cf_digest *d, uint32_t MASK)  {
+static inline uint32_t cf_digest_gethash(const cf_digest *d, uint32_t MASK)  {
 	return((*(uint32_t *)d->digest) & MASK);
 }
 
-static inline uint32_t cf_digest_gethash_mod(cf_digest *d, uint32_t MOD)  {
+static inline uint32_t cf_digest_gethash_mod(const cf_digest *d, uint32_t MOD)  {
 	return((*(uint32_t *)d->digest) % MOD);
 }
 
@@ -116,7 +116,7 @@ static inline uint32_t cf_digest_gethash_mod(cf_digest *d, uint32_t MOD)  {
  * SIGNATURE
  * A non-crypto-solid signature
  */ 
-static inline void cf_signature_compute(void *data, size_t len, cf_signature *s) {
+static inline void cf_signature_compute(const void *data, size_t len, cf_signature *s) {
 	uint8_t sig[MD4_DIGEST_LENGTH];
 
 	MD4_CTX c;
@@ -130,7 +130,7 @@ static inline void cf_signature_compute(void *data, size_t len, cf_signature *s)
  * as_partition_getid
  * A brief utility function to derive the partition ID from a digest 
  */
-static inline cl_partition_id cl_partition_getid(uint32_t n_partitions, cf_digest *d) {
+static inline cl_partition_id cl_partition_getid(uint32_t n_partitions, const cf_digest *d) {
 	uint16_t *d_int = (uint16_t *)&d->digest[0];
 	cl_partition_id r = *d_int & (n_partitions - 1);
     return(r);
