@@ -86,6 +86,7 @@
  *	functions. So, calling `as_iterator_destroy()` is equivalent to calling
  *	`as_arraylist_iterator_destroy()`.
  *
+ *	@extends as_iterator
  */
 typedef struct as_arraylist_iterator_s {
 

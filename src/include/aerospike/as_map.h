@@ -57,7 +57,7 @@ typedef bool (* as_map_foreach_callback) (const as_val * key, const as_val * val
  *
  *	The map struct should not be used directly.
  *
- *	@see `as_hashmap` for 
+ *	@extends as_val
  */
 typedef struct as_map_s {
 

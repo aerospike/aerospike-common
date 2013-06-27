@@ -75,6 +75,7 @@
  *	So, calling `as_map_destroy()` is equivalent to calling 
  *	`as_hashmap_destroy()`.
  *
+ *	@extends as_map
  */
 typedef struct as_hashmap_s {
 	

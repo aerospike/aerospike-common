@@ -79,6 +79,7 @@ struct as_linkedlist_s;
  *	So, calling `as_list_destroy()` is equivalent to calling 
  *	`as_linkedlist_destroy()`.
  *
+ *	@extends as_list
  */
 typedef struct as_linkedlist_s {
 	

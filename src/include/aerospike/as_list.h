@@ -58,6 +58,8 @@ typedef bool (* as_list_foreach_callback) (as_val * value, void * udata);
  *	This is the base type for all list types.
  *
  *	The list struct should not be used directly.
+ *
+ *	@extends as_val
  */
 typedef struct as_list_s {
 

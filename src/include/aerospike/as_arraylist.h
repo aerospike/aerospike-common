@@ -74,6 +74,7 @@
  *	So, calling `as_list_destroy()` is equivalent to calling 
  *	`as_arraylist_destroy()`.
  *
+ *	@extends as_list
  */
 typedef struct as_arraylist_s {
 
