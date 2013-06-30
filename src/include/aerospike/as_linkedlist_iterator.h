@@ -144,7 +144,7 @@ void as_linkedlist_iterator_destroy(as_linkedlist_iterator * iterator);
  *
  *	@return true if there are more values. Otherwise false.
  */
-bool as_linkedlist_iterator_has_next(const as_linkedlist_iterator * i);
+bool as_linkedlist_iterator_has_next(const as_linkedlist_iterator * iterator);
 
 /**
  *	Attempts to get the next value from the iterator.
@@ -154,4 +154,4 @@ bool as_linkedlist_iterator_has_next(const as_linkedlist_iterator * i);
  *
  *	@return The next value in the list if available. Otherwise NULL.
  */
-const as_val * as_linkedlist_iterator_next(as_linkedlist_iterator * i);
+const as_val * as_linkedlist_iterator_next(as_linkedlist_iterator * iterator);

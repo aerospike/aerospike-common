@@ -108,7 +108,7 @@ inline void as_string_destroy(as_string * string)
 /**
  *	The length of the string
  *
- *	@param s The string to get the length of. 
+ *	@param string The string to get the length of. 
  *
  *	@return the length of the string in bytes.
  */
@@ -133,6 +133,7 @@ inline char * as_string_get(const as_string * string)
 /**
  *	Get the string value.
  *	@deprecated Use `as_string_get()` instead
+ *	@see as_string_get()
  */
 inline char * as_string_tostring(const as_string * string) 
 {

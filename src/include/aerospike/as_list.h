@@ -109,7 +109,7 @@ typedef struct as_list_hooks_s {
 	 *
 	 *	@param list	The list to get the hashcode value for.
 	 *
-	 *	@retun The hashcode value.
+	 *	@return The hashcode value.
 	 */
 	uint32_t (* hashcode)(const as_list * list);
 
@@ -724,7 +724,7 @@ inline int as_list_append_map(as_list * list, struct as_map_s * value)
  *
  *	@return 0 on success. Otherwise an error ocucrred.
  */
-inline int as_list_prepend(as_list * list, as_val * v) 
+inline int as_list_prepend(as_list * list, as_val * value) 
 {
 	return as_util_hook(prepend, 1, list, v);
 }

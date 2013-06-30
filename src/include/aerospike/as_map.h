@@ -107,7 +107,7 @@ typedef struct as_map_hooks_s {
 	 *
 	 *	@param map	The map to get the hashcode value for.
 	 *
-	 *	@retun The hashcode value.
+	 *	@return The hashcode value.
 	 */
 	uint32_t (* hashcode)(const as_map * map);
 	

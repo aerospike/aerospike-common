@@ -105,7 +105,7 @@ as_integer * as_integer_new(int64_t value);
  *	as_integer_destroy(i);
  *	~~~~~~~~~~
  *
- *	@param i	The integer to destroy.
+ *	@param integer	The integer to destroy.
  */
 inline void as_integer_destroy(as_integer * integer) {
 	as_val_destroy((as_val *) integer);
@@ -132,6 +132,7 @@ inline int64_t as_integer_get(const as_integer * integer) {
 /**
  *	Get the int64_t value.
  *	@deprecated Use `as_integer_get()` instead.
+ *	@see as_integer_get()
  */
 inline int64_t as_integer_toint(const as_integer * integer) {
 	return as_integer_getorelse(integer, 0);

@@ -197,16 +197,16 @@ int as_linkedlist_prepend(as_linkedlist * list, as_val * value);
  *
  *	@return The value at given index, if it exists. Otherwise NULL.
  */
-as_val * as_linkedlist_get(const as_linkedlist * list, const uint32_t i);
+as_val * as_linkedlist_get(const as_linkedlist * list, const uint32_t index);
 
 /**
  *  Set the value for for the given index of the list.
  *
- *  Notice that in order to maintain proper object/memory management, we
- *  just first destroy (as_val_destroy()) the old object at element position(i)
- *  before assigning the new element.  Also note that the object at element
- *  position (i) is assumed to exist, so all element positions must be
- *  appropriately initialized to zero.
+ *	If the given index already contains a value, the value will be destroyed,
+ *	prior to the new value being set. If you do not want the values to 
+ *	be freed, then you will need to use `as_val_reserve()` to increase the 
+ *	ref-count of the value, so when the value is destroyed, the ref-count
+ *	is decremented, rather than the value being freed.
  *
  *	@param list 	The list.
  *	@param index	Position in the list.
@@ -214,7 +214,7 @@ as_val * as_linkedlist_get(const as_linkedlist * list, const uint32_t i);
  *
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  */
-int as_linkedlist_set(as_linkedlist * list, const uint32_t i, as_val * value);
+int as_linkedlist_set(as_linkedlist * list, const uint32_t index, as_val * value);
 
 /**
  *	Get the first element of the list.
@@ -254,6 +254,7 @@ as_linkedlist * as_linkedlist_drop(const as_linkedlist * list, uint32_t n);
  *	with the original list.
  *
  *	@param list 	The list.
+ *	@param n 		The number of element to take.
  *
  *	@return A new list of the first n elements.
  */
@@ -270,7 +271,7 @@ as_linkedlist * as_linkedlist_take(const as_linkedlist * list, uint32_t n);
  *	@param callback	The functon to call for each element in the list.
  *	@param udata	User-data to be sent to the callback.
  *
- *	@param TRUE on success. Otherwise FALSE.
+ *	@return On success, true. Otherwise an error occurred.
  */
 bool as_linkedlist_foreach(const as_linkedlist * list, as_list_foreach_callback callback, void * udata);
 
