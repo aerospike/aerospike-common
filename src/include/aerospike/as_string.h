@@ -20,6 +20,17 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
+/**
+ *	A container for string values. 
+ *
+ *	An as_string should be initialized via either:
+ *	- as_string_init()
+ *	- as_string_new()
+ *
+ *	@addtogroup string_t
+ *	@{
+ */
+
 #pragma once
 
 #include <aerospike/as_util.h>
@@ -181,3 +192,7 @@ uint32_t as_string_val_hashcode(const as_val * v);
  *	Internal helper function for getting the string representation of an as_val.
  */
 char * as_string_val_tostring(const as_val * v);
+
+/**
+ *	@}
+ */

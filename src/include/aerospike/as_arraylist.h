@@ -20,6 +20,12 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
+/**
+ *	@copydoc as_arraylist
+ *	@addtogroup arraylist_t
+ *	@{
+ */
+
 #pragma once
 
 #include <aerospike/as_list.h>
@@ -140,7 +146,7 @@ typedef enum as_arraylist_status_e {
  *	@param list 		The as_list to initialize
  *	@param capacity		The number of elements to allocate to the list.
  *	@param block_size	The number of elements to grow the list by, when the 
- *	capacity has been reached.
+ *						capacity has been reached.
  *
  *	@return On success, the initialize list. Otherwise NULL.
  */
@@ -148,11 +154,10 @@ as_arraylist * as_arraylist_init(as_arraylist * list, uint32_t capacity, uint32_
 
 /**
  *	Create and initialize a heap allocated list as as_arraylist.
- *
- *	@param list 		The as_list to initialize
+ *	
  *	@param capacity		The number of elements to allocate to the list.
  *	@param block_size	The number of elements to grow the list by, when the 
- *	capacity has been reached.
+ *						capacity has been reached.
  *  
  *	@return On success, the new list. Otherwise NULL.
  */
@@ -270,6 +275,7 @@ as_arraylist * as_arraylist_drop(const as_arraylist * list, uint32_t n);
  *  Return a new list containing the first n elements.
  *
  *	@param list 	The list.
+ *	@param n 		The number of elements to take.
  *
  *	@return A new list of the first n elements.
  */
@@ -286,7 +292,7 @@ as_arraylist * as_arraylist_take(const as_arraylist * list, uint32_t n);
  *	@param callback	The functon to call for each element in the list.
  *	@param udata	User-data to be sent to the callback.
  *
- *	@param TRUE on success. Otherwise FALSE.
+ *	@return On success, true. Otherwise an error occurred.
  */
 bool as_arraylist_foreach(const as_arraylist * list, as_list_foreach_callback callback, void * udata);
 
@@ -333,3 +339,6 @@ bool as_arraylist_foreach(const as_arraylist * list, as_list_foreach_callback ca
 	(__list)->elements = alloca(sizeof(as_val *) * __n);
 
 
+/**
+ *	@}
+ */

@@ -20,6 +20,18 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
+/**
+ *	as_list is an interface for List based data types. A list is a sequence
+ *	of values.
+ *
+ *	Implementations:
+ *	- as_arraylist
+ *	- as_linkedlist
+ *
+ *	@addtogroup list_t
+ *	@{
+ */
+
 #pragma once
 
 #include <aerospike/as_bytes.h>
@@ -905,3 +917,7 @@ uint32_t as_list_val_hashcode(const as_val * v);
  *	Internal helper function for getting the string representation of an as_val.
  */
 char * as_list_val_tostring(const as_val * v);
+
+/**
+ *	@}
+ */

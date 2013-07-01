@@ -20,6 +20,12 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
+/**
+ *	@copydoc as_linkedlist
+ *	@addtogroup linkedlist_t
+ *	@{
+ */
+
 #pragma once
 
 #include <aerospike/as_list.h>
@@ -313,3 +319,6 @@ bool as_linkedlist_foreach(const as_linkedlist * list, as_list_foreach_callback 
 
 
 
+/**
+ *	@}
+ */

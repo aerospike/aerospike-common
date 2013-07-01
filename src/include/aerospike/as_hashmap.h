@@ -20,6 +20,12 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
+/**
+ *	@copydoc as_hashmap
+ *	@addtogroup hashmap_t
+ *	@{
+ */
+
 #pragma once
 
 #include <aerospike/as_map.h>
@@ -193,3 +199,7 @@ int as_hashmap_clear(as_hashmap * map);
  *	@return TRUE on success. Otherwise an error occurred.
  */
 bool as_hashmap_foreach(const as_hashmap * map, as_map_foreach_callback callback, void * udata);
+
+/**
+ *	@}
+ */

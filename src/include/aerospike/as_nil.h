@@ -20,6 +20,11 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
+/**
+ *	@addtogroup nil_t
+ *	@{
+ */
+
 #pragma once
 
 #include <aerospike/as_val.h>
@@ -56,3 +61,7 @@ uint32_t as_nil_val_hashcode(const as_val * v);
  *	Internal helper function for getting the string representation of an as_val.
  */
 char * as_nil_val_tostring(const as_val * v);
+
+/**
+ *	@}
+ */

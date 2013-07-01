@@ -20,6 +20,11 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
+/**
+ *	@addtogroup pair_t
+ *	@{
+ */
+
 #pragma once
 
 #include <aerospike/as_util.h>
@@ -155,3 +160,7 @@ uint32_t as_pair_val_hashcode(const as_val *);
  *	Internal helper function for getting the string representation of an as_val.
  */
 char * as_pair_val_tostring(const as_val *);
+
+/**
+ *	@}
+ */

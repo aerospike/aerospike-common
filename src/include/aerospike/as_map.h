@@ -20,6 +20,17 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
+/**
+ *	as_map is an interface for Map based data types. A map is a mapping of
+ *	keys to values. 
+ *
+ *	Implementations:
+ *	- as_hashmap
+ *
+ *	@addtogroup map_t
+ *	@{
+ */
+
 #pragma once
 
 #include <aerospike/as_iterator.h>
@@ -390,3 +401,7 @@ uint32_t as_map_val_hashcode(const as_val * val);
  *	Internal helper function for getting the string representation of an as_val.
  */
 char * as_map_val_tostring(const as_val * val);
+
+/**
+ *	@}
+ */

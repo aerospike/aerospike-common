@@ -20,6 +20,18 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
+/**
+ *	as_rec is an interface for record types. A record is how data in Aerospike
+ *	is represented. A record is composed of bins and metadata.
+ *
+ *	Implementatios:
+ *	- as_record
+ *
+ *	@addtogroup rec_t
+ *	@{
+ */
+
+
 #pragma once
 
 #include <aerospike/as_integer.h>
@@ -524,3 +536,7 @@ uint32_t as_rec_val_hashcode(const as_val *v);
  *	Internal helper function for getting the string representation of an as_val.
  */
 char * as_rec_val_tostring(const as_val *v);
+
+/**
+ *	@}
+ */

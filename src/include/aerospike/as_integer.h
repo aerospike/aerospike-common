@@ -20,6 +20,17 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
+/**
+ *	A container for integer values. 
+ *
+ *	An as_integer should be initialized via either:
+ *	- as_integer_init()
+ *	- as_integer_new()
+ *
+ *	@addtogroup integer_t
+ *	@{
+ */
+
 #pragma once
 
 #include <aerospike/as_util.h>
@@ -177,3 +188,7 @@ uint32_t as_integer_val_hashcode(const as_val * v);
  *	Internal helper function for getting the string representation of an as_val.
  */
 char * as_integer_val_tostring(const as_val * v);
+
+/**
+ *	@}
+ */

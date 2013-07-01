@@ -20,6 +20,31 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
+/**
+ *
+ *	@defgroup aerospike_types Aerospike Types
+ *	@{
+ *		@defgroup integer_t 	as_integer
+ *		@defgroup string_t 		as_string
+ *		@defgroup pair_t 		as_pair
+ *		@defgroup nil_t 		as_nil
+ *		@defgroup rec_t 		as_rec
+ *
+ *		@defgroup list_t 		as_list
+ *		@{
+ *			@defgroup arraylist_t 	as_arraylist
+ *			@defgroup linkedlist_t 	as_linkedlist
+ *		@}
+ *		
+ *		@defgroup map_t			as_map
+ *		@{
+ *			@defgroup hashmap_t		as_hashmap
+ *			@defgroup stringmap_t	as_stringmap
+ *		@}
+ *	@}
+ */
+
+
 #pragma once
 
 #include <citrusleaf/cf_atomic.h>
