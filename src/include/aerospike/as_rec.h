@@ -56,6 +56,8 @@ struct as_rec_hooks_s;
  *
  *	To use the record interface, you will need to create an instance 
  *	via one of the implementations.
+ *
+ *	@extends as_val
  */
 typedef struct as_rec_s {
 
