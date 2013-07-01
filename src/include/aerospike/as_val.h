@@ -29,6 +29,7 @@
  *		@defgroup pair_t 		as_pair
  *		@defgroup nil_t 		as_nil
  *		@defgroup rec_t 		as_rec
+ *		@defgroup stream_t 		as_stream
  *
  *		@defgroup list_t 		as_list
  *		@{
@@ -188,7 +189,7 @@ char * as_val_val_tostring(const as_val *);
  *	@private
  *	Initialize an as_val. 
  *	Should only be used by subtypes.
- *	@deprecated Use `as_val_cons()` instead.
+ *	@deprecated Use as_val_cons() instead.
  */
 inline void as_val_init(as_val * v, as_val_t type, bool free) 
 {

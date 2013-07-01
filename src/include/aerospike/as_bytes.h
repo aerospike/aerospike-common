@@ -539,8 +539,7 @@ bool as_bytes_ensure(as_bytes * bytes, uint32_t n, bool resize);
 /**
  *	Get the bytes value.
  *
- *	@deprecated Use `as_bytes_get()` instead.
- *	@see as_bytes_get()
+ *	@deprecated Use as_bytes_get() instead.
  */
 inline uint8_t * as_bytes_tobytes(const as_bytes * b, uint32_t * size) 
 {

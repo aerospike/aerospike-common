@@ -132,8 +132,7 @@ inline bool as_boolean_get(const as_boolean * boolean) {
 
 /**
  *	Get the bool value.
- *	@deprecated Use `as_boolean_get()` instead.
- *	@see as_boolean_get()
+ *	@deprecated Use as_boolean_get() instead.
  */
 inline bool as_boolean_tobool(const as_boolean * boolean) {
 	return as_boolean_getorelse(boolean, false);

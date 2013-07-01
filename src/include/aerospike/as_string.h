@@ -143,8 +143,7 @@ inline char * as_string_get(const as_string * string)
 
 /**
  *	Get the string value.
- *	@deprecated Use `as_string_get()` instead
- *	@see as_string_get()
+ *	@deprecated Use as_string_get() instead
  */
 inline char * as_string_tostring(const as_string * string) 
 {

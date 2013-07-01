@@ -142,8 +142,7 @@ inline int64_t as_integer_get(const as_integer * integer) {
 
 /**
  *	Get the int64_t value.
- *	@deprecated Use `as_integer_get()` instead.
- *	@see as_integer_get()
+ *	@deprecated Use as_integer_get() instead.
  */
 inline int64_t as_integer_toint(const as_integer * integer) {
 	return as_integer_getorelse(integer, 0);

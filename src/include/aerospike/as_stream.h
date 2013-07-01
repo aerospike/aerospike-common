@@ -20,6 +20,12 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
+/**
+ *
+ *	@addtogroup stream_t
+ *	@{
+ */
+
 #pragma once
 
 #include <stdlib.h>
@@ -218,3 +224,7 @@ inline bool as_stream_writable(const as_stream * stream)
 {
 	return stream != NULL && stream->hooks != NULL && stream->hooks->write;
 }
+
+/**
+ *	@}
+ */

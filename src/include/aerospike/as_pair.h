@@ -49,8 +49,8 @@ typedef struct as_pair_s {
 
 	/**
 	 *	@private
-	 *	as_boolean is a subtype of as_val.
-	 *	You can cast as_boolean to as_val.
+	 *	as_pair is a subtype of as_val.
+	 *	You can cast as_pair to as_val.
 	 */
 	as_val _;
 
