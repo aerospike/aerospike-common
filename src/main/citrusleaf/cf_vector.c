@@ -191,7 +191,7 @@ int cf_vector_set(cf_vector *v, uint32_t index, void *value) {
 		return(-1);
 
 	memcpy(v->vector + (index * v->value_len), value, v->value_len);
-	if (index > v->len)	v->len = index;
+	if (index >= v->len)	v->len = index + 1;
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_UNLOCK(v);
 	return(0);
