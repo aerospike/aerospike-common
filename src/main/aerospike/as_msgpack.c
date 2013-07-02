@@ -94,44 +94,40 @@ static int as_msgpack_pack_integer(msgpack_packer * pk, as_integer * i)
 {
 	LOG("as_msgpack_pack_integer : start");
 
-	char * v = as_val_tostring(i);
-	LOG("packing integer %s",v);
-	free(v);
-
 	int rc = msgpack_pack_int64(pk, as_integer_toint(i));
 	if ( rc ) {
-		LOG("as_msgpack_pack_string > %d",rc);
+		LOG("as_msgpack_pack_integer : as_msgpack_pack_string : %d",rc);
 		return rc;
 	}
+
+	LOG("as_msgpack_pack_integer : %d", rc);
 	return rc;
 }
 
 static int as_msgpack_pack_string(msgpack_packer * pk, as_string * s)
 {
-	LOG("as_msgpack_pack_string : start");
+	LOG("as_msgpack_pack_string : start : %p", s);
 	int rc = 0;
 	
-	char * v = as_val_tostring(s);
-	LOG("packing string %s",v);
-	free(v);
+	uint32_t len = as_string_len(s) + 1;
+	uint8_t * raw = alloca(len);
 
-	int len = as_string_len(s) + 1;
-	uint8_t tbuf[len];
-	tbuf[0] = AS_BYTES_TYPE_STRING;
-	memcpy(tbuf+1, as_string_tostring(s),len-1);
+	raw[0] = AS_BYTES_STRING;
+	memcpy(raw + 1, s->value, s->len);
 
 	rc = msgpack_pack_raw(pk, len);
 	if ( rc ) {
-		LOG("msgpack_pack_raw > %d",rc);
+		LOG("as_msgpack_pack_string : msgpack_pack_raw : %d",rc);
 		return rc;
 	}
 
-	rc = msgpack_pack_raw_body(pk, tbuf, len);
+	rc = msgpack_pack_raw_body(pk, raw, len);
 	if ( rc ) {
-		LOG("msgpack_pack_raw_body > %d",rc);
+		LOG("as_msgpack_pack_string : msgpack_pack_raw_body : %d",rc);
 		return rc;
 	}
-	
+
+	LOG("as_msgpack_pack_string : %d", rc);
 	return rc;
 }
 
@@ -140,23 +136,24 @@ static int as_msgpack_pack_bytes(msgpack_packer * pk, as_bytes * b)
 	LOG("as_msgpack_pack_bytes : start");
 	int rc = 0;
 
-	int len = as_bytes_len(b) + 1;
-	uint8_t tbuf[len];
-	tbuf[0] = as_bytes_get_type(b);
-	memcpy(tbuf+1, as_bytes_tobytes(b),len-1);
+	uint32_t  len = b->size + 1;
+	uint8_t * raw = alloca(len);
+	raw[0] = b->type;
+	memcpy(raw + 1, b->value, b->size);
 
 	rc = msgpack_pack_raw(pk, len);
 	if ( rc ) {
-		LOG("msgpack_pack_raw > %d",rc);
+		LOG("as_msgpack_pack_bytes : msgpack_pack_raw : %d",rc);
 		return rc;
 	}
 
-	rc = msgpack_pack_raw_body(pk, tbuf, len);
+	rc = msgpack_pack_raw_body(pk, raw, len);
 	if ( rc ) {
-		LOG("msgpack_pack_raw_body > %d",rc);
+		LOG("as_msgpack_pack_bytes : msgpack_pack_raw_body : %d",rc);
 		return rc;
 	}
 
+	LOG("as_msgpack_pack_bytes : %d", rc);
 	return rc;
 }
 
@@ -165,18 +162,15 @@ static bool as_msgpack_pack_list_foreach(as_val * val, void * udata)
 	LOG("as_msgpack_pack_list_foreach : start");
 	int rc = 0;
 
-	char * v = as_val_tostring(val);
-	LOG("packing list entry %s",v);
-	free(v);
-	
 	msgpack_packer * pk = (msgpack_packer *) udata;
 
 	rc = as_msgpack_pack_val(pk, val);
 	if ( rc ) {
-		LOG("as_msgpack_pack_val > %d",rc);
+		LOG("as_msgpack_pack_list_foreach : as_msgpack_pack_val : %d",rc);
 		return false;
 	}
 
+	LOG("as_msgpack_pack_list_foreach : %d", rc);
 	return true;
 }
 
@@ -187,11 +181,13 @@ static int as_msgpack_pack_list(msgpack_packer * pk, as_list * l)
 
 	rc = msgpack_pack_array(pk, as_list_size(l));
 	if ( rc ) {
-		LOG("msgpack_pack_array > %d",rc);
+		LOG("as_msgpack_pack_list : msgpack_pack_array > %d",rc);
 		return rc;
 	}
 	
 	as_list_foreach(l, as_msgpack_pack_list_foreach, pk);
+
+	LOG("as_msgpack_pack_list : %d",rc);
 	return rc;
 }
 
@@ -200,49 +196,45 @@ static bool as_msgpack_pack_map_foreach(const as_val * key, const as_val * val, 
 	LOG("as_msgpack_pack_map_foreach : start");
 	int rc = 0;
 
-	char * k = as_val_tostring(key);
-	char * v = as_val_tostring(val);
-	LOG("packing map entry %s=%s",k,v);
-	free(k);
-	free(v);
-
 	msgpack_packer * pk = (msgpack_packer *) udata;
 
 	rc = as_msgpack_pack_val(pk, (as_val *) key);
 	if ( rc ) {
-		LOG("as_msgpack_pack_val > %d",rc);
+		LOG("as_msgpack_pack_map_foreach : as_msgpack_pack_val : %d",rc);
 		return false;
 	}
 
 	rc = as_msgpack_pack_val(pk, (as_val *) val);
 	if ( rc ) {
-		LOG("as_msgpack_pack_val > %d",rc);
+		LOG("as_msgpack_pack_map_foreach : as_msgpack_pack_val : %d",rc);
 		return false;
 	}
 
-	LOG("as_msgpack_pack_map_foreach : end");
+	LOG("as_msgpack_pack_map_foreach : %d", rc);
 	return true;
 }
 
 static int as_msgpack_pack_map(msgpack_packer * pk, as_map * m)
 {
-	LOG("as_msgpack_pack_map : start %d", as_map_size(m));
+	LOG("as_msgpack_pack_map : start : size=%d", as_map_size(m));
 	int rc = 0;
 
 	rc = msgpack_pack_map(pk, as_map_size(m));
 	if ( rc ) {
-		LOG("msgpack_pack_map > %d",rc);
+		LOG("as_msgpack_pack_map : msgpack_pack_map : %d",rc);
 		return rc;
 	}
 	
 	bool rb = as_map_foreach(m, as_msgpack_pack_map_foreach, pk);
-	LOG("as_map_foreach > %s", rb ? "true" : "false");
+	LOG("as_msgpack_pack_map : as_map_foreach : %s", rb ? "true" : "false");
+
+	LOG("as_msgpack_pack_map : %d", rb);
 	return rb ? 0 : 1;
 }
 
 static int as_msgpack_pack_rec(msgpack_packer * pk, as_rec * r)
 {
-	LOG("as_msgpack_pack_rec : start");
+	LOG("as_msgpack_pack_rec : NOP");
 	return 1;
 }
 
@@ -253,22 +245,23 @@ static int as_msgpack_pack_pair(msgpack_packer * pk, as_pair * p)
 
 	rc = msgpack_pack_array(pk, 2);
 	if ( rc ) {
-		LOG("msgpack_pack_array > %d",rc);
+		LOG("as_msgpack_pack_pair : msgpack_pack_array : %d",rc);
 		return rc;
 	}
 
 	rc = as_msgpack_pack_val(pk, as_pair_1(p));
 	if ( rc ) {
-		LOG("as_msgpack_pack_val > %d",rc);
+		LOG("as_msgpack_pack_pair : as_msgpack_pack_val : %d",rc);
 		return rc;
 	}
 
 	rc = as_msgpack_pack_val(pk, as_pair_2(p));
 	if ( rc ) {
-		LOG("as_msgpack_pack_val > %d",rc);
+		LOG("as_msgpack_pack_pair : as_msgpack_pack_val : %d",rc);
 		return rc;
 	}
 
+	LOG("as_msgpack_pack_pair : %d", rc);
 	return rc;
 }
 
@@ -289,7 +282,7 @@ static int as_msgpack_raw_to_val(msgpack_object_raw * r, as_val ** v)
 	const char * raw = r->ptr;
 	*v = 0;
 	// strings are special
-	if (*raw == AS_BYTES_TYPE_STRING) {
+	if (*raw == AS_BYTES_STRING) {
 		*v = (as_val *) as_string_new(strndup(raw+1,r->size - 1),true);
 	}
 	// everything else encoded as a bytes with the type set
@@ -297,9 +290,10 @@ static int as_msgpack_raw_to_val(msgpack_object_raw * r, as_val ** v)
 		int len = r->size - 1;
 		uint8_t *buf = malloc(len);
 		memcpy(buf, raw+1, len);
-		as_bytes *b = as_bytes_new(buf, len, true /*ismalloc*/);
-		if (b)
-			as_bytes_set_type( b, (as_bytes_type) *raw );
+		as_bytes *b = as_bytes_new_wrap(buf, len, true);
+		if ( b ) {
+			b->type = (as_bytes_type) *raw;
+		}
 		*v = (as_val *) b;
 	}
 	return 0;

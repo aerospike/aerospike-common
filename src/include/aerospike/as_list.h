@@ -738,7 +738,7 @@ inline int as_list_append_map(as_list * list, struct as_map_s * value)
  */
 inline int as_list_prepend(as_list * list, as_val * value) 
 {
-	return as_util_hook(prepend, 1, list, v);
+	return as_util_hook(prepend, 1, list, value);
 }
 
 /**

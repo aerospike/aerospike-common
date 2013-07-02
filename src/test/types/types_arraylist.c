@@ -336,8 +336,9 @@ TEST( types_arraylist_msgpack, "as_arraylist msgpack" ) {
     assert_string_eq( as_arraylist_get_str(&l1, 4), "def" );
     assert_string_eq( as_arraylist_get_str(&l1, 5), "ghi" );
 
-    as_arraylist_destroy(&l1);
-    as_list_destroy(l2);
+    // as_arraylist_destroy(&l1);
+    
+    // as_list_destroy(l2);
 }
 
 /******************************************************************************
@@ -350,6 +351,8 @@ SUITE( types_arraylist, "as_arraylist" ) {
     suite_add( types_arraylist_cap10_blk10 );
     suite_add( types_arraylist_1 );
     suite_add( types_arraylist_list );
+    suite_add( types_arraylist_iterator );
+    suite_add( types_arraylist_iterator );
     suite_add( types_arraylist_iterator );
     suite_add( types_arraylist_msgpack );
 }

@@ -20,11 +20,12 @@
  * IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <stdlib.h>
-#include <string.h>
-
 #include <citrusleaf/cf_alloc.h>
 #include <aerospike/as_bytes.h>
+
+#include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 /******************************************************************************
  * INLINE FUNCTIONS
@@ -32,23 +33,28 @@
 
 extern inline void as_bytes_destroy(as_bytes * s);
 
+extern inline uint32_t as_bytes_size(as_bytes * bytes);
+extern inline uint32_t as_bytes_capacity(as_bytes * bytes);
 
-extern inline uint8_t as_bytes_get_byte(const as_bytes * bytes, uint32_t index);
-extern inline int16_t as_bytes_get_int32(const as_bytes * bytes, uint32_t index);
-extern inline int32_t as_bytes_get_int32(const as_bytes * bytes, uint32_t index);
-extern inline int64_t as_bytes_get_int64(const as_bytes * bytes, uint32_t index);
+extern inline as_bytes_type as_bytes_get_type(as_bytes * bytes);
+extern inline void as_bytes_set_type(as_bytes * bytes, as_bytes_type type);
 
-extern inline int as_bytes_set_byte(as_bytes * bytes, uint32_t index, uint8_t value);
-extern inline int as_bytes_set_int16(as_bytes * bytes, uint32_t index, int16_t value);
-extern inline int as_bytes_set_int32(as_bytes * bytes, uint32_t index, int32_t value);
-extern inline int as_bytes_set_int64(as_bytes * bytes, uint32_t index, int64_t value);
+extern inline uint32_t as_bytes_get_byte(const as_bytes * bytes, uint32_t index, uint8_t * value);
+extern inline uint32_t as_bytes_get_int16(const as_bytes * bytes, uint32_t index, int16_t * value);
+extern inline uint32_t as_bytes_get_int32(const as_bytes * bytes, uint32_t index, int32_t * value);
+extern inline uint32_t as_bytes_get_int64(const as_bytes * bytes, uint32_t index, int64_t * value);
 
-extern inline int as_bytes_append_byte(as_bytes * bytes, uint8_t value);
-extern inline int as_bytes_append_int16(as_bytes * bytes, int16_t value);
-extern inline int as_bytes_append_int32(as_bytes * bytes, int32_t value);
-extern inline int as_bytes_append_int64(as_bytes * bytes, int64_t value);
+extern inline bool as_bytes_set_byte(as_bytes * bytes, uint32_t index, uint8_t value);
+extern inline bool as_bytes_set_int16(as_bytes * bytes, uint32_t index, int16_t value);
+extern inline bool as_bytes_set_int32(as_bytes * bytes, uint32_t index, int32_t value);
+extern inline bool as_bytes_set_int64(as_bytes * bytes, uint32_t index, int64_t value);
 
-extern inline uint8_t * as_bytes_tobytes(const as_bytes * s);
+extern inline bool as_bytes_append_byte(as_bytes * bytes, uint8_t value);
+extern inline bool as_bytes_append_int16(as_bytes * bytes, int16_t value);
+extern inline bool as_bytes_append_int32(as_bytes * bytes, int32_t value);
+extern inline bool as_bytes_append_int64(as_bytes * bytes, int64_t value);
+
+extern inline uint8_t * as_bytes_tobytes(const as_bytes * s, uint32_t * size);
 
 extern inline as_val * as_bytes_toval(const as_bytes * s);
 extern inline as_bytes * as_bytes_fromval(const as_val * v);
@@ -85,30 +91,8 @@ static inline as_bytes * as_bytes_cons(
 }
 
 /**
- *	Initializes a stack allocated `as_bytes`, filled with specified bytes.
- *
- *	~~~~~~~~~~{.c}
- *	uint8_t raw[10] = {0};
- *
- *	as_bytes bytes;
- *	as_bytes_init(&bytes, raw, 10, false);
- *	~~~~~~~~~~
- *
- *	@param bytes 	The bytes to initialize.
- *	@param value	The initial value.
- *	@param size		The number of bytes of the initial value.
- *	@param free		If true, then `as_bytes_destroy()` will free the value.
- *
- *	@return On success, the initializes bytes. Otherwise NULL.
- */
-as_bytes * as_bytes_init(as_bytes * bytes, uint8_t * value, uint32_t size, bool free)
-{
-	return as_bytes_cons(bytes, false, size, size, value, free, AS_BYTES_TYPE_BLOB);
-}
-
-/**
  *	Initializes a stack allocated `as_bytes`, as an empty buffer of capacity size.
- *
+ *	
  *	~~~~~~~~~~{.c}
  *	as_bytes bytes;
  *	as_bytes_init_empty(&bytes, 10);
@@ -119,18 +103,58 @@ as_bytes * as_bytes_init(as_bytes * bytes, uint8_t * value, uint32_t size, bool 
  *
  *	@return On success, the initializes bytes. Otherwise NULL.
  */
-as_bytes * as_bytes_empty_init(as_bytes * bytes, uint32_t capacity)
+as_bytes * as_bytes_init(as_bytes * bytes, uint32_t capacity)
 {
-	return as_bytes_cons(bytes, false, size, 0, NULL, true, AS_BYTES_TYPE_BLOB);
+	return as_bytes_cons(bytes, false, capacity, 0, NULL, true, AS_BYTES_BLOB);
 }
 
 /**
- *	Creates a new heap allocated `as_bytes`, filled with specified bytes.
+ *	Initializes a stack allocated `as_bytes`, wrapping the given buffer.
  *
  *	~~~~~~~~~~{.c}
  *	uint8_t raw[10] = {0};
  *
- *	as_bytes * bytes = as_bytes_new(raw, 10, false);
+ *	as_bytes bytes;
+ *	as_bytes_init_wrap(&bytes, raw, 10, false);
+ *	~~~~~~~~~~
+ *	
+ *	@param bytes 	The bytes to initialize.
+ *	@param value	The initial value.
+ *	@param size		The number of bytes of the initial value.
+ *	@param free		If true, then `as_bytes_destroy()` will free the value.
+ *
+ *	@return On success, the initializes bytes. Otherwise NULL.
+ */
+as_bytes * as_bytes_init_wrap(as_bytes * bytes, uint8_t * value, uint32_t size, bool free)
+{
+	return as_bytes_cons(bytes, false, size, size, value, free, AS_BYTES_BLOB);
+}
+
+/**
+ *	Creates a new heap allocated `as_bytes`, as an empty buffer of capacity size.
+ *
+ *	~~~~~~~~~~{.c}
+ *	as_bytes * bytes = as_bytes_new(10);
+ *	~~~~~~~~~~
+ *	
+ *	@param capacity	The number of bytes to allocate.
+ *
+ *	@return On success, the initializes bytes. Otherwise NULL.
+ */
+as_bytes * as_bytes_new(uint32_t capacity)
+{
+    as_bytes * bytes = (as_bytes *) malloc(sizeof(as_bytes));
+    if ( !bytes ) return bytes;
+	return as_bytes_cons(bytes, true, capacity, 0, NULL, true, AS_BYTES_BLOB);
+}
+
+/**
+ *	Creates a new heap allocated `as_bytes`, wrapping the given buffer.
+ *
+ *	~~~~~~~~~~{.c}
+ *	uint8_t raw[10] = {0};
+ *
+ *	as_bytes * bytes = as_bytes_new_wrap(raw, 10, false);
  *	~~~~~~~~~~
  *
  *	@param value	The initial value.
@@ -139,69 +163,11 @@ as_bytes * as_bytes_empty_init(as_bytes * bytes, uint32_t capacity)
  *
  *	@return On success, the initializes bytes. Otherwise NULL.
  */
-as_bytes * as_bytes_new(uint8_t * value, uint32_t size, bool free)
+as_bytes * as_bytes_new_wrap(uint8_t * value, uint32_t size, bool free)
 {
     as_bytes * bytes = (as_bytes *) malloc(sizeof(as_bytes));
     if ( !bytes ) return bytes;
-	return as_bytes_cons(bytes, true, size, size, value, free, AS_BYTES_TYPE_BLOB);
-}
-
-/**
- *	Creates a new heap allocated `as_bytes`, as an empty buffer of capacity size.
- *
- *	~~~~~~~~~~{.c}
- *	as_bytes * bytes = as_bytes_new_empty(10);
- *	~~~~~~~~~~
- *	
- *	@param capacity	The number of bytes to allocate.
- *
- *	@return On success, the initializes bytes. Otherwise NULL.
- */
-as_bytes * as_bytes_empty_new(uint32_t capacity)
-{
-    as_bytes * bytes = (as_bytes *) malloc(sizeof(as_bytes));
-    if ( !bytes ) return bytes;
-	return as_bytes_cons(bytes, true, capacity, 0, NULL, true, AS_BYTES_TYPE_BLOB);
-}
-
-
-/******************************************************************************
- *	VALUE FUNCTIONS
- *****************************************************************************/
-
-/**
- *	The length of the buffer.
- *
- *	@param bytes The as_bytes to get the length of.
- *
- *	@return The number of bytes used.
- */
-uint32_t as_bytes_len(as_bytes * s)
-{
-	return s->len;
-}
-
-/**
- *	Get the type of bytes.
- *
- *	@param bytes The as_bytes to get the type of.
- *
- *	@return The type of bytes.
- */
-as_bytes_type as_bytes_get_type(const as_bytes * s)
-{
-    return s->type;
-}
-
-/**
- *	Set the type of bytes.
- *
- *	@param bytes	The as_bytes to get the type of.
- *	@param type		The type for the specified bytes.
- */
-void as_bytes_set_type(as_bytes *s, as_bytes_type t)
-{
-    s->type = t;
+	return as_bytes_cons(bytes, true, size, size, value, free, AS_BYTES_BLOB);
 }
 
 /******************************************************************************
@@ -226,10 +192,11 @@ void as_bytes_set_type(as_bytes *s, as_bytes_type t)
  *
  *	@return The number of bytes copied in to value.
  */
-uint32_t as_bytes_get(const as_bytes * bytes, uint32_t index, uint8_t * value, uint32_t size);
+uint32_t as_bytes_get(const as_bytes * bytes, uint32_t index, uint8_t * value, uint32_t size)
 {
-	uint32_t sz = index + size <= bytes->size ? size : bytes->size - index;
-    memcpy(value, &bytes->value[index], sz);
+	uint32_t sz = index + size > bytes->size ? 0 : size;
+	if ( sz == 0 ) return sz;
+	memcpy(value, &bytes->value[index], sz);
     return sz;
 }
 
@@ -260,6 +227,9 @@ bool as_bytes_set(as_bytes * bytes, uint32_t index, const uint8_t * value, uint3
 {
     if ( index + size > bytes->capacity ) return false;
     memcpy(&bytes->value[index], value, size);
+    if ( index + size > bytes->size ) {
+    	bytes->size = index + size;
+    }
     return true;
 }
 
@@ -315,22 +285,20 @@ bool as_bytes_append(as_bytes * bytes, const uint8_t * value, uint32_t size)
  */
 bool as_bytes_truncate(as_bytes * bytes, uint32_t n)
 {
-	bytes->size = bytes->size - size;
+	if ( n > bytes->size ) return false;
+	bytes->size = bytes->size - n;
 	return true;
 }
 
 /**
- *	Ensure the bytes buffer can handle `n` additional bytes.
- *
- *	Using the current size, we see if `size + n` is within the capcity of 
- *	the bytes' buffer. If so, then return true.
- *	
- *	If `resize` is true and `size + n` exceeds the capacity of the bytes's 
- *	buffer, then resize the capacity of the buffer by `n` bytes. If the buffer
- *	was heap allocated, then `realloc()` will be used to resize. If the buffer
- *	was stack allocated, it will be converted to a heap allocated buffer using
- *	malloc() and then its contents will be copied into the new heap allocated 
- *	buffer.
+ *	Ensure the bytes buffer can handle `capacity` bytes.
+ *		
+ *	If `resize` is true and `capacity` exceeds the capacity of the bytes's 
+ *	buffer, then resize the capacity of the buffer to `capacity` bytes. If the 
+ *	buffer was heap allocated, then `realloc()` will be used to resize. If the 
+ *	buffer was stack allocated, it will be converted to a heap allocated buffer 
+ *	using malloc() and then its contents will be copied into the new heap 
+ *	allocated  buffer.
  *
  *	If `resize` is false, and if the capacity is not sufficient, then return
  *	false.
@@ -340,22 +308,21 @@ bool as_bytes_truncate(as_bytes * bytes, uint32_t n)
  *	~~~~~~~~~~
  *	
  *	@param bytes	The bytes to ensure the capacity of.
- *	@param n		The number of additional bytes to ensure bytes can handle.
+ *	@param capacity	The total number of bytes to ensure bytes can handle.
  *	@param resize	If true and capacity is not sufficient, then resize the buffer.
  *
  *	@return On success, true. Otherwise an error occurred.
  */
-bool as_bytes_ensure(as_bytes * bytes, uint32_t n, bool resize)
+bool as_bytes_ensure(as_bytes * bytes, uint32_t capacity, bool resize)
 {
-	if ( bytes->size + n <= bytes->capacity ) return true;
+	if ( capacity <= bytes->capacity ) return true;
 	if ( !resize ) return false;
 
-	uint32_t sz = bytes->size + n;
 	uint8_t * buffer = NULL;
 
 	if ( bytes->free ) {
 		// this is a previously malloc'd value
-		buffer = realloc(bytes->value, sz);
+		buffer = realloc(bytes->value, capacity);
 		if ( !buffer ) {
 			// allocation failed, so return false.
 			return false;
@@ -363,7 +330,7 @@ bool as_bytes_ensure(as_bytes * bytes, uint32_t n, bool resize)
 	}
 	else {
 		// this is a previously stack alloc'd value
-		buffer = malloc(sz);
+		buffer = malloc(capacity);
 		if ( !buffer ) {
 			// allocation failed, so return false.
 			return false;
@@ -374,7 +341,7 @@ bool as_bytes_ensure(as_bytes * bytes, uint32_t n, bool resize)
 
 	bytes->free = true;
 	bytes->value = buffer;
-	bytes->capacity = sz;
+	bytes->capacity = capacity;
 
 	return true;
 }
@@ -397,7 +364,7 @@ uint32_t as_bytes_val_hashcode(const as_val * v)
     if ( bytes == NULL || bytes->value == NULL ) return 0;
     uint32_t hash = 0;
     uint8_t * buf = bytes->value;
-    int len = bytes->len;
+    int len = bytes->size;
     while ( --len ) {
         int b = *buf++;
         hash = b + (hash << 6) + (hash << 16) - hash;
@@ -407,22 +374,30 @@ uint32_t as_bytes_val_hashcode(const as_val * v)
 
 char * as_bytes_val_tostring(const as_val * v)
 {
-    as_bytes * s = (as_bytes *) v;
-    if (s->value == NULL) return(NULL);
-    uint32_t sl = as_bytes_len(s);
-    if (sl == 0) {
-        return( strdup("") );
+    as_bytes * bytes = as_bytes_fromval(v);
+    if ( !bytes || !bytes->value || !bytes->size ) {
+    	return NULL;
     }
-    size_t st = (4 * sl) + 3;
-    char * str = (char *) malloc(st);
+
+    uint8_t * 	s = bytes->value;
+    uint32_t 	sl = bytes->size;
+    size_t		st = (4 * sl) + 3;
+    char * 		str = (char *) malloc(st);
+
+    if ( !str ) {
+    	return NULL;
+    }
+    
     int j=0;
-    for (int i=0;i<sl;i++) {
-        str[j] = hex_chars[ s->value[i] >> 4 ];
-        str[j+1] = hex_chars[ s->value[i] & 0xf ];
+    for ( int i=0; i < sl; i++ ) {
+        str[j] = hex_chars[ s[i] >> 4 ];
+        str[j+1] = hex_chars[ s[i] & 0xf ];
         str[j+2] = ' ';
         j += 3;
     }
     j--; // chomp
+    
     str[j] = 0;
+    
     return str;
 }

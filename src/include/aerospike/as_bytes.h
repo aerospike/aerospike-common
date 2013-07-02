@@ -38,14 +38,34 @@
 typedef enum as_bytes_type_e {
 
 	/** 
+	 *	Type is Undefined
+	 */
+	AS_BYTES_UNDEF		= 0,
+
+	/** 
+	 *	String
+	 */
+	AS_BYTES_INTEGER	= 1,
+
+	/** 
+	 *	Float
+	 */
+	AS_BYTES_FLOAT	= 1,
+
+	/** 
+	 *	String
+	 */
+	AS_BYTES_STRING		= 3,
+
+	/** 
 	 *	Generic BLOB
 	 */
-	AS_BYTES_BLOB			= 4,
+	AS_BYTES_BLOB		= 4,
 
 	/**
 	 *	Serialized Java Object
 	 */
-	AS_BYTES_JAVA			= 7,
+	AS_BYTES_JAVA		= 7,
 
 	/**
 	 *	Serialized C# Object
@@ -129,31 +149,38 @@ typedef struct as_bytes_s {
 } as_bytes;
 
 /******************************************************************************
+ *	MACROS
+ *****************************************************************************/
+
+/**
+ *	Initializes a stack allocated `as_bytes`. Allocates an internal buffer
+ *	on the stack of specified capacity using `alloca()`.
+ *	
+ *	~~~~~~~~~~{.c}
+ *	as_bytes bytes;
+ *	as_bytes_init(&bytes, 10);
+ *	~~~~~~~~~~
+ *
+ *	@param bytes 	The bytes to initialize.
+ *	@param capacity	The number of bytes to allocate on the heap.
+ */
+#define as_bytes_inita(__bytes, __capacity)\
+	as_bytes_init(__bytes, 0);\
+	(__bytes)->type = AS_BYTES_BLOB;\
+	(__bytes)->free = false;\
+	(__bytes)->capacity = __capacity;\
+	(__bytes)->size = 0;\
+	(__bytes)->value = alloca(__capacity);
+
+
+/******************************************************************************
  *	INSTANCE FUNCTIONS
  *****************************************************************************/
 
 /**
- *	Initializes a stack allocated `as_bytes`, filled with specified bytes.
- *
- *	~~~~~~~~~~{.c}
- *	uint8_t raw[10] = {0};
- *
- *	as_bytes bytes;
- *	as_bytes_init(&bytes, raw, 10, false);
- *	~~~~~~~~~~
- *
- *	@param bytes 	The bytes to initialize.
- *	@param value	The initial value.
- *	@param size		The number of bytes of the initial value.
- *	@param free		If true, then `as_bytes_destroy()` will free the value.
- *
- *	@return On success, the initializes bytes. Otherwise NULL.
- */
-as_bytes * as_bytes_init(as_bytes * bytes, uint8_t * value, uint32_t size, bool free);
-
-/**
- *	Initializes a stack allocated `as_bytes`, as an empty buffer of capacity size.
- *
+ *	Initializes a stack allocated `as_bytes`. Allocates an internal buffer
+ *	on the heap of specified capacity using `malloc()`.
+ *	
  *	~~~~~~~~~~{.c}
  *	as_bytes bytes;
  *	as_bytes_init_empty(&bytes, 10);
@@ -164,15 +191,48 @@ as_bytes * as_bytes_init(as_bytes * bytes, uint8_t * value, uint32_t size, bool 
  *
  *	@return On success, the initializes bytes. Otherwise NULL.
  */
-as_bytes * as_bytes_init_empty(as_bytes * bytes, uint32_t capacity);
+as_bytes * as_bytes_init(as_bytes * bytes, uint32_t capacity);
 
 /**
- *	Creates a new heap allocated `as_bytes`, filled with specified bytes.
+ *	Initializes a stack allocated `as_bytes`, wrapping the given buffer.
  *
  *	~~~~~~~~~~{.c}
  *	uint8_t raw[10] = {0};
  *
- *	as_bytes * bytes = as_bytes_new(raw, 10, false);
+ *	as_bytes bytes;
+ *	as_bytes_init_wrap(&bytes, raw, 10, false);
+ *	~~~~~~~~~~
+ *	
+ *	@param bytes 	The bytes to initialize.
+ *	@param value	The initial value.
+ *	@param size		The number of bytes of the initial value.
+ *	@param free		If true, then `as_bytes_destroy()` will free the value.
+ *
+ *	@return On success, the initializes bytes. Otherwise NULL.
+ */
+as_bytes * as_bytes_init_wrap(as_bytes * bytes, uint8_t * value, uint32_t size, bool free);
+
+/**
+ *	Create and initialize a new heap allocated `as_bytes`. Allocates an 
+ *	internal buffer on the heap of specified capacity using `malloc()`.
+ *	
+ *	~~~~~~~~~~{.c}
+ *	as_bytes * bytes = as_bytes_new(10);
+ *	~~~~~~~~~~
+ *	
+ *	@param capacity	The number of bytes to allocate.
+ *
+ *	@return On success, the initializes bytes. Otherwise NULL.
+ */
+as_bytes * as_bytes_new(uint32_t capacity);
+
+/**
+ *	Creates a new heap allocated `as_bytes`, wrapping the given buffer.
+ *
+ *	~~~~~~~~~~{.c}
+ *	uint8_t raw[10] = {0};
+ *
+ *	as_bytes * bytes = as_bytes_new_wrap(raw, 10, false);
  *	~~~~~~~~~~
  *
  *	@param value	The initial value.
@@ -181,20 +241,7 @@ as_bytes * as_bytes_init_empty(as_bytes * bytes, uint32_t capacity);
  *
  *	@return On success, the initializes bytes. Otherwise NULL.
  */
-as_bytes * as_bytes_new(uint8_t * value, uint32_t size, bool free);
-
-/**
- *	Creates a new heap allocated `as_bytes`, as an empty buffer of capacity size.
- *
- *	~~~~~~~~~~{.c}
- *	as_bytes * bytes = as_bytes_new_empty(10);
- *	~~~~~~~~~~
- *	
- *	@param capacity	The number of bytes to allocate.
- *
- *	@return On success, the initializes bytes. Otherwise NULL.
- */
-as_bytes * as_bytes_new_empty(uint32_t capacity);
+as_bytes * as_bytes_new_wrap(uint8_t * value, uint32_t size, bool free);
 
 /**
  *	Destroy the `as_bytes` and release associated resources.
@@ -207,7 +254,7 @@ as_bytes * as_bytes_new_empty(uint32_t capacity);
  */
 inline void as_bytes_destroy(as_bytes * bytes) 
 {
-	as_val_destroy((as_val *) bytes;
+	as_val_destroy((as_val *) bytes);
 }
 
 /******************************************************************************
@@ -215,31 +262,54 @@ inline void as_bytes_destroy(as_bytes * bytes)
  *****************************************************************************/
 
 /**
- *	The length of the buffer.
+ *	Get the number of bytes used.
  *
- *	@param bytes The as_bytes to get the length of.
+ *	@param bytes The bytes to get the size of.
  *
- *	@return The number of bytes used.
+ *	@param The number of bytes used.
  */
-uint32_t as_bytes_len(as_bytes * bytes);
+inline uint32_t as_bytes_size(as_bytes * bytes)
+{
+	if ( !bytes ) return 0;
+	return bytes->size;
+}
+
+/**
+ *	Get the number of bytes allocated.
+ *
+ *	@param bytes The bytes to get the capacity of.
+ *
+ *	@param The number of bytes allocated.
+ */
+inline uint32_t as_bytes_capacity(as_bytes * bytes)
+{
+	if ( !bytes ) return 0;
+	return bytes->capacity;
+}
 
 /**
  *	Get the type of bytes.
  *
- *	@param bytes The as_bytes to get the type of.
+ *	@param bytes The bytes to get the type of.
  *
- *	@return The type of bytes.
+ *	@param The type of bytes.
  */
-as_bytes_type as_bytes_get_type(const as_bytes * bytes);
+inline as_bytes_type as_bytes_get_type(as_bytes * bytes)
+{
+	if ( !bytes ) return AS_BYTES_UNDEF;
+	return bytes->type;
+}
 
 /**
  *	Set the type of bytes.
  *
- *	@param bytes	The as_bytes to get the type of.
- *	@param type		The type for the specified bytes.
+ *	@param bytes The bytes to set the type of.
  */
-void as_bytes_set_type(as_bytes * bytes, as_bytes_type type);
-
+inline void as_bytes_set_type(as_bytes * bytes, as_bytes_type type)
+{
+	if ( !bytes ) return;
+	bytes->type = type;
+}
 
 /******************************************************************************
  *	GET AT INDEX
@@ -251,8 +321,10 @@ void as_bytes_set_type(as_bytes * bytes, as_bytes_type type);
  *
  *	~~~~~~~~~~{.c}
  *	uint8_t value[3] = {0};
- *
- *	uint32_t size = as_bytes_get(&bytes, 0, value, 3);
+ *	uint32_t sz = as_bytes_get(&bytes, 0, value, 3);
+ *	if ( sz == 0 ) {
+ *		// sz == 0, means that an error occurred
+ *	}
  *	~~~~~~~~~~
  *
  *	@param bytes	The bytes to read from.
@@ -260,72 +332,86 @@ void as_bytes_set_type(as_bytes * bytes, as_bytes_type type);
  *	@param value	The byte buffer to copy into.
  *	@param size		The number of bytes to copy into the buffer.
  *
- *	@return The number of bytes copied in to value.
+ *
+ *	@return The number of bytes read and stored into value. 0 (zero) indicates
+ * 			an error has occurred.
  */
-uint32_t as_bytes_get(const as_bytes * bytes, uint32_t index, const uint8_t * value, uint32_t size);
+uint32_t as_bytes_get(const as_bytes * bytes, uint32_t index, uint8_t * value, uint32_t size);
 
 /** 
  *	Read a single byte from the given gytes.
  *
  *	~~~~~~~~~~{.c}
- *	uint8_t value = as_bytes_get_byte(&bytes, 0);
+ *	uint8_t value = 0;
+ *	uint32_t sz = as_bytes_get_byte(&bytes, 0, &value);
+ *	if ( sz == 0 ) {
+ *		// sz == 0, means that an error occurred
+ *	}
  *	~~~~~~~~~~
  *
- *	@return An uint8_t value at the specified index.
+ *	@return The number of bytes read and stored into value. 0 (zero) indicates
+ * 			an error has occurred.
  */
-inline uint8_t as_bytes_get_byte(const as_bytes * bytes, uint32_t index)
+inline uint32_t as_bytes_get_byte(const as_bytes * bytes, uint32_t index, uint8_t * value)
 {
-	uint8_t value = 0;
-	as_bytes_get(bytes, index, (uint8_t *) &value, 1);
-	return value;
+	return as_bytes_get(bytes, index, (uint8_t *) value, 1);
 }
 
 /** 
  *	Read an int16_t from the given bytes.
  *
  *	~~~~~~~~~~{.c}
- *	int16_t value = as_bytes_get_int16(&bytes, 0);
+ *	int16_t value = 0;
+ *	uint32_t sz = as_bytes_get_int16(&bytes, 0, &value);
+ *	if ( sz == 0 ) {
+ *		// sz == 0, means that an error occurred
+ *	}
  *	~~~~~~~~~~
  *
- *	@return On success, the int16_t value at the specified index. Otherwise INT16_MIN.
+ *	@return The number of bytes read and stored into value. 0 (zero) indicates
+ * 			an error has occurred.
  */
-inline int16_t as_bytes_get_int16(const as_bytes * bytes, uint32_t index)
+inline uint32_t as_bytes_get_int16(const as_bytes * bytes, uint32_t index, int16_t * value)
 {
-	int16_t value = 0;
-	as_bytes_get(bytes, index, (uint8_t *) &value, 2);
-	return value;
+	return as_bytes_get(bytes, index, (uint8_t *) value, 2);
 }
 
 /** 
  *	Read an int32_t from the given bytes.
  *
  *	~~~~~~~~~~{.c}
- *	int32_t value = as_bytes_get_int32(&bytes, 0);
+ *	int32_t value = 0;
+ *	uint32_t sz = as_bytes_get_int32(&bytes, 0, &value);
+ *	if ( sz == 0 ) {
+ *		// sz == 0, means that an error occurred
+ *	}
  *	~~~~~~~~~~
  *
- *	@return On success, the int32_t value at the specified index. Otherwise INT32_MIN.
+ *	@return The number of bytes read and stored into value. 0 (zero) indicates
+ * 			an error has occurred.
  */
-inline int32_t as_bytes_get_int32(const as_bytes * bytes, uint32_t index)
+inline uint32_t as_bytes_get_int32(const as_bytes * bytes, uint32_t index, int32_t * value)
 {
-	int32_t value = 0;
-	as_bytes_get(bytes, index, (uint8_t *) &value, 4);
-	return value;
+	return as_bytes_get(bytes, index, (uint8_t *) value, 4);
 }
 
 /** 
  *	Read an int64_t from the given bytes.
  *
  *	~~~~~~~~~~{.c}
- *	int64_t value = as_bytes_get_int64(&bytes, 0);
+ *	int64_t value = 0;
+ *	uint32_t sz = as_bytes_get_int64(&bytes, 0, &value);
+ *	if ( sz == 0 ) {
+ *		// sz == 0, means that an error occurred
+ *	}
  *	~~~~~~~~~~
  *
- *	@return On success, the int64_t value at the specified index. Otherwise INT64_MIN.
+ *	@return The number of bytes read and stored into value. 0 (zero) indicates
+ * 			an error has occurred.
  */
-inline int64_t as_bytes_get_int64(const as_bytes * bytes, uint32_t index)
+inline uint32_t as_bytes_get_int64(const as_bytes * bytes, uint32_t index, int64_t * value)
 {
-	int64_t value = 0;
-	as_bytes_get(bytes, index, (uint8_t *) &value, 8);
-	return value;
+	return as_bytes_get(bytes, index, (uint8_t *) value, 8);
 }
 
 /******************************************************************************
@@ -438,7 +524,7 @@ bool as_bytes_append(as_bytes * bytes, const uint8_t * value, uint32_t size);
  */
 inline bool as_bytes_append_byte(as_bytes * bytes, uint8_t value)
 {
-	return as_bytes_append(bytes, index, (uint8_t *) &value, 1);
+	return as_bytes_append(bytes, (uint8_t *) &value, 1);
 }
 
 /**
@@ -452,7 +538,7 @@ inline bool as_bytes_append_byte(as_bytes * bytes, uint8_t value)
  */
 inline bool as_bytes_append_int16(as_bytes * bytes, int16_t value)
 {
-	return as_bytes_append(bytes, index, (uint8_t *) &value, 2);
+	return as_bytes_append(bytes, (uint8_t *) &value, 2);
 }
 
 /**
@@ -466,7 +552,7 @@ inline bool as_bytes_append_int16(as_bytes * bytes, int16_t value)
  */
 inline bool as_bytes_append_int32(as_bytes * bytes, int32_t value)
 {
-	return as_bytes_append(bytes, index, (uint8_t *) &value, 4);
+	return as_bytes_append(bytes, (uint8_t *) &value, 4);
 }
 
 /**
@@ -480,7 +566,7 @@ inline bool as_bytes_append_int32(as_bytes * bytes, int32_t value)
  */
 inline bool as_bytes_append_int64(as_bytes * bytes, int64_t value)
 {
-	return as_bytes_append(bytes, index, (uint8_t *) &value, 8);
+	return as_bytes_append(bytes, (uint8_t *) &value, 8);
 }
 
 /******************************************************************************
@@ -541,7 +627,7 @@ bool as_bytes_ensure(as_bytes * bytes, uint32_t n, bool resize);
  *
  *	@deprecated Use as_bytes_get() instead.
  */
-inline uint8_t * as_bytes_tobytes(const as_bytes * b, uint32_t * size) 
+inline uint8_t * as_bytes_tobytes(const as_bytes * bytes, uint32_t * size) 
 {
 	if ( !bytes ) return NULL;
 
