@@ -37,8 +37,6 @@
 #include <aerospike/as_list.h>
 #include <aerospike/as_arraylist.h>
 #include <aerospike/as_arraylist_iterator.h>
-#include <aerospike/as_linkedlist.h>
-#include <aerospike/as_linkedlist_iterator.h>
 
 #include <aerospike/as_map.h>
 #include <aerospike/as_hashmap.h>

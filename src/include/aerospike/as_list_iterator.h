@@ -23,7 +23,6 @@
 #pragma once
 
 #include <aerospike/as_arraylist_iterator.h>
-#include <aerospike/as_linkedlist_iterator.h>
 
 /******************************************************************************
  *	TYPES
@@ -35,7 +34,6 @@
 typedef union as_list_iterator_u {
 	
 	as_arraylist_iterator 	arraylist;
-	as_linkedlist_iterator	linkedlist;
 
 } as_list_iterator;
 

@@ -23,7 +23,6 @@
 #pragma once
 
 #include <aerospike/as_hashmap_iterator.h>
-#include <aerospike/as_linkedlist_iterator.h>
 
 /******************************************************************************
  *	TYPES

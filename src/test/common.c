@@ -9,7 +9,6 @@ PLAN( common ) {
     plan_add( types_integer );
     plan_add( types_bytes );
     plan_add( types_arraylist );
-    plan_add( types_linkedlist );
     plan_add( types_hashmap );
 
 }

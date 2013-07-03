@@ -91,8 +91,8 @@
 typedef struct as_arraylist_iterator_s {
 
 	/**
-	 *	as_linkedlist_iterator is an as_iterator.
-	 *	You can cast as_linkedlist_iterator to as_iterator.
+	 *	as_arraylist_iterator is an as_iterator.
+	 *	You can cast as_arraylist_iterator to as_iterator.
 	 */
 	as_iterator _;
 
