@@ -83,6 +83,7 @@ as_map * as_hashmap_init(as_map * m, uint32_t capacity)
 as_map * as_hashmap_new(uint32_t capacity)
 {
 	as_map *m = (as_map *) malloc(sizeof(as_map));
+	if (!m) return NULL;
 	as_val_init(&m->_, AS_MAP, true);
 	m->hooks = &as_hashmap_map_hooks;
 	shash_create((shash **) &(m->data.hashmap.htable), as_hashmap_shash_hash, sizeof(uint32_t), sizeof(as_pair *), capacity, SHASH_CR_MT_BIGLOCK | SHASH_CR_RESIZE);

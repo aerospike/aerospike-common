@@ -196,6 +196,10 @@ static int as_msgpack_raw_to_val(msgpack_object_raw * r, as_val ** v) {
     else {
         int len = r->size - 1;
         uint8_t *buf = malloc(len);
+        if (!buf) {
+            *v = NULL; 
+            return 0;
+        }
         memcpy(buf, raw+1, len);
         as_bytes *b = as_bytes_new(buf, len, true /*ismalloc*/);
         if (b)

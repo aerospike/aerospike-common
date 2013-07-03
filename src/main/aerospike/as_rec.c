@@ -78,6 +78,7 @@ as_rec * as_rec_init(as_rec * r, void * data, const as_rec_hooks * hooks) {
 
 as_rec * as_rec_new(void * data, const as_rec_hooks * hooks) {
 	as_rec * r = (as_rec *) malloc(sizeof(as_rec));
+	if (!r) return r;
 	as_val_init(&r->_, AS_REC, true);
 	r->data = data;
 	r->hooks = hooks;

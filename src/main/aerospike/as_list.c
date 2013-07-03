@@ -100,6 +100,7 @@ as_list * as_list_init(as_list * l, void * data, const as_list_hooks * hooks) {
 
 as_list * as_list_new(void * data, const as_list_hooks * hooks) {
     as_list * l = (as_list *) malloc(sizeof(as_list));
+    if (!l) return l;
     as_val_init(&l->_, AS_LIST, true);
     l->data.generic = data;
     l->hooks = hooks;
@@ -127,6 +128,7 @@ char * as_list_val_tostring(const as_val * v) {
     bool        sep = false;
 
     buf = (char *) malloc(sizeof(char) * cap);
+    if (buf) return buf;
 
     strcpy(buf, "List(");
     pos += 5;

@@ -129,6 +129,7 @@ inline as_stream * as_stream_init(as_stream * stream, void * data, const as_stre
  */
 inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks) {
 	as_stream * stream = (as_stream *) malloc(sizeof(as_stream));
+	if (!stream) return NULL;
 	stream->free = true;
 	stream->data = data;
 	stream->hooks = hooks;

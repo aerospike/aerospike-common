@@ -49,6 +49,7 @@ as_string * as_string_init(as_string * s, char * value, bool free) {
 
 as_string * as_string_new(char * value, bool free) {
 	as_string * s = (as_string *) malloc(sizeof(as_string));
+	if (!s) return s;
 	as_val_init(&s->_, AS_STRING, true);
 	s->free = free;
 	s->value = value;
@@ -93,6 +94,7 @@ char * as_string_val_tostring(const as_val * v) {
 	size_t sl = as_string_len(s);
 	size_t st = 3 + sl;
 	char * str = (char *) malloc(sizeof(char) * st);
+	if (!str) return str;
 	*(str + 0) = '\"';
 	strcpy(str + 1, s->value);
 	*(str + 1 + sl) = '\"';

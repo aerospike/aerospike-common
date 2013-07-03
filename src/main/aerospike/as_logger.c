@@ -45,6 +45,7 @@ as_logger * as_logger_init(as_logger * logger, void * source, const as_logger_ho
  */
 as_logger * as_logger_new(void * source, const as_logger_hooks * hooks) {
     as_logger * logger = (as_logger *) malloc(sizeof(as_logger));
+    if (!logger) return logger;
     logger->source = source;
     logger->hooks = hooks;
     return logger;

@@ -89,6 +89,7 @@ as_list * as_linkedlist_init(as_list * l, as_val * head, as_list * tail) {
 
 as_list * as_linkedlist_new(as_val * head, as_list * tail) {
     as_list * l = (as_list *) malloc(sizeof(as_list));
+    if (!l) return l;
     as_val_init(&l->_, AS_LIST, true);
     l->hooks = &as_linkedlist_list_hooks;
     l->data.linkedlist.head = head;

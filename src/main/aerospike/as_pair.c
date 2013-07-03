@@ -52,6 +52,7 @@ as_pair * as_pair_init(as_pair * p, as_val * _1, as_val * _2) {
 
 as_pair * as_pair_new(as_val * _1, as_val * _2) {
     as_pair * p = (as_pair *) malloc(sizeof(as_pair));
+    if (!p) return p;
     as_val_init(&p->_,AS_PAIR, true /*is_rcalloc*/);
     p->_1 = _1;
     p->_2 = _2;
@@ -81,6 +82,7 @@ char *as_pair_val_tostring(const as_val * v) {
     
     size_t l = al + bl + 5;
     char * str = (char *) malloc(sizeof(char) * l);
+    if (!str) return str;
 
     strcpy(str, "(");
     strcpy(str+1, a);

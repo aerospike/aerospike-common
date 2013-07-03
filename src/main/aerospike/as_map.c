@@ -75,6 +75,7 @@ char * as_map_val_tostring(const as_val * v) {
     bool        sep = false;
 
     buf = (char *) malloc(sizeof(char) * cap);
+    if (!buf) return buf;
     bzero(buf, sizeof(char) * cap);
 
     strcpy(buf, "Map(");

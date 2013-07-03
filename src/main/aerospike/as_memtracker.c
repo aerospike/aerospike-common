@@ -45,6 +45,7 @@ as_memtracker * as_memtracker_init(as_memtracker * memtracker, void * source, co
  */
 as_memtracker * as_memtracker_new(void * source, const as_memtracker_hooks * hooks) {
     as_memtracker * memtracker = (as_memtracker *) malloc(sizeof(as_memtracker));
+    if (!memtracker) return memtracker;
     memtracker->source = source;
     memtracker->hooks = hooks;
     return memtracker;
