@@ -332,7 +332,7 @@ char * as_arraylist_get_str(const as_arraylist * list, const uint32_t index);
  */
 inline as_integer * as_arraylist_get_integer(const as_arraylist * list, const uint32_t index) 
 {
-	return as_integer_fromval(as_arraylist_get(list, i));
+	return as_integer_fromval(as_arraylist_get(list, index));
 }
 
 /**
@@ -346,7 +346,7 @@ inline as_integer * as_arraylist_get_integer(const as_arraylist * list, const ui
  */
 inline as_string * as_arraylist_get_string(const as_arraylist * list, const uint32_t index) 
 {
-	return as_string_fromval(as_arraylist_get(list, i));
+	return as_string_fromval(as_arraylist_get(list, index));
 }
 
 /**
@@ -360,7 +360,7 @@ inline as_string * as_arraylist_get_string(const as_arraylist * list, const uint
  */
 inline as_bytes * as_arraylist_get_bytes(const as_arraylist * list, const uint32_t index) 
 {
-	return as_bytes_fromval(as_arraylist_get(list, i));
+	return as_bytes_fromval(as_arraylist_get(list, index));
 }
 
 /**
@@ -374,7 +374,7 @@ inline as_bytes * as_arraylist_get_bytes(const as_arraylist * list, const uint32
  */
 inline as_list * as_arraylist_get_list(const as_arraylist * list, const uint32_t index) 
 {
-	return as_list_fromval(as_arraylist_get(list, i));
+	return as_list_fromval(as_arraylist_get(list, index));
 }
 
 /**
@@ -388,7 +388,7 @@ inline as_list * as_arraylist_get_list(const as_arraylist * list, const uint32_t
  */
 inline as_map * as_arraylist_get_map(const as_arraylist * list, const uint32_t index) 
 {
-	return as_map_fromval(as_arraylist_get(list, i));
+	return as_map_fromval(as_arraylist_get(list, index));
 }
 
 /******************************************************************************
@@ -449,7 +449,7 @@ int as_arraylist_set_str(as_arraylist * list, const uint32_t index, const char *
  */
 inline int as_arraylist_set_integer(as_arraylist * list, const uint32_t index, as_integer * value) 
 {
-	return as_arraylist_set(list, i, (as_val *) value);
+	return as_arraylist_set(list, index, (as_val *) value);
 }
 
 /**
@@ -464,7 +464,7 @@ inline int as_arraylist_set_integer(as_arraylist * list, const uint32_t index, a
  */
 inline int as_arraylist_set_string(as_arraylist * list, const uint32_t index, as_string * value) 
 {
-	return as_arraylist_set(list, i, (as_val *) value);
+	return as_arraylist_set(list, index, (as_val *) value);
 }
 
 /**
@@ -479,7 +479,7 @@ inline int as_arraylist_set_string(as_arraylist * list, const uint32_t index, as
  */
 inline int as_arraylist_set_bytes(as_arraylist * list, const uint32_t index, as_bytes * value) 
 {
-	return as_arraylist_set(list, i, (as_val *) value);
+	return as_arraylist_set(list, index, (as_val *) value);
 }
 
 /**
@@ -494,7 +494,7 @@ inline int as_arraylist_set_bytes(as_arraylist * list, const uint32_t index, as_
  */
 inline int as_arraylist_set_list(as_arraylist * list, const uint32_t index, as_list * value) 
 {
-	return as_arraylist_set(list, i, (as_val *) value);
+	return as_arraylist_set(list, index, (as_val *) value);
 }
 
 /**
@@ -509,7 +509,7 @@ inline int as_arraylist_set_list(as_arraylist * list, const uint32_t index, as_l
  */
 inline int as_arraylist_set_map(as_arraylist * list, const uint32_t index, as_map * value) 
 {
-	return as_arraylist_set(list, i, (as_val *) value);
+	return as_arraylist_set(list, index, (as_val *) value);
 }
 
 /******************************************************************************
