@@ -333,7 +333,7 @@ bool as_arraylist_foreach(const as_arraylist * list, as_list_foreach_callback ca
 #define as_arraylist_prepend_map(__list, __v) 		as_list_prepend_map(((as_list *) (__list)), __v)
 
 #define as_arraylist_inita(__list, __n)\
-	as_arraylist_init(__list, 0);\
+	as_arraylist_init(__list, 0, 0);\
 	(__list)->capacity = __n;\
 	(__list)->size = 0;\
 	(__list)->elements = alloca(sizeof(as_val *) * __n);
