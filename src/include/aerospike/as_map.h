@@ -20,17 +20,6 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
-/**
- *	as_map is an interface for Map based data types. A map is a mapping of
- *	keys to values. 
- *
- *	Implementations:
- *	- as_hashmap
- *
- *	@addtogroup map_t
- *	@{
- */
-
 #pragma once
 
 #include <aerospike/as_iterator.h>
@@ -62,13 +51,13 @@ struct as_map_hooks_s;
 typedef bool (* as_map_foreach_callback) (const as_val * key, const as_val * value, void * udata);
 
 /**
- *	Map base type.
+ *	as_map is an interface for Map based data types.
  *
- *	This is the base type for all map types.
- *
- *	The map struct should not be used directly.
- *
+ *	Implementations:
+ *	- as_hashmap
+ *	
  *	@extends as_val
+ *	@ingroup aerospike_t
  */
 typedef struct as_map_s {
 
@@ -214,6 +203,7 @@ typedef struct as_map_hooks_s {
  *	@param hooks	Implementaton for the map interface.
  *	
  *	@return The initialized as_map on success. Otherwise NULL.
+ *	@relatesalso as_map
  */
 as_map * as_map_cons(as_map * map, bool free, void * data, const as_map_hooks * hooks);
 
@@ -225,6 +215,7 @@ as_map * as_map_cons(as_map * map, bool free, void * data, const as_map_hooks * 
  *	@param hooks	Implementaton for the map interface.
  *	
  *	@return On success, the initialized map. Otherwise NULL.
+ *	@relatesalso as_map
  */
 as_map * as_map_init(as_map * map, void * data, const as_map_hooks * hooks);
 
@@ -235,11 +226,13 @@ as_map * as_map_init(as_map * map, void * data, const as_map_hooks * hooks);
  *	@param hooks	Implementaton for the list interface.
  *	
  *	@return On succes, a new list. Otherwise NULL.
+ *	@relatesalso as_map
  */
 as_map * as_map_new(void * data, const as_map_hooks * hooks);
 
 /**
  *	Destroy the as_map and associated resources.
+ *	@relatesalso as_map
  */
 inline void as_map_destroy(as_map * map) 
 {
@@ -256,6 +249,7 @@ inline void as_map_destroy(as_map * map)
  *	@param map		The map
  *
  *	@return The hashcode value of the map.
+ *	@relatesalso as_map
  */
 inline uint32_t as_map_hashcode(const as_map * map) 
 {
@@ -268,6 +262,7 @@ inline uint32_t as_map_hashcode(const as_map * map)
  *	@param map		The map
  *
  *	@return The size of the map.
+ *	@relatesalso as_map
  */
 inline uint32_t as_map_size(const as_map * map) 
 {
@@ -285,6 +280,7 @@ inline uint32_t as_map_size(const as_map * map)
  *	@param key		The key.
  *
  *	@return The value for the specified key on success. Otherwise NULL.
+ *	@relatesalso as_map
  */
 inline as_val * as_map_get(const as_map * map, const as_val * key)
 {
@@ -299,6 +295,7 @@ inline as_val * as_map_get(const as_map * map, const as_val * key)
  *	@param val		The value for the key.
  *	
  *	@return 0 on success. Otherwise an error occurred.
+ *	@relatesalso as_map
  */
 inline int as_map_set(as_map * map, const as_val * key, const as_val * val) 
 {
@@ -311,6 +308,7 @@ inline int as_map_set(as_map * map, const as_val * key, const as_val * val)
  *	@param map		The map.
  *
  *	@return 0 on success. Otherwise an error occurred.
+ *	@relatesalso as_map
  */
 inline int as_map_clear(as_map * map)
 {
@@ -329,6 +327,7 @@ inline int as_map_clear(as_map * map)
  *	@param udata	User-data to be passed to the callback.
  *	
  *	@return TRUE on success. Otherwise an error occurred.
+ *	@relatesalso as_map
  */
 inline bool as_map_foreach(const as_map * map, as_map_foreach_callback callback, void * udata) 
 {
@@ -341,6 +340,7 @@ inline bool as_map_foreach(const as_map * map, as_map_foreach_callback callback,
  *	@param map 	The map to iterate.
  *
  *	@return On success, a new as_iterator. Otherwise NULL.
+ *	@relatesalso as_map
  */
 inline union as_map_iterator_u * as_map_iterator_new(const as_map * map) 
 {
@@ -354,6 +354,7 @@ inline union as_map_iterator_u * as_map_iterator_new(const as_map * map)
  *	@param it 	The iterator to initialize.
  *
  *	@return On success, the initializes as_iterator. Otherwise NULL.
+ *	@relatesalso as_map
  */
 inline union as_map_iterator_u * as_map_iterator_init(union as_map_iterator_u * it, const as_map * map) 
 {
@@ -366,6 +367,7 @@ inline union as_map_iterator_u * as_map_iterator_init(union as_map_iterator_u * 
 
 /**
  *	Convert to an as_val.
+ *	@relatesalso as_map
  */
 inline as_val * as_map_toval(const as_map * map) 
 {
@@ -374,6 +376,7 @@ inline as_val * as_map_toval(const as_map * map)
 
 /**
  *	Convert from an as_val.
+ *	@relatesalso as_map
  */
 inline as_map * as_map_fromval(const as_val * val) 
 {

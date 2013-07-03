@@ -39,31 +39,31 @@
  *	using `as_arraylist_iterator_init()`:
  *
  *	~~~~~~~~~~{.c}
- *		as_arraylist_iterator it;
- *		as_arraylist_iterator_init(&it, &list);
+ *	as_arraylist_iterator it;
+ *	as_arraylist_iterator_init(&it, &list);
  *	~~~~~~~~~~
  * 
  *	Or you can create a new heap allocated variable, using 
  *	`as_arraylist_iterator_new()`:
  *
  *	~~~~~~~~~~{.c}
- *		as_arraylist_iterator * it = as_arraylist_iterator_new(&list);
+ *	as_arraylist_iterator * it = as_arraylist_iterator_new(&list);
  *	~~~~~~~~~~
  *
  *	To iterate, use `as_arraylist_iterator_has_next()` and 
  *	`as_arraylist_iterator_next()`:
  *
  *	~~~~~~~~~~{.c}
- *		while ( as_arraylist_iterator_has_next(&it) ) {
- *			const as_val * val = as_arraylist_iterator_next(&it);
- *		}
+ *	while ( as_arraylist_iterator_has_next(&it) ) {
+ *		const as_val * val = as_arraylist_iterator_next(&it);
+ *	}
  *	~~~~~~~~~~
  *
  *	When you are finished using the iterator, then you should release the 
  *	iterator and associated resources:
  *
  *	~~~~~~~~~~{.c}
- *		as_arraylist_iterator_destroy(it);
+ *	as_arraylist_iterator_destroy(it);
  *	~~~~~~~~~~
  *	
  *
@@ -72,14 +72,14 @@
  *	`as_arraylist_iterator` to `as_iterator`.
  *
  *	~~~~~~~~~~{.c}
- *		as_arraylist_iterator it;
- *		as_iterator * i = (as_iterator *) as_arraylist_iterator_init(&it, &list);
+ *	as_arraylist_iterator it;
+ *	as_iterator * i = (as_iterator *) as_arraylist_iterator_init(&it, &list);
  *
- *		while ( as_iterator_has_next(i) ) {
- *			const as_val * as_iterator_next(i);
- *		}
+ *	while ( as_iterator_has_next(i) ) {
+ *		const as_val * as_iterator_next(i);
+ *	}
  *
- *		as_iterator_destroy(i);
+ *	as_iterator_destroy(i);
  *	~~~~~~~~~~
  *
  *	Each of the `as_iterator` functions proxy to the `as_arraylist_iterator`
@@ -119,6 +119,8 @@ typedef struct as_arraylist_iterator_s {
  *	@param list 		The list to iterate.
  *
  *	@return On success, the initialized iterator. Otherwise NULL.
+ *
+ *	@relatesalso as_arraylist_iterator
  */
 as_arraylist_iterator * as_arraylist_iterator_init(as_arraylist_iterator * iterator, const as_arraylist * list);
 
@@ -128,6 +130,8 @@ as_arraylist_iterator * as_arraylist_iterator_init(as_arraylist_iterator * itera
  *	@param list 		The list to iterate.
  *
  *	@return On success, the new iterator. Otherwise NULL.
+ *
+ *	@relatesalso as_arraylist_iterator
  */
 as_arraylist_iterator * as_arraylist_iterator_new(const as_arraylist * list);
 
@@ -135,6 +139,8 @@ as_arraylist_iterator * as_arraylist_iterator_new(const as_arraylist * list);
  *	Destroy the iterator and releases resources used by the iterator.
  *
  *	@param iterator 	The iterator to release
+ *
+ *	@relatesalso as_arraylist_iterator
  */
 void as_arraylist_iterator_destroy(as_arraylist_iterator * iterator);
 
@@ -148,6 +154,8 @@ void as_arraylist_iterator_destroy(as_arraylist_iterator * iterator);
  *	@param iterator 	The iterator to be tested.
  *
  *	@return true if there are more values. Otherwise false.
+ *
+ *	@relatesalso as_arraylist_iterator
  */
 bool as_arraylist_iterator_has_next(const as_arraylist_iterator * iterator);
 
@@ -158,5 +166,7 @@ bool as_arraylist_iterator_has_next(const as_arraylist_iterator * iterator);
  *	@param iterator 	The iterator to get the next value from.
  *
  *	@return The next value in the list if available. Otherwise NULL.
+ *
+ *	@relatesalso as_arraylist_iterator
  */
 const as_val * as_arraylist_iterator_next(as_arraylist_iterator * iterator);

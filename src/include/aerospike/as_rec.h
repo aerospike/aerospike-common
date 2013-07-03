@@ -20,18 +20,6 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
-/**
- *	as_rec is an interface for record types. A record is how data in Aerospike
- *	is represented. A record is composed of bins and metadata.
- *
- *	Implementatios:
- *	- as_record
- *
- *	@addtogroup rec_t
- *	@{
- */
-
-
 #pragma once
 
 #include <aerospike/as_integer.h>
@@ -52,12 +40,14 @@
 struct as_rec_hooks_s;
 
 /**
- *	Record Interface
+ *	as_rec is an interface for record types. A record is how data in Aerospike
+ *	is represented, and is composed of bins and metadata.
  *
- *	To use the record interface, you will need to create an instance 
- *	via one of the implementations.
- *
+ *	Implementatios:
+ *	- as_record
+ *	
  *	@extends as_val
+ *	@ingroup aerospike_t
  */
 typedef struct as_rec_s {
 
@@ -159,6 +149,8 @@ typedef struct as_rec_hooks_s {
  *	@param hooks	Implementaton for the map interface.
  *	
  *	@return The initialized as_map on success. Otherwise NULL.
+ *
+ *	@relatesalso as_rec
  */
 as_rec * as_rec_cons(as_rec * rec, bool free, void * data, const as_rec_hooks * hooks);
 
@@ -170,6 +162,8 @@ as_rec * as_rec_cons(as_rec * rec, bool free, void * data, const as_rec_hooks * 
  *	@param hooks	Implementaton for the record interface.
  *	
  *	@return On success, the initialized record. Otherwise NULL.
+ *
+ *	@relatesalso as_rec
  */
 as_rec * as_rec_init(as_rec * rec, void * data, const as_rec_hooks * hooks);
 
@@ -180,11 +174,15 @@ as_rec * as_rec_init(as_rec * rec, void * data, const as_rec_hooks * hooks);
  *	@param hooks	Implementaton for the record interface.
  *	
  *	@return On succes, a new record. Otherwise NULL.
+ *
+ *	@relatesalso as_rec
  */
 as_rec * as_rec_new(void * data, const as_rec_hooks * hooks);
 
 /**
  *	Destroy the record.
+ *
+ *	@relatesalso as_rec
  */
 inline void as_rec_destroy(as_rec * rec) 
 {
@@ -197,6 +195,8 @@ inline void as_rec_destroy(as_rec * rec)
 
 /**
  *	Get the data source for the record.
+ *
+ *	@relatesalso as_rec
  */
 inline void * as_rec_source(const as_rec * rec) 
 {
@@ -210,6 +210,8 @@ inline void * as_rec_source(const as_rec * rec)
  *	@param name 	The name of the bin to remove.
  *
  *	@return 0 on success, otherwise an error occurred.
+ *
+ *	@relatesalso as_rec
  */
 inline int as_rec_remove(const as_rec * rec, const char * name) 
 {
@@ -218,6 +220,8 @@ inline int as_rec_remove(const as_rec * rec, const char * name)
 
 /**
  *	Get the ttl for the record.
+ *
+ *	@relatesalso as_rec
  */
 inline uint32_t as_rec_ttl(const as_rec * rec) 
 {
@@ -226,6 +230,8 @@ inline uint32_t as_rec_ttl(const as_rec * rec)
 
 /**
  *	Get the generation of the record
+ *
+ *	@relatesalso as_rec
  */
 inline uint16_t as_rec_gen(const as_rec * rec) 
 {
@@ -234,6 +240,8 @@ inline uint16_t as_rec_gen(const as_rec * rec)
 
 /**
  *	Get the number of bins in the record.
+ *
+ *	@relatesalso as_rec
  */
 inline uint16_t as_rec_numbins(const as_rec * rec) 
 {
@@ -242,6 +250,8 @@ inline uint16_t as_rec_numbins(const as_rec * rec)
 
 /**
  *	Get the digest of the record.
+ *
+ *	@relatesalso as_rec
  */
 inline as_bytes * as_rec_digest(const as_rec * rec) 
 {
@@ -250,6 +260,8 @@ inline as_bytes * as_rec_digest(const as_rec * rec)
 
 /**
  *	Set flags on a bin.
+ *
+ *	@relatesalso as_rec
  */
 inline int  as_rec_set_flags(const as_rec * rec, const char * name, uint8_t flags) 
 {
@@ -258,6 +270,8 @@ inline int  as_rec_set_flags(const as_rec * rec, const char * name, uint8_t flag
 
 /**
  *	Set the record type.
+ *
+ *	@relatesalso as_rec
  */
 inline int as_rec_set_type(const as_rec * rec, uint8_t rec_type) 
 {
@@ -275,6 +289,8 @@ inline int as_rec_set_type(const as_rec * rec, uint8_t rec_type)
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
+ *
+ *	@relatesalso as_rec
  */
 inline as_val * as_rec_get(const as_rec * rec, const char * name) 
 {
@@ -288,6 +304,8 @@ inline as_val * as_rec_get(const as_rec * rec, const char * name)
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise 0.
+ *
+ *	@relatesalso as_rec
  */
 inline int64_t as_rec_get_int64(const as_rec * rec, const char * name) 
 {
@@ -303,6 +321,8 @@ inline int64_t as_rec_get_int64(const as_rec * rec, const char * name)
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
+ *
+ *	@relatesalso as_rec
  */
 inline char * as_rec_get_str(const as_rec * rec, const char * name) 
 {
@@ -318,6 +338,8 @@ inline char * as_rec_get_str(const as_rec * rec, const char * name)
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
+ *
+ *	@relatesalso as_rec
  */
 inline as_integer * as_rec_get_integer(const as_rec * rec, const char * name) 
 {
@@ -332,6 +354,8 @@ inline as_integer * as_rec_get_integer(const as_rec * rec, const char * name)
  *	@param name		The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
+ *
+ *	@relatesalso as_rec
  */
 inline as_string * as_rec_get_string(const as_rec * rec, const char * name) 
 {
@@ -346,6 +370,8 @@ inline as_string * as_rec_get_string(const as_rec * rec, const char * name)
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
+ *
+ *	@relatesalso as_rec
  */
 inline as_bytes * as_rec_get_bytes(const as_rec * rec, const char * name) 
 {
@@ -360,6 +386,8 @@ inline as_bytes * as_rec_get_bytes(const as_rec * rec, const char * name)
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
+ *
+ *	@relatesalso as_rec
  */
 inline as_list * as_rec_get_list(const as_rec * rec, const char * name) 
 {
@@ -374,6 +402,8 @@ inline as_list * as_rec_get_list(const as_rec * rec, const char * name)
  *	@param name 	The name of the bin.
  *
  *	@return On success, the value of the bin. Otherwise NULL.
+ *
+ *	@relatesalso as_rec
  */
 inline as_map * as_rec_get_map(const as_rec * rec, const char * name) 
 {
@@ -393,6 +423,8 @@ inline as_map * as_rec_get_map(const as_rec * rec, const char * name)
  *	@param value 	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
+ *
+ *	@relatesalso as_rec
  */
 inline int as_rec_set(const as_rec * rec, const char * name, const as_val * value) 
 {
@@ -407,6 +439,8 @@ inline int as_rec_set(const as_rec * rec, const char * name, const as_val * valu
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
+ *
+ *	@relatesalso as_rec
  */
 inline int as_rec_set_int64(const as_rec * rec, const char * name, int64_t value) 
 {
@@ -421,6 +455,8 @@ inline int as_rec_set_int64(const as_rec * rec, const char * name, int64_t value
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
+ *
+ *	@relatesalso as_rec
  */
 inline int as_rec_set_str(const as_rec * rec, const char * name, const char * value) 
 {
@@ -435,6 +471,8 @@ inline int as_rec_set_str(const as_rec * rec, const char * name, const char * va
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
+ *
+ *	@relatesalso as_rec
  */
 inline int as_rec_set_integer(const as_rec * rec, const char * name, const as_integer * value) 
 {
@@ -449,6 +487,8 @@ inline int as_rec_set_integer(const as_rec * rec, const char * name, const as_in
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
+ *
+ *	@relatesalso as_rec
  */
 inline int as_rec_set_string(const as_rec * rec, const char * name, const as_string * value) 
 {
@@ -463,6 +503,8 @@ inline int as_rec_set_string(const as_rec * rec, const char * name, const as_str
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
+ *
+ *	@relatesalso as_rec
  */
 inline int as_rec_set_bytes(const as_rec * rec, const char * name, const as_bytes * value) 
 {
@@ -477,6 +519,8 @@ inline int as_rec_set_bytes(const as_rec * rec, const char * name, const as_byte
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
+ *
+ *	@relatesalso as_rec
  */
 inline int as_rec_set_list(const as_rec * rec, const char * name, const as_list * value) 
 {
@@ -491,6 +535,8 @@ inline int as_rec_set_list(const as_rec * rec, const char * name, const as_list 
  *	@param value	The value of the bin.
  *
  *	@return On success, 0. Otherwise an error occurred.
+ *
+ *	@relatesalso as_rec
  */
 inline int as_rec_set_map(const as_rec * rec, const char * name, const as_map * value) 
 {
@@ -503,6 +549,8 @@ inline int as_rec_set_map(const as_rec * rec, const char * name, const as_map * 
 
 /**
  *	Convert to an as_val.
+ *
+ *	@relatesalso as_rec
  */
 inline as_val * as_rec_toval(const as_rec * rec) 
 {
@@ -511,6 +559,8 @@ inline as_val * as_rec_toval(const as_rec * rec)
 
 /**
  *	Convert from an as_val.
+ *
+ *	@relatesalso as_rec
  */
 inline as_rec * as_rec_fromval(const as_val * v) 
 {

@@ -20,11 +20,6 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
-/**
- *	@addtogroup nil_t
- *	@{
- */
-
 #pragma once
 
 #include <aerospike/as_val.h>
@@ -37,6 +32,7 @@
 
 /**
  *	NIL value
+ *	@ingroup aerospike_t
  */
 extern const as_val as_nil;
 

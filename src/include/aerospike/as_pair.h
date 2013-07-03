@@ -20,11 +20,6 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
-/**
- *	@addtogroup pair_t
- *	@{
- */
-
 #pragma once
 
 #include <aerospike/as_util.h>
@@ -44,6 +39,7 @@
 
 /**
  *	A Pair of values: (_1,_2)
+ *	@ingroup aerospike_t
  */
 typedef struct as_pair_s {
 
@@ -77,6 +73,8 @@ typedef struct as_pair_s {
  *	@param _2	The second value.
  *
  *	@return On success, the new pair. Otherwise NULL.
+ *
+ *	@relatesalso as_pair
  */
 as_pair * as_pair_new(as_val * _1, as_val * _2);
 
@@ -88,11 +86,15 @@ as_pair * as_pair_new(as_val * _1, as_val * _2);
  *	@param _2	The second value.
  *
  *	@return On success, the new pair. Otherwise NULL.
+ *
+ *	@relatesalso as_pair
  */
 as_pair * as_pair_init(as_pair * pair, as_val * _1, as_val * _2);
 
 /**
  *	Destroy the `as_pair` and release associated resources.
+ *
+ *	@relatesalso as_pair
  */
 inline void as_pair_destroy(as_pair * pair)
 {
@@ -105,6 +107,8 @@ inline void as_pair_destroy(as_pair * pair)
 
 /**
  *	Get the first value of the pair
+ *
+ *	@relatesalso as_pair
  */
 inline as_val * as_pair_1(as_pair * pair) 
 {
@@ -125,6 +129,8 @@ inline as_val * as_pair_2(as_pair * pair)
 
 /**
  *	Convert to an as_val.
+ *
+ *	@relatesalso as_pair
  */
 inline as_val * as_pair_toval(const as_pair * pair) 
 {
@@ -133,6 +139,8 @@ inline as_val * as_pair_toval(const as_pair * pair)
 
 /**
  *	Convert from an as_val.
+ *
+ *	@relatesalso as_pair
  */
 inline as_pair * as_pair_fromval(const as_val * v) 
 {

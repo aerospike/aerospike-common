@@ -20,12 +20,6 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
-/**
- *
- *	@addtogroup stream_t
- *	@{
- */
-
 #pragma once
 
 #include <stdlib.h>
@@ -58,6 +52,8 @@ typedef enum as_stream_status_e {
  *
  *	To use the stream interface, you will need to create an instance 
  *	via one of the implementations.
+ *
+ *	@ingroup aerospike_t
  */
 typedef struct as_stream_s {
 
@@ -116,6 +112,8 @@ typedef struct as_stream_hooks_s {
  *	@param hooks	The hooks that interface with the source
  *
  *	@return On success, the initialized stream. Otherwise NULL.
+ *
+ *	@relatesalso as_stream
  */
 inline as_stream * as_stream_init(as_stream * stream, void * data, const as_stream_hooks * hooks) 
 {
@@ -134,6 +132,8 @@ inline as_stream * as_stream_init(as_stream * stream, void * data, const as_stre
  *	@param hooks	The hooks that interface with the source
  *
  *	@return On success, a new stream. Otherwise NULL.
+ *
+ *	@relatesalso as_stream
  */
 inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks)
 {
@@ -152,6 +152,8 @@ inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks)
  *	@param stream 	The stream to destroy.
  *
  *	@return 0 on success, otherwise 1.
+ *
+ *	@relatesalso as_stream
  */
 inline void as_stream_destroy(as_stream * stream)
 {
@@ -169,6 +171,8 @@ inline void as_stream_destroy(as_stream * stream)
  *	@param stream 	The stream to get the source from
  *
  *	@return pointer to the source of the stream
+ *
+ *	@relatesalso as_stream
  */
 inline void * as_stream_source(const as_stream * stream)
 {
@@ -181,6 +185,8 @@ inline void * as_stream_source(const as_stream * stream)
  *	@param stream 	The stream to be read.
  *
  *	@return the element read from the stream or STREAM_END
+ *
+ *	@relatesalso as_stream
  */
 inline as_val * as_stream_read(const as_stream * stream)
 {
@@ -193,6 +199,8 @@ inline as_val * as_stream_read(const as_stream * stream)
  *	@param stream 	The stream to test.
  *
  *	@return true if the stream can be read from
+ *
+ *	@relatesalso as_stream
  */
 inline bool as_stream_readable(const as_stream * stream)
 {
@@ -206,6 +214,8 @@ inline bool as_stream_readable(const as_stream * stream)
  *	@param value	The element to write to the stream.
  *
  *	@return AS_STREAM_OK on success, otherwise is failure.
+ *
+ *	@relatesalso as_stream
  */
 inline as_stream_status as_stream_write(const as_stream * stream, as_val * value)
 {
@@ -219,12 +229,10 @@ inline as_stream_status as_stream_write(const as_stream * stream, as_val * value
  *	@param stream 	The stream to test.
  *
  *	@return true if the stream can be written to.
+ *
+ *	@relatesalso as_stream
  */
 inline bool as_stream_writable(const as_stream * stream)
 {
 	return stream != NULL && stream->hooks != NULL && stream->hooks->write;
 }
-
-/**
- *	@}
- */

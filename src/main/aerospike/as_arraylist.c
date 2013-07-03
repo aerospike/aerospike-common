@@ -40,6 +40,11 @@
 extern const as_list_hooks as_arraylist_list_hooks;
 
 /*******************************************************************************
+ *	INLINE FUNCTIONS
+ ******************************************************************************/
+
+
+/*******************************************************************************
  *	INSTANCE FUNCTIONS
  ******************************************************************************/
 
@@ -184,37 +189,8 @@ uint32_t as_arraylist_size(const as_arraylist * list)
 }
 
 /*******************************************************************************
- *	ACCESSOR & MODIFICATION FUNCTIONS
+ *	GET FUNCTIONS
  ******************************************************************************/
-
-/**
- *	Add the element to the end of the list.
- */
-int as_arraylist_append(as_arraylist * list, as_val * value) 
-{
-	int rc = as_arraylist_ensure(list, 1);
-	if ( rc != AS_ARRAYLIST_OK ) return rc;
-	list->elements[list->size++] = value;
-	return rc;
-}
-
-/**
- *	Add the element to the beginning of the list.
- */
-int as_arraylist_prepend(as_arraylist * list, as_val * value) 
-{
-	int rc = as_arraylist_ensure(list, 1);
-	if ( rc != AS_ARRAYLIST_OK ) return rc;
-
-	for (int i = list->size; i > 0; i-- ) {
-		list->elements[i] = list->elements[i-1];
-	}
-
-	list->elements[0] = value;
-	list->size++;
-
-	return rc;
-}
 
 /**
  *	Return the element at the specified index.
@@ -224,6 +200,26 @@ as_val * as_arraylist_get(const as_arraylist * list, const uint32_t i)
 	if ( i >= list->size ) return(NULL);
 	return list->elements[i];
 }
+
+int64_t as_arraylist_get_int64(const as_arraylist * list, const uint32_t i) 
+{
+	return as_integer_get(as_integer_fromval(as_arraylist_get(list, i)));
+}
+
+char * as_arraylist_get_str(const as_arraylist * list, const uint32_t i) 
+{
+	return as_string_get(as_string_fromval(as_arraylist_get(list, i)));
+}
+
+extern inline as_integer * as_arraylist_get_integer(const as_arraylist * list, const uint32_t i);
+extern inline as_string * as_arraylist_get_string(const as_arraylist * list, const uint32_t i);
+extern inline as_bytes * as_arraylist_get_bytes(const as_arraylist * list, const uint32_t i);
+extern inline as_list * as_arraylist_get_list(const as_arraylist * list, const uint32_t i);
+extern inline as_map * as_arraylist_get_map(const as_arraylist * list, const uint32_t i);
+
+/*******************************************************************************
+ *	SET FUNCTIONS
+ ******************************************************************************/
 
 /**
  *	Set the arraylist (L) at element index position (i) with element value (v).
@@ -250,6 +246,96 @@ int as_arraylist_set(as_arraylist * list, const uint32_t index, as_val * value)
 
 	return rc;
 }
+
+int as_arraylist_set_int64(as_arraylist * list, const uint32_t i, int64_t value) 
+{
+	return as_arraylist_set(list, i, (as_val *) as_integer_new(value));
+}
+
+int as_arraylist_set_str(as_arraylist * list, const uint32_t i, const char * value) 
+{
+	return as_arraylist_set(list, i, (as_val *) as_string_new(strdup(value), true));
+}
+
+extern inline int as_arraylist_set_integer(as_arraylist * list, const uint32_t i, as_integer * value);
+extern inline int as_arraylist_set_string(as_arraylist * list, const uint32_t i, as_string * value);
+extern inline int as_arraylist_set_bytes(as_arraylist * list, const uint32_t i, as_bytes * value);
+extern inline int as_arraylist_set_list(as_arraylist * list, const uint32_t i, as_list * value);
+extern inline int as_arraylist_set_map(as_arraylist * list, const uint32_t i, as_map * value);
+
+/*******************************************************************************
+ *	APPEND FUNCTIONS
+ ******************************************************************************/
+
+/**
+ *	Add the element to the end of the list.
+ */
+int as_arraylist_append(as_arraylist * list, as_val * value) 
+{
+	int rc = as_arraylist_ensure(list, 1);
+	if ( rc != AS_ARRAYLIST_OK ) return rc;
+	list->elements[list->size++] = value;
+	return rc;
+}
+
+int as_arraylist_append_int64(as_arraylist * list, int64_t value) 
+{
+	return as_arraylist_append(list, (as_val *) as_integer_new(value));
+}
+
+int as_arraylist_append_str(as_arraylist * list, const char * value) 
+{
+	return as_arraylist_append(list, (as_val *) as_string_new(strdup(value), true));
+}
+
+extern inline int as_arraylist_append_integer(as_arraylist * list, as_integer * value);
+extern inline int as_arraylist_append_string(as_arraylist * list, as_string * value);
+extern inline int as_arraylist_append_bytes(as_arraylist * list, as_bytes * value);
+extern inline int as_arraylist_append_list(as_arraylist * list, as_list * value);
+extern inline int as_arraylist_append_map(as_arraylist * list, as_map * value);
+
+/*******************************************************************************
+ *	PREPEND FUNCTIONS
+ ******************************************************************************/
+
+/**
+ *	Add the element to the beginning of the list.
+ */
+int as_arraylist_prepend(as_arraylist * list, as_val * value) 
+{
+	int rc = as_arraylist_ensure(list, 1);
+	if ( rc != AS_ARRAYLIST_OK ) return rc;
+
+	for (int i = list->size; i > 0; i-- ) {
+		list->elements[i] = list->elements[i-1];
+	}
+
+	list->elements[0] = value;
+	list->size++;
+
+	return rc;
+}
+
+int as_arraylist_prepend_int64(as_arraylist * list, int64_t value) 
+{
+	return as_arraylist_append(list, (as_val *) as_integer_new(value));
+}
+
+int as_arraylist_prepend_str(as_arraylist * list, const char * value) 
+{
+	return as_arraylist_append(list, (as_val *) as_string_new(strdup(value), true));
+}
+
+
+extern inline int as_arraylist_prepend_integer(as_arraylist * list, as_integer * value);
+extern inline int as_arraylist_prepend_string(as_arraylist * list, as_string * value);
+extern inline int as_arraylist_prepend_bytes(as_arraylist * list, as_bytes * value);
+extern inline int as_arraylist_prepend_list(as_arraylist * list, as_list * value);
+extern inline int as_arraylist_prepend_map(as_arraylist * list, as_map * value);
+
+/*******************************************************************************
+ *	ACCESSOR & MODIFICATION FUNCTIONS
+ ******************************************************************************/
 
 as_val * as_arraylist_head(const as_arraylist * list) 
 {

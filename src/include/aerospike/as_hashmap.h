@@ -20,12 +20,6 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
-/**
- *	@copydoc as_hashmap
- *	@addtogroup hashmap_t
- *	@{
- */
-
 #pragma once
 
 #include <aerospike/as_map.h>
@@ -82,6 +76,7 @@
  *	`as_hashmap_destroy()`.
  *
  *	@extends as_map
+ *	@ingroup aerospike_t
  */
 typedef struct as_hashmap_s {
 	
@@ -110,6 +105,8 @@ typedef struct as_hashmap_s {
  *	@param buckets		The number of hash buckets to allocate.
  *
  *	@return On success, the initialized map. Otherwise NULL.
+ *
+ *	@relatesalso as_hashmap
  */
 as_hashmap * as_hashmap_init(as_hashmap * map, uint32_t buckets);
 
@@ -119,6 +116,8 @@ as_hashmap * as_hashmap_init(as_hashmap * map, uint32_t buckets);
  *	@param buckets		The number of hash buckets to allocate.
  *
  *	@return On success, the new map. Otherwise NULL.
+ *
+ *	@relatesalso as_hashmap
  */
 as_hashmap * as_hashmap_new(uint32_t buckets);
 
@@ -126,6 +125,8 @@ as_hashmap * as_hashmap_new(uint32_t buckets);
  *	Free the map and associated resources.
  *
  *	@param map 	The map to destroy.
+ *
+ *	@relatesalso as_hashmap
  */
 void as_hashmap_destroy(as_hashmap * map);
 
@@ -139,6 +140,8 @@ void as_hashmap_destroy(as_hashmap * map);
  *	@param map 	The list.
  *
  *	@return The hash value of the list.
+ *
+ *	@relatesalso as_hashmap
  */
 uint32_t as_hashmap_hashcode(const as_hashmap * map);
 
@@ -148,6 +151,8 @@ uint32_t as_hashmap_hashcode(const as_hashmap * map);
  *	@param map 	The map.
  *
  *	@return The number of entries in the map.
+ *
+ *	@relatesalso as_hashmap
  */
 uint32_t as_hashmap_size(const as_hashmap * map);
 
@@ -162,6 +167,8 @@ uint32_t as_hashmap_size(const as_hashmap * map);
  *	@param key		The key.
  *
  *	@return The value for the specified key. Otherwise NULL.
+ *
+ *	@relatesalso as_hashmap
  */
 as_val * as_hashmap_get(const as_hashmap * map, const as_val * key);
 
@@ -173,6 +180,8 @@ as_val * as_hashmap_get(const as_hashmap * map, const as_val * key);
  *	@param val		The value for the given key.
  *
  *	@return 0 on success. Otherwise an error occurred.
+ *
+ *	@relatesalso as_hashmap
  */
 int as_hashmap_set(as_hashmap * map, const as_val * key, const as_val * val);
 
@@ -182,6 +191,8 @@ int as_hashmap_set(as_hashmap * map, const as_val * key, const as_val * val);
  *	@param map		The map.
  *
  *	@return 0 on success. Otherwise an error occurred.
+ *
+ *	@relatesalso as_hashmap
  */
 int as_hashmap_clear(as_hashmap * map);
 
@@ -197,9 +208,7 @@ int as_hashmap_clear(as_hashmap * map);
  *	@param udata	User-data to be passed to the callback.
  *	
  *	@return TRUE on success. Otherwise an error occurred.
+ *
+ *	@relatesalso as_hashmap
  */
 bool as_hashmap_foreach(const as_hashmap * map, as_map_foreach_callback callback, void * udata);
-
-/**
- *	@}
- */
