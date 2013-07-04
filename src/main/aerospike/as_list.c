@@ -128,7 +128,7 @@ char * as_list_val_tostring(const as_val * v) {
     bool        sep = false;
 
     buf = (char *) malloc(sizeof(char) * cap);
-    if (buf) return buf;
+    if (!buf) return buf;
 
     strcpy(buf, "List(");
     pos += 5;
