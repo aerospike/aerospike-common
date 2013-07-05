@@ -50,7 +50,7 @@ typedef enum as_bytes_type_e {
 	/** 
 	 *	Float
 	 */
-	AS_BYTES_FLOAT	= 1,
+	AS_BYTES_FLOAT		= 1,
 
 	/** 
 	 *	String
@@ -83,19 +83,34 @@ typedef enum as_bytes_type_e {
 	AS_BYTES_RUBY		= 10,
 
 	/**
+	 *	Serialized PHP Object
+	 */
+	AS_BYTES_PHP		= 11,
+
+	/**
 	 *	Serialized Erlang Data
 	 */
-	AS_BYTES_ERLANG		= 11,
+	AS_BYTES_ERLANG		= 12,
 
 	/**
-	 *	Serialized Lua Table
+	 *	Map
 	 */
-	AS_BYTES_LUA		= 13,
+	AS_BYTES_MAP		= 19,
 
 	/**
-	 *	JSON Object
+	 *	List
 	 */
-	AS_BYTES_JSON		= 14
+	AS_BYTES_LIST		= 20,
+
+	/**
+	 *	Large Date Type
+	 */
+	AS_BYTES_LDT		= 21,
+
+	/**
+	 *	Upper bounds for the enum
+	 */
+	AS_BYTES_TYPE_MAX	= 22
 
 } as_bytes_type;
 

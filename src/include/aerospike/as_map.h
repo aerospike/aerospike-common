@@ -404,7 +404,3 @@ uint32_t as_map_val_hashcode(const as_val * val);
  *	Internal helper function for getting the string representation of an as_val.
  */
 char * as_map_val_tostring(const as_val * val);
-
-/**
- *	@}
- */

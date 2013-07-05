@@ -168,7 +168,7 @@ typedef enum as_arraylist_status_e {
  *	@relatesalso as_arraylist
  */
 #define as_arraylist_inita(__list, __n)\
-	as_arraylist_init(__list, 0, 0);\
+	as_arraylist_init((__list), 0, 0);\
 	(__list)->capacity = __n;\
 	(__list)->size = 0;\
 	(__list)->elements = alloca(sizeof(as_val *) * __n);

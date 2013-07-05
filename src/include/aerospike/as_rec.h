@@ -40,6 +40,19 @@
 struct as_rec_hooks_s;
 
 /**
+ *	Callback function for `as_rec_foreach()`. Called for each bin in the 
+ *	record.
+ *	
+ *	@param name 	The name of the current bin.
+ *	@param value 	The value of the current bin.
+ *	@param udata	The user-data provided to the `as_rec_foreach()`.
+ *	
+ *	@return true to continue iterating through the list. 
+ *			false to stop iterating.
+ */
+typedef bool (* as_rec_foreach_callback) (const char * name, const as_val * value, void * udata);
+
+/**
  *	as_rec is an interface for record types. A record is how data in Aerospike
  *	is represented, and is composed of bins and metadata.
  *
@@ -132,6 +145,11 @@ typedef struct as_rec_hooks_s {
 	 *	Set the type of record.
 	 */
 	int (* set_type)(const as_rec * rec,  uint8_t type);
+
+	/**
+	 *	Iterate over each bin in the record.
+	 */
+	bool (* foreach)(const char * bin, const as_val * value, void * udata);
 
 } as_rec_hooks;
 
@@ -544,6 +562,26 @@ inline int as_rec_set_map(const as_rec * rec, const char * name, const as_map * 
 }
 
 /******************************************************************************
+ *	ITERATION FUNCTIONS
+ ******************************************************************************/
+
+/**
+ *	Call the callback function for each bin in the record.
+ *
+ *	@param rec		The as_rec containing the bins to iterate over.
+ *	@param callback	The function to call for each entry.
+ *	@param udata	User-data to be passed to the callback.
+ *	
+ *	@return TRUE on success. Otherwise an error occurred.
+ *
+ *	@relatesalso as_rec
+ */
+inline int as_rec_foreach(const as_rec * rec, as_rec_foreach_callback callback, void * udata) 
+{
+	return as_util_hook(set, 1, rec, callback, udata);
+}
+
+/******************************************************************************
  *	CONVERSION FUNCTIONS
  ******************************************************************************/
 
@@ -588,7 +626,3 @@ uint32_t as_rec_val_hashcode(const as_val *v);
  *	Internal helper function for getting the string representation of an as_val.
  */
 char * as_rec_val_tostring(const as_val *v);
-
-/**
- *	@}
- */

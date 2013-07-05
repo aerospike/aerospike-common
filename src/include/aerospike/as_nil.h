@@ -57,7 +57,3 @@ uint32_t as_nil_val_hashcode(const as_val * v);
  *	Internal helper function for getting the string representation of an as_val.
  */
 char * as_nil_val_tostring(const as_val * v);
-
-/**
- *	@}
- */
