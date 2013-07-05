@@ -61,6 +61,8 @@ extern inline int			as_rec_set_bytes(const as_rec * rec, const char * name, cons
 extern inline int			as_rec_set_list(const as_rec * rec, const char * name, const as_list * value);
 extern inline int			as_rec_set_map(const as_rec * rec, const char * name, const as_map * value);
 
+extern inline bool 			as_rec_foreach(const as_rec * rec, as_rec_foreach_callback callback, void * udata);
+
 extern inline as_val *		as_rec_toval(const as_rec * rec);
 extern inline as_rec *		as_rec_fromval(const as_val * v);
 

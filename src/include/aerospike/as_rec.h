@@ -149,7 +149,7 @@ typedef struct as_rec_hooks_s {
 	/**
 	 *	Iterate over each bin in the record.
 	 */
-	bool (* foreach)(const char * bin, const as_val * value, void * udata);
+	bool (* foreach)(const as_rec * rec, as_rec_foreach_callback callback, void * udata);
 
 } as_rec_hooks;
 
@@ -576,9 +576,9 @@ inline int as_rec_set_map(const as_rec * rec, const char * name, const as_map * 
  *
  *	@relatesalso as_rec
  */
-inline int as_rec_foreach(const as_rec * rec, as_rec_foreach_callback callback, void * udata) 
+inline bool as_rec_foreach(const as_rec * rec, as_rec_foreach_callback callback, void * udata) 
 {
-	return as_util_hook(set, 1, rec, callback, udata);
+	return as_util_hook(foreach, false, rec, callback, udata);
 }
 
 /******************************************************************************
