@@ -572,7 +572,7 @@ inline int as_rec_set_map(const as_rec * rec, const char * name, const as_map * 
  *	@param callback	The function to call for each entry.
  *	@param udata	User-data to be passed to the callback.
  *	
- *	@return TRUE on success. Otherwise an error occurred.
+ *	@return true if iteration completes fully. false if iteration was aborted.
  *
  *	@relatesalso as_rec
  */

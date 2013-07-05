@@ -737,7 +737,8 @@ inline int as_arraylist_prepend_map(as_arraylist * list, as_map * value)
  *	@param callback	The functon to call for each element in the list.
  *	@param udata	User-data to be sent to the callback.
  *
- *	@return On success, true. Otherwise an error occurred.
+ *	@return true if iteration completes fully. false if iteration was aborted.
+ *
  *	@relatesalso as_arraylist
  */
 bool as_arraylist_foreach(const as_arraylist * list, as_list_foreach_callback callback, void * udata);

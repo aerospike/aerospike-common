@@ -326,7 +326,8 @@ inline int as_map_clear(as_map * map)
  *	@param callback	The function to call for each entry.
  *	@param udata	User-data to be passed to the callback.
  *	
- *	@return TRUE on success. Otherwise an error occurred.
+ *	@return true if iteration completes fully. false if iteration was aborted.
+ *
  *	@relatesalso as_map
  */
 inline bool as_map_foreach(const as_map * map, as_map_foreach_callback callback, void * udata) 

@@ -965,7 +965,8 @@ inline int as_list_prepend_map(as_list * list, struct as_map_s * value)
  *	@param callback	The callback function call for each element.
  *	@param udata	User-data to send to the callback.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return true if iteration completes fully. false if iteration was aborted.
+ *
  *	@relatesalso as_list
  */
 inline bool as_list_foreach(const as_list * list, as_list_foreach_callback callback, void * udata) 
