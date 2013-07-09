@@ -4,7 +4,6 @@ include project/settings.mk
 ###############################################################################
 
 # Modules
-MSGPACK := 
 MODULES := MSGPACK
 
 # Overrride optimizations via: make O=n
