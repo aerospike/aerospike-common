@@ -171,7 +171,7 @@ typedef enum as_arraylist_status_e {
 	as_arraylist_init((__list), 0, 0);\
 	(__list)->capacity = __n;\
 	(__list)->size = 0;\
-	(__list)->elements = alloca(sizeof(as_val *) * __n);
+	(__list)->elements = (as_val **) alloca(sizeof(as_val *) * __n);
 
 /*******************************************************************************
  *	INSTANCE FUNCTIONS
