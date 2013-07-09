@@ -158,7 +158,9 @@ inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks)
 inline void as_stream_destroy(as_stream * stream)
 {
 	as_util_hook(destroy, 1, stream);
-	if ( stream && stream->free ) free(stream);
+	if ( stream && stream->free ) {
+		free(stream);
+	}
 }
 
 /******************************************************************************

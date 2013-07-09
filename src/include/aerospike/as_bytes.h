@@ -294,7 +294,7 @@ typedef struct as_bytes_s {
 	(__bytes)->free = false;\
 	(__bytes)->capacity = __capacity;\
 	(__bytes)->size = 0;\
-	(__bytes)->value = alloca(__capacity);
+	(__bytes)->value = (uint8_t *) alloca(__capacity * sizeof(uint8_t));
 
 
 /******************************************************************************
