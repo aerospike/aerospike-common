@@ -50,7 +50,7 @@ static as_list *        as_arraylist_list_tail(const as_list *);
 static as_list *        as_arraylist_list_drop(const as_list *, uint32_t);
 static as_list *        as_arraylist_list_take(const as_list *, uint32_t);
 
-static bool             as_arraylist_list_foreach(const as_list *, void *, bool (*foreach)(as_val *, void *));
+static bool             as_arraylist_list_foreach(const as_list *, bool (*foreach)(as_val *, void *), void *);
 static as_iterator *    as_arraylist_list_iterator_init(const as_list *, as_iterator *);
 static as_iterator *    as_arraylist_list_iterator_new(const as_list *);
 
@@ -86,12 +86,14 @@ const as_list_hooks as_arraylist_list_hooks = {
  * and with the new (delta) allocation amount of "block_size" elements.
  * Use calloc() for the new element memory so that it is initialized to zero
  */
-as_list * as_arraylist_init(as_list * l, uint32_t capacity, uint32_t block_size) {
-    as_val_init(&l->_, AS_LIST, false /*is_malloc*/);
+as_list * as_arraylist_init(as_list * l, uint32_t capacity, uint32_t block_size)
+{
+	if ( !l ) return l;
+
+    as_val_init(&l->_, AS_LIST, false);
     l->hooks = &as_arraylist_list_hooks;
     // Allocate 'capacity' elements of SIZE bytes each, all initialized to 0.
-    l->data.arraylist.elements =
-            (as_val **) calloc( capacity, sizeof(as_val *) );
+    l->data.arraylist.elements = (as_val **) calloc( capacity, sizeof(as_val *) );
     l->data.arraylist.size = 0; // No elements have been added yet
     l->data.arraylist.capacity = capacity;
     l->data.arraylist.block_size = block_size;
@@ -103,9 +105,12 @@ as_list * as_arraylist_init(as_list * l, uint32_t capacity, uint32_t block_size)
  * and with the new (delta) allocation amount of "block_size" elements.
  * Use calloc() for the new element memory so that it is initialized to zero
  */
-as_list * as_arraylist_new(uint32_t capacity, uint32_t block_size) {
+as_list * as_arraylist_new(uint32_t capacity, uint32_t block_size)
+{
     as_list * l = (as_list *) malloc(sizeof(as_list));
-    as_val_init(&l->_, AS_LIST, true /*is_malloc*/);
+	if ( !l ) return l;
+
+    as_val_init(&l->_, AS_LIST, true);
     l->hooks = &as_arraylist_list_hooks;
     // Allocate 'capacity' elements of SIZE bytes each, all initialized to 0.
     l->data.arraylist.elements = (as_val **) calloc(capacity, sizeof(as_val *));
@@ -119,7 +124,8 @@ as_list * as_arraylist_new(uint32_t capacity, uint32_t block_size) {
  * as_arraylist_destroy
  * helper function for those who like the joy of as_arraylist_new
  */
-void as_arraylist_destroy(as_list * l) {
+void as_arraylist_destroy(as_list * l)
+{
     as_val_val_destroy( (as_val *) l);
 }
 
@@ -357,7 +363,7 @@ static as_list * as_arraylist_list_take(const as_list * l, uint32_t n) {
 /** 
  * Call the callback function for each element in the list.
  */
-static bool as_arraylist_list_foreach(const as_list * l, void * udata, as_list_foreach_callback callback) {
+static bool as_arraylist_list_foreach(const as_list * l, as_list_foreach_callback callback, void * udata) {
     const as_arraylist * a = &l->data.arraylist;
     for(int i = 0; i < a->size; i++ ) {
         if ( callback(a->elements[i], udata) == false ) {

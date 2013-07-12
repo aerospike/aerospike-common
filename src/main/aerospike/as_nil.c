@@ -31,7 +31,7 @@
 
 const as_val as_nil = {
     .type = AS_NIL,
-    .is_malloc = false,
+    .free = false,
     .count = 0
 };
 

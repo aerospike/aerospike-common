@@ -20,6 +20,7 @@
  * IN THE SOFTWARE.
  *****************************************************************************/
 
+#include <stdlib.h>
 #include <stdio.h>
 
 #include <aerospike/as_buffer.h>

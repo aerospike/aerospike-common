@@ -89,7 +89,7 @@ static int as_msgpack_serializer_deserialize(as_serializer * s, as_buffer * buff
 
     size_t offset = 0;
 
-    if ( msgpack_unpack_next(&msg, (uint8_t *) buff->data, buff->size, &offset) ) {
+    if ( msgpack_unpack_next(&msg, (char *) buff->data, buff->size, &offset) ) {
         as_msgpack_object_to_val(&msg.data, v);
     }
 

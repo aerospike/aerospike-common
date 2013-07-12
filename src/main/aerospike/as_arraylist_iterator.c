@@ -51,17 +51,23 @@ const as_iterator_hooks as_arraylist_iterator_hooks = {
  * FUNCTIONS
  *****************************************************************************/
 
-as_iterator * as_arraylist_iterator_new(const as_arraylist * l) {
+as_iterator * as_arraylist_iterator_new(const as_arraylist * l)
+{
     as_iterator * i = (as_iterator *) malloc(sizeof(as_iterator));
-    i->is_malloc = true;
+	if ( !i ) return i;
+
+    i->free = true;
     i->hooks = &as_arraylist_iterator_hooks;
     i->data.arraylist.list = l;
     i->data.arraylist.pos = 0;
     return i;
 }
 
-as_iterator * as_arraylist_iterator_init(const as_arraylist * l, as_iterator * i) {
-    i->is_malloc = false;
+as_iterator * as_arraylist_iterator_init(const as_arraylist * l, as_iterator * i)
+{
+	if ( !i ) return i;
+
+    i->free = false;
     i->hooks = &as_arraylist_iterator_hooks;
     i->data.arraylist.list = l;
     i->data.arraylist.pos = 0;
@@ -72,16 +78,19 @@ as_iterator * as_arraylist_iterator_init(const as_arraylist * l, as_iterator * i
  * STATIC FUNCTIONS
  *****************************************************************************/
 
-static void as_arraylist_iterator_destroy(as_iterator * i) {
+static void as_arraylist_iterator_destroy(as_iterator * i)
+{
     return;
 }
 
-static bool as_arraylist_iterator_has_next(const as_iterator * i) {
+static bool as_arraylist_iterator_has_next(const as_iterator * i)
+{
     const as_arraylist_iterator * it = &i->data.arraylist;
     return it->pos < it->list->size;
 }
 
-static as_val * as_arraylist_iterator_next(as_iterator * i) {
+static as_val * as_arraylist_iterator_next(as_iterator * i)
+{
     as_arraylist_iterator * it = &i->data.arraylist;
     if ( it->pos < it->list->size ) {
         as_val * val = *(it->list->elements + it->pos);

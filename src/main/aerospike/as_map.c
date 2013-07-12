@@ -43,7 +43,7 @@ extern inline as_val *      as_map_get(const as_map * m, const as_val * k);
 extern inline int           as_map_set(as_map * m, const as_val * k, const as_val * v);
 extern inline int           as_map_clear(as_map * m);
 
-extern inline void          as_map_foreach(const as_map * m, void * udata, as_map_foreach_callback callback);
+extern inline void          as_map_foreach(const as_map * m, as_map_foreach_callback callback, void * udata);
 extern inline as_iterator * as_map_iterator_init(as_iterator *i, const as_map * m);
 extern inline as_iterator * as_map_iterator_new(const as_map * m);
 
@@ -75,6 +75,7 @@ char * as_map_val_tostring(const as_val * v) {
     bool        sep = false;
 
     buf = (char *) malloc(sizeof(char) * cap);
+    if (!buf) return buf;
     bzero(buf, sizeof(char) * cap);
 
     strcpy(buf, "Map(");
@@ -90,17 +91,16 @@ char * as_map_val_tostring(const as_val * v) {
 
         char * valstr = as_val_tostring(as_pair_2(pair));
         size_t vallen = strlen(valstr);
+        if ( sep ) {
+            strcpy(buf + pos, ", ");
+            pos += 2;
+        }
 
         if ( pos + keylen + 2 + vallen + 2 >= cap ) {
             uint32_t adj = keylen+2+vallen+2 > blk ? keylen+2+vallen+2 : blk;
             buf = realloc(buf, sizeof(char) * (cap + adj));
             bzero(buf+cap, sizeof(char)*adj);
             cap += adj;
-        }
-
-        if ( sep ) {
-            strcpy(buf + pos, ", ");
-            pos += 2;
         }
 
         strncpy(buf + pos, keystr, keylen);
@@ -118,6 +118,7 @@ char * as_map_val_tostring(const as_val * v) {
     as_iterator_destroy(&i);
 
     strcpy(buf + pos, ")");
+    buf[pos + 1] = 0;
     
     return buf;
 }

@@ -20,15 +20,15 @@
  * IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <stdbool.h>
-#include <stdlib.h>
-
 #include <citrusleaf/cf_alloc.h>
 
 #include <aerospike/as_iterator.h>
 #include <aerospike/as_linkedlist.h>
 #include <aerospike/as_linkedlist_iterator.h>
 #include <aerospike/as_list.h>
+
+#include <stdbool.h>
+#include <stdlib.h>
 
 /******************************************************************************
  * STATIC FUNCTIONS
@@ -43,54 +43,63 @@ static as_val * as_linkedlist_iterator_next(as_iterator *);
  *****************************************************************************/
 
 const as_iterator_hooks as_linkedlist_iterator_hooks = {
-    .destroy    = as_linkedlist_iterator_destroy,
-    .has_next   = as_linkedlist_iterator_has_next,
-    .next       = as_linkedlist_iterator_next
+	.destroy    = as_linkedlist_iterator_destroy,
+	.has_next   = as_linkedlist_iterator_has_next,
+	.next       = as_linkedlist_iterator_next
 };
 
 /******************************************************************************
  * FUNCTIONS
  *****************************************************************************/
 
-as_iterator * as_linkedlist_iterator_new(const as_linkedlist * l) {
-    as_iterator * i = (as_iterator *) malloc(sizeof(as_iterator));
-    i->is_malloc = true;
-    i->hooks = &as_linkedlist_iterator_hooks;
-    i->data.linkedlist.list = l;
-    return i;
+as_iterator * as_linkedlist_iterator_new(const as_linkedlist * l)
+{
+	as_iterator * i = (as_iterator *) malloc(sizeof(as_iterator));
+	if ( !i ) return i;
+
+	i->free = true;
+	i->hooks = &as_linkedlist_iterator_hooks;
+	i->data.linkedlist.list = l;
+	return i;
 }
 
-as_iterator * as_linkedlist_iterator_init(const as_linkedlist * l, as_iterator * i) {
-    i->is_malloc = false;
-    i->hooks = &as_linkedlist_iterator_hooks;
-    i->data.linkedlist.list = l;
-    return i;
+as_iterator * as_linkedlist_iterator_init(const as_linkedlist * l, as_iterator * i)
+{
+	if ( !i ) return i;
+	
+	i->free = false;
+	i->hooks = &as_linkedlist_iterator_hooks;
+	i->data.linkedlist.list = l;
+	return i;
 }
 
 /******************************************************************************
  * STATIC FUNCTIONS
  *****************************************************************************/
 
-static void as_linkedlist_iterator_destroy(as_iterator * i) {
-    return;
+static void as_linkedlist_iterator_destroy(as_iterator * i)
+{
+	return;
 }
 
-static bool as_linkedlist_iterator_has_next(const as_iterator * i) {
-    as_linkedlist_iterator * it = (as_linkedlist_iterator *) &(i->data.linkedlist);
-    return it->list && it->list->head;
+static bool as_linkedlist_iterator_has_next(const as_iterator * i)
+{
+	as_linkedlist_iterator * it = (as_linkedlist_iterator *) &(i->data.linkedlist);
+	return it->list && it->list->head;
 }
 
-static as_val * as_linkedlist_iterator_next(as_iterator * i) {
-    as_linkedlist_iterator * it = (as_linkedlist_iterator *) &(i->data.linkedlist);
-    as_val * head = NULL;
-    if ( it->list ) {
-        head = it->list->head;
-        if ( it->list->tail ) {
-            it->list = &(it->list->tail->data.linkedlist);
-        }
-        else {
-            it->list = 0;
-        }
-    }
-    return head;
+static as_val * as_linkedlist_iterator_next(as_iterator * i)
+{
+	as_linkedlist_iterator * it = (as_linkedlist_iterator *) &(i->data.linkedlist);
+	as_val * head = NULL;
+	if ( it->list ) {
+		head = it->list->head;
+		if ( it->list->tail ) {
+			it->list = &(it->list->tail->data.linkedlist);
+		}
+		else {
+			it->list = 0;
+		}
+	}
+	return head;
 }

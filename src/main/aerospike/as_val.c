@@ -47,7 +47,7 @@ typedef char *      (* as_val_tostring_callback)(const as_val * v);
  * INLINE FUNCTIONS
  *****************************************************************************/
 
-extern inline void as_val_init(as_val *v, as_val_t type, bool is_rcalloc);
+extern inline void as_val_init(as_val *v, as_val_t type, bool free);
 
 /******************************************************************************
  * STATIC FUNCTIONS
@@ -126,7 +126,7 @@ as_val * as_val_val_destroy(as_val * v) {
     // if we reach the last reference, call the destructor, and free
     if ( 0 == cf_atomic32_decr(&(v->count)) ) {
         as_val_destroy_callbacks[ v->type ](v);     
-        if ( v->is_malloc ) {
+        if ( v->free ) {
             free(v);
         }
         v = NULL;

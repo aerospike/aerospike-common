@@ -84,7 +84,6 @@ void cf_digest_string(cf_digest *digest, char* output);
  */
 static inline void cf_digest_compute(void *data, size_t len, cf_digest *d) {
 	RIPEMD160((const unsigned char *) data, len, (unsigned char *) d->digest);
-    char *x = (char *)d; bzero(x + 16, 4);
 }
 
 
@@ -103,7 +102,6 @@ static inline void cf_digest_compute2(void *data1, size_t len1, void *data2, siz
 		RIPEMD160_Update(&c, data2, len2);
 		RIPEMD160_Final( (unsigned char *)(d->digest), &c);
 	}
-    char *x = (char *)d; bzero(x + 16, 4);
 }
 
 static inline uint32_t cf_digest_gethash(cf_digest *d, uint32_t MASK)  {

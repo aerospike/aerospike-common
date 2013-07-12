@@ -63,7 +63,7 @@ cf_vector * cf_vector_create( uint32_t value_len, uint32_t init_sz, uint flags) 
 	}
 	else
 		v->vector = 0;
-	if (flags & VECTOR_FLAG_INITZERO)
+	if ((flags & VECTOR_FLAG_INITZERO) && v->vector)
 		memset(v->vector, 0, init_sz * value_len);
 	if (flags & VECTOR_FLAG_BIGLOCK){
 #ifdef EXTERNAL_LOCKS
@@ -88,7 +88,7 @@ int cf_vector_init(cf_vector *v, uint32_t value_len, uint32_t init_sz, uint flag
 	}
 	else
 		v->vector = 0;
-	if (flags & VECTOR_FLAG_INITZERO)
+	if ((flags & VECTOR_FLAG_INITZERO) && v->vector)
 		memset(v->vector, 0, init_sz * value_len);
 	if (flags & VECTOR_FLAG_BIGLOCK){
 #ifdef EXTERNAL_LOCKS
@@ -108,7 +108,7 @@ void cf_vector_init_smalloc(cf_vector *v, uint32_t value_len, uint8_t *sbuf, int
 	v->stack_struct = true;
 	v->stack_vector = true;
 	v->vector = sbuf;
-	if (flags & VECTOR_FLAG_INITZERO)
+	if ((flags & VECTOR_FLAG_INITZERO) && v->vector)
 		memset(v->vector, 0, sbuf_sz);
 	if (flags & VECTOR_FLAG_BIGLOCK){
 #ifdef EXTERNAL_LOCKS
@@ -160,6 +160,9 @@ static int cf_vector_resize(cf_vector *v, uint32_t new_sz) {
 	if (v->flags & VECTOR_FLAG_BIGRESIZE) {
 		if (new_sz < 50)	new_sz = 50;
 	}
+	else if (new_sz == 0) {
+		new_sz = 2;
+	}
 	uint8_t *_t;
 	if (v->vector == 0 || v->stack_vector) {
 		_t = malloc(new_sz * v->value_len);
@@ -174,7 +177,7 @@ static int cf_vector_resize(cf_vector *v, uint32_t new_sz) {
 	if (!_t)	return(-1);
 	v->vector = _t;
 	if (v->flags & VECTOR_FLAG_INITZERO)
-		memset(v->vector + (v->alloc_len * v->value_len), 0, (new_sz + 2) - v->alloc_len);
+		memset(v->vector + (v->alloc_len * v->value_len), 0, (new_sz - v->alloc_len) * v->value_len);
 	v->alloc_len = new_sz;
 	return(0);
 }
@@ -188,14 +191,14 @@ int cf_vector_set(cf_vector *v, uint32_t index, void *value) {
 		return(-1);
 
 	memcpy(v->vector + (index * v->value_len), value, v->value_len);
-	if (index > v->len)	v->len = index;
+	if (index >= v->len)	v->len = index + 1;
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_UNLOCK(v);
 	return(0);
 }
 
 int cf_vector_append_lockfree(cf_vector *v, void *value) {
-	if (v->len + 1 >= v->alloc_len)
+	if (v->len >= v->alloc_len)
 		if (0 != cf_vector_resize(v, v->len * 2))	return(-1);
 	memcpy(v->vector + (v->len * v->value_len), value, v->value_len);
 	v->len ++;

@@ -1,23 +1,23 @@
 /******************************************************************************
- * Copyright 2008-2013 by Aerospike.
+ *	Copyright 2008-2013 by Aerospike.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy 
- * of this software and associated documentation files (the "Software"), to 
- * deal in the Software without restriction, including without limitation the 
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
- * sell copies of the Software, and to permit persons to whom the Software is 
- * furnished to do so, subject to the following conditions:
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy 
+ *	of this software and associated documentation files (the "Software"), to 
+ *	deal in the Software without restriction, including without limitation the 
+ *	rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
+ *	sell copies of the Software, and to permit persons to whom the Software is 
+ *	furnished to do so, subject to the following conditions:
  * 
- * The above copyright notice and this permission notice shall be included in 
- * all copies or substantial portions of the Software.
+ *	The above copyright notice and this permission notice shall be included in 
+ *	all copies or substantial portions of the Software.
  * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ *	FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *	IN THE SOFTWARE.
  *****************************************************************************/
 
 #pragma once
@@ -28,145 +28,179 @@
 #include <aerospike/as_util.h>
 
 /******************************************************************************
- * MACROS
+ *	MACROS
  *****************************************************************************/
 
 #define AS_STREAM_END ((void *) 0)
 
 /******************************************************************************
- * TYPES
+ *	TYPES
  *****************************************************************************/
 
 struct as_stream_hooks_s;
 
 /**
- * Stream Status Codes
+ *	Stream Status Codes
  */
-enum as_stream_status_e {
-    AS_STREAM_OK = 0,
-    AS_STREAM_ERR = 1
-};
-
-typedef enum as_stream_status_e as_stream_status;
+typedef enum as_stream_status_e {
+	AS_STREAM_OK	= 0,
+	AS_STREAM_ERR	= 1
+} as_stream_status;
 
 /**
- * Stream Object
- * Contains pointer to the source of the stream and a pointer to the
- * hooks that interface with the source.
+ *	Stream Interface
  *
- * @field source the source of the stream
- * @field hooks the interface to the source
+ *	To use the stream interface, you will need to create an instance 
+ *	via one of the implementations.
  */
-struct as_stream_s {
-    bool                                is_malloc;
-    void *                              data;
-    const struct as_stream_hooks_s *    hooks;
-};
+typedef struct as_stream_s {
 
-typedef struct as_stream_s as_stream;
+	/**
+	 *	Specifies whether the free() can be used 
+	 *	on this stream.
+	 */
+	bool free;
+
+	/**
+	 *	Context data for the stream.
+	 */
+	void * data;
+
+	/**
+	 *	Hooks for the stream
+	 */
+	const struct as_stream_hooks_s * hooks;
+
+} as_stream;
 
 /**
- * Stream Interface
- * Provided functions that interface with the streams.
+ *	Stream Hooks
+ *
+ *	An implementation of `as_rec` should provide implementations for each
+ *	of the hooks.
  */
-struct as_stream_hooks_s {
-    int                 (* destroy)(as_stream *);
-    as_val *            (* read)(const as_stream *);
-    as_stream_status    (* write)(const as_stream *, as_val *);
-};
+typedef struct as_stream_hooks_s {
 
-typedef struct as_stream_hooks_s as_stream_hooks;
+	/**
+	 *	Destroy the stream.
+	 */
+	int (* destroy)(as_stream * stream);
+
+	/**
+	 *	Read the next value from the stream.
+	 */
+	as_val * (* read)(const as_stream * stream);
+
+	/**
+	 *	Write a value to the stream.
+	 */
+	as_stream_status (* write)(const as_stream * stream, as_val * value);
+	
+} as_stream_hooks;
 
 /******************************************************************************
- * INLINE FUNCTIONS
+ *	INLINE FUNCTIONS
  *****************************************************************************/
 
-inline as_stream * as_stream_init(as_stream * s, void * data, const as_stream_hooks * hooks) {
-    if ( s == NULL ) return s;
-    s->is_malloc = false;
-    s->data = data;
-    s->hooks = hooks;
-    return s;
+/**
+ *	Initializes a stack allocated as_stream for a given source and hooks.
+ *
+ *	@param stream	The stream to initialize.
+ *	@param data		The source feeding the stream
+ *	@param hooks	The hooks that interface with the source
+ *
+ *	@return On success, the initialized stream. Otherwise NULL.
+ */
+inline as_stream * as_stream_init(as_stream * stream, void * data, const as_stream_hooks * hooks) {
+	if ( stream == NULL ) return stream;
+	stream->free = false;
+	stream->data = data;
+	stream->hooks = hooks;
+	return stream;
 }
 
 /**
- * Creates a new stream for a given source and hooks.
+ *	Creates a new heap allocated as_stream for a given source and hooks.
  *
- * @param source the source feeding the stream
- * @param hooks the hooks that interface with the source
+ *	@param data		The source feeding the stream
+ *	@param hooks	The hooks that interface with the source
+ *
+ *	@return On success, a new stream. Otherwise NULL.
  */
 inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks) {
-    as_stream * s = (as_stream *) malloc(sizeof(as_stream));
-    s->is_malloc = true;
-    s->data = data;
-    s->hooks = hooks;
-    return s;
+	as_stream * stream = (as_stream *) malloc(sizeof(as_stream));
+	if (!stream) return NULL;
+	stream->free = true;
+	stream->data = data;
+	stream->hooks = hooks;
+	return stream;
 }
 
 /**
- * Frees the stream
+ *	Destroy the as_stream and associated resources.
  *
- * Proxies to `s->hooks->free(s)`
+ *	@param stream 	The stream to destroy.
  *
- * @param s the stream to free
- * @return 0 on success, otherwise 1.
+ *	@return 0 on success, otherwise 1.
  */
-inline void as_stream_destroy(as_stream * s) {
-    as_util_hook(destroy, 1, s);
-    if ( s && s->is_malloc) free(s);
-}
-/**
- * Get the source for the stream
- *
- * @param stream to get the source from
- * @return pointer to the source of the stream
- */
-inline void * as_stream_source(const as_stream * s) {
-    return (s ? s->data : NULL);
+inline void as_stream_destroy(as_stream * stream) {
+	as_util_hook(destroy, 1, stream);
+	if ( stream && stream->free ) free(stream);
 }
 
 /**
- * Reads a value from the stream
+ *	Get the source for the stream
  *
- * Proxies to `s->hooks->read(s)`
+ *	@param stream 	The stream to get the source from
  *
- * @param s the stream to be read.
- * @return the element read from the stream or STREAM_END
+ *	@return pointer to the source of the stream
  */
-inline as_val * as_stream_read(const as_stream * s) {
-    return as_util_hook(read, NULL, s);
+inline void * as_stream_source(const as_stream * stream) {
+	return (stream ? stream->data : NULL);
 }
 
 /**
- * Is the stream readable? Tests whether the stream has a read function.
+ *	Reads a value from the stream
  *
- * @param s the stream to test.
- * @return true if the stream can be read from
+ *	@param stream 	The stream to be read.
+ *
+ *	@return the element read from the stream or STREAM_END
  */
-inline bool as_stream_readable(const as_stream * s) {
-    return s != NULL && s->hooks != NULL && s->hooks->read;
+inline as_val * as_stream_read(const as_stream * stream) {
+	return as_util_hook(read, NULL, stream);
 }
 
 /**
- * Write a value to the stream
+ *	Is the stream readable? Tests whether the stream has a read function.
  *
- * Proxies to `s->hooks->write(s,v)`
+ *	@param stream 	The stream to test.
  *
- * @param s the stream to write to.
- * @param v the element to write to the stream.
- * @return AS_STREAM_OK on success, otherwise is failure.
+ *	@return true if the stream can be read from
  */
-inline as_stream_status as_stream_write(const as_stream * s, as_val * v) {
-    return as_util_hook(write, AS_STREAM_ERR, s, v);
+inline bool as_stream_readable(const as_stream * stream) {
+	return stream != NULL && stream->hooks != NULL && stream->hooks->read;
+}
+
+/**
+ *	Write a value to the stream
+ *
+ *	@param stream	The stream to write to.
+ *	@param value	The element to write to the stream.
+ *
+ *	@return AS_STREAM_OK on success, otherwise is failure.
+ */
+inline as_stream_status as_stream_write(const as_stream * stream, as_val * value) {
+	return as_util_hook(write, AS_STREAM_ERR, stream, value);
 }
 
 
 /**
- * Is the stream writable? Tests whether the stream has a write function.
+ *	Is the stream writable? Tests whether the stream has a write function.
  *
- * @param s the stream to test.
- * @return true if the stream can be written to.
+ *	@param stream 	The stream to test.
+ *
+ *	@return true if the stream can be written to.
  */
-inline bool as_stream_writable(const as_stream * s) {
-    return s != NULL && s->hooks != NULL && s->hooks->write;
+inline bool as_stream_writable(const as_stream * stream) {
+	return stream != NULL && stream->hooks != NULL && stream->hooks->write;
 }

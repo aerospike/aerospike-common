@@ -51,9 +51,6 @@ struct as_aerospike_hooks_s {
 	// Chunk record related interfaces. Specific to Large Stack Objects
 	as_rec *(*create_subrec)(const as_aerospike *, const as_rec *);
 	as_rec *(*open_subrec)(const as_aerospike *, const as_rec *, const char *);
-	// Change Update and Close to no longer require the TOP RECORD parm
-//    int (*update_subrec)(const as_aerospike *, const as_rec *, const as_rec *);
-//    int (*close_subrec)(const as_aerospike *, const as_rec *, const as_rec *);
 	int (*update_subrec)(const as_aerospike *, const as_rec *);
 	int (*close_subrec)(const as_aerospike *, const as_rec *);
 };

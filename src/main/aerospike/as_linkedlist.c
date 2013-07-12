@@ -48,7 +48,7 @@ static as_list *        as_linkedlist_list_tail(const as_list *);
 static as_list *        as_linkedlist_list_drop(const as_list *, uint32_t);
 static as_list *        as_linkedlist_list_take(const as_list *, uint32_t);
 
-static bool             as_linkedlist_list_foreach(const as_list *, void *, as_list_foreach_callback);
+static bool             as_linkedlist_list_foreach(const as_list *, as_list_foreach_callback, void *);
 static as_iterator *    as_linkedlist_list_iterator_init(const as_list *, as_iterator *);
 static as_iterator *    as_linkedlist_list_iterator_new(const as_list *);
 
@@ -89,6 +89,7 @@ as_list * as_linkedlist_init(as_list * l, as_val * head, as_list * tail) {
 
 as_list * as_linkedlist_new(as_val * head, as_list * tail) {
     as_list * l = (as_list *) malloc(sizeof(as_list));
+    if (!l) return l;
     as_val_init(&l->_, AS_LIST, true);
     l->hooks = &as_linkedlist_list_hooks;
     l->data.linkedlist.head = head;
@@ -263,7 +264,7 @@ static as_list * as_linkedlist_list_take(const as_list * l, uint32_t n) {
 /** 
  * Call the callback function for each element in the list.
  */
-static bool as_linkedlist_list_foreach(const as_list * l, void * udata, bool (*foreach)(as_val * val, void * udata)) {
+static bool as_linkedlist_list_foreach(const as_list * l, bool (*foreach)(as_val * val, void * udata), void * udata) {
     const as_linkedlist * ll = (as_linkedlist *) &l->data.linkedlist;
     while ( ll != NULL && ll->head != NULL ) {
         if ( foreach(ll->head, udata) == false ) {
