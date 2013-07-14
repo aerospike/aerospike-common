@@ -51,6 +51,12 @@ cf_clock cf_clock_getabsolute() {
 	return(CF_TIMESPEC_TO_MS(ts));
 }
 
+cf_clock cf_clock_getabsoluteus() {
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	return(CF_TIMESPEC_TO_US(ts));
+}
+
 cf_clock cf_get_seconds() {
 	struct timespec ts;
 	clock_gettime( CLOCK_MONOTONIC, &ts);
