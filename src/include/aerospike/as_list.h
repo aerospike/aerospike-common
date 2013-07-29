@@ -609,7 +609,7 @@ inline struct as_map_s * as_list_get_map(const as_list * list, const uint32_t i)
  *	@param i		The index of the value to set in the list.
  *	@param value	The value to set at the given index.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_set(as_list * list, const uint32_t i, as_val * value) 
@@ -624,7 +624,7 @@ inline int as_list_set(as_list * list, const uint32_t i, as_val * value)
  *	@param i		The index of the value to set in the list.
  *	@param value	The value to set at the given index.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_set_int64(as_list * list, const uint32_t i, int64_t value) 
@@ -639,7 +639,7 @@ inline int as_list_set_int64(as_list * list, const uint32_t i, int64_t value)
  *	@param i		The index of the value to set in the list.
  *	@param value	The value to set at the given index.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_set_str(as_list * list, const uint32_t i, const char * value) 
@@ -669,7 +669,7 @@ inline int as_list_set_integer(as_list * list, const uint32_t i, as_integer * va
  *	@param i		The index of the value to set in the list.
  *	@param value	The value to set at the given index.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_set_string(as_list * list, const uint32_t i, as_string * value) 
@@ -684,7 +684,7 @@ inline int as_list_set_string(as_list * list, const uint32_t i, as_string * valu
  *	@param i		The index of the value to set in the list.
  *	@param value	The value to set at the given index.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_set_bytes(as_list * list, const uint32_t i, as_bytes * value) 
@@ -699,7 +699,7 @@ inline int as_list_set_bytes(as_list * list, const uint32_t i, as_bytes * value)
  *	@param i		The index of the value to set in the list.
  *	@param value	The value to set at the given index.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_set_list(as_list * list, const uint32_t i, as_list * value) 
@@ -714,7 +714,7 @@ inline int as_list_set_list(as_list * list, const uint32_t i, as_list * value)
  *	@param i		The index of the value to set in the list.
  *	@param value	The value to set at the given index.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_set_map(as_list * list, const uint32_t i, struct as_map_s * value) 
@@ -732,7 +732,7 @@ inline int as_list_set_map(as_list * list, const uint32_t i, struct as_map_s * v
  *	@param list		The list.
  *	@param value	The value to append to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_append(as_list * list, as_val * value) 
@@ -746,7 +746,7 @@ inline int as_list_append(as_list * list, as_val * value)
  *	@param list		The list.
  *	@param value	The value to append to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_append_int64(as_list * list, int64_t value) 
@@ -760,7 +760,7 @@ inline int as_list_append_int64(as_list * list, int64_t value)
  *	@param list		The list.
  *	@param value	The value to append to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_append_str(as_list * list, const char * value) 
@@ -774,7 +774,7 @@ inline int as_list_append_str(as_list * list, const char * value)
  *	@param list		The list.
  *	@param value	The value to append to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_append_integer(as_list * list, as_integer * value) 
@@ -788,7 +788,7 @@ inline int as_list_append_integer(as_list * list, as_integer * value)
  *	@param list		The list.
  *	@param value	The value to append to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_append_string(as_list * list, as_string * value) 
@@ -802,7 +802,7 @@ inline int as_list_append_string(as_list * list, as_string * value)
  *	@param list		The list.
  *	@param value	The value to append to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_append_bytes(as_list * list, as_bytes * value) 
@@ -816,7 +816,7 @@ inline int as_list_append_bytes(as_list * list, as_bytes * value)
  *	@param list		The list.
  *	@param value	The value to append to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_append_list(as_list * list, as_list * value) 
@@ -830,7 +830,7 @@ inline int as_list_append_list(as_list * list, as_list * value)
  *	@param list		The list.
  *	@param value	The value to append to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_append_map(as_list * list, struct as_map_s * value) 
@@ -848,7 +848,7 @@ inline int as_list_append_map(as_list * list, struct as_map_s * value)
  *	@param list		The list.
  *	@param value	The value to prepend to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_prepend(as_list * list, as_val * value) 
@@ -862,7 +862,7 @@ inline int as_list_prepend(as_list * list, as_val * value)
  *	@param list		The list.
  *	@param value	The value to prepend to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_prepend_int64(as_list * list, int64_t value) 
@@ -876,7 +876,7 @@ inline int as_list_prepend_int64(as_list * list, int64_t value)
  *	@param list		The list.
  *	@param value	The value to prepend to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_prepend_str(as_list * list, const char * value) 
@@ -890,7 +890,7 @@ inline int as_list_prepend_str(as_list * list, const char * value)
  *	@param list		The list.
  *	@param value	The value to prepend to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_prepend_integer(as_list * list, as_integer * value) 
@@ -904,7 +904,7 @@ inline int as_list_prepend_integer(as_list * list, as_integer * value)
  *	@param list		The list.
  *	@param value	The value to prepend to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_prepend_string(as_list * list, as_string * value) 
@@ -918,7 +918,7 @@ inline int as_list_prepend_string(as_list * list, as_string * value)
  *	@param list		The list.
  *	@param value	The value to prepend to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_prepend_bytes(as_list * list, as_bytes * value)
@@ -932,7 +932,7 @@ inline int as_list_prepend_bytes(as_list * list, as_bytes * value)
  *	@param list		The list.
  *	@param value	The value to prepend to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_prepend_list(as_list * list, as_list * value) 
@@ -946,7 +946,7 @@ inline int as_list_prepend_list(as_list * list, as_list * value)
  *	@param list		The list.
  *	@param value	The value to prepend to the list.
  *
- *	@return 0 on success. Otherwise an error ocucrred.
+ *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
 inline int as_list_prepend_map(as_list * list, struct as_map_s * value) 

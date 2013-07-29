@@ -199,7 +199,7 @@ typedef enum as_bytes_type_e {
  *	| Function | Description |
  *	| -------- | ----------- |
  *	| as_bytes_set() | Copy a byte array into the buffer. |
- *	| as_bytes_set_byte() | Wtite a byte from the buffer |
+ *	| as_bytes_set_byte() | Write a byte from the buffer |
  *	| as_bytes_set_int16() | Write a 16-bit integer from the buffer |
  *	| as_bytes_set_int32() | Write a 32-bit integer from the buffer |
  *	| as_bytes_set_int64() | Write a 64-bit integer from the buffer |
@@ -209,7 +209,7 @@ typedef enum as_bytes_type_e {
  *	| Function | Description |
  *	| -------- | ----------- |
  *	| as_bytes_append() | Copy a byte array into the buffer. |
- *	| as_bytes_append_byte() | Wtite a byte from the buffer |
+ *	| as_bytes_append_byte() | Write a byte from the buffer |
  *	| as_bytes_append_int16() | Write a 16-bit integer from the buffer |
  *	| as_bytes_append_int32() | Write a 32-bit integer from the buffer |
  *	| as_bytes_append_int64() | Write a 64-bit integer from the buffer |
@@ -255,7 +255,7 @@ typedef struct as_bytes_s {
 	uint32_t size;
 
 	/**
-	 *	A sequnece of bytes. 
+	 *	A sequence of bytes.
 	 */
 	uint8_t * value;
 
@@ -484,7 +484,7 @@ inline void as_bytes_set_type(as_bytes * bytes, as_bytes_type type)
 uint32_t as_bytes_get(const as_bytes * bytes, uint32_t index, uint8_t * value, uint32_t size);
 
 /** 
- *	Read a single byte from the given gytes.
+ *	Read a single byte from the given bytes.
  *
  *	~~~~~~~~~~{.c}
  *	uint8_t value = 0;
@@ -771,7 +771,7 @@ bool as_bytes_truncate(as_bytes * bytes, uint32_t n);
 /**
  *	Ensure the bytes buffer can handle `n` additional bytes.
  *
- *	Using the current size, we see if `size + n` is within the capcity of 
+ *	Using the current size, we see if `size + n` is within the capacity of
  *	the bytes' buffer. If so, then return true.
  *	
  *	If `resize` is true and `size + n` exceeds the capacity of the bytes's 

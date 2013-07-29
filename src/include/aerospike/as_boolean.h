@@ -90,7 +90,7 @@ extern const as_boolean as_false;
  *	@param boolean	The `as_boolean` to initialize.
  *	@param value	The bool value.
  *
- *	@return On succes, the initialized value. Otherwise NULL.
+ *	@return On success, the initialized value. Otherwise NULL.
  *
  *	@relatesalso as_boolean
  */
@@ -102,7 +102,7 @@ as_boolean * as_boolean_init(as_boolean * boolean, bool value);
  *
  *	@param value	The bool value.
  *
- *	@return On succes, the newly allocated value. Otherwise NULL.
+ *	@return On success, the newly allocated value. Otherwise NULL.
  *
  *	@relatesalso as_boolean
  */

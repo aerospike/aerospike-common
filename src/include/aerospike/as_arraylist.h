@@ -734,7 +734,7 @@ inline int as_arraylist_prepend_map(as_arraylist * list, as_map * value)
  *  Call the callback function for each element in the list.
  *
  *	@param list 	The list to iterate.
- *	@param callback	The functon to call for each element in the list.
+ *	@param callback	The function to call for each element in the list.
  *	@param udata	User-data to be sent to the callback.
  *
  *	@return true if iteration completes fully. false if iteration was aborted.

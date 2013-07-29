@@ -34,7 +34,7 @@
 /**
  *	Iterator for as_hashmap.
  *
- *	To use the iterator, you can either intialize a stack allocated variable,
+ *	To use the iterator, you can either initialize a stack allocated variable,
  *	use `as_hashmap_iterator_init()`:
  *
  *	~~~~~~~~~~{.c}

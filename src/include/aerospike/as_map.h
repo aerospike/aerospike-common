@@ -212,7 +212,7 @@ as_map * as_map_cons(as_map * map, bool free, void * data, const as_map_hooks * 
  *
  *	@param map		Stack allocated map to initialize.
  *	@param data		Data for the map.
- *	@param hooks	Implementaton for the map interface.
+ *	@param hooks	Implementation for the map interface.
  *	
  *	@return On success, the initialized map. Otherwise NULL.
  *	@relatesalso as_map
@@ -223,9 +223,9 @@ as_map * as_map_init(as_map * map, void * data, const as_map_hooks * hooks);
  *	Create and initialize a new heap allocated map.
  *	
  *	@param data		Data for the list.
- *	@param hooks	Implementaton for the list interface.
+ *	@param hooks	Implementation for the list interface.
  *	
- *	@return On succes, a new list. Otherwise NULL.
+ *	@return On success, a new list. Otherwise NULL.
  *	@relatesalso as_map
  */
 as_map * as_map_new(void * data, const as_map_hooks * hooks);

@@ -35,7 +35,7 @@
 /**
  *	Iterator for as_arraylist.
  *
- *	To use the iterator, you can either intialize a stack allocated variable,
+ *	To use the iterator, you can either initialize a stack allocated variable,
  *	using `as_arraylist_iterator_init()`:
  *
  *	~~~~~~~~~~{.c}

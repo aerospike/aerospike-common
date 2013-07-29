@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 /**
- *	as_stringmap provides a convience interface for populating a map with
+ *	as_stringmap provides a convenience interface for populating a map with
  *	string keys.
  *
  *	@addtogroup stringmap_t StringMap

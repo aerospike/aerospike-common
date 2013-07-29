@@ -139,7 +139,7 @@ typedef struct as_integer_s {
  *	@param integer		The `as_integer` to initialize.
  *	@param value		The integer value.
  *
- *	@return On succes, the initialized value. Otherwise NULL.
+ *	@return On success, the initialized value. Otherwise NULL.
  *
  *	@relatesalso as_integer
  */
@@ -161,7 +161,7 @@ as_integer * as_integer_init(as_integer * integer, int64_t value);
  *
  *	@param value		The integer value.
  *
- *	@return On succes, the initialized value. Otherwise NULL.
+ *	@return On success, the initialized value. Otherwise NULL.
  *
  *	@relatesalso as_integer
  */

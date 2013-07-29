@@ -91,7 +91,7 @@ struct as_module_hooks_s {
     int (* update)(as_module *, as_module_event *);
 
     /**
-     * Apply a functio to a record
+     * Apply a function to a record
      */
     int (* apply_record)(as_module *, as_aerospike *, const char *, const char *, as_rec *, as_list *, as_result *);
 
@@ -141,7 +141,7 @@ as_logger * as_module_logger(as_module * m);
  * Proxies to `m->hooks->destroy(m, ...)`
  *
  * @param m the module being initialized.
- * @return 0 on success, otherwhise 1
+ * @return 0 on success, otherwise 1
  */
 int as_module_destroy(as_module * m);
 
@@ -163,7 +163,7 @@ int as_module_configure(as_module * m, void * c);
  * Proxies to `m->hooks->update(m, ...)`
  *
  * @param m the module being initialized.
- * @return 0 on success, otherwhise 1
+ * @return 0 on success, otherwise 1
  */
 int as_module_update(as_module * m, as_module_event * e);
 

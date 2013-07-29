@@ -56,7 +56,7 @@ typedef bool (* as_rec_foreach_callback) (const char * name, const as_val * valu
  *	as_rec is an interface for record types. A record is how data in Aerospike
  *	is represented, and is composed of bins and metadata.
  *
- *	Implementatios:
+ *	Implementations:
  *	- as_record
  *	
  *	@extends as_val
@@ -164,7 +164,7 @@ typedef struct as_rec_hooks_s {
  *	@param rec		The record to initialize
  *	@param free 	If TRUE, then as_rec_destory() will free the record.
  *	@param data		Data for the map.
- *	@param hooks	Implementaton for the map interface.
+ *	@param hooks	Implementation for the map interface.
  *	
  *	@return The initialized as_map on success. Otherwise NULL.
  *
@@ -177,7 +177,7 @@ as_rec * as_rec_cons(as_rec * rec, bool free, void * data, const as_rec_hooks * 
  *
  *	@param rec		Stack allocated record to initialize.
  *	@param data		Data for the record.
- *	@param hooks	Implementaton for the record interface.
+ *	@param hooks	Implementation for the record interface.
  *	
  *	@return On success, the initialized record. Otherwise NULL.
  *
@@ -189,9 +189,9 @@ as_rec * as_rec_init(as_rec * rec, void * data, const as_rec_hooks * hooks);
  *	Create and initialize a new heap allocated record.
  *	
  *	@param data		Data for the record.
- *	@param hooks	Implementaton for the record interface.
+ *	@param hooks	Implementation for the record interface.
  *	
- *	@return On succes, a new record. Otherwise NULL.
+ *	@return On success, a new record. Otherwise NULL.
  *
  *	@relatesalso as_rec
  */
