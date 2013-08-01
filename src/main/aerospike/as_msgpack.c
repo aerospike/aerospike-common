@@ -32,6 +32,7 @@
  * STATIC FUNCTIONS
  ******************************************************************************/
 
+static int as_msgpack_pack_nil(msgpack_packer *);
 static int as_msgpack_pack_boolean(msgpack_packer *, as_boolean *);
 static int as_msgpack_pack_integer(msgpack_packer *, as_integer *);
 static int as_msgpack_pack_string(msgpack_packer *, as_string *);
@@ -41,6 +42,7 @@ static int as_msgpack_pack_map(msgpack_packer *, as_map *);
 static int as_msgpack_pack_rec(msgpack_packer *, as_rec *);
 static int as_msgpack_pack_pair(msgpack_packer *, as_pair *);
 
+static int as_msgpack_nil_to_val(as_val ** v);
 static int as_msgpack_boolean_to_val(bool, as_val **);
 static int as_msgpack_integer_to_val(int64_t, as_val **);
 static int as_msgpack_raw_to_val(msgpack_object_raw *, as_val **);
@@ -52,10 +54,9 @@ static int as_msgpack_map_to_val(msgpack_object_map *, as_val **);
  ******************************************************************************/
 
 int as_msgpack_pack_val(msgpack_packer * pk, as_val * v) {
-	LOG("packing val := %p", v);
 	if ( v == NULL ) return 1;
-	LOG("packing val type := %d", as_val_type(v) );
 	switch( as_val_type(v) ) {
+		case AS_NIL		: return as_msgpack_pack_nil(pk);
 		case AS_BOOLEAN : return as_msgpack_pack_boolean(pk, (as_boolean *) v);
 		case AS_INTEGER : return as_msgpack_pack_integer(pk, (as_integer *) v);
 		case AS_STRING  : return as_msgpack_pack_string(pk, (as_string *) v);
@@ -71,6 +72,7 @@ int as_msgpack_pack_val(msgpack_packer * pk, as_val * v) {
 int as_msgpack_object_to_val(msgpack_object * object, as_val ** val) {
 	if ( object == NULL ) return 1;
 	switch( object->type ) {
+		case MSGPACK_OBJECT_NIL             	: return as_msgpack_nil_to_val(val);
 		case MSGPACK_OBJECT_BOOLEAN             : return as_msgpack_boolean_to_val(object->via.boolean, val);
 		case MSGPACK_OBJECT_POSITIVE_INTEGER    : return as_msgpack_integer_to_val((int64_t) object->via.u64, val);
 		case MSGPACK_OBJECT_NEGATIVE_INTEGER    : return as_msgpack_integer_to_val((int64_t) object->via.i64, val);
@@ -85,19 +87,47 @@ int as_msgpack_object_to_val(msgpack_object * object, as_val ** val) {
  * STATIC FUNCTIONS
  ******************************************************************************/
 
+static int as_msgpack_pack_nil(msgpack_packer * pk)
+{
+	LOG("as_msgpack_pack_nil : start");
+	int rc = msgpack_pack_nil(pk);
+	if ( rc ) {
+		LOG("as_msgpack_pack_nil : msgpack_pack_nil : %d",rc);
+	}
+	LOG("as_msgpack_pack_nil : %d", rc);
+	return rc;
+}
+
 static int as_msgpack_pack_boolean(msgpack_packer * pk, as_boolean * b)
 {
-	return as_boolean_tobool(b) ? msgpack_pack_true(pk) : msgpack_pack_false(pk);
+	LOG("as_msgpack_pack_boolean : start");
+	int rc = 0;
+
+	if ( as_boolean_get(b) == true ) {
+		rc = msgpack_pack_true(pk);
+		if ( rc ) {
+			LOG("as_msgpack_pack_boolean : msgpack_pack_true : %d",rc);
+		}
+	}
+	else {
+		rc = msgpack_pack_false(pk);
+		if ( rc ) {
+			LOG("as_msgpack_pack_boolean : msgpack_pack_false : %d",rc);
+		}
+	}
+
+	LOG("as_msgpack_pack_boolean : %d", rc);
+	return rc;
 }
 
 static int as_msgpack_pack_integer(msgpack_packer * pk, as_integer * i)
 {
 	LOG("as_msgpack_pack_integer : start");
+	int rc = 0;
 
-	int rc = msgpack_pack_int64(pk, as_integer_toint(i));
+	rc = msgpack_pack_int64(pk, as_integer_get(i));
 	if ( rc ) {
-		LOG("as_msgpack_pack_integer : as_msgpack_pack_string : %d",rc);
-		return rc;
+		LOG("as_msgpack_pack_integer : msgpack_pack_int64 : %d",rc);
 	}
 
 	LOG("as_msgpack_pack_integer : %d", rc);
@@ -118,13 +148,12 @@ static int as_msgpack_pack_string(msgpack_packer * pk, as_string * s)
 	rc = msgpack_pack_raw(pk, len);
 	if ( rc ) {
 		LOG("as_msgpack_pack_string : msgpack_pack_raw : %d",rc);
-		return rc;
 	}
-
-	rc = msgpack_pack_raw_body(pk, raw, len);
-	if ( rc ) {
-		LOG("as_msgpack_pack_string : msgpack_pack_raw_body : %d",rc);
-		return rc;
+	else {
+		rc = msgpack_pack_raw_body(pk, raw, len);
+		if ( rc ) {
+			LOG("as_msgpack_pack_string : msgpack_pack_raw_body : %d",rc);
+		}
 	}
 
 	LOG("as_msgpack_pack_string : %d", rc);
@@ -144,13 +173,12 @@ static int as_msgpack_pack_bytes(msgpack_packer * pk, as_bytes * b)
 	rc = msgpack_pack_raw(pk, len);
 	if ( rc ) {
 		LOG("as_msgpack_pack_bytes : msgpack_pack_raw : %d",rc);
-		return rc;
 	}
-
-	rc = msgpack_pack_raw_body(pk, raw, len);
-	if ( rc ) {
-		LOG("as_msgpack_pack_bytes : msgpack_pack_raw_body : %d",rc);
-		return rc;
+	else {	
+		rc = msgpack_pack_raw_body(pk, raw, len);
+		if ( rc ) {
+			LOG("as_msgpack_pack_bytes : msgpack_pack_raw_body : %d",rc);
+		}
 	}
 
 	LOG("as_msgpack_pack_bytes : %d", rc);
@@ -167,11 +195,10 @@ static bool as_msgpack_pack_list_foreach(as_val * val, void * udata)
 	rc = as_msgpack_pack_val(pk, val);
 	if ( rc ) {
 		LOG("as_msgpack_pack_list_foreach : as_msgpack_pack_val : %d",rc);
-		return false;
 	}
 
 	LOG("as_msgpack_pack_list_foreach : %d", rc);
-	return true;
+	return rc == 0;
 }
 
 static int as_msgpack_pack_list(msgpack_packer * pk, as_list * l)
@@ -182,10 +209,11 @@ static int as_msgpack_pack_list(msgpack_packer * pk, as_list * l)
 	rc = msgpack_pack_array(pk, as_list_size(l));
 	if ( rc ) {
 		LOG("as_msgpack_pack_list : msgpack_pack_array > %d",rc);
-		return rc;
 	}
-	
-	as_list_foreach(l, as_msgpack_pack_list_foreach, pk);
+	else {
+		rc = as_list_foreach(l, as_msgpack_pack_list_foreach, pk) == true ? 0 : 1;
+		LOG("as_msgpack_pack_map : as_map_foreach : %d", rc);
+	}
 
 	LOG("as_msgpack_pack_list : %d",rc);
 	return rc;
@@ -201,17 +229,16 @@ static bool as_msgpack_pack_map_foreach(const as_val * key, const as_val * val, 
 	rc = as_msgpack_pack_val(pk, (as_val *) key);
 	if ( rc ) {
 		LOG("as_msgpack_pack_map_foreach : as_msgpack_pack_val : %d",rc);
-		return false;
 	}
-
-	rc = as_msgpack_pack_val(pk, (as_val *) val);
-	if ( rc ) {
-		LOG("as_msgpack_pack_map_foreach : as_msgpack_pack_val : %d",rc);
-		return false;
+	else {	
+		rc = as_msgpack_pack_val(pk, (as_val *) val);
+		if ( rc ) {
+			LOG("as_msgpack_pack_map_foreach : as_msgpack_pack_val : %d",rc);
+		}
 	}
 
 	LOG("as_msgpack_pack_map_foreach : %d", rc);
-	return true;
+	return rc == 0;
 }
 
 static int as_msgpack_pack_map(msgpack_packer * pk, as_map * m)
@@ -224,12 +251,13 @@ static int as_msgpack_pack_map(msgpack_packer * pk, as_map * m)
 		LOG("as_msgpack_pack_map : msgpack_pack_map : %d",rc);
 		return rc;
 	}
-	
-	bool rb = as_map_foreach(m, as_msgpack_pack_map_foreach, pk);
-	LOG("as_msgpack_pack_map : as_map_foreach : %s", rb ? "true" : "false");
+	else {
+		rc = as_map_foreach(m, as_msgpack_pack_map_foreach, pk) == true ? 0 : 1;
+		LOG("as_msgpack_pack_map : as_map_foreach : %d", rc);
+	}
 
-	LOG("as_msgpack_pack_map : %d", rb);
-	return rb ? 0 : 1;
+	LOG("as_msgpack_pack_map : %d", rc);
+	return rc;
 }
 
 static int as_msgpack_pack_rec(msgpack_packer * pk, as_rec * r)
@@ -246,28 +274,35 @@ static int as_msgpack_pack_pair(msgpack_packer * pk, as_pair * p)
 	rc = msgpack_pack_array(pk, 2);
 	if ( rc ) {
 		LOG("as_msgpack_pack_pair : msgpack_pack_array : %d",rc);
-		return rc;
 	}
-
-	rc = as_msgpack_pack_val(pk, as_pair_1(p));
-	if ( rc ) {
-		LOG("as_msgpack_pack_pair : as_msgpack_pack_val : %d",rc);
-		return rc;
-	}
-
-	rc = as_msgpack_pack_val(pk, as_pair_2(p));
-	if ( rc ) {
-		LOG("as_msgpack_pack_pair : as_msgpack_pack_val : %d",rc);
-		return rc;
+	else {
+		rc = as_msgpack_pack_val(pk, as_pair_1(p));
+		if ( rc ) {
+			LOG("as_msgpack_pack_pair : as_msgpack_pack_val : %d",rc);
+		}
+		else {
+			rc = as_msgpack_pack_val(pk, as_pair_2(p));
+			if ( rc ) {
+				LOG("as_msgpack_pack_pair : as_msgpack_pack_val : %d",rc);
+			}
+		}
 	}
 
 	LOG("as_msgpack_pack_pair : %d", rc);
 	return rc;
 }
 
+
+static int as_msgpack_nil_to_val(as_val ** v)
+{
+	*v = (as_val *) &as_nil;
+	return 0;
+}
+
 static int as_msgpack_boolean_to_val(bool b, as_val ** v)
 {
-	*v = (as_val *) as_boolean_new(b);
+	// Aerospike does not support Boolean, so we convert it to Integer
+	*v = (as_val *) as_integer_new(b == true ? 1 : 0);
 	return 0;
 }
 

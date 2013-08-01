@@ -352,7 +352,5 @@ SUITE( types_arraylist, "as_arraylist" ) {
     suite_add( types_arraylist_1 );
     suite_add( types_arraylist_list );
     suite_add( types_arraylist_iterator );
-    suite_add( types_arraylist_iterator );
-    suite_add( types_arraylist_iterator );
     suite_add( types_arraylist_msgpack );
 }

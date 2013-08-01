@@ -68,7 +68,7 @@ static inline as_boolean * as_boolean_cons(as_boolean * boolean, bool free, bool
 {
 	if ( !boolean ) return boolean;
 
-	as_val_cons((as_val *) boolean, free, AS_BOOLEAN);
+	as_val_cons((as_val *) boolean, AS_BOOLEAN, free);
 	boolean->value = value;
 	return boolean;
 }

@@ -19,11 +19,11 @@ TEST_DEPS += $(addprefix $(MSGPACK)/src/.libs/, unpack.o objectc.o version.o vre
 ###############################################################################
 
 TEST_TYPES = 
+TEST_TYPES += types/types_boolean
 TEST_TYPES += types/types_integer
 TEST_TYPES += types/types_string
 TEST_TYPES += types/types_bytes
 TEST_TYPES += types/types_arraylist
-TEST_TYPES += types/types_linkedlist
 TEST_TYPES += types/types_hashmap
 
 TEST_UTIL = 
@@ -39,33 +39,32 @@ TESTS += $(TEST_TYPES)
 
 .PHONY: test
 test: test-build
-	@$(TARGET_BIN)/test/common
+	@$(TARGET_TEST)/common
 
 .PHONY: test-valgrind
 test-valgrind: test-build
-	valgrind $(TEST_VALGRIND) $(TARGET_BIN)/test/common 1>&2 2>test-valgrind
+	valgrind $(TEST_VALGRIND) $(TARGET_TEST)/common 1>&2 2>test-valgrind
 
 .PHONY: test-build
 test-build: test/common
 
 .PHONY: test-clean
 test-clean: 
-	@rm -rf $(TARGET_BIN)/test
-	@rm -rf $(TARGET_OBJ)/test
+	@rm -rf $(TARGET_TEST)
 
-$(TARGET_OBJ)/test/%/%.o: CFLAGS = $(TEST_CFLAGS)
-$(TARGET_OBJ)/test/%/%.o: LDFLAGS += $(TEST_LDFLAGS)
-$(TARGET_OBJ)/test/%/%.o: $(SOURCE_TEST)/%/%.c
+$(TARGET_TEST)/%/%.o: CFLAGS = $(TEST_CFLAGS)
+$(TARGET_TEST)/%/%.o: LDFLAGS += $(TEST_LDFLAGS)
+$(TARGET_TEST)/%/%.o: $(SOURCE_TEST)/%/%.c
 	$(object)
 
-$(TARGET_OBJ)/test/%.o: CFLAGS = $(TEST_CFLAGS)
-$(TARGET_OBJ)/test/%.o: LDFLAGS += $(TEST_LDFLAGS)
-$(TARGET_OBJ)/test/%.o: $(SOURCE_TEST)/%.c
+$(TARGET_TEST)/%.o: CFLAGS = $(TEST_CFLAGS)
+$(TARGET_TEST)/%.o: LDFLAGS += $(TEST_LDFLAGS)
+$(TARGET_TEST)/%.o: $(SOURCE_TEST)/%.c
 	$(object)
 
 .PHONY: test/common
-test/common: $(TARGET_BIN)/test/common
-$(TARGET_BIN)/test/common: CFLAGS = $(TEST_CFLAGS)
-$(TARGET_BIN)/test/common: LDFLAGS += $(TEST_LDFLAGS)
-$(TARGET_BIN)/test/common: $(TESTS:%=$(TARGET_OBJ)/test/%.o) $(TARGET_OBJ)/test/test.o $(wildcard $(TARGET_OBJ)/*) | modules build prepare
+test/common: $(TARGET_TEST)/common
+$(TARGET_TEST)/common: CFLAGS = $(TEST_CFLAGS)
+$(TARGET_TEST)/common: LDFLAGS += $(TEST_LDFLAGS)
+$(TARGET_TEST)/common: $(TESTS:%=$(TARGET_TEST)/%.o) $(TARGET_TEST)/test.o $(wildcard $(TARGET_OBJ)/*) | modules build prepare
 	$(executable) $(TEST_DEPS)
