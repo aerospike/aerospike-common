@@ -171,5 +171,5 @@ bool as_hashmap_foreach(const as_hashmap * map, as_map_foreach_callback callback
 		.udata = udata,
 		.callback = callback
 	};
-	return shash_reduce((shash *) map->htable, as_hashmap_shash_foreach, &ctx) == TRUE;
+	return shash_reduce((shash *) map->htable, as_hashmap_shash_foreach, &ctx) == 0;
 }
