@@ -12,4 +12,8 @@ PLAN( common ) {
     plan_add( types_arraylist );
     plan_add( types_hashmap );
 
+    /**
+     * msgpack - tests msgpack
+     */
+	plan_add( msgpack_roundtrip );
 }
