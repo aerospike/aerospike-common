@@ -126,6 +126,12 @@ typedef struct as_arraylist_s {
 	 */
 	as_val ** elements;
 
+	/**
+	 *	If true, then as_arraylist.elements will be freed when
+	 *	as_arraylist_destroy() is called.
+	 */
+	bool free;
+
 } as_arraylist;
 
 /**
@@ -169,6 +175,7 @@ typedef enum as_arraylist_status_e {
  */
 #define as_arraylist_inita(__list, __n)\
 	as_arraylist_init((__list), 0, 0);\
+	(__list)->free = false;\
 	(__list)->capacity = __n;\
 	(__list)->size = 0;\
 	(__list)->elements = (as_val **) alloca(sizeof(as_val *) * __n);

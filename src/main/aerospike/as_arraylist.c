@@ -62,9 +62,11 @@ as_arraylist * as_arraylist_init(as_arraylist * list, uint32_t capacity, uint32_
 	list->capacity = capacity;
 	list->size = 0;
 	if ( list->capacity > 0 ) {
+		list->free = true;
 		list->elements = (as_val **) calloc( capacity, sizeof(as_val *) );
 	}
 	else {
+		list->free = false;
 		list->elements = NULL;
 	}
 	return list;
@@ -85,9 +87,11 @@ as_arraylist * as_arraylist_new(uint32_t capacity, uint32_t block_size)
 	list->capacity = capacity;
 	list->size = 0;
 	if ( list->capacity > 0 ) {
+		list->free = true;
 		list->elements = (as_val **) calloc( capacity, sizeof(as_val *) );
 	}
 	else {
+		list->free = false;
 		list->elements = NULL;
 	}
 	return list;
@@ -103,13 +107,18 @@ as_arraylist * as_arraylist_new(uint32_t capacity, uint32_t block_size)
  */
 bool as_arraylist_release(as_arraylist * list)
 {
-	for (int i = 0; i < list->size; i++ ) {
-		if (list->elements[i]) {
-			as_val_destroy(list->elements[i]);
+	if ( list->elements ) {
+		for (int i = 0; i < list->size; i++ ) {
+			if (list->elements[i]) {
+				as_val_destroy(list->elements[i]);
+			}
+			list->elements[i] = NULL;
 		}
-		list->elements[i] = NULL;
+
+		if ( list->free ) {
+			free(list->elements);
+		}
 	}
-	free(list->elements);
 	
 	list->elements = NULL;
 	list->size = 0;
