@@ -26,6 +26,7 @@
 #include <aerospike/as_val.h>
 
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
 /******************************************************************************
@@ -404,7 +405,7 @@ inline void as_bytes_destroy(as_bytes * bytes)
  *
  *	@relatesalso as_bytes
  */
-inline uint32_t as_bytes_size(as_bytes * bytes)
+inline uint32_t as_bytes_size(const as_bytes * bytes)
 {
 	if ( !bytes ) return 0;
 	return bytes->size;
@@ -419,7 +420,7 @@ inline uint32_t as_bytes_size(as_bytes * bytes)
  *
  *	@relatesalso as_bytes
  */
-inline uint32_t as_bytes_capacity(as_bytes * bytes)
+inline uint32_t as_bytes_capacity(const as_bytes * bytes)
 {
 	if ( !bytes ) return 0;
 	return bytes->capacity;
@@ -434,7 +435,7 @@ inline uint32_t as_bytes_capacity(as_bytes * bytes)
  *
  *	@relatesalso as_bytes
  */
-inline as_bytes_type as_bytes_get_type(as_bytes * bytes)
+inline as_bytes_type as_bytes_get_type(const as_bytes * bytes)
 {
 	if ( !bytes ) return AS_BYTES_UNDEF;
 	return bytes->type;
@@ -454,9 +455,50 @@ inline void as_bytes_set_type(as_bytes * bytes, as_bytes_type type)
 	bytes->type = type;
 }
 
+/** 
+ *	Get the raw value of this instance. If the instance is NULL, then 
+ *	return the fallback value.
+ *
+ *	~~~~~~~~~~{.c}
+ *	uint8_t * raw = as_bytes_getorelse(&bytes, NULL);
+ *	~~~~~~~~~~
+ *
+ *	@param bytes	The bytes to get the raw value from.
+ *	@param fallback	The value to return if bytes is NULL.
+ *
+ *	@return The pointer to the raw value if bytes is not NULL. Otherwise 
+ *			return the fallback.
+ *
+ *	@relatesalso as_bytes
+ */
+inline uint8_t * as_bytes_getorelse(const as_bytes * bytes, uint8_t * fallback)
+{
+	return bytes ? bytes->value : fallback;
+}
+
+/** 
+ *	Get the raw value of this instance.
+ *
+ *	~~~~~~~~~~{.c}
+ *	uint8_t * raw = as_bytes_get(&bytes);
+ *	~~~~~~~~~~
+ *
+ *	@param bytes	The bytes to get the raw value from.
+ *
+ *	@return The pointer to the raw value.
+ *
+ *	@relatesalso as_bytes
+ */
+inline uint8_t * as_bytes_get(const as_bytes * bytes)
+{
+	return as_bytes_getorelse(bytes, NULL);
+}
+
+
 /******************************************************************************
  *	GET AT INDEX
  *****************************************************************************/
+
 
 /** 
  *	Copy into value up to size bytes from the given `as_bytes`, returning
@@ -464,7 +506,7 @@ inline void as_bytes_set_type(as_bytes * bytes, as_bytes_type type)
  *
  *	~~~~~~~~~~{.c}
  *	uint8_t value[3] = {0};
- *	uint32_t sz = as_bytes_get(&bytes, 0, value, 3);
+ *	uint32_t sz = as_bytes_copy(&bytes, 0, value, 3);
  *	if ( sz == 0 ) {
  *		// sz == 0, means that an error occurred
  *	}
@@ -481,7 +523,7 @@ inline void as_bytes_set_type(as_bytes * bytes, as_bytes_type type)
  *
  *	@relatesalso as_bytes
  */
-uint32_t as_bytes_get(const as_bytes * bytes, uint32_t index, uint8_t * value, uint32_t size);
+uint32_t as_bytes_copy(const as_bytes * bytes, uint32_t index, uint8_t * value, uint32_t size);
 
 /** 
  *	Read a single byte from the given bytes.
@@ -501,7 +543,7 @@ uint32_t as_bytes_get(const as_bytes * bytes, uint32_t index, uint8_t * value, u
  */
 inline uint32_t as_bytes_get_byte(const as_bytes * bytes, uint32_t index, uint8_t * value)
 {
-	return as_bytes_get(bytes, index, (uint8_t *) value, 1);
+	return as_bytes_copy(bytes, index, (uint8_t *) value, 1);
 }
 
 /** 
@@ -522,7 +564,7 @@ inline uint32_t as_bytes_get_byte(const as_bytes * bytes, uint32_t index, uint8_
  */
 inline uint32_t as_bytes_get_int16(const as_bytes * bytes, uint32_t index, int16_t * value)
 {
-	return as_bytes_get(bytes, index, (uint8_t *) value, 2);
+	return as_bytes_copy(bytes, index, (uint8_t *) value, 2);
 }
 
 /** 
@@ -543,7 +585,7 @@ inline uint32_t as_bytes_get_int16(const as_bytes * bytes, uint32_t index, int16
  */
 inline uint32_t as_bytes_get_int32(const as_bytes * bytes, uint32_t index, int32_t * value)
 {
-	return as_bytes_get(bytes, index, (uint8_t *) value, 4);
+	return as_bytes_copy(bytes, index, (uint8_t *) value, 4);
 }
 
 /** 
@@ -564,7 +606,7 @@ inline uint32_t as_bytes_get_int32(const as_bytes * bytes, uint32_t index, int32
  */
 inline uint32_t as_bytes_get_int64(const as_bytes * bytes, uint32_t index, int64_t * value)
 {
-	return as_bytes_get(bytes, index, (uint8_t *) value, 8);
+	return as_bytes_copy(bytes, index, (uint8_t *) value, 8);
 }
 
 /******************************************************************************

@@ -33,11 +33,14 @@
 
 extern inline void as_bytes_destroy(as_bytes * s);
 
-extern inline uint32_t as_bytes_size(as_bytes * bytes);
-extern inline uint32_t as_bytes_capacity(as_bytes * bytes);
+extern inline uint32_t as_bytes_size(const as_bytes * bytes);
+extern inline uint32_t as_bytes_capacity(const as_bytes * bytes);
 
-extern inline as_bytes_type as_bytes_get_type(as_bytes * bytes);
+extern inline as_bytes_type as_bytes_get_type(const as_bytes * bytes);
 extern inline void as_bytes_set_type(as_bytes * bytes, as_bytes_type type);
+
+extern inline uint8_t * as_bytes_getorelse(const as_bytes * bytes, uint8_t * fallback);
+extern inline uint8_t * as_bytes_get(const as_bytes * bytes);
 
 extern inline uint32_t as_bytes_get_byte(const as_bytes * bytes, uint32_t index, uint8_t * value);
 extern inline uint32_t as_bytes_get_int16(const as_bytes * bytes, uint32_t index, int16_t * value);
@@ -192,7 +195,7 @@ as_bytes * as_bytes_new_wrap(uint8_t * value, uint32_t size, bool free)
  *
  *	@return The number of bytes copied in to value.
  */
-uint32_t as_bytes_get(const as_bytes * bytes, uint32_t index, uint8_t * value, uint32_t size)
+uint32_t as_bytes_copy(const as_bytes * bytes, uint32_t index, uint8_t * value, uint32_t size)
 {
 	uint32_t sz = index + size > bytes->size ? 0 : size;
 	if ( sz == 0 ) return sz;
