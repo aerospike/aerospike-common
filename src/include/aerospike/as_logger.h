@@ -111,8 +111,8 @@ struct as_logger_hooks_s;
  * Logger handle
  */
 typedef struct as_logger_s {
-    bool                    is_malloc;
-    void *                  source;
+    bool	free;
+    void *	source;
     const struct as_logger_hooks_s * hooks;
 } as_logger;
 
@@ -142,6 +142,7 @@ typedef struct as_logger_hooks_s {
      * Log a message using the logger.
      */
     int (* log)(const as_logger *, const as_logger_level, const char *, const int, const char *, va_list);
+
 } as_logger_hooks;
 
 
