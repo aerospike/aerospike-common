@@ -161,6 +161,13 @@ int as_hashmap_clear(as_hashmap * map)
 	return 0;
 }
 
+int as_hashmap_remove(as_hashmap * map, const as_val * k)
+{
+	uint32_t h = as_val_hashcode(k);
+	shash_delete_lockfree((shash *) map->htable, &h);
+	return 0;
+}
+
 /*******************************************************************************
  *	ITERATION FUNCTIONS
  ******************************************************************************/

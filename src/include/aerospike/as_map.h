@@ -154,6 +154,16 @@ typedef struct as_map_hooks_s {
 	 */
 	int (* clear)(as_map * map);
 
+	/**
+	 *	Remove the entry specified by the key.
+	 *
+	 *	@param map 	The map to remove the entry from.
+	 *	@param key 	The key of the entry to be removed.
+	 *
+	 *	@return 0 on success. Otherwise an error occurred.
+	 */
+	int (* remove)(as_map * map, const as_val * key);
+
 	/***************************************************************************
 	 *	iteration hooks
 	 **************************************************************************/
@@ -313,6 +323,21 @@ inline int as_map_set(as_map * map, const as_val * key, const as_val * val)
 inline int as_map_clear(as_map * map)
 {
 	return as_util_hook(clear, 1, map);
+}
+
+/**
+ *	Remove the entry specified by the key.
+ *
+ *	@param map 	The map to remove the entry from.
+ *	@param key 	The key of the entry to be removed.
+ *
+ *	@return 0 on success. Otherwise an error occurred.
+ *
+ *	@relatesalso as_map
+ */
+inline int as_map_remove(as_map * map, const as_val * key)
+{
+	return as_util_hook(remove, 1, map, key);
 }
 
 /******************************************************************************

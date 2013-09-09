@@ -22,6 +22,8 @@ TEST( types_hashmap_empty, "as_hashmap is empty" ) {
 
 TEST( types_hashmap_ops, "as_hashmap ops" ) {
 
+	int rc = 0;
+
 	as_val * a = (as_val *) as_string_new(strdup("a"), true);
 	as_val * b = (as_val *) as_string_new(strdup("b"), true);
 	as_val * c = (as_val *) as_string_new(strdup("c"), true);
@@ -67,6 +69,21 @@ TEST( types_hashmap_ops, "as_hashmap ops" ) {
 	v = (as_integer *) as_hashmap_get(m, c);
 	assert_int_eq( v->value, 6 );
 
+	// remove an entry
+
+	rc = as_hashmap_remove(m, a);
+
+	assert_int_eq( as_hashmap_size(m), 2 );
+
+	v = (as_integer *) as_hashmap_get(m, a);
+	assert_null( v );
+
+	v = (as_integer *) as_hashmap_get(m, b);
+	assert_int_eq( v->value, 5 );
+
+	v = (as_integer *) as_hashmap_get(m, c);
+	assert_int_eq( v->value, 6 );
+
 	// Clear the map
 
 	as_hashmap_clear(m);
@@ -98,6 +115,8 @@ TEST( types_hashmap_ops, "as_hashmap ops" ) {
 }
 
 TEST( types_hashmap_map_ops, "as_hashmap w/ as_map ops" ) {
+
+	int rc = 0;
 
 	as_val * a = (as_val *) as_string_new(strdup("a"), true);
 	as_val * b = (as_val *) as_string_new(strdup("b"), true);
@@ -140,6 +159,21 @@ TEST( types_hashmap_map_ops, "as_hashmap w/ as_map ops" ) {
 
 	v = (as_integer *) as_map_get(m, a);
 	assert_int_eq( v->value, 4 );
+
+	v = (as_integer *) as_map_get(m, b);
+	assert_int_eq( v->value, 5 );
+
+	v = (as_integer *) as_map_get(m, c);
+	assert_int_eq( v->value, 6 );
+
+	// remove an entry
+
+	rc = as_map_remove(m, a);
+
+	assert_int_eq( as_map_size(m), 2 );
+
+	v = (as_integer *) as_map_get(m, a);
+	assert_null( v );
 
 	v = (as_integer *) as_map_get(m, b);
 	assert_int_eq( v->value, 5 );

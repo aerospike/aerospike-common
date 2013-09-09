@@ -196,6 +196,18 @@ int as_hashmap_set(as_hashmap * map, const as_val * key, const as_val * val);
  */
 int as_hashmap_clear(as_hashmap * map);
 
+/**
+ *	Remove the entry specified by the key.
+ *
+ *	@param map 	The map to remove the entry from.
+ *	@param key 	The key of the entry to be removed.
+ *
+ *	@return 0 on success. Otherwise an error occurred.
+ *
+ *	@relatesalso as_hashmap
+ */
+int as_hashmap_remove(as_hashmap * map, const as_val * key);
+
 /******************************************************************************
  *	ITERATION FUNCTIONS
  *****************************************************************************/

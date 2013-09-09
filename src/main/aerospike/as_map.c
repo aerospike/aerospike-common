@@ -42,6 +42,7 @@ extern inline uint32_t			as_map_size(const as_map * m);
 extern inline as_val *			as_map_get(const as_map * m, const as_val * k);
 extern inline int				as_map_set(as_map * m, const as_val * k, const as_val * v);
 extern inline int				as_map_clear(as_map * m);
+extern inline int				as_map_remove(as_map * m, const as_val * k);
 
 extern inline bool				as_map_foreach(const as_map * m, as_map_foreach_callback callback, void * udata);
 extern inline as_map_iterator *	as_map_iterator_new(const as_map * m);

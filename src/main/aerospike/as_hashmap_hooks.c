@@ -76,6 +76,11 @@ static int _as_hashmap_map_clear(as_map * m)
 	return as_hashmap_clear((as_hashmap *) m);
 }
 
+static int _as_hashmap_map_remove(as_map * m, const as_val * k)
+{
+	return as_hashmap_remove((as_hashmap *) m, k);
+}
+
 static bool _as_hashmap_map_foreach(const as_map * m, as_map_foreach_callback callback, void * udata) 
 {
 	return as_hashmap_foreach((const as_hashmap *) m, callback, udata);
@@ -117,6 +122,7 @@ const as_map_hooks as_hashmap_map_hooks = {
 	.set		= _as_hashmap_map_set,
 	.get		= _as_hashmap_map_get,
 	.clear		= _as_hashmap_map_clear,
+	.remove		= _as_hashmap_map_remove,
 	
 	/***************************************************************************
 	 *	iteration hooks
