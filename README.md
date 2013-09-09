@@ -4,9 +4,15 @@ Library for commonly used or shared code.
 
 ## Build
 
-aerospike-common currently is built as a static archive, to be directly compiled into an executable or shared library.
+aerospike-common currently builds both a static archive and a dynamic shared library.
 
-	$ make libcf.a
+To only build the static archive:
+
+  $ make libaerospike-common.a
+
+To only build the dynamic shared library:
+
+  $ make libaerospike-common.so
 
 Alternatively, you can use `all` target:
 
