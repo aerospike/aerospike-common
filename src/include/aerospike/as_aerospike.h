@@ -39,53 +39,69 @@ struct as_aerospike_s {
 };
 
 struct as_aerospike_hooks_s {
-	void (*destroy)(as_aerospike *);
-	int (*rec_create)(const as_aerospike *, const as_rec *);
-	int (*rec_update)(const as_aerospike *, const as_rec *);
-	int (*rec_remove)(const as_aerospike *, const as_rec *);
-	int (*rec_exists)(const as_aerospike *, const as_rec *);
-	int (*log)(const as_aerospike *, const char *, const int, const int, const char *);
-	// @LDT @TOBY:: New method to give system time to Lua UDFs
-	cf_clock (*get_current_time)( const as_aerospike * );
+	void (* destroy)(as_aerospike *);
 
-	// Chunk record related interfaces. Specific to Large Stack Objects
-	as_rec *(*create_subrec)(const as_aerospike *, const as_rec *);
-	as_rec *(*open_subrec)(const as_aerospike *, const as_rec *, const char *);
-	int (*update_subrec)(const as_aerospike *, const as_rec *);
-	int (*remove_subrec)(const as_aerospike *, const as_rec *);
-	int (*close_subrec)(const as_aerospike *, const as_rec *);
+	int (* rec_create)(const as_aerospike *, const as_rec *);
+	int (* rec_update)(const as_aerospike *, const as_rec *);
+	int (* rec_remove)(const as_aerospike *, const as_rec *);
+	int (* rec_exists)(const as_aerospike *, const as_rec *);
+
+	int (*log)(const as_aerospike *, const char *, const int, const int, const char *);
+	cf_clock (* get_current_time)( const as_aerospike * );
+
+	as_rec *(* create_subrec)(const as_aerospike *, const as_rec *);
+	as_rec *(* open_subrec)(const as_aerospike *, const as_rec *, const char *);
+	int (* update_subrec)(const as_aerospike *, const as_rec *);
+	int (* remove_subrec)(const as_aerospike *, const as_rec *);
+	int (* close_subrec)(const as_aerospike *, const as_rec *);
 };
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-as_aerospike * as_aerospike_init(as_aerospike *a, void *source,
-		const as_aerospike_hooks *hooks);
+as_aerospike * as_aerospike_init(as_aerospike *a, void *source, const as_aerospike_hooks *hooks);
 
 as_aerospike * as_aerospike_new(void *source, const as_aerospike_hooks *hooks);
 
 void as_aerospike_destroy(as_aerospike *);
 
-
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
 
-inline int as_aerospike_rec_create(const as_aerospike * a, const as_rec * r) {
+inline int as_aerospike_rec_create(const as_aerospike * a, const as_rec * r)
+{
 	return as_util_hook(rec_create, 1, a, r);
 }
 
-inline int as_aerospike_rec_update(const as_aerospike * a, const as_rec * r) {
+inline int as_aerospike_rec_update(const as_aerospike * a, const as_rec * r)
+{
 	return as_util_hook(rec_update, 1, a, r);
 }
 
-inline as_rec *as_aerospike_crec_create(const as_aerospike * a, const as_rec * r) {
-	return as_util_hook(create_subrec, NULL, a, r);
+inline int as_aerospike_rec_exists(const as_aerospike * a, const as_rec * r)
+{
+	return as_util_hook(rec_exists, 1, a, r);
 }
 
-inline cf_clock as_aerospike_get_current_time(const as_aerospike * a ) {
+inline int as_aerospike_rec_remove(const as_aerospike * a, const as_rec * r)
+{
+	return as_util_hook(rec_remove, 1, a, r);
+}
+
+inline int as_aerospike_log(const as_aerospike * a, const char * name, const int line, const int lvl, const char * msg) 
+{
+	return as_util_hook(log, 1, a, name, line, lvl, msg);
+}
+
+inline cf_clock as_aerospike_get_current_time(const as_aerospike * a )
+{
 	return as_util_hook(get_current_time, 0, a);
+}
+
+inline as_rec * as_aerospike_crec_create(const as_aerospike * a, const as_rec * r) {
+	return as_util_hook(create_subrec, NULL, a, r);
 }
 
 inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec * cr)
@@ -98,23 +114,12 @@ inline int as_aerospike_crec_remove(const as_aerospike * a, const as_rec * cr)
 	return as_util_hook(remove_subrec, 1, a, cr);
 }
 
-inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec * cr)
+inline as_rec * as_aerospike_crec_open(const as_aerospike * a, const as_rec * r, const char * dig)
 {
-	return as_util_hook(close_subrec, 1, a, cr);
-}
-
-inline as_rec * as_aerospike_crec_open(const as_aerospike * a, const as_rec * r, const char *dig) {
 	return as_util_hook(open_subrec, NULL, a, r, dig);
 }
 
-inline int as_aerospike_rec_exists(const as_aerospike * a, const as_rec * r) {
-	return as_util_hook(rec_exists, 1, a, r);
-}
-
-inline int as_aerospike_rec_remove(const as_aerospike * a, const as_rec * r) {
-	return as_util_hook(rec_remove, 1, a, r);
-}
-
-inline int as_aerospike_log(const as_aerospike * a, const char * name, const int line, const int lvl, const char * msg) {
-	return as_util_hook(log, 1, a, name, line, lvl, msg);
+inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec * cr)
+{
+	return as_util_hook(close_subrec, 1, a, cr);
 }

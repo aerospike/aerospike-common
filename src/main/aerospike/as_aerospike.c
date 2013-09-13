@@ -37,17 +37,13 @@ extern inline int as_aerospike_rec_create(const as_aerospike * a, const as_rec *
 extern inline int as_aerospike_rec_update(const as_aerospike * a, const as_rec * r);
 extern inline int as_aerospike_rec_exists(const as_aerospike * a, const as_rec * r);
 extern inline int as_aerospike_rec_remove(const as_aerospike * a, const as_rec * r);
-extern inline int as_aerospike_log(const as_aerospike * a, const char * name, 
-    const int line, const int lvl, const char * msg);
-// @LDT @TOBY:  Giving us all a little more time
+
+extern inline int as_aerospike_log(const as_aerospike * a, const char * name, const int line, const int lvl, const char * msg);
 extern inline cf_clock as_aerospike_get_current_time(const as_aerospike * a );
 
-extern inline as_rec *as_aerospike_crec_create(const as_aerospike * a, const as_rec * r);
-extern inline as_rec *as_aerospike_crec_open(const as_aerospike * a, const as_rec *r, const char *);
-
-// Change crec_update and crec_close so that it no longer requires the top_rec parameter (6/13:tjl)
-//extern inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec * r, const as_rec *cr);
-//extern inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec * r, const as_rec *cr);
+extern inline as_rec * as_aerospike_crec_create(const as_aerospike * a, const as_rec * r);
+extern inline as_rec * as_aerospike_crec_open(const as_aerospike * a, const as_rec *r, const char *);
+extern inline int as_aerospike_crec_remove(const as_aerospike * a, const as_rec * cr);
 extern inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec *cr);
 extern inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec *cr);
 
@@ -55,23 +51,26 @@ extern inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec *
  * FUNCTIONS
  ******************************************************************************/
 
-as_aerospike * as_aerospike_init(as_aerospike * a, void * s, const as_aerospike_hooks * h) {
+as_aerospike * as_aerospike_init(as_aerospike * a, void * s, const as_aerospike_hooks * h)
+{
 	a->is_rcalloc = false;
-    a->source = s;
-    a->hooks = h;
-    return a;
+	a->source = s;
+	a->hooks = h;
+	return a;
 }
 
-as_aerospike * as_aerospike_new(void * s, const as_aerospike_hooks * h) {
-    as_aerospike * a = (as_aerospike *) cf_rc_alloc(sizeof(as_aerospike));
-    a->is_rcalloc = true;
-    a->source = s;
-    a->hooks = h;
-    return a;
+as_aerospike * as_aerospike_new(void * s, const as_aerospike_hooks * h)
+{
+	as_aerospike * a = (as_aerospike *) cf_rc_alloc(sizeof(as_aerospike));
+	a->is_rcalloc = true;
+	a->source = s;
+	a->hooks = h;
+	return a;
 }
 
-void as_aerospike_destroy(as_aerospike * a) {
-    if (a->is_rcalloc)
+void as_aerospike_destroy(as_aerospike * a)
+{
+	if (a->is_rcalloc)
 	   cf_rc_releaseandfree(a);
 }
 
