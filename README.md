@@ -6,7 +6,7 @@ Library for commonly used or shared code.
 
 aerospike-common currently is built as a static archive, to be directly compiled into an executable or shared library.
 
-	$ make libcf.a
+	$ make libaerospike-common.a
 
 Alternatively, you can use `all` target:
 
