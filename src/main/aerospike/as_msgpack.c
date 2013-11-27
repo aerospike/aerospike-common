@@ -224,7 +224,8 @@ static int as_msgpack_array_to_val(msgpack_object_array * a, as_val ** v) {
 }
 
 static int as_msgpack_map_to_val(msgpack_object_map * o, as_val ** v) {
-    as_map * m = as_hashmap_new(o->size);
+	uint32_t buckets = o->size < 32 ? 32 : (o->size/8) * 8 + 8;
+    as_map * m = as_hashmap_new(32);
     for ( int i = 0; i < o->size; i++) {
         msgpack_object_kv * kv = o->ptr + i;
         as_val * key = NULL;
