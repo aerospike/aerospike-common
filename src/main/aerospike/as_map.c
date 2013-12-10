@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <citrusleaf/cf_alloc.h>
+#include <citrusleaf/alloc.h>
 #include <aerospike/as_map.h>
 #include <aerospike/as_pair.h>
 

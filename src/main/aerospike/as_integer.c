@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <citrusleaf/cf_alloc.h>
+#include <citrusleaf/alloc.h>
 #include <aerospike/as_integer.h>
 
 /******************************************************************************

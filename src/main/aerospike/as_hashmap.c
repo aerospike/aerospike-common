@@ -23,7 +23,7 @@
 #include <stdlib.h>
 
 #include <citrusleaf/cf_shash.h>
-#include <citrusleaf/cf_alloc.h>
+#include <citrusleaf/alloc.h>
 
 #include <aerospike/as_hashmap.h>
 #include <aerospike/as_hashmap_iterator.h>

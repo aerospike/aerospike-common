@@ -20,7 +20,7 @@
  * IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <citrusleaf/cf_alloc.h>
+#include <citrusleaf/alloc.h>
 
 #include <aerospike/as_iterator.h>
 #include <aerospike/as_linkedlist.h>

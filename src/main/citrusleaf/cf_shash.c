@@ -33,7 +33,7 @@
 #include <string.h>
 
 #include <citrusleaf/cf_shash.h>
-#include <citrusleaf/cf_alloc.h>
+#include <citrusleaf/alloc.h>
 
 /******************************************************************************
  * FUNCTIONS

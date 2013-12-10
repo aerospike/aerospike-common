@@ -23,7 +23,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
-#include <citrusleaf/cf_alloc.h>
+#include <citrusleaf/alloc.h>
 
 #include <aerospike/as_arraylist.h>
 #include <aerospike/as_arraylist_iterator.h>

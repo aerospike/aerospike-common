@@ -22,7 +22,7 @@
 
 #include <stdlib.h>
 
-#include <citrusleaf/cf_alloc.h>
+#include <citrusleaf/alloc.h>
 #include <aerospike/as_result.h>
 
 #include "internal.h"

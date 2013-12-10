@@ -32,7 +32,7 @@ CFLAGS = -O$(O)
 # LDFLAGS = 
 
 # Include Paths
-INC_PATH += $(MSGPACK)/src
+INC_PATH += $(MSGPACK)/src $(CF)/include
 
 # Library Paths
 # LIB_PATH +=

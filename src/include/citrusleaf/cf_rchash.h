@@ -28,7 +28,7 @@
  * And you can keep adding cool things to it
  */
 
-#include <citrusleaf/cf_alloc.h>
+#include <citrusleaf/alloc.h>
 #include <citrusleaf/cf_types.h>
 #include <inttypes.h>
 #include <stdint.h>

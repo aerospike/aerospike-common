@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <citrusleaf/cf_alloc.h>
+#include <citrusleaf/alloc.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_pair.h>
 

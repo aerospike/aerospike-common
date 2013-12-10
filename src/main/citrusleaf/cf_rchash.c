@@ -40,7 +40,7 @@
 #include <stdbool.h>
 
 #include <citrusleaf/cf_rchash.h>
-#include <citrusleaf/cf_alloc.h>
+#include <citrusleaf/alloc.h>
 #include <citrusleaf/cf_atomic.h>
 
 /******************************************************************************

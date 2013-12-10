@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <citrusleaf/cf_alloc.h>
+#include <citrusleaf/alloc.h>
 
 #include <aerospike/as_linkedlist.h>
 #include <aerospike/as_linkedlist_iterator.h>
