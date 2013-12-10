@@ -92,7 +92,8 @@ int cf_rchash_create(cf_rchash **h_r, cf_rchash_hash_fn h_fn, cf_rchash_destruct
 
 	if (flags & CF_RCHASH_CR_MT_BIGLOCK) {
 		if (0 != pthread_mutex_init ( &h->biglock, 0) ) {
-			cf_free(h->table); cf_free(h);
+			cf_free(h->table);
+			cf_free(h);
 			return(CF_RCHASH_ERR);
 		}
 	}
