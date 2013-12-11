@@ -25,6 +25,8 @@
 #include <aerospike/as_val.h>
 #include <aerospike/as_nil.h>
 
+#include <citrusleaf/alloc.h>
+
 /******************************************************************************
  * CONSTANTS
  *****************************************************************************/
@@ -48,5 +50,5 @@ uint32_t as_nil_val_hashcode(const as_val * v) {
 }
 
 char * as_nil_val_tostring(const as_val * v) {
-	return strdup("NIL");
+	return cf_strdup("NIL");
 }

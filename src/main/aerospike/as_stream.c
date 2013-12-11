@@ -47,3 +47,17 @@ extern inline bool as_stream_readable(const as_stream *);
 extern inline as_stream_status as_stream_write(const as_stream *, as_val * v);
 
 extern inline bool as_stream_writable(const as_stream *);
+
+/**
+ *  Wrapper functions to ensure each CF allocation-related function call has a unique line.
+ */
+
+void *as_stream_malloc(size_t size)
+{
+	return cf_malloc(size);
+}
+
+void as_stream_free(void *ptr)
+{
+	cf_free(ptr);
+}

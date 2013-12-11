@@ -67,7 +67,7 @@ as_boolean * as_boolean_init(as_boolean * v, bool b) {
 }
 
 as_boolean * as_boolean_new(bool b) {
-    as_boolean * v = (as_boolean *) malloc(sizeof(as_boolean));
+    as_boolean * v = (as_boolean *) cf_malloc(sizeof(as_boolean));
     if (!v) return v;
     as_val_init(&v->_, AS_BOOLEAN, true /*is_rcalloc*/);
     v->value = b;
@@ -87,7 +87,7 @@ char * as_boolean_val_tostring(const as_val * v) {
     if ( as_val_type(v) != AS_BOOLEAN ) return NULL;
 
     as_boolean * b = (as_boolean *) v;
-    char * str = (char *) malloc(sizeof(char) * 6);
+    char * str = (char *) cf_malloc(sizeof(char) * 6);
     if (!str) return str;
     bzero(str,6);
     if ( b->value ) {

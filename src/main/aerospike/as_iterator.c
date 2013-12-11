@@ -39,9 +39,9 @@ extern inline const as_val * as_iterator_next(as_iterator * i) ;
 
 void as_iterator_destroy(as_iterator * i)
 {
-    as_util_hook(destroy, 1, i);
-    if ( i->free) {
-    	free(i);
-    }
+	as_util_hook(destroy, 1, i);
+	if ( i->free) {
+		cf_free(i);
+	}
 }
 

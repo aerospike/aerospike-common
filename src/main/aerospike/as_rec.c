@@ -77,7 +77,7 @@ as_rec * as_rec_init(as_rec * r, void * data, const as_rec_hooks * hooks) {
 }
 
 as_rec * as_rec_new(void * data, const as_rec_hooks * hooks) {
-	as_rec * r = (as_rec *) malloc(sizeof(as_rec));
+	as_rec * r = (as_rec *) cf_malloc(sizeof(as_rec));
 	if (!r) return r;
 	as_val_init(&r->_, AS_REC, true);
 	r->data = data;
@@ -96,5 +96,5 @@ uint32_t as_rec_val_hashcode(const as_val * v) {
 }
 
 char * as_rec_val_tostring(const as_val * v) {
-	return strdup("[ REC ]");
+	return cf_strdup("[ REC ]");
 }

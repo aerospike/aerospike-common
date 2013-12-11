@@ -74,7 +74,7 @@ char * as_map_val_tostring(const as_val * v) {
     uint32_t    pos = 0;
     bool        sep = false;
 
-    buf = (char *) malloc(sizeof(char) * cap);
+    buf = (char *) cf_malloc(sizeof(char) * cap);
     if (!buf) return buf;
     bzero(buf, sizeof(char) * cap);
 
@@ -98,7 +98,7 @@ char * as_map_val_tostring(const as_val * v) {
 
         if ( pos + keylen + 2 + vallen + 2 >= cap ) {
             uint32_t adj = keylen+2+vallen+2 > blk ? keylen+2+vallen+2 : blk;
-            buf = realloc(buf, sizeof(char) * (cap + adj));
+            buf = cf_realloc(buf, sizeof(char) * (cap + adj));
             bzero(buf+cap, sizeof(char)*adj);
             cap += adj;
         }
@@ -109,9 +109,9 @@ char * as_map_val_tostring(const as_val * v) {
         pos += keylen + 2 + vallen;
         sep = true;
 
-        free(keystr);
+        cf_free(keystr);
         keystr = NULL;
-        free(valstr);
+        cf_free(valstr);
         valstr = NULL;
     }
 

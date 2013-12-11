@@ -386,7 +386,7 @@ inline int as_rec_set_int64(const as_rec * r, const char * name, int64_t value)
  */
 inline int as_rec_set_str(const as_rec * r, const char * name, const char * value) 
 {
-	return as_util_hook(set, 1, r, name, (as_val *) as_string_new(strdup(value), true));
+	return as_util_hook(set, 1, r, name, (as_val *) as_string_new_strdup(value));
 }
 
 /**

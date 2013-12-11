@@ -84,7 +84,7 @@ const as_list_hooks as_arraylist_list_hooks = {
 /**
  * Initialize an arraylist, with room for  "capacity" number of elements
  * and with the new (delta) allocation amount of "block_size" elements.
- * Use calloc() for the new element memory so that it is initialized to zero
+ * Use cf_calloc() for the new element memory so that it is initialized to zero
  */
 as_list * as_arraylist_init(as_list * l, uint32_t capacity, uint32_t block_size)
 {
@@ -93,7 +93,7 @@ as_list * as_arraylist_init(as_list * l, uint32_t capacity, uint32_t block_size)
     as_val_init(&l->_, AS_LIST, false);
     l->hooks = &as_arraylist_list_hooks;
     // Allocate 'capacity' elements of SIZE bytes each, all initialized to 0.
-    l->data.arraylist.elements = (as_val **) calloc( capacity, sizeof(as_val *) );
+    l->data.arraylist.elements = (as_val **) cf_calloc( capacity, sizeof(as_val *) );
     l->data.arraylist.size = 0; // No elements have been added yet
     l->data.arraylist.capacity = capacity;
     l->data.arraylist.block_size = block_size;
@@ -103,17 +103,17 @@ as_list * as_arraylist_init(as_list * l, uint32_t capacity, uint32_t block_size)
 /**
  * Create a new arraylist, with room for  "capacity" number of elements
  * and with the new (delta) allocation amount of "block_size" elements.
- * Use calloc() for the new element memory so that it is initialized to zero
+ * Use cf_calloc() for the new element memory so that it is initialized to zero
  */
 as_list * as_arraylist_new(uint32_t capacity, uint32_t block_size)
 {
-    as_list * l = (as_list *) malloc(sizeof(as_list));
+    as_list * l = (as_list *) cf_malloc(sizeof(as_list));
 	if ( !l ) return l;
 
     as_val_init(&l->_, AS_LIST, true);
     l->hooks = &as_arraylist_list_hooks;
     // Allocate 'capacity' elements of SIZE bytes each, all initialized to 0.
-    l->data.arraylist.elements = (as_val **) calloc(capacity, sizeof(as_val *));
+    l->data.arraylist.elements = (as_val **) cf_calloc(capacity, sizeof(as_val *));
     l->data.arraylist.size = 0; // No elements have been added yet
     l->data.arraylist.capacity = capacity;
     l->data.arraylist.block_size = block_size;
@@ -154,7 +154,7 @@ static bool as_arraylist_list_destroy(as_list * l) {
         }
         a->elements[i] = NULL;
     }
-    free(a->elements);
+    cf_free(a->elements);
     a->elements = NULL;
     a->size = 0;  // no more elements
     a->capacity = 0; // no more room for elements
@@ -181,7 +181,7 @@ static int as_arraylist_ensure(as_list * l, uint32_t delta) {
             // This will get us (conservatively) at least one block
             int new_blocks = (new_room + a->block_size) / a->block_size;
             int new_capacity = a->capacity + (new_blocks * a->block_size);
-            as_val ** elements = (as_val **) realloc(a->elements, sizeof(as_val *) * new_capacity);
+            as_val ** elements = (as_val **) cf_realloc(a->elements, sizeof(as_val *) * new_capacity);
             if ( elements != NULL ) {
                 // Looks like it worked, so fill in the new values
                 a->elements = elements;

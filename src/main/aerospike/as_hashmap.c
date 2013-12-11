@@ -82,7 +82,7 @@ as_map * as_hashmap_init(as_map * m, uint32_t capacity)
 
 as_map * as_hashmap_new(uint32_t capacity)
 {
-	as_map *m = (as_map *) malloc(sizeof(as_map));
+	as_map *m = (as_map *) cf_malloc(sizeof(as_map));
 	if (!m) return NULL;
 	as_val_init(&m->_, AS_MAP, true);
 	m->hooks = &as_hashmap_map_hooks;

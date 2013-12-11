@@ -40,7 +40,7 @@ as_result * as_result_init(as_result * r) {
 }
 
 as_result * as_result_new() {
-    as_result * r = (as_result *) malloc(sizeof(as_result));
+    as_result * r = (as_result *) cf_malloc(sizeof(as_result));
     if (!r) return r;
     r->is_malloc = true;
     r->count = 1;
@@ -62,7 +62,7 @@ void as_result_destroy(as_result *r) {
             r->value = NULL;
         }
         if (r->is_malloc) {
-            free(r);
+            cf_free(r);
         }
     }
     return;

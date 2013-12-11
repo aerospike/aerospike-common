@@ -195,7 +195,7 @@ static int as_msgpack_raw_to_val(msgpack_object_raw * r, as_val ** v) {
     // everything else encoded as a bytes with the type set
     else {
         int len = r->size - 1;
-        uint8_t *buf = malloc(len);
+        uint8_t *buf = cf_malloc(len);
         if (!buf) {
             *v = NULL; 
             return 0;

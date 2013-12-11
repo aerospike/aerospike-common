@@ -54,7 +54,7 @@ const as_iterator_hooks as_linkedlist_iterator_hooks = {
 
 as_iterator * as_linkedlist_iterator_new(const as_linkedlist * l)
 {
-	as_iterator * i = (as_iterator *) malloc(sizeof(as_iterator));
+	as_iterator * i = (as_iterator *) cf_malloc(sizeof(as_iterator));
 	if ( !i ) return i;
 
 	i->free = true;

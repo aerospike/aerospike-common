@@ -400,7 +400,7 @@ inline int as_list_set_int64(as_list * l, const uint32_t i, int64_t value)
  */
 inline int as_list_set_str(as_list * l, const uint32_t i, const char * value) 
 {
-	return as_util_hook(set, 1, l, i, (as_val *) as_string_new(strdup(value), true));
+	return as_util_hook(set, 1, l, i, (as_val *) as_string_new_strdup(value));
 }
 
 /**
@@ -468,7 +468,7 @@ inline int as_list_append_int64(as_list * l, int64_t value)
  */
 inline int as_list_append_str(as_list * l, const char * value) 
 {
-	return as_util_hook(append, 1, l, (as_val *) as_string_new(strdup(value), true));
+	return as_util_hook(append, 1, l, (as_val *) as_string_new_strdup(value));
 }
 
 /**
@@ -536,7 +536,7 @@ inline int as_list_prepend_int64(as_list * l, int64_t value)
  */
 inline int as_list_prepend_str(as_list * l, const char * value) 
 {
-	return as_util_hook(prepend, 1, l, (as_val *) as_string_new(strdup(value), true));
+	return as_util_hook(prepend, 1, l, (as_val *) as_string_new_strdup(value));
 }
 
 /**

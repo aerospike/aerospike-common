@@ -183,7 +183,7 @@ int as_logger_destroy(as_logger * logger);
  *   if ( as_logger_enabled(logger, AS_LOG_DEBUG) ) {
  *       char * foo = tostring(x);
  *       as_logger_debug(logger, "foo = %s", foo);
- *       free(foo);
+ *       cf_free(foo);
  *   }
  *
  */

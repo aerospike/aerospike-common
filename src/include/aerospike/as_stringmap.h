@@ -43,7 +43,7 @@
  */
 inline int as_stringmap_set(as_map * m, const char * k, as_val * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), v);
+	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), v);
 }
 
 /**
@@ -51,7 +51,7 @@ inline int as_stringmap_set(as_map * m, const char * k, as_val * v)
  */
 inline int as_stringmap_set_int64(as_map * m, const char * k, int64_t v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) as_integer_new(v));
+	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) as_integer_new(v));
 }
 
 /**
@@ -59,7 +59,7 @@ inline int as_stringmap_set_int64(as_map * m, const char * k, int64_t v)
  */
 inline int as_stringmap_set_str(as_map * m, const char * k, const char * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) as_string_new(strdup(v),true));
+	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) as_string_new_strdup(v));
 }
 
 /**
@@ -67,7 +67,7 @@ inline int as_stringmap_set_str(as_map * m, const char * k, const char * v)
  */
 inline int as_stringmap_set_integer(as_map * m, const char * k, as_integer * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) v);
+	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) v);
 }
 
 /**
@@ -75,7 +75,7 @@ inline int as_stringmap_set_integer(as_map * m, const char * k, as_integer * v)
  */
 inline int as_stringmap_set_string(as_map * m, const char * k, as_string * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) v);
+	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) v);
 }
 
 /**
@@ -83,7 +83,7 @@ inline int as_stringmap_set_string(as_map * m, const char * k, as_string * v)
  */
 inline int as_stringmap_set_bytes(as_map * m, const char * k, as_bytes * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) v);
+	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) v);
 }
 
 /**
@@ -91,7 +91,7 @@ inline int as_stringmap_set_bytes(as_map * m, const char * k, as_bytes * v)
  */
 inline int as_stringmap_set_list(as_map * m, const char * k, as_list * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) v);
+	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) v);
 }
 
 /**
@@ -99,7 +99,7 @@ inline int as_stringmap_set_list(as_map * m, const char * k, as_list * v)
  */
 inline int as_stringmap_set_map(as_map * m, const char * k, as_map * v) 
 {
-	return as_util_hook(set, 1, m, (as_val *) as_string_new(strdup(k),true), (as_val *) v);
+	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) v);
 }
 
 /******************************************************************************

@@ -60,7 +60,7 @@ as_bytes * as_bytes_empty_init(as_bytes * v, uint32_t len) {
     as_val_init(&v->_, AS_BYTES, false /*is_malloc*/);
     v->free = true;
     v->type = AS_BYTES_TYPE_BLOB;
-    v->value = malloc(len);
+    v->value = cf_malloc(len);
     memset(v->value, 0, len);
     v->len = len;
     v->capacity = len;
@@ -68,7 +68,7 @@ as_bytes * as_bytes_empty_init(as_bytes * v, uint32_t len) {
 }
 
 as_bytes * as_bytes_new(uint8_t * s, uint32_t len, bool free) {
-    as_bytes * v = (as_bytes *) malloc(sizeof(as_bytes));
+    as_bytes * v = (as_bytes *) cf_malloc(sizeof(as_bytes));
     as_val_init(&v->_, AS_BYTES, true /*is_malloc*/);
     v->free = free;
     v->type = AS_BYTES_TYPE_BLOB;
@@ -79,11 +79,11 @@ as_bytes * as_bytes_new(uint8_t * s, uint32_t len, bool free) {
 }
 
 as_bytes * as_bytes_empty_new(uint32_t len) {
-    as_bytes * v = (as_bytes *) malloc(sizeof(as_bytes));
+    as_bytes * v = (as_bytes *) cf_malloc(sizeof(as_bytes));
     as_val_init(&v->_, AS_BYTES, true /*is_malloc*/);
     v->free = true;
     v->type = AS_BYTES_TYPE_BLOB;
-    v->value = malloc(len);
+    v->value = cf_malloc(len);
     memset(v->value, 0, len);
     v->len = len;
     v->capacity = len;
@@ -121,10 +121,10 @@ as_bytes * as_bytes_slice_new(const as_bytes * src, uint32_t start, uint32_t end
     }
     int len = end - start;
 
-    as_bytes * dest = (as_bytes *) malloc(sizeof(as_bytes));
+    as_bytes * dest = (as_bytes *) cf_malloc(sizeof(as_bytes));
     as_val_init(&dest->_, AS_BYTES, true);
     dest->free = true;
-    dest->value = malloc(len);
+    dest->value = cf_malloc(len);
     memcpy(dest->value, &src->value[start], len);
     dest->len = len;
     dest->capacity = len;
@@ -140,7 +140,7 @@ as_bytes * as_bytes_slice_init(as_bytes * dest, const as_bytes * src, uint32_t s
 
     as_val_init(&dest->_, AS_BYTES, false);
     dest->free = true;
-    dest->value = malloc(len);
+    dest->value = cf_malloc(len);
     memcpy(dest->value, &src->value[start], len);
     dest->len = len;
     dest->capacity = len;
@@ -153,13 +153,13 @@ int as_bytes_append(as_bytes * v, const uint8_t * buf, uint32_t buf_len)  {
     if (v->len + buf_len > v->capacity) {
         uint8_t *t;
         if (v->free == false) {
-            t = malloc(v->len + buf_len);
+            t = cf_malloc(v->len + buf_len);
             if (!t) return(-1);
             v->free = true;
             memcpy(t, v->value + v->len, v->len);
         }
         else {
-            t = realloc(v->value, v->len + buf_len);
+            t = cf_realloc(v->value, v->len + buf_len);
             if (!t) return(-1);
         }
         memcpy(&t[v->len], buf, buf_len);
@@ -179,14 +179,14 @@ int as_bytes_append_bytes(as_bytes * s1, as_bytes * s2) {
     if (s1->len + s2->len > s1->capacity) {
         uint8_t *t;
         if (s1->free == false) {
-            t = malloc(s1->len + s2->len);
+            t = cf_malloc(s1->len + s2->len);
             if (!t) return(-1);
             s1->free = true;
             memcpy(t, s1->value + s1->len, s1->len);
             s1->free = true;
         }
         else {
-            t = realloc(s1->value, s1->len + s2->len);
+            t = cf_realloc(s1->value, s1->len + s2->len);
             if (!t) return(-1);
         }
         memcpy(&t[s1->len], s2->value, s2->len);
@@ -219,7 +219,7 @@ int as_bytes_set_len(as_bytes * v, uint32_t len) {
     if (v->len == len) return(0);
     if (len > v->len) {
         if (len > v->capacity) {
-            v->value = realloc(v->value, len);
+            v->value = cf_realloc(v->value, len);
             if (v->value == 0) return(-1);
             memset(v->value + v->capacity, 0, len - v->capacity);
             v->capacity = len;
@@ -235,7 +235,7 @@ int as_bytes_set_len(as_bytes * v, uint32_t len) {
 void as_bytes_val_destroy(as_val * v) {
     as_bytes * b = as_bytes_fromval(v);
     if ( b && b->free && b->value ) {
-        free(b->value);
+        cf_free(b->value);
     }
 }
 
@@ -257,10 +257,10 @@ char * as_bytes_val_tostring(const as_val * v) {
     if (s->value == NULL) return(NULL);
     uint32_t sl = as_bytes_len(s);
     if (sl == 0) {
-        return( strdup("\"\"") );
+        return( cf_strdup("\"\"") );
     }
     size_t st = (4 * sl) + 3;
-    char * str = (char *) malloc(st);
+    char * str = (char *) cf_malloc(st);
     str[0] = '\"';
     int j=1;
     for (int i=0;i<sl;i++) {

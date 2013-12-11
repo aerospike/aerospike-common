@@ -19,7 +19,7 @@ TEST( types_linkedlist_empty, "as_linkedlist is empty" ) {
 static void print_list(const char *msg, const as_list *l) {
 	char *s = as_val_tostring(l);
 	fprintf(stderr, "%s %s\n",msg,s);
-	free(s);
+	cf_free(s);
 }
 
 

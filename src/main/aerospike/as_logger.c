@@ -44,7 +44,7 @@ as_logger * as_logger_init(as_logger * logger, void * source, const as_logger_ho
  * Heap allocate and initialize a logger
  */
 as_logger * as_logger_new(void * source, const as_logger_hooks * hooks) {
-    as_logger * logger = (as_logger *) malloc(sizeof(as_logger));
+    as_logger * logger = (as_logger *) cf_malloc(sizeof(as_logger));
     if (!logger) return logger;
     logger->source = source;
     logger->hooks = hooks;
@@ -59,7 +59,7 @@ as_logger * as_logger_new(void * source, const as_logger_hooks * hooks) {
 int as_logger_destroy(as_logger * logger) {
     int rc = as_util_hook(destroy, 1, logger);
     if ( rc == 0 && logger->is_malloc ) {
-        free(logger);
+        cf_free(logger);
     }
     return rc;
 }
@@ -79,7 +79,7 @@ int as_logger_destroy(as_logger * logger) {
  *   if ( as_logger_enabled(logger, AS_LOG_DEBUG) ) {
  *       char * foo = tostring(x);
  *       as_logger_debug(logger, "foo = %s", foo);
- *       free(foo);
+ *       cf_free(foo);
  *   }
  *
  */

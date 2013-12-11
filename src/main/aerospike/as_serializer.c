@@ -40,7 +40,7 @@ as_serializer * as_serializer_init(as_serializer * s, const void * source, const
 }
 
 as_serializer * as_serializer_new(const void * source, const as_serializer_hooks * hooks) {
-    as_serializer * s = (as_serializer *) malloc(sizeof(as_serializer));
+    as_serializer * s = (as_serializer *) cf_malloc(sizeof(as_serializer));
     if (!s) return s;
     s->is_malloc = true;
     s->hooks = hooks;
@@ -48,7 +48,7 @@ as_serializer * as_serializer_new(const void * source, const as_serializer_hooks
 }
 
 void as_serializer_destroy(as_serializer * s) {
-    if (s->is_malloc == true) free(s);
+    if (s->is_malloc == true) cf_free(s);
 }
 
 

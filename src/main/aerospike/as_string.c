@@ -48,13 +48,18 @@ as_string * as_string_init(as_string * s, char * value, bool free) {
 }
 
 as_string * as_string_new(char * value, bool free) {
-	as_string * s = (as_string *) malloc(sizeof(as_string));
+	as_string * s = (as_string *) cf_malloc(sizeof(as_string));
 	if (!s) return s;
 	as_val_init(&s->_, AS_STRING, true);
 	s->free = free;
 	s->value = value;
 	s->len = SIZE_MAX;
 	return s;
+}
+
+as_string *as_string_new_strdup(const char * s)
+{
+	return as_string_new(cf_strdup(s), true);
 }
 
 size_t as_string_len(as_string * s) {
@@ -70,7 +75,7 @@ size_t as_string_len(as_string * s) {
 void as_string_val_destroy(as_val * v) {
 	as_string * s = as_string_fromval(v);
 	if ( s && s->value && s->free ) {
-		free(s->value);
+		cf_free(s->value);
 		s->value = NULL;
 		s->free = false;
 	}
@@ -93,7 +98,7 @@ char * as_string_val_tostring(const as_val * v) {
 	if (s->value == NULL) return(NULL);
 	size_t sl = as_string_len(s);
 	size_t st = 3 + sl;
-	char * str = (char *) malloc(sizeof(char) * st);
+	char * str = (char *) cf_malloc(sizeof(char) * st);
 	if (!str) return str;
 	*(str + 0) = '\"';
 	strcpy(str + 1, s->value);

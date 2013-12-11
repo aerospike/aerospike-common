@@ -44,7 +44,7 @@ as_memtracker * as_memtracker_init(as_memtracker * memtracker, void * source, co
  * Heap allocate and initialize a memtracker
  */
 as_memtracker * as_memtracker_new(void * source, const as_memtracker_hooks * hooks) {
-    as_memtracker * memtracker = (as_memtracker *) malloc(sizeof(as_memtracker));
+    as_memtracker * memtracker = (as_memtracker *) cf_malloc(sizeof(as_memtracker));
     if (!memtracker) return memtracker;
     memtracker->source = source;
     memtracker->hooks = hooks;
@@ -59,7 +59,7 @@ as_memtracker * as_memtracker_new(void * source, const as_memtracker_hooks * hoo
 int as_memtracker_destroy(as_memtracker * memtracker) {
     int rc = as_util_hook(destroy, 1, memtracker);
     if ( rc == 0 && memtracker->is_malloc ) {
-        free(memtracker);
+        cf_free(memtracker);
     }
     return rc;
 }

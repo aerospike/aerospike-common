@@ -99,7 +99,7 @@ as_list * as_list_init(as_list * l, void * data, const as_list_hooks * hooks) {
 }
 
 as_list * as_list_new(void * data, const as_list_hooks * hooks) {
-    as_list * l = (as_list *) malloc(sizeof(as_list));
+    as_list * l = (as_list *) cf_malloc(sizeof(as_list));
     if (!l) return l;
     as_val_init(&l->_, AS_LIST, true);
     l->data.generic = data;
@@ -127,7 +127,7 @@ char * as_list_val_tostring(const as_val * v) {
     uint32_t    pos = 0;
     bool        sep = false;
 
-    buf = (char *) malloc(sizeof(char) * cap);
+    buf = (char *) cf_malloc(sizeof(char) * cap);
     if (!buf) return buf;
 
     strcpy(buf, "List(");
@@ -141,7 +141,7 @@ char * as_list_val_tostring(const as_val * v) {
             
             if ( pos + vallen + 2 >= cap ) {
                 uint32_t adj = ((vallen+2) > blk) ? vallen+2 : blk;
-                buf = realloc(buf, sizeof(char) * (cap + adj));
+                buf = cf_realloc(buf, sizeof(char) * (cap + adj));
                 cap += adj;
             }
 
@@ -155,13 +155,13 @@ char * as_list_val_tostring(const as_val * v) {
             pos += vallen;
             sep = true;
 
-            free(valstr);
+            cf_free(valstr);
         }
     }
     as_iterator_destroy(i);
 
     if ( pos + 2 >= cap ) {
-		buf = realloc(buf, sizeof(char) * (cap + 2));
+		buf = cf_realloc(buf, sizeof(char) * (cap + 2));
 		cap += 2;
 	}
 

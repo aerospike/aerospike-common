@@ -53,7 +53,7 @@ const as_iterator_hooks as_arraylist_iterator_hooks = {
 
 as_iterator * as_arraylist_iterator_new(const as_arraylist * l)
 {
-    as_iterator * i = (as_iterator *) malloc(sizeof(as_iterator));
+    as_iterator * i = (as_iterator *) cf_malloc(sizeof(as_iterator));
 	if ( !i ) return i;
 
     i->free = true;

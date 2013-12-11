@@ -95,6 +95,17 @@ as_string * as_string_init(as_string * s, char * value, bool free);
 as_string * as_string_new(char * value, bool free);
 
 /**
+ *	Create and initialize a new heap allocated `as_string`.
+ *
+ *	Value is cf_strdup()'d and will be freed when the as_string is destroyed.
+ *
+ *	@param value 	The NULL terminated string of character.
+ *
+ *	@return On success, the new string. Otherwise NULL.
+ */
+as_string * as_string_new_strdup(const char * value);
+
+/**
  *	Destroy the as_string and associated resources.
  */
 inline void as_string_destroy(as_string * s) 

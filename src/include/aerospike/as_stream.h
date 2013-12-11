@@ -27,6 +27,8 @@
 #include <aerospike/as_val.h>
 #include <aerospike/as_util.h>
 
+#include <citrusleaf/alloc.h>
+
 /******************************************************************************
  *	MACROS
  *****************************************************************************/
@@ -56,7 +58,7 @@ typedef enum as_stream_status_e {
 typedef struct as_stream_s {
 
 	/**
-	 *	Specifies whether the free() can be used 
+	 *	Specifies whether the cf_free() can be used
 	 *	on this stream.
 	 */
 	bool free;
@@ -98,6 +100,12 @@ typedef struct as_stream_hooks_s {
 	
 } as_stream_hooks;
 
+/**
+ *  Wrapper functions to ensure each CF allocation-related function call has a unique line.
+ */
+void *as_stream_malloc(size_t size);
+void as_stream_free(void *ptr);
+
 /******************************************************************************
  *	INLINE FUNCTIONS
  *****************************************************************************/
@@ -128,7 +136,7 @@ inline as_stream * as_stream_init(as_stream * stream, void * data, const as_stre
  *	@return On success, a new stream. Otherwise NULL.
  */
 inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks) {
-	as_stream * stream = (as_stream *) malloc(sizeof(as_stream));
+	as_stream * stream = (as_stream *) as_stream_malloc(sizeof(as_stream));
 	if (!stream) return NULL;
 	stream->free = true;
 	stream->data = data;
@@ -145,7 +153,7 @@ inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks) {
  */
 inline void as_stream_destroy(as_stream * stream) {
 	as_util_hook(destroy, 1, stream);
-	if ( stream && stream->free ) free(stream);
+	if ( stream && stream->free ) as_stream_free(stream);
 }
 
 /**

@@ -127,7 +127,7 @@ as_val * as_val_val_destroy(as_val * v) {
     if ( 0 == cf_atomic32_decr(&(v->count)) ) {
         as_val_destroy_callbacks[ v->type ](v);     
         if ( v->free ) {
-            free(v);
+            cf_free(v);
         }
         v = NULL;
     }

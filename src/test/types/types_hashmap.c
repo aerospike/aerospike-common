@@ -19,9 +19,9 @@ TEST( types_hashmap_empty, "as_hashmap is empty" ) {
 
 TEST( types_hashmap_ops, "as_hashmap ops" ) {
 
-    as_val * a = (as_val *) as_string_new(strdup("a"), true);
-    as_val * b = (as_val *) as_string_new(strdup("b"), true);
-    as_val * c = (as_val *) as_string_new(strdup("c"), true);
+    as_val * a = (as_val *) as_string_new(cf_strdup("a"), true);
+    as_val * b = (as_val *) as_string_new(cf_strdup("b"), true);
+    as_val * c = (as_val *) as_string_new(cf_strdup("c"), true);
     as_integer * v = NULL;
 
     as_map * m = as_hashmap_new(10);
@@ -101,9 +101,9 @@ TEST( types_hashmap_iterator, "as_hashmap w/ iterator ops" ) {
     as_map * m = as_hashmap_new(10);
     assert_int_eq( as_map_size(m), 0 );
 
-    as_map_set(m, (as_val *) as_string_new(strdup("a"), true), (as_val *) as_integer_new(1));
-    as_map_set(m, (as_val *) as_string_new(strdup("b"), true), (as_val *) as_integer_new(2));
-    as_map_set(m, (as_val *) as_string_new(strdup("c"), true), (as_val *) as_integer_new(3));
+    as_map_set(m, (as_val *) as_string_new(cf_strdup("a"), true), (as_val *) as_integer_new(1));
+    as_map_set(m, (as_val *) as_string_new(cf_strdup("b"), true), (as_val *) as_integer_new(2));
+    as_map_set(m, (as_val *) as_string_new(cf_strdup("c"), true), (as_val *) as_integer_new(3));
     assert_int_eq( as_map_size(m), 3 );
 
     as_iterator * i  = as_map_iterator_new(m);

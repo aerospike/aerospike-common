@@ -25,6 +25,8 @@
 
 #include <citrusleaf/cf_vector.h>
 
+#include <citrusleaf/alloc.h>
+
 /******************************************************************************
  * MACROS
  ******************************************************************************/
@@ -45,7 +47,7 @@
 cf_vector * cf_vector_create( uint32_t value_len, uint32_t init_sz, uint flags) {
 	cf_vector *v;
 
-	v = malloc(sizeof(cf_vector));
+	v = cf_malloc(sizeof(cf_vector));
 	if (!v)	return(0);
 
 	v->value_len = value_len;
@@ -55,9 +57,9 @@ cf_vector * cf_vector_create( uint32_t value_len, uint32_t init_sz, uint flags) 
 	v->stack_struct = false;
 	v->stack_vector = false;
 	if (init_sz) {
-		v->vector = malloc(init_sz * value_len);
+		v->vector = cf_malloc(init_sz * value_len);
 		if (!v->vector)	{
-			free(v);
+			cf_free(v);
 			return(0);
 		}
 	}
@@ -83,7 +85,7 @@ int cf_vector_init(cf_vector *v, uint32_t value_len, uint32_t init_sz, uint flag
 	v->stack_struct = true;
 	v->stack_vector = false;
 	if (init_sz) {
-		v->vector = malloc(init_sz * value_len);
+		v->vector = cf_malloc(init_sz * value_len);
 		if (!v->vector)	return(-1);
 	}
 	else
@@ -152,8 +154,8 @@ void cf_vector_destroy(cf_vector *v) {
 		pthread_mutex_destroy(&v->LOCK);
 #endif // EXTERNAL_LOCKS
 	}
-	if (v->vector && (v->stack_vector == false))	free(v->vector);
-	if (v->stack_struct == false) free(v);
+	if (v->vector && (v->stack_vector == false))	cf_free(v->vector);
+	if (v->stack_struct == false) cf_free(v);
 }
 
 static int cf_vector_resize(cf_vector *v, uint32_t new_sz) {
@@ -165,7 +167,7 @@ static int cf_vector_resize(cf_vector *v, uint32_t new_sz) {
 	}
 	uint8_t *_t;
 	if (v->vector == 0 || v->stack_vector) {
-		_t = malloc(new_sz * v->value_len);
+		_t = cf_malloc(new_sz * v->value_len);
 		if (!_t)	return(-1);
 		if (v->stack_vector) {
 			memcpy(_t, v->vector, v->alloc_len * v->value_len); 
@@ -173,7 +175,7 @@ static int cf_vector_resize(cf_vector *v, uint32_t new_sz) {
 		}
 	}
 	else
-		_t = realloc(v->vector, (new_sz) * v->value_len);
+		_t = cf_realloc(v->vector, (new_sz) * v->value_len);
 	if (!_t)	return(-1);
 	v->vector = _t;
 	if (v->flags & VECTOR_FLAG_INITZERO)
@@ -322,7 +324,7 @@ void cf_vector_compact(cf_vector *v) {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_LOCK(v);
 	if (v->alloc_len && (v->len != v->alloc_len)) {
-		v->vector = realloc(v->vector, v->len * v->alloc_len);
+		v->vector = cf_realloc(v->vector, v->len * v->alloc_len);
 		v->alloc_len = v->len;
 	}
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
