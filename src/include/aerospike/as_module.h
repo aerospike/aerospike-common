@@ -219,4 +219,4 @@ int as_module_apply_stream(as_module * m, as_aerospike * as, const char * filena
  *
  * @param errno        The error code
  */
-char *as_module_err_string(int errno);
+char *as_module_err_string(int);
