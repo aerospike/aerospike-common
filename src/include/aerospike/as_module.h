@@ -213,3 +213,10 @@ int as_module_apply_record(as_module * m, as_aerospike * as, const char * filena
  * @return 0 on success, otherwise 1
  */
 int as_module_apply_stream(as_module * m, as_aerospike * as, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream);
+
+/**
+ * Return lua error in string format when error code is passed in
+ *
+ * @param errno        The error code
+ */
+char *as_module_err_string(int errno);
