@@ -104,9 +104,14 @@ static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, 
 
 	char * keystr = as_val_tostring(key);
 	size_t keylen = strlen(keystr);
+	if (!keystr) {
+		return false;
+	}
 
 	char * valstr = as_val_tostring(val);
-    if (!buf) return buf;
+    if (!valstr) {
+    	return false;
+    }
 	size_t vallen = strlen(valstr);
 
 	if ( data->sep ) {
