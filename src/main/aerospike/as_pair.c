@@ -92,6 +92,7 @@ char *as_pair_val_tostring(const as_val * v)
 	
 	size_t l = al + bl + 5;
 	char * str = (char *) malloc(sizeof(char) * l);
+    if (!str) return str;
 
 	strcpy(str, "(");
 	strcpy(str+1, a);

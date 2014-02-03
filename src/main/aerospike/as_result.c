@@ -41,6 +41,7 @@ as_result * as_result_init(as_result * r) {
 
 as_result * as_result_new() {
     as_result * r = (as_result *) malloc(sizeof(as_result));
+    if (!r) return r;
     r->is_malloc = true;
     r->count = 1;
     r->is_success = false;

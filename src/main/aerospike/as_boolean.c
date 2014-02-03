@@ -108,6 +108,7 @@ char * as_boolean_val_tostring(const as_val * v)
 
 	as_boolean * b = (as_boolean *) v;
 	char * str = (char *) malloc(sizeof(char) * 6);
+    if (!str) return str;
 	bzero(str,6);
 	if ( b->value ) {
 		strcpy(str,"true");
