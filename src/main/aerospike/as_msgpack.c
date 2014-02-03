@@ -319,20 +319,6 @@ static int as_msgpack_pack_pair(msgpack_packer * pk, as_pair * p)
 
 static int as_msgpack_nil_to_val(as_val ** v)
 {
-        *v = (as_val *) as_string_new(strndup(raw+1,r->size - 1),true);
-    }
-    // everything else encoded as a bytes with the type set
-    else {
-        int len = r->size - 1;
-        uint8_t *buf = malloc(len);
-        if (!buf) {
-            *v = NULL; 
-            return 0;
-        }
-        memcpy(buf, raw+1, len);
-        as_bytes *b = as_bytes_new(buf, len, true /*ismalloc*/);
-        if (b)
-            as_bytes_set_type( b, (as_bytes_type) *raw );
 	*v = (as_val *) &as_nil;
 	return 0;
 }
