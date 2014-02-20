@@ -53,7 +53,7 @@
  *	map and associated resources, using `as_hashmap_destroy()`:
  *	
  *	~~~~~~~~~~{.c}
- *	as_hashmap_destroy(list);
+ *	as_hashmap_destroy(map);
  *	~~~~~~~~~~
  *
  *
@@ -62,7 +62,7 @@
  *
  *	~~~~~~~~~~{.c}
  *	as_hashmap map;
- *	as_map * l = (as_list *) as_hashmap_init(&map, 32);
+ *	as_map * l = (as_map*) as_hashmap_init(&map, 32);
  *	as_stringmap_set_int64(l, "a", 1);
  *	as_stringmap_set_int64(l, "b", 2);
  *	as_stringmap_set_int64(l, "c", 3);
@@ -137,9 +137,9 @@ void as_hashmap_destroy(as_hashmap * map);
 /**
  *	The hash value of the map.
  *
- *	@param map 	The list.
+ *	@param map 	The map.
  *
- *	@return The hash value of the list.
+ *	@return The hash value of the map.
  *
  *	@relatesalso as_hashmap
  */

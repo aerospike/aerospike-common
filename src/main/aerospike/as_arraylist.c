@@ -327,12 +327,12 @@ int as_arraylist_prepend(as_arraylist * list, as_val * value)
 
 int as_arraylist_prepend_int64(as_arraylist * list, int64_t value) 
 {
-	return as_arraylist_append(list, (as_val *) as_integer_new(value));
+	return as_arraylist_prepend(list, (as_val *) as_integer_new(value));
 }
 
 int as_arraylist_prepend_str(as_arraylist * list, const char * value) 
 {
-	return as_arraylist_append(list, (as_val *) as_string_new(strdup(value), true));
+	return as_arraylist_prepend(list, (as_val *) as_string_new(strdup(value), true));
 }
 
 

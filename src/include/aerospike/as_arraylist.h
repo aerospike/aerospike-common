@@ -674,7 +674,7 @@ int as_arraylist_prepend_str(as_arraylist * list, const char * value);
  */
 inline int as_arraylist_prepend_integer(as_arraylist * list, as_integer * value) 
 {
-	return as_arraylist_append(list, (as_val *) value);
+	return as_arraylist_prepend(list, (as_val *) value);
 }
 
 /**
@@ -688,7 +688,7 @@ inline int as_arraylist_prepend_integer(as_arraylist * list, as_integer * value)
  */
 inline int as_arraylist_prepend_string(as_arraylist * list, as_string * value) 
 {
-	return as_arraylist_append(list, (as_val *) value);
+	return as_arraylist_prepend(list, (as_val *) value);
 }
 
 /**
@@ -702,7 +702,7 @@ inline int as_arraylist_prepend_string(as_arraylist * list, as_string * value)
  */
 inline int as_arraylist_prepend_bytes(as_arraylist * list, as_bytes * value) 
 {
-	return as_arraylist_append(list, (as_val *) value);
+	return as_arraylist_prepend(list, (as_val *) value);
 }
 
 /**
@@ -716,7 +716,7 @@ inline int as_arraylist_prepend_bytes(as_arraylist * list, as_bytes * value)
  */
 inline int as_arraylist_prepend_list(as_arraylist * list, as_list * value) 
 {
-	return as_arraylist_append(list, (as_val *) value);
+	return as_arraylist_prepend(list, (as_val *) value);
 }
 
 /**
@@ -730,7 +730,7 @@ inline int as_arraylist_prepend_list(as_arraylist * list, as_list * value)
  */
 inline int as_arraylist_prepend_map(as_arraylist * list, as_map * value) 
 {
-	return as_arraylist_append(list, (as_val *) value);
+	return as_arraylist_prepend(list, (as_val *) value);
 }
 
 /******************************************************************************
