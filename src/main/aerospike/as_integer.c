@@ -87,6 +87,6 @@ char * as_integer_val_tostring(const as_val * v)
 	as_integer * i = (as_integer *) v;
 	char * str = (char *) malloc(sizeof(char) * 32);
 	bzero(str, 32);
-	sprintf(str,"%lu",i->value);
+	sprintf(str,"%ld",i->value);
 	return str;
 }
