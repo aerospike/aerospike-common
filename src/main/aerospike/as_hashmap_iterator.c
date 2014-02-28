@@ -42,7 +42,6 @@ extern const as_iterator_hooks as_hashmap_iterator_hooks;
  *****************************************************************************/
 
 static bool as_hashmap_iterator_seek(as_hashmap_iterator * it)
->>>>>>> ee8a19a8ecdc32692467512ce95b0ebc6839a843
 {
 	// We no longer have slots in the table
 	if ( it->pos > it->size ) return false;
