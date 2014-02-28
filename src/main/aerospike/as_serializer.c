@@ -20,35 +20,48 @@
  * IN THE SOFTWARE.
  *****************************************************************************/
 
+#include <citrusleaf/alloc.h>
+
 #include <aerospike/as_serializer.h>
 
 /******************************************************************************
  * INLINE FUNCTIONS
  *****************************************************************************/
 
-extern inline int as_serializer_serialize(as_serializer * s, as_val * v, as_buffer * b);
-extern inline int as_serializer_deserialize(as_serializer * s, as_buffer * b, as_val ** v);
+extern inline int as_serializer_serialize(as_serializer * serializer, as_val * val, as_buffer * buffer);
+
+extern inline int as_serializer_deserialize(as_serializer * serializer, as_buffer * buffer, as_val ** val);
 
 /******************************************************************************
  * FUNCTIONS
  *****************************************************************************/
 
-as_serializer * as_serializer_init(as_serializer * s, const void * source, const as_serializer_hooks * hooks) {
-    s->is_malloc = false;
-    s->hooks = hooks;
-    return s;
+as_serializer * as_serializer_cons(as_serializer * serializer, bool free, void * data, const as_serializer_hooks * hooks) 
+{
+	if ( !serializer ) return serializer;
+
+    serializer->free = false;
+    serializer->data = data;
+    serializer->hooks = hooks;
+    return serializer;
 }
 
-as_serializer * as_serializer_new(const void * source, const as_serializer_hooks * hooks) {
-    as_serializer * s = (as_serializer *) cf_malloc(sizeof(as_serializer));
-    if (!s) return s;
-    s->is_malloc = true;
-    s->hooks = hooks;
-    return s;
+as_serializer * as_serializer_init(as_serializer * serializer, void * data, const as_serializer_hooks * hooks) 
+{
+    return as_serializer_cons(serializer, false, data, hooks);
 }
 
-void as_serializer_destroy(as_serializer * s) {
-    if (s->is_malloc == true) cf_free(s);
+as_serializer * as_serializer_new(void * data, const as_serializer_hooks * hooks)
+{
+    as_serializer * serializer = (as_serializer *) cf_malloc(sizeof(as_serializer));
+    return as_serializer_cons(serializer, true, data, hooks);
+}
+
+void as_serializer_destroy(as_serializer * serializer)
+{
+    if ( serializer->free ) {
+    	cf_free(serializer);
+    }
 }
 
 

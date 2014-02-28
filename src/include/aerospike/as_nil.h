@@ -32,6 +32,7 @@
 
 /**
  *	NIL value
+ *	@ingroup aerospike_t
  */
 extern const as_val as_nil;
 

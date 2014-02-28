@@ -22,13 +22,13 @@
 
 #pragma once
 
-#include <aerospike/as_val.h>
 #include <aerospike/as_boolean.h>
 #include <aerospike/as_integer.h>
 #include <aerospike/as_string.h>
 #include <aerospike/as_bytes.h>
 #include <aerospike/as_pair.h>
 #include <aerospike/as_nil.h>
+#include <aerospike/as_val.h>
 
 #include <aerospike/as_rec.h>
 #include <aerospike/as_iterator.h>
@@ -37,8 +37,6 @@
 #include <aerospike/as_list.h>
 #include <aerospike/as_arraylist.h>
 #include <aerospike/as_arraylist_iterator.h>
-#include <aerospike/as_linkedlist.h>
-#include <aerospike/as_linkedlist_iterator.h>
 
 #include <aerospike/as_map.h>
 #include <aerospike/as_hashmap.h>

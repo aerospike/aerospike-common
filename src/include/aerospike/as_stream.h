@@ -54,6 +54,8 @@ typedef enum as_stream_status_e {
  *
  *	To use the stream interface, you will need to create an instance 
  *	via one of the implementations.
+ *
+ *	@ingroup aerospike_t
  */
 typedef struct as_stream_s {
 
@@ -107,7 +109,7 @@ void *as_stream_malloc(size_t size);
 void as_stream_free(void *ptr);
 
 /******************************************************************************
- *	INLINE FUNCTIONS
+ *	INSTANCE FUNCTIONS
  *****************************************************************************/
 
 /**
@@ -118,9 +120,13 @@ void as_stream_free(void *ptr);
  *	@param hooks	The hooks that interface with the source
  *
  *	@return On success, the initialized stream. Otherwise NULL.
+ *
+ *	@relatesalso as_stream
  */
-inline as_stream * as_stream_init(as_stream * stream, void * data, const as_stream_hooks * hooks) {
-	if ( stream == NULL ) return stream;
+inline as_stream * as_stream_init(as_stream * stream, void * data, const as_stream_hooks * hooks) 
+{
+	if ( !stream ) return stream;
+
 	stream->free = false;
 	stream->data = data;
 	stream->hooks = hooks;
@@ -134,10 +140,14 @@ inline as_stream * as_stream_init(as_stream * stream, void * data, const as_stre
  *	@param hooks	The hooks that interface with the source
  *
  *	@return On success, a new stream. Otherwise NULL.
+ *
+ *	@relatesalso as_stream
  */
-inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks) {
+inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks)
+{
 	as_stream * stream = (as_stream *) as_stream_malloc(sizeof(as_stream));
-	if (!stream) return NULL;
+	if ( !stream ) return stream;
+
 	stream->free = true;
 	stream->data = data;
 	stream->hooks = hooks;
@@ -150,11 +160,20 @@ inline as_stream * as_stream_new(void * data, const as_stream_hooks * hooks) {
  *	@param stream 	The stream to destroy.
  *
  *	@return 0 on success, otherwise 1.
+ *
+ *	@relatesalso as_stream
  */
-inline void as_stream_destroy(as_stream * stream) {
+inline void as_stream_destroy(as_stream * stream)
+{
 	as_util_hook(destroy, 1, stream);
-	if ( stream && stream->free ) as_stream_free(stream);
+	if ( stream && stream->free ) {
+		as_stream_free(stream);
+	}
 }
+
+/******************************************************************************
+ *	VALUE FUNCTIONS
+ *****************************************************************************/
 
 /**
  *	Get the source for the stream
@@ -162,8 +181,11 @@ inline void as_stream_destroy(as_stream * stream) {
  *	@param stream 	The stream to get the source from
  *
  *	@return pointer to the source of the stream
+ *
+ *	@relatesalso as_stream
  */
-inline void * as_stream_source(const as_stream * stream) {
+inline void * as_stream_source(const as_stream * stream)
+{
 	return (stream ? stream->data : NULL);
 }
 
@@ -173,8 +195,11 @@ inline void * as_stream_source(const as_stream * stream) {
  *	@param stream 	The stream to be read.
  *
  *	@return the element read from the stream or STREAM_END
+ *
+ *	@relatesalso as_stream
  */
-inline as_val * as_stream_read(const as_stream * stream) {
+inline as_val * as_stream_read(const as_stream * stream)
+{
 	return as_util_hook(read, NULL, stream);
 }
 
@@ -184,8 +209,11 @@ inline as_val * as_stream_read(const as_stream * stream) {
  *	@param stream 	The stream to test.
  *
  *	@return true if the stream can be read from
+ *
+ *	@relatesalso as_stream
  */
-inline bool as_stream_readable(const as_stream * stream) {
+inline bool as_stream_readable(const as_stream * stream)
+{
 	return stream != NULL && stream->hooks != NULL && stream->hooks->read;
 }
 
@@ -196,8 +224,11 @@ inline bool as_stream_readable(const as_stream * stream) {
  *	@param value	The element to write to the stream.
  *
  *	@return AS_STREAM_OK on success, otherwise is failure.
+ *
+ *	@relatesalso as_stream
  */
-inline as_stream_status as_stream_write(const as_stream * stream, as_val * value) {
+inline as_stream_status as_stream_write(const as_stream * stream, as_val * value)
+{
 	return as_util_hook(write, AS_STREAM_ERR, stream, value);
 }
 
@@ -208,7 +239,10 @@ inline as_stream_status as_stream_write(const as_stream * stream, as_val * value
  *	@param stream 	The stream to test.
  *
  *	@return true if the stream can be written to.
+ *
+ *	@relatesalso as_stream
  */
-inline bool as_stream_writable(const as_stream * stream) {
+inline bool as_stream_writable(const as_stream * stream)
+{
 	return stream != NULL && stream->hooks != NULL && stream->hooks->write;
 }

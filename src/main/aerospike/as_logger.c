@@ -23,6 +23,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include <citrusleaf/alloc.h>
+
 #include <aerospike/as_logger.h>
 #include <aerospike/as_util.h>
 
@@ -31,24 +33,38 @@
  *****************************************************************************/
 
 /**
+ * Constructs a logger
+ */
+static as_logger * as_logger_cons(as_logger * logger, bool free, void * source, const as_logger_hooks * hooks) 
+{
+	if ( logger == NULL ) return logger;
+
+	logger->free = free;
+	logger->source = source;
+	logger->hooks = hooks;
+
+	return logger;
+}
+/*****************************************************************************
+ * FUNCTIONS
+ *****************************************************************************/
+
+/**
  * Initialize a stack allocated logger
  */
-as_logger * as_logger_init(as_logger * logger, void * source, const as_logger_hooks * hooks) {
-    if ( logger == NULL ) return logger;
-    logger->source = source;
-    logger->hooks = hooks;
-    return logger;
+as_logger * as_logger_init(as_logger * logger, void * source, const as_logger_hooks * hooks) 
+{
+	return as_logger_cons(logger, false, source, hooks);
 }
 
 /**
  * Heap allocate and initialize a logger
  */
-as_logger * as_logger_new(void * source, const as_logger_hooks * hooks) {
-    as_logger * logger = (as_logger *) cf_malloc(sizeof(as_logger));
-    if (!logger) return logger;
-    logger->source = source;
-    logger->hooks = hooks;
-    return logger;
+as_logger * as_logger_new(void * source, const as_logger_hooks * hooks) 
+{
+	as_logger * logger = (as_logger *) cf_malloc(sizeof(as_logger));
+	if ( !logger ) return logger;
+	return as_logger_cons(logger, true, source, hooks);
 }
 
 /**
@@ -56,12 +72,13 @@ as_logger * as_logger_new(void * source, const as_logger_hooks * hooks) {
  * Calls logger->destroy. If success and if this is a heap allocated
  * logger, then it will be freed.
  */
-int as_logger_destroy(as_logger * logger) {
-    int rc = as_util_hook(destroy, 1, logger);
-    if ( rc == 0 && logger->is_malloc ) {
-        cf_free(logger);
-    }
-    return rc;
+int as_logger_destroy(as_logger * logger) 
+{
+	int rc = as_util_hook(destroy, 1, logger);
+	if ( rc == 0 && logger->free ) {
+		cf_free(logger);
+	}
+	return rc;
 }
 
 
@@ -83,15 +100,17 @@ int as_logger_destroy(as_logger * logger) {
  *   }
  *
  */
-bool as_logger_is_enabled(const as_logger * logger, const as_logger_level level) {
-    return as_util_hook(enabled, false, logger, level);
+bool as_logger_is_enabled(const as_logger * logger, const as_logger_level level)
+{
+	return as_util_hook(enabled, false, logger, level);
 }
 
 /**
  * Get the current log level for the logger.
  */
-as_logger_level as_logger_get_level(const as_logger * logger) {
-    return as_util_hook(level, 1, logger);
+as_logger_level as_logger_get_level(const as_logger * logger)
+{
+	return as_util_hook(level, 1, logger);
 }
 
 /**
@@ -108,10 +127,11 @@ as_logger_level as_logger_get_level(const as_logger * logger) {
  *   as_logger_log(logger, AS_LOG_DEBUG, __FILE__, __LINE__, "Hello %s", "Bob");
  *
  */
-int as_logger_log(const as_logger * logger, const as_logger_level level, const char * file, const int line, const char * format, ...) {
-    va_list args;
-    va_start(args, format);
-    int rc = as_util_hook(log, 1, logger, level, file, line, format, args);
-    va_end(args);
-    return rc;
+int as_logger_log(const as_logger * logger, const as_logger_level level, const char * file, const int line, const char * format, ...)
+{
+	va_list args;
+	va_start(args, format);
+	int rc = as_util_hook(log, 1, logger, level, file, line, format, args);
+	va_end(args);
+	return rc;
 }

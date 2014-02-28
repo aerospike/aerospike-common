@@ -25,10 +25,6 @@
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
 
-#include <aerospike/as_linkedlist_iterator.h>
-#include <aerospike/as_arraylist_iterator.h>
-#include <aerospike/as_hashmap_iterator.h>
-
 #include <stdbool.h>
 
 /******************************************************************************
@@ -38,22 +34,10 @@
 struct as_iterator_hooks_s;
 
 /**
- *	Iterator Data
- *
- *	Each is specific to an implementation of `as_iterator`.
- */
-typedef union as_iterator_data_u {
-	as_linkedlist_iterator	linkedlist;
-	as_arraylist_iterator	arraylist;
-	as_hashmap_iterator		hashmap;
-	void *					generic;
-} as_iterator_data;
-
-/**
  *	Iterator Object
  */
 typedef struct as_iterator_s {
-	
+
 	/**
 	 *	@private
 	 *	If TRUE, then free this instance.
@@ -61,12 +45,12 @@ typedef struct as_iterator_s {
 	bool free;
 
 	/**
-	 *	Data provided by the implementation of `as_iterator`.
+	 *	Data for the iterator.
 	 */
-	union as_iterator_data_u data;
+	void * data;
 
 	/**
-	 *	Hooks provided by the implementations of `as_iterator`.
+	 *	Hooks for subtypes of as_iterator.
 	 */
 	const struct as_iterator_hooks_s * hooks;
 
@@ -78,89 +62,61 @@ typedef struct as_iterator_s {
 typedef struct as_iterator_hooks_s {
 
 	/**
-	 *	Releases the implementation of `as_iterator`.
-	 *
-	 *	@param it	The iterator to destroy.
+	 *	Releases the subtype of as_iterator.
 	 */
-	void (* const destroy)(as_iterator * it);
+	bool (* destroy)(as_iterator *);
 
 	/**
 	 *	Tests whether there is another element in the iterator.
-	 *
-	 *	@param it	The iterator to test.
-	 *
-	 *	@return true, if there is a next value. Otherwise false.
 	 */
-	bool (* const has_next)(const as_iterator * it);
+	bool (* has_next)(const as_iterator *);
 
 	/**
 	 *	Read the next value.
-	 *
-	 *	@param it	The iterator to read the next value from.
-	 *
-	 *	@return On success, the next value from the iterator. Otherwise NULL.
 	 */
-	as_val * (* const next)(as_iterator * it);
+	const as_val * (* next)(as_iterator *);
 
 } as_iterator_hooks;
 
 /******************************************************************************
- *	FUNCTIONS
+ *	INSTANCE FUNCTIONS
  ******************************************************************************/
 
 /**
- *	Initializes a stack allocated `as_iterator`.
- *
- *	@param i		The iterator to initialize.
- *	@param data		The data provided by the implementation of the iterator.
- *	@param hooks	The hooks provided by the implementation of the iterator.
- *
- *	@return On success, the initialized iterator. Otherwise NULL.
+ *	Initialize a stack allocated iterator.
  */
-as_iterator * as_iterator_init(as_iterator * i, void * data, const as_iterator_hooks * hooks);
+as_iterator * as_iterator_init(as_iterator * iterator, bool free, void * data, const as_iterator_hooks * hooks);
 
 /**
- *	Create and initialize a heap allocated `as_iterator`.
- *
- *	this is done with MALLOC and thus the iterator must be freed exactly once
- *
- *	@param data		The data provided by the implementation of the iterator.
- *	@param hooks	The hooks provided by the implementation of the iterator.
- *
- *	@return On success, the initialized iterator. Otherwise NULL.
+ *	Destroys the iterator and releasing associated resources.
  */
-as_iterator * as_iterator_new(void * data, const as_iterator_hooks * hooks);
-
-/**
- *	Destroy the iterator, releasing associated resources.
- *
- *	@param i		The iterator to destroy.
- */
-void as_iterator_destroy(as_iterator * i);
+void as_iterator_destroy(as_iterator * iterator);
 
 /******************************************************************************
- *	INLINE FUNCTIONS
+ *	VALUE FUNCTIONS
  ******************************************************************************/
 
 /**
  *	Tests if there are more values available in the iterator.
  *
- *	@param i	The  iterator to be tested.
+ *	@param iterator		The iterator to be tested.
  *
- *	@return On success, the next value available in the iterator. Otherwise NULL.
+ *	@return true if there are more values, otherwise false.
  */
-inline bool as_iterator_has_next(const as_iterator * i) {
-	return as_util_hook(has_next, false, i);
+inline bool as_iterator_has_next(const as_iterator * iterator)
+{
+	return as_util_hook(has_next, false, iterator);
 }
 
 /**
  *	Attempts to get the next value from the iterator.
  *	This will return the next value, and iterate past the value.
  *
- *	@param i 	The iterator to get the next value from.
+ *	@param iterator		The iterator to get the next value from.
  *
- *	@return On success, the next value available in the iterator. Otherwise NULL.
+ *	@return the next value available in the iterator.
  */
-inline const as_val * as_iterator_next(as_iterator * i) {
-	return as_util_hook(next, NULL, i);
+inline const as_val * as_iterator_next(as_iterator * iterator)
+{
+	return as_util_hook(next, NULL, iterator);
 }

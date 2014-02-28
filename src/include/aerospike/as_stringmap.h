@@ -20,6 +20,14 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
+/**
+ *	as_stringmap provides a convenience interface for populating a map with
+ *	string keys.
+ *
+ *	@addtogroup stringmap_t StringMap
+ *	@{
+ */
+
 #pragma once
 
 #include <aerospike/as_util.h>
@@ -119,7 +127,7 @@ inline as_val * as_stringmap_get(as_map * m, const char * k)
 /**
  *	Get the specified key's value as an int64_t.
  */
-inline int as_stringmap_get_int64(as_map * m, const char * k) 
+inline int64_t as_stringmap_get_int64(as_map * m, const char * k) 
 {
 	as_string key;
 	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
@@ -188,4 +196,6 @@ inline as_map * as_stringmap_get_map(as_map * m, const char * k)
 	return as_map_fromval(v);
 }
 
-
+/**
+ *	@}
+ */

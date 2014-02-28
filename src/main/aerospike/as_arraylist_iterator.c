@@ -1,27 +1,24 @@
 /******************************************************************************
- * Copyright 2008-2013 by Aerospike.
+ *	Copyright 2008-2013 by Aerospike.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy 
- * of this software and associated documentation files (the "Software"), to 
- * deal in the Software without restriction, including without limitation the 
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
- * sell copies of the Software, and to permit persons to whom the Software is 
- * furnished to do so, subject to the following conditions:
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy 
+ *	of this software and associated documentation files (the "Software"), to 
+ *	deal in the Software without restriction, including without limitation the 
+ *	rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
+ *	sell copies of the Software, and to permit persons to whom the Software is 
+ *	furnished to do so, subject to the following conditions:
  * 
- * The above copyright notice and this permission notice shall be included in 
- * all copies or substantial portions of the Software.
+ *	The above copyright notice and this permission notice shall be included in 
+ *	all copies or substantial portions of the Software.
  * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ *	FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *	IN THE SOFTWARE.
  *****************************************************************************/
-
-#include <stdbool.h>
-#include <stdlib.h>
 
 #include <citrusleaf/alloc.h>
 
@@ -29,74 +26,63 @@
 #include <aerospike/as_arraylist_iterator.h>
 #include <aerospike/as_iterator.h>
 
-/******************************************************************************
- * STATIC FUNCTIONS
- *****************************************************************************/
+#include <stdbool.h>
+#include <stdlib.h>
 
-static void     as_arraylist_iterator_destroy(as_iterator *);
-static bool     as_arraylist_iterator_has_next(const as_iterator *);
-static as_val * as_arraylist_iterator_next(as_iterator *);
+/*******************************************************************************
+ *	EXTERNS
+ ******************************************************************************/
 
-/******************************************************************************
- * CONSTANTS
- *****************************************************************************/
-
-const as_iterator_hooks as_arraylist_iterator_hooks = {
-    .destroy    = as_arraylist_iterator_destroy,
-    .has_next   = as_arraylist_iterator_has_next,
-    .next       = as_arraylist_iterator_next
-};
+extern const as_iterator_hooks as_arraylist_iterator_hooks;
 
 /******************************************************************************
- * FUNCTIONS
+ *	FUNCTIONS
  *****************************************************************************/
 
-as_iterator * as_arraylist_iterator_new(const as_arraylist * l)
+as_arraylist_iterator * as_arraylist_iterator_init(as_arraylist_iterator * iterator, const as_arraylist * list)
 {
-    as_iterator * i = (as_iterator *) cf_malloc(sizeof(as_iterator));
-	if ( !i ) return i;
+	if ( !iterator ) return iterator;
 
-    i->free = true;
-    i->hooks = &as_arraylist_iterator_hooks;
-    i->data.arraylist.list = l;
-    i->data.arraylist.pos = 0;
-    return i;
+	as_iterator_init((as_iterator *) iterator, false, NULL, &as_arraylist_iterator_hooks);
+	iterator->list = list;
+	iterator->pos = 0;
+	return iterator;
 }
 
-as_iterator * as_arraylist_iterator_init(const as_arraylist * l, as_iterator * i)
+as_arraylist_iterator * as_arraylist_iterator_new(const as_arraylist * list)
 {
-	if ( !i ) return i;
+	as_arraylist_iterator * iterator = (as_arraylist_iterator *) cf_malloc(sizeof(as_arraylist_iterator));
+	if ( !iterator ) return iterator;
 
-    i->free = false;
-    i->hooks = &as_arraylist_iterator_hooks;
-    i->data.arraylist.list = l;
-    i->data.arraylist.pos = 0;
-    return i;
+	as_iterator_init((as_iterator *) iterator, true, NULL, &as_arraylist_iterator_hooks);
+	iterator->list = list;
+	iterator->pos = 0;
+	return iterator;
 }
 
-/******************************************************************************
- * STATIC FUNCTIONS
- *****************************************************************************/
-
-static void as_arraylist_iterator_destroy(as_iterator * i)
+bool as_arraylist_iterator_release(as_arraylist_iterator * iterator) 
 {
-    return;
+	iterator->list = NULL;
+	iterator->pos = 0;
+	return true;
 }
 
-static bool as_arraylist_iterator_has_next(const as_iterator * i)
+void as_arraylist_iterator_destroy(as_arraylist_iterator * iterator) 
 {
-    const as_arraylist_iterator * it = &i->data.arraylist;
-    return it->pos < it->list->size;
+	as_iterator_destroy((as_iterator *) iterator);
 }
 
-static as_val * as_arraylist_iterator_next(as_iterator * i)
+bool as_arraylist_iterator_has_next(const as_arraylist_iterator * iterator) 
 {
-    as_arraylist_iterator * it = &i->data.arraylist;
-    if ( it->pos < it->list->size ) {
-        as_val * val = *(it->list->elements + it->pos);
-        it->pos++;
-        return val;
-    }
-    return NULL;
+	return iterator && iterator->pos < iterator->list->size;
 }
 
+const as_val * as_arraylist_iterator_next(as_arraylist_iterator * iterator) 
+{
+	if ( iterator->pos < iterator->list->size ) {
+		as_val * val = *(iterator->list->elements + iterator->pos);
+		iterator->pos++;
+		return val;
+	}
+	return NULL;
+}

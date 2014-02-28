@@ -174,18 +174,13 @@ atf_plan_result * atf_plan_result_add(atf_plan_result * plan_result, atf_suite_r
  *****************************************************************************/
 
 void atf_assert(atf_test_result * test_result, const char * exp, const char * file, int line);
-
 void atf_assert_true(atf_test_result * test_result, const char * exp, const char * file, int line);
 void atf_assert_false(atf_test_result * test_result, const char * exp, const char * file, int line);
-
 void atf_assert_null(atf_test_result * test_result, const char * exp, const char * file, int line);
 void atf_assert_not_null(atf_test_result * test_result, const char * exp, const char * file, int line);
-
 void atf_assert_int_eq(atf_test_result * result, const char * actual_exp, int64_t actual, int64_t expected, const char * file, int line);
 void atf_assert_int_ne(atf_test_result * result, const char * actual_exp, int64_t actual, int64_t expected, const char * file, int line);
-
 void atf_assert_string_eq(atf_test_result * result, const char * actual_exp, const char * actual, const char * expected, const char * file, int line);
-
 void atf_assert_log(atf_test_result * result, const char * exp, const char * file, int line, const char * fmt, ...);
 
 
@@ -218,6 +213,63 @@ void atf_assert_log(atf_test_result * result, const char * exp, const char * fil
 
 #define assert_log(EXP, fmt, args ... ) \
     if ( (EXP) == true ) return atf_assert_log(__result__, #EXP, __FILE__, __LINE__, fmt, ##args );
+
+
+
+
+#define bassert(EXP) \
+    if ( (EXP) != true ) {\
+    	atf_assert(__result__, #EXP, __FILE__, __LINE__);\
+    	return false;\
+    }
+
+#define bassert_true(EXP) \
+    if ( (EXP) != true ) {\
+    	atf_assert_true(__result__, #EXP, __FILE__, __LINE__);\
+    	return false;\
+    }
+
+#define bassert_false(EXP) \
+    if ( (EXP) == true ) {\
+    	atf_assert_false(__result__, #EXP, __FILE__, __LINE__);\
+    	return false;\
+    }
+
+#define bassert_null(EXP) \
+    if ( (EXP) != NULL ) {\
+    	atf_assert_null(__result__, #EXP, __FILE__, __LINE__);\
+    	return false;\
+    }
+
+#define bassert_not_null(EXP) \
+    if ( (EXP) == NULL ) {\
+    	atf_assert_not_null(__result__, #EXP, __FILE__, __LINE__);\
+    	return false;\
+    }
+
+#define bassert_int_eq(ACTUAL, EXPECTED) \
+    if ( (ACTUAL) != (EXPECTED) ) {\
+    	atf_assert_int_eq(__result__, #ACTUAL, ACTUAL, EXPECTED, __FILE__, __LINE__);\
+    	return false;\
+    }
+
+#define bassert_int_ne(ACTUAL, EXPECTED) \
+    if ( (ACTUAL) == (EXPECTED) ) {\
+    	atf_assert_int_ne(__result__, #ACTUAL, ACTUAL, EXPECTED, __FILE__, __LINE__);\
+    	return false;\
+    }
+
+#define bassert_string_eq(ACTUAL, EXPECTED) \
+    if ( strcmp(ACTUAL, EXPECTED) != 0 ) {\
+    	atf_assert_string_eq(__result__, #ACTUAL, ACTUAL, EXPECTED, __FILE__, __LINE__);\
+    	return false;\
+    }
+
+#define bassert_log(EXP, fmt, args ... ) \
+    if ( (EXP) == true ) {\
+    	atf_assert_log(__result__, #EXP, __FILE__, __LINE__, fmt, ##args );\
+    	return false;\
+    }
 
 /******************************************************************************
  * atf_log

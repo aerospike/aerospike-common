@@ -20,38 +20,19 @@
  *	IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <string.h>
+#pragma once
 
-#include <citrusleaf/alloc.h>
-
-#include <aerospike/as_val.h>
-#include <aerospike/as_nil.h>
+#include <aerospike/as_hashmap_iterator.h>
 
 /******************************************************************************
- *	CONSTANTS
+ *	TYPES
  *****************************************************************************/
 
-const as_val as_nil = {
-	.type = AS_NIL,
-	.free = false,
-	.count = 0
-};
+/**
+ *	Union of standard map iterators
+ */
+typedef union as_map_iterator_u {
+	
+	as_hashmap_iterator 	hashmap;
 
-/******************************************************************************
- *	as_val FUNCTIONS
- *****************************************************************************/
-
-void as_nil_val_destroy(as_val * v) 
-{
-	return;
-}
-
-uint32_t as_nil_val_hashcode(const as_val * v) 
-{
-	return 0;
-}
-
-char * as_nil_val_tostring(const as_val * v) 
-{
-	return cf_strdup("NIL");
-}
+} as_map_iterator;

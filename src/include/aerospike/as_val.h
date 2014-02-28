@@ -24,8 +24,8 @@
 
 #include <citrusleaf/cf_atomic.h>
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 
 /******************************************************************************
  *	TYPES
@@ -35,69 +35,94 @@
  *	as_val types
  */
 typedef enum as_val_t {
-	AS_UNKNOWN      = 0,
-	AS_NIL          = 1,
-	AS_BOOLEAN      = 2,
-	AS_INTEGER      = 3,
-	AS_STRING       = 4,
-	AS_LIST         = 5,
-	AS_MAP          = 6,
-	AS_REC          = 7,
-	AS_PAIR         = 8,
-	AS_BYTES        = 9
+	AS_UNDEF		= 0,
+    AS_UNKNOWN      = 0,	//<! @deprecated
+    AS_NIL          = 1,
+    AS_BOOLEAN      = 2,
+    AS_INTEGER      = 3,
+    AS_STRING       = 4,
+    AS_LIST         = 5,
+    AS_MAP          = 6,
+    AS_REC          = 7,
+    AS_PAIR         = 8,
+    AS_BYTES        = 9,
+    AS_VAL_T_MAX
 } __attribute__((packed)) as_val_t;
 
 /**
  *	Represents a value
+ *	@ingroup aerospike_t
  */
 typedef struct as_val_s {
 
 	/**
 	 *	Value type
 	 */
-	enum as_val_t type;
+    enum as_val_t type;
 
-	/**
-	 *	Value can be freed.
-	 *	Should be false for stack allocated values.
-	 */
-	bool free;
+    /**
+     *	Value can be freed.
+     *	Should be false for stack allocated values.
+     */
+    bool free;
 
-	/**
-	 *	Reference count
-	 *	Values are ref counted.
-	 */
-	cf_atomic32 count;
+    /**
+     *	Reference count
+     *	Values are ref counted.
+     *	To increment the count, use `as_val_reserve()`
+     */
+    cf_atomic32 count;
 
 } as_val;
 
 /******************************************************************************
  *	MACROS
  *****************************************************************************/
-
+ 
 /**
- *	Get the type of the specified value.
+ *	Returns the `as_val.type` of a value.
+ *
+ *	@param __v 	The `as_val` to get the type of
+ *
+ *	@return An as_val_t value. If the type is unknown, then it will 
+ *	be AS_UNKNOWN.
  */
-#define as_val_type(__v) (((as_val *)__v)->type)
+#define as_val_type(__v) (__v ? ((as_val *)__v)->type : AS_UNDEF)
 
 /**
- *	Increase the refcount of the value.
+ *	Increment the `as_val.count` of a value.
+ *	
+ *	@param __v	The `as_val` to be incremented.
+ *
+ *	@return	The value, with it's refcount incremented.
  */
 #define as_val_reserve(__v) ( as_val_val_reserve((as_val *)__v) )
 
 /**
- *	Decrement the refcount of the value. When it reaches 0 (zero) and 
- *	`free` is true, then free the value.
+ *	Decrement the `as_val.count` of a value. If `as_val.count` reaches 0 (zero) and
+ *	`as_val.free` is true, then free the `as_val` instance.
+ *
+ *	@param __v 	The `as_val` to be decremented.
+ *
+ *	@return The value, if its `as_val.count` > 0. Otherwise NULL.
  */
 #define as_val_destroy(__v) ( as_val_val_destroy((as_val *)__v) )
 
 /**
- *	Get the hashcode of the value.
+ *	Get the hashcode value for the value.
+ *
+ *	@param __v 	The `as_val` to get the hashcode value for.
+ *
+ *	@return The hashcode value.
  */
 #define as_val_hashcode(__v) ( as_val_val_hashcode((as_val *)__v) )
 
 /**
  *	Get the string representation of the value.
+ *
+ *	@param __v 	The `as_val` to get the string value for.
+ *
+ *	@return The string representation on success. Otherwise NULL.
  */
 #define as_val_tostring(__v) ( as_val_val_tostring((as_val *)__v) )
 
@@ -131,16 +156,35 @@ uint32_t as_val_val_hashcode(const as_val *);
 char * as_val_val_tostring(const as_val *);
 
 /******************************************************************************
- *	INLINE FUNCTIONS
+ *	INSTANCE FUNCTIONS
  *****************************************************************************/
 
 /**
- *	Initializes as_val types.
+ *	@private
+ *	Initialize an as_val. 
+ *	Should only be used by subtypes.
+ *	@deprecated Use as_val_cons() instead.
  */
 inline void as_val_init(as_val * v, as_val_t type, bool free) 
 {
-	v->type = type; 
-	v->free = free; 
-	v->count = 1;
+    v->type = type; 
+    v->free = free; 
+    v->count = 1;
+}
+
+
+/**
+ *	@private
+ *	Initialize an as_val. 
+ *	Should only be used by subtypes.
+ */
+inline as_val * as_val_cons(as_val * val, as_val_t type, bool free) 
+{
+	if ( !val ) return val;
+
+    val->type = type; 
+    val->free = free; 
+    val->count = 1;
+    return val;
 }
 

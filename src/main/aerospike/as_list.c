@@ -1,36 +1,42 @@
 /******************************************************************************
- * Copyright 2008-2013 by Aerospike.
+ *	Copyright 2008-2013 by Aerospike.
  *
- * Permission is hereby granted, free of charge, to any person obtaining a copy 
- * of this software and associated documentation files (the "Software"), to 
- * deal in the Software without restriction, including without limitation the 
- * rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
- * sell copies of the Software, and to permit persons to whom the Software is 
- * furnished to do so, subject to the following conditions:
+ *	Permission is hereby granted, free of charge, to any person obtaining a copy 
+ *	of this software and associated documentation files (the "Software"), to 
+ *	deal in the Software without restriction, including without limitation the 
+ *	rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
+ *	sell copies of the Software, and to permit persons to whom the Software is 
+ *	furnished to do so, subject to the following conditions:
  * 
- * The above copyright notice and this permission notice shall be included in 
- * all copies or substantial portions of the Software.
+ *	The above copyright notice and this permission notice shall be included in 
+ *	all copies or substantial portions of the Software.
  * 
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
- * IN THE SOFTWARE.
+ *	THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ *	IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ *	FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ *	AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ *	LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+ *	FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ *	IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <stdbool.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include <citrusleaf/alloc.h>
+
+#include <aerospike/as_iterator.h>
 #include <aerospike/as_list.h>
+#include <aerospike/as_list_iterator.h>
 #include <aerospike/as_map.h>
 #include <aerospike/as_util.h>
 
+#include <string.h>
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+
+#include "internal.h"
+
 /******************************************************************************
- * INLINE FUNCTIONS
+ *	INLINE FUNCTIONS
  *****************************************************************************/
 
 extern inline void			as_list_destroy(as_list * l);
@@ -40,25 +46,6 @@ extern inline as_val *		as_list_head(const as_list * l);
 extern inline as_list *		as_list_tail(const as_list * l);
 extern inline as_list *		as_list_drop(const as_list * l, uint32_t n);
 extern inline as_list *		as_list_take(const as_list * l, uint32_t n);
-
-
-extern inline int 			as_list_append(as_list * l, as_val * v);
-extern inline int 			as_list_append_int64(as_list * l, int64_t v);
-extern inline int 			as_list_append_str(as_list * l, const char * v);
-extern inline int 			as_list_append_integer(as_list * l, as_integer * v);
-extern inline int 			as_list_append_string(as_list * l, as_string * v);
-extern inline int 			as_list_append_bytes(as_list * l, as_bytes * v);
-extern inline int 			as_list_append_list(as_list * l, as_list * v);
-extern inline int 			as_list_append_map(as_list * l, as_map * v);
-
-extern inline int 			as_list_prepend(as_list * l, as_val * v);
-extern inline int 			as_list_prepend_int64(as_list * l, int64_t v);
-extern inline int 			as_list_prepend_str(as_list * l, const char * v);
-extern inline int 			as_list_prepend_integer(as_list * l, as_integer * v);
-extern inline int 			as_list_prepend_string(as_list * l, as_string * v);
-extern inline int 			as_list_prepend_bytes(as_list * l, as_bytes * v);
-extern inline int 			as_list_prepend_list(as_list * l, as_list * v);
-extern inline int 			as_list_prepend_map(as_list * l, as_map * v);
 
 extern inline as_val *		as_list_get(const as_list * l, const uint32_t i);
 extern inline int64_t 		as_list_get_int64(const as_list * l, const uint32_t i);
@@ -78,95 +65,145 @@ extern inline int			as_list_set_bytes(as_list * l, const uint32_t i, as_bytes * 
 extern inline int			as_list_set_list(as_list * l, const uint32_t i, as_list * v);
 extern inline int			as_list_set_map(as_list * l, const uint32_t i, as_map * v);
 
+extern inline int 			as_list_append(as_list * l, as_val * v);
+extern inline int 			as_list_append_int64(as_list * l, int64_t v);
+extern inline int 			as_list_append_str(as_list * l, const char * v);
+extern inline int 			as_list_append_integer(as_list * l, as_integer * v);
+extern inline int 			as_list_append_string(as_list * l, as_string * v);
+extern inline int 			as_list_append_bytes(as_list * l, as_bytes * v);
+extern inline int 			as_list_append_list(as_list * l, as_list * v);
+extern inline int 			as_list_append_map(as_list * l, as_map * v);
 
-extern inline void          as_list_foreach(const as_list * l, bool (* foreach)(as_val *, void *), void * udata);
-extern inline as_iterator * as_list_iterator_init(as_iterator *i, const as_list * l);
-extern inline as_iterator * as_list_iterator_new(const as_list * l);
+extern inline int 			as_list_prepend(as_list * l, as_val * v);
+extern inline int 			as_list_prepend_int64(as_list * l, int64_t v);
+extern inline int 			as_list_prepend_str(as_list * l, const char * v);
+extern inline int 			as_list_prepend_integer(as_list * l, as_integer * v);
+extern inline int 			as_list_prepend_string(as_list * l, as_string * v);
+extern inline int 			as_list_prepend_bytes(as_list * l, as_bytes * v);
+extern inline int 			as_list_prepend_list(as_list * l, as_list * v);
+extern inline int 			as_list_prepend_map(as_list * l, as_map * v);
+
+extern inline bool					as_list_foreach(const as_list * l, as_list_foreach_callback callback, void * udata);
+extern inline as_list_iterator *	as_list_iterator_new(const as_list * l);
+extern inline as_list_iterator *	as_list_iterator_init(as_list_iterator * it, const as_list * l);
 
 extern inline as_val *		as_list_toval(as_list * l);
 extern inline as_list *		as_list_fromval(as_val * v);
 
 /******************************************************************************
- * FUNCTIONS
+ *	FUNCTIONS
  *****************************************************************************/
 
-as_list * as_list_init(as_list * l, void * data, const as_list_hooks * hooks) {
-    if ( !l ) return l;
-    as_val_init(&l->_, AS_LIST, false);
-    l->data.generic = data;
-    l->hooks = hooks;
-    return l;
+/**
+ *	Initialize an instance of as_list.
+ *	This should only be called from subtypes of as_list during initialization.
+ */
+as_list * as_list_cons(as_list * list, bool free, void * data, const as_list_hooks * hooks) 
+{
+	if ( !list ) return list;
+
+	as_val_cons((as_val *) list, AS_LIST, free);
+	list->data = data;
+	list->hooks = hooks;
+	return list;
+}
+/**
+ *	Initialize an instance of as_list.
+ *	This should only be called from subtypes of as_list during initialization.
+ */
+as_list * as_list_init(as_list * list, void * data, const as_list_hooks * hooks) 
+{
+	return as_list_cons(list, false, data, hooks);
 }
 
-as_list * as_list_new(void * data, const as_list_hooks * hooks) {
-    as_list * l = (as_list *) cf_malloc(sizeof(as_list));
-    if (!l) return l;
-    as_val_init(&l->_, AS_LIST, true);
-    l->data.generic = data;
-    l->hooks = hooks;
-    return l;
+/**
+ *	Initialize an instance of as_list.
+ *	This should only be called from subtypes of as_list during initialization.
+ */
+as_list * as_list_new(void * data, const as_list_hooks * hooks) 
+{
+	as_list * list = (as_list *) cf_malloc(sizeof(as_list));
+	return as_list_cons(list, true, data, hooks);
 }
 
-void as_list_val_destroy(as_val * v) {
-    as_list * l = as_list_fromval((as_val *) v);
-    as_util_hook(destroy, false, l);
+/******************************************************************************
+ *	as_val FUNCTIONS
+ *****************************************************************************/
+
+void as_list_val_destroy(as_val * v) 
+{
+	as_list * l = as_list_fromval((as_val *) v);
+	as_util_hook(destroy, false, l);
 }
 
-uint32_t as_list_val_hashcode(const as_val * v) {
-    as_list * l = as_list_fromval((as_val *) v);
-    return as_util_hook(hashcode, 0, l);
+uint32_t as_list_val_hashcode(const as_val * v) 
+{
+	as_list * l = as_list_fromval((as_val *) v);
+	return as_util_hook(hashcode, 0, l);
 }
 
-char * as_list_val_tostring(const as_val * v) {
+typedef struct as_list_val_tostring_data_s {
+	char *		buf;
+	uint32_t	blk;
+	uint32_t	cap;
+	uint32_t	pos;
+	bool		sep;
+} as_list_val_tostring_data;
 
-    as_list * l = (as_list *) v;
+static bool as_list_val_tostring_foreach(as_val * val, void * udata)
+{
+	as_list_val_tostring_data * data = (as_list_val_tostring_data *) udata;
 
-    char *      buf = NULL;
-    uint32_t    blk = 256;
-    uint32_t    cap = blk;
-    uint32_t    pos = 0;
-    bool        sep = false;
+	char * str = as_val_tostring(val);
+	size_t len = strlen(str);
 
-    buf = (char *) cf_malloc(sizeof(char) * cap);
-    if (!buf) return buf;
-
-    strcpy(buf, "List(");
-    pos += 5;
-    as_iterator *i = as_list_iterator_new(l);
-    while ( as_iterator_has_next(i) ) {
-        as_val * val = (as_val *) as_iterator_next(i);
-        if ( val ) {
-            char * valstr = as_val_tostring(val);
-            size_t vallen = strlen(valstr);
-            
-            if ( pos + vallen + 2 >= cap ) {
-                uint32_t adj = ((vallen+2) > blk) ? vallen+2 : blk;
-                buf = cf_realloc(buf, sizeof(char) * (cap + adj));
-                cap += adj;
-            }
-
-            if ( sep ) {
-            	buf[pos] = ',';
-            	buf[pos+1] = ' ';
-                pos += 2;
-            }
-
-            memcpy(buf + pos, valstr, vallen);
-            pos += vallen;
-            sep = true;
-
-            cf_free(valstr);
-        }
-    }
-    as_iterator_destroy(i);
-
-    if ( pos + 2 >= cap ) {
-		buf = cf_realloc(buf, sizeof(char) * (cap + 2));
-		cap += 2;
+	if ( data->pos + len + 2 >= data->cap ) {
+		uint32_t adj = ((len+2) > data->blk) ? len+2 : data->blk;
+		data->buf = cf_realloc(data->buf, sizeof(char) * (data->cap + adj));
+		data->cap += adj;
 	}
 
-    buf[pos] = ')';
-    buf[pos+1] = 0;
-    
-    return buf;
+	if ( data->sep ) {
+		data->buf[data->pos] = ',';
+		data->buf[data->pos + 1] = ' ';
+		data->pos += 2;
+	}
+
+	memcpy(data->buf + data->pos, str, len);
+	data->pos += len;
+	data->sep = true;
+
+	cf_free(str);
+
+	return true;
+}
+
+char * as_list_val_tostring(const as_val * v) 
+{
+	as_list_val_tostring_data data = {
+		.buf = NULL,
+		.blk = 256,
+		.cap = 1024,
+		.pos = 0,
+		.sep = false
+	};
+
+	data.buf = (char *) cf_calloc(data.cap, sizeof(char));
+
+	strcpy(data.buf, "List(");
+	data.pos += 5;
+
+	if ( v ) {
+		as_list_foreach((as_list *) v, as_list_val_tostring_foreach, &data);
+	}
+
+	if ( data.pos + 2 >= data.cap ) {
+		data.buf = cf_realloc(data.buf, sizeof(char) * (data.cap + 2));
+		data.cap += 2;
+	}
+
+	data.buf[data.pos] = ')';
+	data.buf[data.pos + 1] = 0;
+	
+	return data.buf;
 }

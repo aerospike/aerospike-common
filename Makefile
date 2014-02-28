@@ -41,57 +41,67 @@ INC_PATH += $(MSGPACK)/src $(CF)/include
 ##  OBJECTS                                                                  ##
 ###############################################################################
 
-AEROSPIKE =
-AEROSPIKE += as_val.o
-AEROSPIKE += as_module.o
-AEROSPIKE += as_nil.o
-AEROSPIKE += as_stream.o
-AEROSPIKE += as_result.o
-AEROSPIKE += as_aerospike.o
-AEROSPIKE += as_logger.o
-AEROSPIKE += as_memtracker.o
-AEROSPIKE += as_buffer.o
+AEROSPIKE-OBJECTS =
+AEROSPIKE-OBJECTS += as_module.o
+AEROSPIKE-OBJECTS += as_nil.o
+AEROSPIKE-OBJECTS += as_result.o
+AEROSPIKE-OBJECTS += as_aerospike.o
+AEROSPIKE-OBJECTS += as_logger.o
+AEROSPIKE-OBJECTS += as_memtracker.o
+AEROSPIKE-OBJECTS += as_buffer.o
+AEROSPIKE-OBJECTS += as_pair.o
+AEROSPIKE-OBJECTS += as_stream.o
+AEROSPIKE-OBJECTS += as_iterator.o
+AEROSPIKE-OBJECTS += as_stringmap.o
 
-AEROSPIKE += as_serializer.o
-AEROSPIKE += as_msgpack.o
-AEROSPIKE += as_msgpack_serializer.o
+AEROSPIKE-OBJECTS += internal.o
 
-AEROSPIKE += as_boolean.o
-AEROSPIKE += as_bytes.o
-AEROSPIKE += as_integer.o
-AEROSPIKE += as_list.o
-AEROSPIKE += as_map.o
-AEROSPIKE += as_string.o
+# serializers
+AEROSPIKE-OBJECTS += as_serializer.o
+AEROSPIKE-OBJECTS += as_msgpack.o
+AEROSPIKE-OBJECTS += as_msgpack_serializer.o
 
-AEROSPIKE += as_pair.o
-AEROSPIKE += as_rec.o
+# types
+AEROSPIKE-OBJECTS += as_boolean.o
+AEROSPIKE-OBJECTS += as_bytes.o
+AEROSPIKE-OBJECTS += as_integer.o
+AEROSPIKE-OBJECTS += as_list.o
+AEROSPIKE-OBJECTS += as_map.o
+AEROSPIKE-OBJECTS += as_rec.o
+AEROSPIKE-OBJECTS += as_string.o
+AEROSPIKE-OBJECTS += as_val.o
 
-AEROSPIKE += as_arraylist.o
-AEROSPIKE += as_hashmap.o
-AEROSPIKE += as_linkedlist.o
-AEROSPIKE += as_stringmap.o
+# arraylist
+AEROSPIKE-OBJECTS += as_arraylist.o
+AEROSPIKE-OBJECTS += as_arraylist_hooks.o
+AEROSPIKE-OBJECTS += as_arraylist_iterator.o
+AEROSPIKE-OBJECTS += as_arraylist_iterator_hooks.o
 
-AEROSPIKE += as_iterator.o
-AEROSPIKE += as_linkedlist_iterator.o
-AEROSPIKE += as_arraylist_iterator.o
-AEROSPIKE += as_hashmap_iterator.o
+# hashmap
+AEROSPIKE-OBJECTS += as_hashmap.o
+AEROSPIKE-OBJECTS += as_hashmap_hooks.o
+AEROSPIKE-OBJECTS += as_hashmap_iterator.o
+AEROSPIKE-OBJECTS += as_hashmap_iterator_hooks.o
 
-AEROSPIKE += internal.o
+
+CITRUSLEAF-OBJECTS =
+CITRUSLEAF-OBJECTS += cf_b64.o
+CITRUSLEAF-OBJECTS += cf_bits.o
+CITRUSLEAF-OBJECTS += cf_clock.o
+CITRUSLEAF-OBJECTS += cf_crypto.o
+CITRUSLEAF-OBJECTS += cf_digest.o
+CITRUSLEAF-OBJECTS += cf_hooks.o
+CITRUSLEAF-OBJECTS += cf_ll.o
+CITRUSLEAF-OBJECTS += cf_rchash.o
+CITRUSLEAF-OBJECTS += cf_shash.o
+CITRUSLEAF-OBJECTS += cf_vector.o
 
 
-CITRUSLEAF =
-CITRUSLEAF += cf_b64.o
-CITRUSLEAF += cf_bits.o
-CITRUSLEAF += cf_clock.o
-CITRUSLEAF += cf_crypto.o
-CITRUSLEAF += cf_digest.o
-CITRUSLEAF += cf_hooks.o
-CITRUSLEAF += cf_ll.o
-CITRUSLEAF += cf_rchash.o
-CITRUSLEAF += cf_shash.o
-CITRUSLEAF += cf_vector.o
+OBJECTS = 
+OBJECTS += $(AEROSPIKE-OBJECTS:%=$(TARGET_OBJ)/common/aerospike/%) 
+OBJECTS += $(CITRUSLEAF-OBJECTS:%=$(TARGET_OBJ)/common/citrusleaf/%)
 
-OBJECTS = $(CITRUSLEAF:%=$(TARGET_OBJ)/citrusleaf/%) $(AEROSPIKE:%=$(TARGET_OBJ)/aerospike/%)
+HOOKED-OBJECTS = $(CITRUSLEAF-OBJECTS:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%)
 
 ###############################################################################
 ##  MAIN TARGETS                                                             ##
@@ -110,6 +120,7 @@ build: libaerospike-common libaerospike-common-hooked
 build-clean:
 	@rm -rf $(TARGET_BIN)
 	@rm -rf $(TARGET_LIB)
+	@rm -rf $(TARGET_OBJ)
 
 .PHONY: libaerospike-common libaerospike-common.a libaerospike-common.so
 libaerospike-common: libaerospike-common.a libaerospike-common.so
@@ -134,10 +145,10 @@ $(TARGET_OBJ)/common/aerospike/%.o: $(SOURCE_MAIN)/aerospike/%.c $(SOURCE_INCL)/
 $(TARGET_OBJ)/common/citrusleaf/%.o: $(SOURCE_MAIN)/citrusleaf/%.c $(SOURCE_INCL)/citrusleaf/*.h | modules 
 	$(object)
 
-$(TARGET_LIB)/libaerospike-common.so: $(AEROSPIKE:%=$(TARGET_OBJ)/common/aerospike/%) $(CITRUSLEAF:%=$(TARGET_OBJ)/common/citrusleaf/%) | modules 
+$(TARGET_LIB)/libaerospike-common.so: $(OBJECTS) | modules 
 	$(library)
 
-$(TARGET_LIB)/libaerospike-common.a: $(AEROSPIKE:%=$(TARGET_OBJ)/common/aerospike/%) $(CITRUSLEAF:%=$(TARGET_OBJ)/common/citrusleaf/%) | modules 
+$(TARGET_LIB)/libaerospike-common.a: $(OBJECTS) | modules 
 	$(archive)
 
 # HOOKED COMMON
@@ -146,10 +157,10 @@ $(TARGET_OBJ)/common-hooked/citrusleaf/%.o: CC_FLAGS += -DEXTERNAL_LOCKS
 $(TARGET_OBJ)/common-hooked/citrusleaf/%.o: $(SOURCE_MAIN)/citrusleaf/%.c $(SOURCE_INCL)/citrusleaf/*.h | modules
 	$(object)
 
-$(TARGET_LIB)/libaerospike-common-hooked.so: $(CITRUSLEAF:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%) | modules 
+$(TARGET_LIB)/libaerospike-common-hooked.so: $(HOOKED-OBJECTS) | modules 
 	$(library)
 
-$(TARGET_LIB)/libaerospike-common-hooked.a: $(CITRUSLEAF:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%) | modules 
+$(TARGET_LIB)/libaerospike-common-hooked.a: $(HOOKED-OBJECTS) | modules 
 	$(archive)
 
 # COMMON HEADERS

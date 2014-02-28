@@ -20,9 +20,14 @@
  * IN THE SOFTWARE.
  *****************************************************************************/
 
+#include <citrusleaf/alloc.h>
 
 #include <aerospike/as_iterator.h>
+#include <aerospike/as_util.h>
+#include <aerospike/as_val.h>
 
+#include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
 
 #include "internal.h"
@@ -30,18 +35,31 @@
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
-extern inline bool as_iterator_has_next(const as_iterator * i) ;
-extern inline const as_val * as_iterator_next(as_iterator * i) ;
+
+extern inline bool as_iterator_has_next(const as_iterator * iterator);
+extern inline const as_val * as_iterator_next(as_iterator * iterator);
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-void as_iterator_destroy(as_iterator * i)
+as_iterator * as_iterator_init(as_iterator * iterator, bool free, void * data, const as_iterator_hooks * hooks)
 {
-	as_util_hook(destroy, 1, i);
-	if ( i->free) {
-		cf_free(i);
-	}
+	if ( !iterator ) return iterator;
+
+	iterator->free = free;
+	iterator->data = data;
+	iterator->hooks = hooks;
+	return iterator;
+}
+
+void as_iterator_destroy(as_iterator * iterator)
+{
+    as_util_hook(destroy, 1, iterator);
+	iterator->data = NULL;
+	iterator->hooks = NULL;
+    if ( iterator->free ) {
+    	cf_free(iterator);
+    }
 }
 

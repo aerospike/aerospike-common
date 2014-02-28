@@ -20,105 +20,163 @@
  * IN THE SOFTWARE.
  *****************************************************************************/
 
-#include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-
 #include <citrusleaf/alloc.h>
+
+#include <aerospike/as_iterator.h>
 #include <aerospike/as_map.h>
+#include <aerospike/as_map_iterator.h>
 #include <aerospike/as_pair.h>
 
-#include "internal.h"
+#include <stdbool.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 
+#include "internal.h"
 
 /******************************************************************************
  * INLINES
  ******************************************************************************/
 
-extern inline void          as_map_destroy(as_map * m);
+extern inline void				as_map_destroy(as_map * m);
 
-extern inline uint32_t      as_map_size(const as_map * m);
-extern inline as_val *      as_map_get(const as_map * m, const as_val * k);
-extern inline int           as_map_set(as_map * m, const as_val * k, const as_val * v);
-extern inline int           as_map_clear(as_map * m);
+extern inline uint32_t			as_map_size(const as_map * m);
+extern inline as_val *			as_map_get(const as_map * m, const as_val * k);
+extern inline int				as_map_set(as_map * m, const as_val * k, const as_val * v);
+extern inline int				as_map_clear(as_map * m);
+extern inline int				as_map_remove(as_map * m, const as_val * k);
 
-extern inline void          as_map_foreach(const as_map * m, as_map_foreach_callback callback, void * udata);
-extern inline as_iterator * as_map_iterator_init(as_iterator *i, const as_map * m);
-extern inline as_iterator * as_map_iterator_new(const as_map * m);
+extern inline bool				as_map_foreach(const as_map * m, as_map_foreach_callback callback, void * udata);
+extern inline as_map_iterator *	as_map_iterator_new(const as_map * m);
+extern inline as_map_iterator *	as_map_iterator_init(as_map_iterator * it, const as_map * m);
 
-extern inline as_val *      as_map_toval(const as_map * m) ;
-extern inline as_map *      as_map_fromval(const as_val * v);
+extern inline as_val *			as_map_toval(const as_map * m) ;
+extern inline as_map *			as_map_fromval(const as_val * v);
 
 /******************************************************************************
- * FUNCTIONS
+ *	FUNCTIONS
+ *****************************************************************************/
+
+as_map * as_map_cons(as_map * map, bool free, void * data, const as_map_hooks * hooks) 
+{
+	if ( !map ) return map;
+
+	as_val_cons((as_val *) map, AS_MAP, free);
+	map->data = data;
+	map->hooks = hooks;
+	return map;
+}
+
+as_map * as_map_init(as_map * map, void * data, const as_map_hooks * hooks) 
+{
+	return as_map_cons(map, false, data, hooks);
+}
+
+as_map * as_map_new(void * data, const as_map_hooks * hooks) 
+{
+	as_map * map = (as_map *) cf_malloc(sizeof(as_map));
+	return as_map_cons(map, true, data, hooks);
+}
+
+/******************************************************************************
+ * as_val FUNCTIONS
  ******************************************************************************/
 
 void as_map_val_destroy(as_val * v) {
-    as_map * m = as_map_fromval(v);
-    as_util_hook(destroy, false, m);
+	as_map * m = as_map_fromval(v);
+	as_util_hook(destroy, false, m);
 }
 
 uint32_t as_map_val_hashcode(const as_val *v) {
-    as_map * m = as_map_fromval(v);
-    return as_util_hook(hashcode, 0, m);
+	as_map * m = as_map_fromval(v);
+	return as_util_hook(hashcode, 0, m);
 }
 
-char * as_map_val_tostring(const as_val * v) {
+typedef struct as_map_val_tostring_data_s {
+	char *		buf;
+	uint32_t	blk;
+	uint32_t	cap;
+	uint32_t	pos;
+	bool		sep;
+} as_map_val_tostring_data;
 
-    as_map * m = (as_map *) v;
+static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, void * udata)
+{
+	as_map_val_tostring_data * data = (as_map_val_tostring_data *) udata;
 
-    char *      buf = NULL;
-    uint32_t    blk = 256;
-    uint32_t    cap = blk;
-    uint32_t    pos = 0;
-    bool        sep = false;
+	char * keystr = as_val_tostring(key);
+	size_t keylen = strlen(keystr);
+	if (!keystr) {
+		return false;
+	}
 
-    buf = (char *) cf_malloc(sizeof(char) * cap);
-    if (!buf) return buf;
-    bzero(buf, sizeof(char) * cap);
-
-    strcpy(buf, "Map(");
-    pos += 4;
-    
-    as_iterator i;
-    as_map_iterator_init(&i, m);
-    while ( as_iterator_has_next(&i) ) {
-        as_pair * pair = (as_pair *) as_iterator_next(&i);
-
-        char * keystr = as_val_tostring(as_pair_1(pair));
-        size_t keylen = strlen(keystr);
-
-        char * valstr = as_val_tostring(as_pair_2(pair));
-        size_t vallen = strlen(valstr);
-        if ( sep ) {
-            strcpy(buf + pos, ", ");
-            pos += 2;
-        }
-
-        if ( pos + keylen + 2 + vallen + 2 >= cap ) {
-            uint32_t adj = keylen+2+vallen+2 > blk ? keylen+2+vallen+2 : blk;
-            buf = cf_realloc(buf, sizeof(char) * (cap + adj));
-            bzero(buf+cap, sizeof(char)*adj);
-            cap += adj;
-        }
-
-        strncpy(buf + pos, keystr, keylen);
-        strcpy(buf + pos + keylen, "->");
-        strncpy(buf + pos + keylen + 2, valstr, vallen);
-        pos += keylen + 2 + vallen;
-        sep = true;
-
-        cf_free(keystr);
-        keystr = NULL;
-        cf_free(valstr);
-        valstr = NULL;
+	char * valstr = as_val_tostring(val);
+    if (!valstr) {
+    	return false;
     }
+	size_t vallen = strlen(valstr);
 
-    as_iterator_destroy(&i);
+	if ( data->sep ) {
+		data->buf[data->pos] = ',';
+		data->buf[data->pos + 1] = ' ';
+		data->pos += 2;
+	}
 
-    strcpy(buf + pos, ")");
-    buf[pos + 1] = 0;
-    
-    return buf;
+	size_t entlen = keylen + 2 + vallen + 2;
+
+	if ( data->pos + entlen >= data->cap ) {
+		uint32_t adj = entlen > data->blk ? entlen : data->blk;
+		data->buf = cf_realloc(data->buf, sizeof(char) * (data->cap + adj));
+		bzero(data->buf + data->cap, sizeof(char) * adj);
+		data->cap += adj;
+	}
+
+	strncpy(data->buf + data->pos, keystr, keylen);
+	data->pos += keylen;
+
+	strcpy(data->buf + data->pos, "->");
+	data->pos += 2;
+
+	strncpy(data->buf + data->pos, valstr, vallen);
+	data->pos += vallen;
+
+	data->sep = true;
+
+	cf_free(keystr);
+	keystr = NULL;
+
+	cf_free(valstr);
+	valstr = NULL;
+
+	return true;
+}
+
+char * as_map_val_tostring(const as_val * v)
+{
+	as_map_val_tostring_data data = {
+		.buf = NULL,
+		.blk = 256,
+		.cap = 1024,
+		.pos = 0,
+		.sep = false
+	};
+
+	data.buf = (char *) cf_calloc(data.cap, sizeof(char));
+
+	strcpy(data.buf, "Map(");
+	data.pos += 4;
+	
+	if ( v ) {
+		as_map_foreach((as_map *) v, as_map_val_tostring_foreach, &data);
+	}
+
+	if ( data.pos + 2 >= data.cap ) {
+		data.buf = cf_realloc(data.buf, sizeof(char) * (data.cap + 2));
+		data.cap += 2;
+	}
+
+	data.buf[data.pos] = ')';
+	data.buf[data.pos + 1] = 0;
+	
+	return data.buf;
 }

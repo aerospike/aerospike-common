@@ -10,27 +10,23 @@ TEST_CFLAGS += -I$(TARGET_INCL)
 TEST_LDFLAGS = -lssl -lcrypto -llua -lpthread -lm -lrt 
 
 TEST_DEPS =
-TEST_DEPS += $(MSGPACK)/src/.libs/libmsgpackc.a
 TEST_DEPS += $(TARGET_LIB)/libaerospike-common.a
+TEST_DEPS += $(addprefix $(MSGPACK)/src/.libs/, unpack.o objectc.o version.o vrefbuffer.o zone.o)
 
 ###############################################################################
 ##  TEST OBJECTS                                                       		 ##
 ###############################################################################
 
-TEST_TYPES = 
-TEST_TYPES += types/types_integer
-TEST_TYPES += types/types_string
-TEST_TYPES += types/types_bytes
-TEST_TYPES += types/types_arraylist
-TEST_TYPES += types/types_linkedlist
-TEST_TYPES += types/types_hashmap
+TEST_AEROSPIKE = common.c
+TEST_AEROSPIKE += test.c
+TEST_AEROSPIKE += test_common.c
+TEST_AEROSPIKE += types/*.c
+TEST_AEROSPIKE += msgpack/*.c
+TEST_AEROSPIKE += util/*.c
 
-TEST_UTIL = 
-TEST_UTIL += util/cf_alloc
+TEST_SOURCE = $(wildcard $(addprefix $(SOURCE_TEST)/, $(TEST_AEROSPIKE)))
 
-TESTS = common
-TESTS += $(TEST_UTIL)
-TESTS += $(TEST_TYPES) 
+TEST_OBJECT = $(patsubst %.c,%.o,$(subst $(SOURCE_TEST)/,$(TARGET_TEST)/,$(TEST_SOURCE)))
 
 ###############################################################################
 ##  TEST TARGETS                                                      		 ##
@@ -38,33 +34,30 @@ TESTS += $(TEST_TYPES)
 
 .PHONY: test
 test: test-build
-	@$(TARGET_BIN)/test/common
+	$(TARGET_TEST)/common
 
 .PHONY: test-valgrind
 test-valgrind: test-build
-	valgrind $(TEST_VALGRIND) $(TARGET_BIN)/test/test 1>&2 2>test-valgrind
+	valgrind $(TEST_VALGRIND) $(TARGET_TEST)/common 1>&2 2>test-valgrind
 
 .PHONY: test-build
-test-build: test/common
+test-build: $(TARGET_TEST)/common
 
 .PHONY: test-clean
 test-clean: 
-	@rm -rf $(TARGET_BIN)/test
-	@rm -rf $(TARGET_OBJ)/test
+	@rm -rf $(TARGET_TEST)
 
-$(TARGET_OBJ)/test/%/%.o: CFLAGS = $(TEST_CFLAGS)
-$(TARGET_OBJ)/test/%/%.o: LDFLAGS += $(TEST_LDFLAGS)
-$(TARGET_OBJ)/test/%/%.o: $(SOURCE_TEST)/%/%.c
+$(TARGET_TEST)/%/%.o: CFLAGS = $(TEST_CFLAGS)
+$(TARGET_TEST)/%/%.o: LDFLAGS += $(TEST_LDFLAGS)
+$(TARGET_TEST)/%/%.o: $(SOURCE_TEST)/%/%.c
 	$(object)
 
-$(TARGET_OBJ)/test/%.o: CFLAGS = $(TEST_CFLAGS)
-$(TARGET_OBJ)/test/%.o: LDFLAGS += $(TEST_LDFLAGS)
-$(TARGET_OBJ)/test/%.o: $(SOURCE_TEST)/%.c
+$(TARGET_TEST)/%.o: CFLAGS = $(TEST_CFLAGS)
+$(TARGET_TEST)/%.o: LDFLAGS += $(TEST_LDFLAGS)
+$(TARGET_TEST)/%.o: $(SOURCE_TEST)/%.c
 	$(object)
 
-.PHONY: test/common
-test/common: $(TARGET_BIN)/test/common
-$(TARGET_BIN)/test/common: CFLAGS = $(TEST_CFLAGS)
-$(TARGET_BIN)/test/common: LDFLAGS += $(TEST_LDFLAGS)
-$(TARGET_BIN)/test/common: $(TESTS:%=$(TARGET_OBJ)/test/%.o) $(TARGET_OBJ)/test/test.o $(wildcard $(TARGET_OBJ)/*) | modules build prepare
+$(TARGET_TEST)/common: CFLAGS = $(TEST_CFLAGS)
+$(TARGET_TEST)/common: LDFLAGS += $(TEST_LDFLAGS)
+$(TARGET_TEST)/common: $(TEST_OBJECT) $(wildcard $(TARGET_OBJ)/*) | modules build prepare
 	$(executable) $(TEST_DEPS)

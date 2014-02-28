@@ -23,7 +23,6 @@
 #pragma once
 
 #include <aerospike/as_iterator.h>
-#include <aerospike/as_hashmap.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
 
@@ -34,180 +33,311 @@
  *	TYPES
  *****************************************************************************/
 
+union as_map_iterator_u;
+
 struct as_map_hooks_s;
 
 /**
- *	Callback function for as_map_foreach()
+ *	Callback function for `as_map_foreach()`. Called for each entry in the 
+ *	map.
+ *	
+ *	@param key 		The key of the current entry.
+ *	@param value 	The value of the current entry.
+ *	@param udata	The user-data provided to the `as_list_foreach()`.
+ *	
+ *	@return true to continue iterating through the list. 
+ *			false to stop iterating.
  */
-typedef bool (* as_map_foreach_callback) (const as_val *, const as_val *, void *);
+typedef bool (* as_map_foreach_callback) (const as_val * key, const as_val * value, void * udata);
 
 /**
- *	Map Data
- */
-typedef union as_map_data_u {
-	as_hashmap  hashmap;
-	void *      generic;
-} as_map_data;
-
-/**
- *	Map value.
+ *	as_map is an interface for Map based data types.
  *
- *	To use the map interface, you will need to create an instance 
- *	via one of the implementations.
- *
+ *	Implementations:
+ *	- as_hashmap
+ *	
  *	@extends as_val
+ *	@ingroup aerospike_t
  */
 typedef struct as_map_s {
 
 	/**
 	 *	@private
-	 *	as_boolean is a subtype of as_val.
-	 *	You can cast as_boolean to as_val.
+	 *	as_map is a subtype of as_val.
+	 *	You can cast as_map to as_val.
 	 */
 	as_val _;
-	
+
 	/**
-	 *	Data provided by the implementation of `as_map`.
+	 *	Pointer to the data for this list.
 	 */
-	as_map_data data;
-	
+	void * data;
+
 	/**
-	 *	Hooks provided by the implementation of `as_map`.
+	 * Hooks for sybtypes of as_list to implement.
 	 */
 	const struct as_map_hooks_s * hooks;
 
 } as_map;
 
 /**
- *	Map Hooks
- *
- *	An implementation of `as_map` should provide implementations for each
- *	of the hooks.
- *
- *	@relates as_map
+ *	Map Function Hooks
  */
 typedef struct as_map_hooks_s {
 
+	/***************************************************************************
+	 *	instance hooks
+	 **************************************************************************/
+
 	/**
-	 *	Destroy the map.
+	 *	Releases the subtype of as_map.
+	 *
+	 *	@param map 	The map instance to destroy.
 	 *
 	 *	@return true on success. Otherwise false.
 	 */
 	bool (* destroy)(as_map * map);
 
-	/**
-	 *	The hashcode for the map.
-	 */
-	uint32_t (* hashcode)(const as_map * map);
+	/***************************************************************************
+	 *	info hooks
+	 **************************************************************************/
 
 	/**
-	 *	The number of entries in the map.
+	 *	The hash value of an as_map.
+	 *
+	 *	@param map	The map to get the hashcode value for.
+	 *
+	 *	@return The hashcode value.
+	 */
+	uint32_t (* hashcode)(const as_map * map);
+	
+	/**
+	 *	The size of the as_map.
+	 *
+	 *	@param map	The map to get the size of.
+	 *
+	 *	@return The number of entries in the map.
 	 */
 	uint32_t (* size)(const as_map * map);
 
+	/***************************************************************************
+	 *	accessor and modifier hooks
+	 **************************************************************************/
+
 	/**
-	 *	Set the value of the specified key of the map.
+	 *	Set a value of the given key in a map.
 	 *
-	 *	@param map		The map.
-	 *	@param key		They key to set the value for.
-	 *	@param val		They value for the key.
+	 *	@param map 	The map to store the (key,value) pair.
+	 *	@param key 	The key for the given value.
+	 *	@param val 	The value for the given key.
 	 *
-	 *	@return On success, 0. Otherwise an error occurred.
+	 *	@return 0 on success. Otherwise an error occurred.
 	 */
 	int (* set)(as_map * map, const as_val * key, const as_val * val);
 
 	/**
-	 *	Get the value of the specified key of the map.
+	 *	Set a value at the given key of the map.
 	 *
-	 *	@param map		The map.
-	 *	@param key		The key to get the value for.
+	 *	@param map 	The map to containing the (key,value) pair.
+	 *	@param key 	The key of the value.
 	 *
-	 *	@param On success, the value. Otherwise NULL.
+	 *	@return The value on success. Otherwise NULL.
 	 */
 	as_val * (* get)(const as_map * map, const as_val * key);
 
 	/**
-	 *	Remove all entries from the map.
+	 *	Clear all entries of the map.
 	 *
-	 *	@return On success, 0. Otherwise an error occurred.
+	 *	@param map 	The map to clear.
+	 *
+	 *	@return 0 on success. Otherwise an error occurred.
 	 */
 	int (* clear)(as_map * map);
 
 	/**
-	 *	Iterate over each entry of the map and call the callback
-	 *	function. The udata is sent to the callback function.
+	 *	Remove the entry specified by the key.
 	 *
-	 *	@param map		The map to iterate.
+	 *	@param map 	The map to remove the entry from.
+	 *	@param key 	The key of the entry to be removed.
+	 *
+	 *	@return 0 on success. Otherwise an error occurred.
+	 */
+	int (* remove)(as_map * map, const as_val * key);
+
+	/***************************************************************************
+	 *	iteration hooks
+	 **************************************************************************/
+	
+	/**
+	 *	Iterate over each entry in the map can call the callback function.
+	 *
+	 *	@param map 		The map to iterate.
 	 *	@param callback	The function to call for each entry in the map.
-	 *	@param udata	User-data to be passed to the callback function.
+	 *	@param udata 	User-data to be passed to the callback.
 	 *
-	 *	@return		true, to continue the iteration. 
-	 *				false, to stop the iteration.
+	 *	@return true on success. Otherwise false.
 	 */
-	bool (* foreach)(const as_map *, as_map_foreach_callback, void *);
+	bool (* foreach)(const as_map * map, as_map_foreach_callback callback, void * udata);
 
 	/**
-	 *	Initialize an iterator for the map.
+	 *	Create and initialize a new heap allocated iterator to traverse over the entries map.
 	 *
-	 *	@param map		The map to iterate.
-	 *	@param iterator	The iterator to initialize.
-	 *
-	 *	@return On success, the initialized iterator. Otherwise NULL.
-	 */
-	as_iterator * (* iterator_init)(const as_map *, as_iterator *);
-
-	/**
-	 *	Create a new iterator for the list.
-	 *
-	 *	@param map		The map to iterate.
+	 *	@param map 	The map to iterate.
 	 *	
-	 *	@return On success, a new iterator. Otherwise NULL.
+	 *	@return true on success. Otherwise false.
 	 */
-	as_iterator * (* iterator_new)(const as_map *);
+	union as_map_iterator_u * (* iterator_new)(const as_map * map);
+
+	/**
+	 *	Initialize a stack allocated iterator to traverse over the entries map.
+	 *
+	 *	@param map 	The map to iterate.
+	 *	
+	 *	@return true on success. Otherwise false.
+	 */
+	union as_map_iterator_u * (* iterator_init)(const as_map * map, union as_map_iterator_u * it);
 
 } as_map_hooks;
 
 /******************************************************************************
- *	INLINE FUNCTIONS
+ *	INSTANCE FUNCTIONS
  *****************************************************************************/
 
 /**
- *	Destroy the as_map and associated resources.
+ *	@private
+ *	Utilized by subtypes of as_map to initialize the parent.
+ *
+ *	@param map		The map to initialize
+ *	@param free 	If TRUE, then as_map_destory() will free the map.
+ *	@param data		Data for the map.
+ *	@param hooks	Implementaton for the map interface.
+ *	
+ *	@return The initialized as_map on success. Otherwise NULL.
+ *	@relatesalso as_map
  */
-inline void as_map_destroy(as_map * m) 
+as_map * as_map_cons(as_map * map, bool free, void * data, const as_map_hooks * hooks);
+
+/**
+ *	Initialize a stack allocated map.
+ *
+ *	@param map		Stack allocated map to initialize.
+ *	@param data		Data for the map.
+ *	@param hooks	Implementation for the map interface.
+ *	
+ *	@return On success, the initialized map. Otherwise NULL.
+ *	@relatesalso as_map
+ */
+as_map * as_map_init(as_map * map, void * data, const as_map_hooks * hooks);
+
+/**
+ *	Create and initialize a new heap allocated map.
+ *	
+ *	@param data		Data for the list.
+ *	@param hooks	Implementation for the list interface.
+ *	
+ *	@return On success, a new list. Otherwise NULL.
+ *	@relatesalso as_map
+ */
+as_map * as_map_new(void * data, const as_map_hooks * hooks);
+
+/**
+ *	Destroy the as_map and associated resources.
+ *	@relatesalso as_map
+ */
+inline void as_map_destroy(as_map * map) 
 {
-	as_val_val_destroy((as_val *) m);
+	as_val_destroy((as_val *) map);
+}
+
+/*******************************************************************************
+ *	INFO FUNCTIONS
+ ******************************************************************************/
+
+/**
+ *	Hash value for the map
+ *
+ *	@param map		The map
+ *
+ *	@return The hashcode value of the map.
+ *	@relatesalso as_map
+ */
+inline uint32_t as_map_hashcode(const as_map * map) 
+{
+	return as_util_hook(hashcode, 0, map);
 }
 
 /**
  *	Get the number of entries in the map.
+ *
+ *	@param map		The map
+ *
+ *	@return The size of the map.
+ *	@relatesalso as_map
  */
-inline uint32_t as_map_size(const as_map * m) 
+inline uint32_t as_map_size(const as_map * map) 
 {
-	return as_util_hook(size, 0, m);
+	return as_util_hook(size, 0, map);
 }
+
+/*******************************************************************************
+ *	ACCESSOR AND MODIFIER FUNCTIONS
+ ******************************************************************************/
 
 /**
  *	Get the value for specified key.
+ *
+ *	@param map		The map.
+ *	@param key		The key.
+ *
+ *	@return The value for the specified key on success. Otherwise NULL.
+ *	@relatesalso as_map
  */
-inline as_val * as_map_get(const as_map * m, const as_val * k)
+inline as_val * as_map_get(const as_map * map, const as_val * key)
 {
-	return as_util_hook(get, NULL, m, k);
+	return as_util_hook(get, NULL, map, key);
 }
 
 /**
  *	Set the value for specified key.
+ *
+ *	@param map		The map.
+ *	@param key		The key.
+ *	@param val		The value for the key.
+ *	
+ *	@return 0 on success. Otherwise an error occurred.
+ *	@relatesalso as_map
  */
-inline int as_map_set(as_map * m, const as_val * k, const as_val * v) 
+inline int as_map_set(as_map * map, const as_val * key, const as_val * val) 
 {
-	return as_util_hook(set, 1, m, k, v);
+	return as_util_hook(set, 1, map, key, val);
 }
 
 /**
  *	Remove all entries from the map.
+ *
+ *	@param map		The map.
+ *
+ *	@return 0 on success. Otherwise an error occurred.
+ *	@relatesalso as_map
  */
-inline int as_map_clear(as_map * m) {
-	return as_util_hook(clear, 1, m);
+inline int as_map_clear(as_map * map)
+{
+	return as_util_hook(clear, 1, map);
+}
+
+/**
+ *	Remove the entry specified by the key.
+ *
+ *	@param map 	The map to remove the entry from.
+ *	@param key 	The key of the entry to be removed.
+ *
+ *	@return 0 on success. Otherwise an error occurred.
+ *
+ *	@relatesalso as_map
+ */
+inline int as_map_remove(as_map * map, const as_val * key)
+{
+	return as_util_hook(remove, 1, map, key);
 }
 
 /******************************************************************************
@@ -216,26 +346,45 @@ inline int as_map_clear(as_map * m) {
 
 /**
  *	Call the callback function for each entry in the map.
+ *
+ *	@param map		The map.
+ *	@param callback	The function to call for each entry.
+ *	@param udata	User-data to be passed to the callback.
+ *	
+ *	@return true if iteration completes fully. false if iteration was aborted.
+ *
+ *	@relatesalso as_map
  */
-inline void as_map_foreach(const as_map * m, as_map_foreach_callback callback, void * udata) 
+inline bool as_map_foreach(const as_map * map, as_map_foreach_callback callback, void * udata) 
 {
-	as_util_hook(foreach, false, m, callback, udata);
+	return as_util_hook(foreach, false, map, callback, udata);
 }
 
 /**
- *	Initializes a stack allocated iterator to iterate over the entries in the map.
+ *	Creates and initializes a new heap allocated iterator over the given map.
+ *
+ *	@param map 	The map to iterate.
+ *
+ *	@return On success, a new as_iterator. Otherwise NULL.
+ *	@relatesalso as_map
  */
-inline as_iterator * as_map_iterator_init(as_iterator *i, const as_map * m) 
+inline union as_map_iterator_u * as_map_iterator_new(const as_map * map) 
 {
-	return as_util_hook(iterator_init, NULL, m, i);
+	return as_util_hook(iterator_new, NULL, map);
 }
 
 /**
- *	Create a new heap allocated iterator to iterate over the entries in the map.
+ *	Initialzies a stack allocated iterator over the given map.
+ *
+ *	@param map 	The map to iterate.
+ *	@param it 	The iterator to initialize.
+ *
+ *	@return On success, the initializes as_iterator. Otherwise NULL.
+ *	@relatesalso as_map
  */
-inline as_iterator * as_map_iterator_new(const as_map * m) 
+inline union as_map_iterator_u * as_map_iterator_init(union as_map_iterator_u * it, const as_map * map) 
 {
-	return as_util_hook(iterator_new, NULL, m);
+	return as_util_hook(iterator_init, NULL, map, it);
 }
 
 /******************************************************************************
@@ -244,18 +393,20 @@ inline as_iterator * as_map_iterator_new(const as_map * m)
 
 /**
  *	Convert to an as_val.
+ *	@relatesalso as_map
  */
-inline as_val * as_map_toval(const as_map * m) 
+inline as_val * as_map_toval(const as_map * map) 
 {
-	return (as_val *) m;
+	return (as_val *) map;
 }
 
 /**
  *	Convert from an as_val.
+ *	@relatesalso as_map
  */
-inline as_map * as_map_fromval(const as_val * v) 
+inline as_map * as_map_fromval(const as_val * val) 
 {
-	return as_util_fromval(v, AS_MAP, as_map);
+	return as_util_fromval(val, AS_MAP, as_map);
 }
 
 /******************************************************************************
@@ -266,16 +417,16 @@ inline as_map * as_map_fromval(const as_val * v)
  *	@private
  *	Internal helper function for destroying an as_val.
  */
-void as_map_val_destroy(as_val * v);
+void as_map_val_destroy(as_val * val);
 
 /**
  *	@private
  *	Internal helper function for getting the hashcode of an as_val.
  */
-uint32_t as_map_val_hashcode(const as_val * v);
+uint32_t as_map_val_hashcode(const as_val * val);
 
 /**
  *	@private
  *	Internal helper function for getting the string representation of an as_val.
  */
-char * as_map_val_tostring(const as_val * v);
+char * as_map_val_tostring(const as_val * val);

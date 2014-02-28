@@ -39,13 +39,14 @@
 
 /**
  *	A Pair of values: (_1,_2)
+ *	@ingroup aerospike_t
  */
 typedef struct as_pair_s {
 
 	/**
 	 *	@private
-	 *	as_boolean is a subtype of as_val.
-	 *	You can cast as_boolean to as_val.
+	 *	as_pair is a subtype of as_val.
+	 *	You can cast as_pair to as_val.
 	 */
 	as_val _;
 
@@ -72,26 +73,32 @@ typedef struct as_pair_s {
  *	@param _2	The second value.
  *
  *	@return On success, the new pair. Otherwise NULL.
+ *
+ *	@relatesalso as_pair
  */
 as_pair * as_pair_new(as_val * _1, as_val * _2);
 
 /**
  *	Initializes a stack allocated `as_pair`.
  *
- *	@param p	The pair to initialize.
+ *	@param pair	The pair to initialize.
  *	@param _1	The first value.
  *	@param _2	The second value.
  *
  *	@return On success, the new pair. Otherwise NULL.
+ *
+ *	@relatesalso as_pair
  */
-as_pair * as_pair_init(as_pair * p, as_val * _1, as_val * _2);
+as_pair * as_pair_init(as_pair * pair, as_val * _1, as_val * _2);
 
 /**
  *	Destroy the `as_pair` and release associated resources.
+ *
+ *	@relatesalso as_pair
  */
-inline void as_pair_destroy(as_pair * p)
+inline void as_pair_destroy(as_pair * pair)
 {
-	as_val_val_destroy((as_val *)p);
+	as_val_destroy((as_val *) pair);
 }
 
 /******************************************************************************
@@ -100,18 +107,20 @@ inline void as_pair_destroy(as_pair * p)
 
 /**
  *	Get the first value of the pair
+ *
+ *	@relatesalso as_pair
  */
-inline as_val * as_pair_1(as_pair * p) 
+inline as_val * as_pair_1(as_pair * pair) 
 {
-	return p->_1;
+	return pair ? pair->_1 : NULL;
 }
 
 /**
  *	Get the second value of the pair
  */
-inline as_val * as_pair_2(as_pair * p) 
+inline as_val * as_pair_2(as_pair * pair) 
 {
-	return p->_2;
+	return pair ? pair->_2 : NULL;
 }
 
 /******************************************************************************
@@ -120,14 +129,18 @@ inline as_val * as_pair_2(as_pair * p)
 
 /**
  *	Convert to an as_val.
+ *
+ *	@relatesalso as_pair
  */
-inline as_val * as_pair_toval(const as_pair * p) 
+inline as_val * as_pair_toval(const as_pair * pair) 
 {
-	return (as_val *)p;
+	return (as_val *) pair;
 }
 
 /**
  *	Convert from an as_val.
+ *
+ *	@relatesalso as_pair
  */
 inline as_pair * as_pair_fromval(const as_val * v) 
 {
