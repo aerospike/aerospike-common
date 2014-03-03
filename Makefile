@@ -31,6 +31,11 @@ CFLAGS = -O$(O)
 # Make-tree Linker Flags
 # LDFLAGS = 
 
+# If CF is not passed in, use the default allocator.
+ifeq ($(CF), )
+  CF = src/default
+endif
+
 # Include Paths
 INC_PATH += $(MSGPACK)/src $(CF)/include
 
