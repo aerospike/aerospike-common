@@ -23,7 +23,7 @@ CC_FLAGS += -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64
 CC_FLAGS += -D_REENTRANT -D_GNU_SOURCE -DMEM_COUNT=1
 
 # Make-local Linker Flags
-LD_FLAGS = $(LDGLAGS) -lm -fPIC 
+LD_FLAGS = $(LDFLAGS) -undefined dynamic_lookup -lm -fPIC 
 
 # DEBUG Settings
 ifdef DEBUG
