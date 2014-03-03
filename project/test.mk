@@ -7,7 +7,11 @@ TEST_VALGRIND = --tool=memcheck --leak-check=yes --show-reachable=yes --num-call
 TEST_CFLAGS =  -DMEM_COUNT=1
 TEST_CFLAGS += -I$(TARGET_INCL)
 
-TEST_LDFLAGS = -lssl -lcrypto -llua -lpthread -lm -lrt 
+ifeq ($(OS),Darwin)
+TEST_LDFLAGS = -lssl -lcrypto -lpthread -lm
+else
+TEST_LDFLAGS = -lssl -lcrypto -lpthread -lm -lrt
+endif
 
 TEST_DEPS =
 TEST_DEPS += $(TARGET_LIB)/libaerospike-common.a

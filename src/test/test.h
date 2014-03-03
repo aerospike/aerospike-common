@@ -148,8 +148,9 @@ atf_plan_result * atf_plan_result_add(atf_plan_result * plan_result, atf_suite_r
     }; \
     atf_plan * __plan_name = & plan__##__plan_name; \
     int main(int argc, char ** args) { \
+		atf_plan atfp = {#__plan_name}; \
         atf_plan_result result = { \
-            .plan = #__plan_name, \
+            .plan = &atfp, \
             .suites = { NULL }, \
             .size = 0 \
         }; \
