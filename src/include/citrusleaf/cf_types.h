@@ -24,9 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
-#include <unistd.h>   
-#include <asm/byteorder.h>
-
+#include <unistd.h>
 
 #ifndef CF_WINDOWS
 /******************************************************************************
@@ -42,6 +40,9 @@
  *****************************************************************************/
 
 #include <malloc.h>     // for alloca()
+
+#define PRIu64 "I64u"
+#define PRId64 "I64d"
 
 #endif // CF_WINDOWS
 

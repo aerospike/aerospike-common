@@ -19,375 +19,560 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
  * IN THE SOFTWARE.
  *****************************************************************************/
-
-#include <msgpack.h>
-
-#include <citrusleaf/alloc.h>
-
 #include <aerospike/as_msgpack.h>
 #include <aerospike/as_serializer.h>
 #include <aerospike/as_types.h>
+#include <citrusleaf/cf_byte_order.h>
 
 #include "internal.h"
 
 /******************************************************************************
- * STATIC FUNCTIONS
+ * PACK FUNCTIONS
  ******************************************************************************/
 
-static int as_msgpack_pack_nil(msgpack_packer *);
-static int as_msgpack_pack_boolean(msgpack_packer *, as_boolean *);
-static int as_msgpack_pack_integer(msgpack_packer *, as_integer *);
-static int as_msgpack_pack_string(msgpack_packer *, as_string *);
-static int as_msgpack_pack_bytes(msgpack_packer *, as_bytes *);
-static int as_msgpack_pack_list(msgpack_packer *, as_list *);
-static int as_msgpack_pack_map(msgpack_packer *, as_map *);
-static int as_msgpack_pack_rec(msgpack_packer *, as_rec *);
-static int as_msgpack_pack_pair(msgpack_packer *, as_pair *);
-
-static int as_msgpack_nil_to_val(as_val ** v);
-static int as_msgpack_boolean_to_val(bool, as_val **);
-static int as_msgpack_integer_to_val(int64_t, as_val **);
-static int as_msgpack_raw_to_val(msgpack_object_raw *, as_val **);
-static int as_msgpack_array_to_val(msgpack_object_array *, as_val **);
-static int as_msgpack_map_to_val(msgpack_object_map *, as_val **);
-
-/******************************************************************************
- * FUNCTIONS
- ******************************************************************************/
-
-int as_msgpack_pack_val(msgpack_packer * pk, as_val * val)
+static int as_pack_resize(as_packer * pk, int length)
 {
-#if LOG_ENABLED==1
-	char * v = as_val_tostring(val);
-	LOG("as_msgpack_pack_val : start : %s",v);
-	cf_free(v);
-#endif
-
-	int rc = 0;
-
-	if ( val == NULL ) {
-		LOG("as_msgpack_pack_val : value is null");
-		rc = 1;
+	// Add current buffer to linked list and allocate a new buffer
+	as_packer_buffer* entry = (as_packer_buffer*) cf_malloc(sizeof(as_packer_buffer));
+	
+	if (entry == 0) {
+		return -1;
 	}
-	else {	
-		switch( as_val_type(val) ) {
-			case AS_NIL : 
-				rc = as_msgpack_pack_nil(pk);
-				LOG_COND(rc, "as_msgpack_pack_val : as_msgpack_pack_nil : %d", rc);
-				break;
-			case AS_BOOLEAN : 
-				rc = as_msgpack_pack_boolean(pk, (as_boolean *) val);
-				LOG_COND(rc, "as_msgpack_pack_val : as_msgpack_pack_boolean : %d", rc);
-				break;
-			case AS_INTEGER : 
-				rc = as_msgpack_pack_integer(pk, (as_integer *) val);
-				LOG_COND(rc, "as_msgpack_pack_val : as_msgpack_pack_integer : %d", rc);
-				break;
-			case AS_STRING : 
-				rc = as_msgpack_pack_string(pk, (as_string *) val);
-				LOG_COND(rc, "as_msgpack_pack_val : as_msgpack_pack_string : %d", rc);
-				break;
-			case AS_BYTES : 
-				rc = as_msgpack_pack_bytes(pk, (as_bytes *) val);
-				LOG_COND(rc, "as_msgpack_pack_val : as_msgpack_pack_bytes : %d", rc);
-				break;
-			case AS_LIST : 
-				rc = as_msgpack_pack_list(pk, (as_list *) val);
-				LOG_COND(rc, "as_msgpack_pack_val : as_msgpack_pack_list : %d", rc);
-				break;
-			case AS_MAP : 
-				rc = as_msgpack_pack_map(pk, (as_map *) val);
-				LOG_COND(rc, "as_msgpack_pack_val : as_msgpack_pack_map : %d", rc);
-				break;
-			case AS_REC : 
-				rc = as_msgpack_pack_rec(pk, (as_rec *) val);
-				LOG_COND(rc, "as_msgpack_pack_val : as_msgpack_pack_rec : %d", rc);
-				break;
-			case AS_PAIR : 
-				rc = as_msgpack_pack_pair(pk, (as_pair *) val);
-				LOG_COND(rc, "as_msgpack_pack_val : as_msgpack_pack_pair : %d", rc);
-				break;
-			default : 
-				rc = 2;
-		}
+	entry->buffer = pk->buffer;
+	entry->length = pk->offset;
+	entry->next = 0;
+	
+	int size = (length > pk->capacity)? length : pk->capacity;
+	pk->buffer = (unsigned char*) cf_malloc(size);
+	
+	if (pk->buffer == 0) {
+		return -1;
 	}
-
-	LOG("as_msgpack_pack_val : end : %d", rc);
-	return rc;
-}
-
-int as_msgpack_object_to_val(msgpack_object * object, as_val ** val) 
-{
-	if ( object == NULL ) return 1;
-	switch( object->type ) {
-		case MSGPACK_OBJECT_NIL             	: return as_msgpack_nil_to_val(val);
-		case MSGPACK_OBJECT_BOOLEAN             : return as_msgpack_boolean_to_val(object->via.boolean, val);
-		case MSGPACK_OBJECT_POSITIVE_INTEGER    : return as_msgpack_integer_to_val((int64_t) object->via.u64, val);
-		case MSGPACK_OBJECT_NEGATIVE_INTEGER    : return as_msgpack_integer_to_val((int64_t) object->via.i64, val);
-		case MSGPACK_OBJECT_RAW                 : return as_msgpack_raw_to_val(&object->via.raw, val);
-		case MSGPACK_OBJECT_ARRAY               : return as_msgpack_array_to_val(&object->via.array, val);
-		case MSGPACK_OBJECT_MAP                 : return as_msgpack_map_to_val(&object->via.map, val);
-		default                                 : return 2;
-	}
-}
-
-/******************************************************************************
- * STATIC FUNCTIONS
- ******************************************************************************/
-
-static int as_msgpack_pack_nil(msgpack_packer * pk)
-{
-	LOG("as_msgpack_pack_nil : start");
-	int rc = msgpack_pack_nil(pk);
-	LOG_COND(rc, "as_msgpack_pack_nil : msgpack_pack_nil : %d",rc);
-	LOG("as_msgpack_pack_nil : end : %d", rc);
-	return rc;
-}
-
-static int as_msgpack_pack_boolean(msgpack_packer * pk, as_boolean * b)
-{
-	LOG("as_msgpack_pack_boolean : start");
-	int rc = 0;
-
-	if ( as_boolean_get(b) == true ) {
-		rc = msgpack_pack_true(pk);
-		LOG_COND(rc, "as_msgpack_pack_boolean : msgpack_pack_true : %d",rc);
+	pk->capacity = size;
+	pk->offset = 0;
+	
+	if (pk->tail) {
+		pk->tail->next = entry;
+		pk->tail = entry;
 	}
 	else {
-		rc = msgpack_pack_false(pk);
-		LOG_COND(rc, "as_msgpack_pack_boolean : msgpack_pack_false : %d",rc);
+		pk->head = entry;
+		pk->tail = entry;
 	}
-
-	LOG("as_msgpack_pack_boolean : end : %d", rc);
-	return rc;
+	return 0;
 }
 
-static int as_msgpack_pack_integer(msgpack_packer * pk, as_integer * i)
+static inline int as_pack_append(as_packer * pk, const unsigned char * src, int length)
 {
-	LOG("as_msgpack_pack_integer : start");
-	int rc = 0;
-
-	rc = msgpack_pack_int64(pk, as_integer_get(i));
-	LOG_COND(rc, "as_msgpack_pack_integer : msgpack_pack_int64 : %d",rc);
-
-	LOG("as_msgpack_pack_integer : end : %d", rc);
-	return rc;
+	if (pk->offset + length > pk->capacity) {
+		if (as_pack_resize(pk, length)) {
+			return -1;
+		}
+	}
+	memcpy(pk->buffer + pk->offset, src, length);
+	pk->offset += length;
+	return 0;
 }
 
-static int as_msgpack_pack_string(msgpack_packer * pk, as_string * s)
+static inline int as_pack_byte(as_packer * pk, uint8_t val) {
+	if (pk->offset + 1 > pk->capacity) {
+		if (as_pack_resize(pk, 1)) {
+			return -1;
+		}
+	}
+	*(pk->buffer + pk->offset) = val;
+	pk->offset++;
+	return 0;
+}
+
+static inline int as_pack_int8(as_packer * pk, unsigned char type, uint8_t val) {
+	if (pk->offset + 2 > pk->capacity) {
+		if (as_pack_resize(pk, 2)) {
+			return -1;
+		}
+	}
+	unsigned char* p = pk->buffer + pk->offset;
+	*p++ = type;
+	*p = val;
+	pk->offset += 2;
+	return 0;
+}
+
+static inline int as_pack_int16(as_packer * pk, unsigned char type, uint16_t val) {
+	if (pk->offset + 3 > pk->capacity) {
+		if (as_pack_resize(pk, 3)) {
+			return -1;
+		}
+	}
+	uint16_t swapped = cf_swap_to_be16(val);
+	unsigned char* s = (unsigned char*)&swapped;
+	unsigned char* p = pk->buffer + pk->offset;
+	*p++ = type;
+	*p++ = *s++;
+	*p = *s;
+	pk->offset += 3;
+	return 0;
+}
+
+static inline int as_pack_int32(as_packer * pk, unsigned char type, uint32_t val) {
+	if (pk->offset + 5 > pk->capacity) {
+		if (as_pack_resize(pk, 5)) {
+			return -1;
+		}
+	}
+	uint32_t swapped = cf_swap_to_be32(val);
+	unsigned char* p = pk->buffer + pk->offset;
+	*p++ = type;
+	memcpy(p, &swapped, 4);
+	pk->offset += 5;
+	return 0;
+}
+
+static inline int as_pack_int64(as_packer * pk, unsigned char type, uint64_t val) {
+	if (pk->offset + 9 > pk->capacity) {
+		if (as_pack_resize(pk, 9)) {
+			return -1;
+		}
+	}
+	uint64_t swapped = cf_swap_to_be64(val);
+	unsigned char* p = pk->buffer + pk->offset;
+	*p++ = type;
+	memcpy(p, &swapped, 8);
+	pk->offset += 9;
+	return 0;
+}
+
+static inline int as_pack_boolean(as_packer * pk, as_boolean * b)
 {
-	LOG("as_msgpack_pack_string : start : %p", s);
-	int rc = 0;
+	return as_pack_byte(pk, (as_boolean_get(b) == true)? 0xc3 : 0xc2);
+}
+
+static int as_pack_integer(as_packer * pk, as_integer * i)
+{
+	int64_t val = as_integer_get(i);
 	
-	uint32_t len = as_string_len(s) + 1;
-	uint8_t * raw = alloca(len);
-
-	raw[0] = AS_BYTES_STRING;
-	memcpy(raw + 1, s->value, s->len);
-
-	rc = msgpack_pack_raw(pk, len);
-	LOG_COND(rc, "as_msgpack_pack_string : msgpack_pack_raw : %d",rc);
-	if ( rc == 0 ) {
-		rc = msgpack_pack_raw_body(pk, raw, len);
-		LOG_COND(rc, "as_msgpack_pack_string : msgpack_pack_raw_body : %d",rc);
+	if (val >= 0) {
+		if (val < 128) {
+			return as_pack_byte(pk, (uint8_t)val);
+		}
+		
+		if (val < 256) {
+			return as_pack_int8(pk, 0xcc, (uint8_t)val);
+		}
+		
+		if (val < 65536) {
+			return as_pack_int16(pk, 0xcd, (uint16_t)val);
+		}
+		
+		if (val < 4294967296) {
+			return as_pack_int32(pk, 0xce, (uint32_t)val);
+		}
+		return as_pack_int64(pk, 0xcf, (uint64_t)val);
 	}
+	else {
+		if (val >= -32) {
+			return as_pack_byte(pk, (uint8_t)(0xe0 | (val + 32)));
+		}
+		
+		if (val >= -128) {
+			return as_pack_int8(pk, 0xd0, (uint8_t)val);
+		}
+		
+		if (val >= -32768) {
+			return as_pack_int16(pk, 0xd1, (uint16_t)val);
+		}
+		
+		if (val >= 0x80000000) {
+			return as_pack_int32(pk, 0xd2, (uint32_t)val);
+		}
+		return as_pack_int64(pk, 0xd3, (uint64_t)val);
+	}
+}
 
-	LOG("as_msgpack_pack_string : end : %d", rc);
+static int as_pack_byte_array_header(as_packer * pk, uint32_t length, uint8_t type)
+{
+	length++;  // Account for extra aerospike type.
+	
+	int rc;
+
+	if (length < 32) {
+		rc = as_pack_byte(pk, (uint8_t)(0xa0 | length));
+	} else if (length < 65536) {
+		rc = as_pack_int16(pk, 0xda, (uint16_t)length);
+	} else {
+		rc = as_pack_int32(pk, 0xdb, length);
+	}
+	
+	if (rc == 0) {
+		rc = as_pack_byte(pk, type);
+	}
 	return rc;
 }
 
-static int as_msgpack_pack_bytes(msgpack_packer * pk, as_bytes * b)
+static int as_pack_string(as_packer * pk, as_string * s)
 {
-	LOG("as_msgpack_pack_bytes : start");
-	int rc = 0;
-
-	uint32_t  len = b->size + 1;
-	uint8_t * raw = alloca(len);
-	raw[0] = b->type;
-	memcpy(raw + 1, b->value, b->size);
-
-	rc = msgpack_pack_raw(pk, len);
-	LOG_COND(rc, "as_msgpack_pack_bytes : msgpack_pack_raw : %d",rc);
-	if ( rc == 0 ) {	
-		rc = msgpack_pack_raw_body(pk, raw, len);
-		LOG_COND(rc, "as_msgpack_pack_bytes : msgpack_pack_raw_body : %d",rc);
+	uint32_t length = (uint32_t)as_string_len(s);
+	int rc = as_pack_byte_array_header(pk, length, AS_BYTES_STRING);
+	
+	if (rc == 0) {
+		rc = as_pack_append(pk, (unsigned char*)s->value, length);
 	}
-
-	LOG("as_msgpack_pack_bytes : end : %d", rc);
 	return rc;
 }
 
-static bool as_msgpack_pack_list_foreach(as_val * val, void * udata)
+static int as_pack_bytes(as_packer * pk, as_bytes * b)
 {
-	LOG("as_msgpack_pack_list_foreach : start");
-	int rc = 0;
+	int rc = as_pack_byte_array_header(pk, b->size, b->type);
+	
+	if (rc == 0) {
+		rc = as_pack_append(pk, b->value, b->size);
+	}
+	return rc;
+}
 
-	msgpack_packer * pk = (msgpack_packer *) udata;
+static bool as_pack_list_foreach(as_val * val, void * udata)
+{
+	as_packer* pk = (as_packer*)udata;
+	return as_pack_val(pk, val) == 0;
+}
 
-	rc = as_msgpack_pack_val(pk, val);
-	LOG_COND(rc, "as_msgpack_pack_list_foreach : as_msgpack_pack_val : %d",rc);
+static int as_pack_list(as_packer * pk, as_list * l)
+{
+	uint32_t size = as_list_size(l);
+	int rc;
+	
+	if (size < 16) {
+		rc = as_pack_byte(pk, (uint8_t)(0x90 | size));
+	}
+	else if (size < 65536) {
+		rc = as_pack_int16(pk, 0xdc, (uint16_t)size);
+	} else {
+		rc = as_pack_int32(pk, 0xdd, size);
+	}
+				
+	if (rc == 0) {
+		rc = as_list_foreach(l, as_pack_list_foreach, pk) == true ? 0 : 1;
+	}
+	return rc;
+}
 
-	LOG("as_msgpack_pack_list_foreach : %d", rc);
+static bool as_pack_map_foreach(const as_val * key, const as_val * val, void * udata)
+{
+	as_packer* pk = (as_packer*)udata;
+	int rc = as_pack_val(pk, (as_val*)key);
+	
+	if (rc == 0) {
+		rc = as_pack_val(pk, (as_val*)val);
+	}
 	return rc == 0;
 }
 
-static int as_msgpack_pack_list(msgpack_packer * pk, as_list * l)
+static int as_pack_map(as_packer * pk, as_map * m)
 {
-	LOG("as_msgpack_pack_list : start");
-	int rc = 0;
-
-	rc = msgpack_pack_array(pk, as_list_size(l));
-	LOG_COND(rc, "as_msgpack_pack_list : msgpack_pack_array : %d",rc);
-
-	if ( rc == 0 ) {
-		rc = as_list_foreach(l, as_msgpack_pack_list_foreach, pk) == true ? 0 : 1;
-		LOG_COND(rc, "as_msgpack_pack_map : as_map_foreach : %d", rc);
+	uint32_t size = as_map_size(m);
+	int rc;
+	
+	if (size < 16) {
+		rc = as_pack_byte(pk, (uint8_t)(0x80 | size));
+	} else if (size < 65536) {
+		rc = as_pack_int16(pk, 0xde, (uint16_t)size);
+	} else {
+		rc = as_pack_int32(pk, 0xdf, size);
 	}
-
-	LOG("as_msgpack_pack_list : end : %d",rc);
+	
+	if (rc == 0) {
+		rc = as_map_foreach(m, as_pack_map_foreach, pk) == true ? 0 : 1;
+	}
 	return rc;
 }
 
-static bool as_msgpack_pack_map_foreach(const as_val * key, const as_val * val, void * udata)
+static int as_pack_rec(as_packer * pk, as_rec * r)
 {
-#if LOG_ENABLED==1
-	char * k = as_val_tostring(key);
-	char * v = as_val_tostring(val);
-	LOG("as_msgpack_pack_map_foreach : start : %s=%s",k,v);
-	cf_free(k);
-	cf_free(v);
-#endif
-
-	int rc = 0;
-
-	msgpack_packer * pk = (msgpack_packer *) udata;
-
-	rc = as_msgpack_pack_val(pk, (as_val *) key);
-	LOG_COND(rc, "as_msgpack_pack_map_foreach : as_msgpack_pack_val : %d",rc);
-
-	if ( rc == 0 ) {	
-		rc = as_msgpack_pack_val(pk, (as_val *) val);
-		LOG_COND(rc, "as_msgpack_pack_map_foreach : as_msgpack_pack_val : %d",rc);
-	}
-
-	LOG("as_msgpack_pack_map_foreach : end : %d", rc);
-	return true;//rc == 0;
-}
-
-static int as_msgpack_pack_map(msgpack_packer * pk, as_map * m)
-{
-	LOG("as_msgpack_pack_map : start : size=%d", as_map_size(m));
-	int rc = 0;
-
-	rc = msgpack_pack_map(pk, as_map_size(m));
-	LOG_COND(rc, "as_msgpack_pack_map : msgpack_pack_map : %d",rc);
-	if ( rc == 0 ) {
-		rc = as_map_foreach(m, as_msgpack_pack_map_foreach, pk) == true ? 0 : 1;
-		LOG_COND(rc, "as_msgpack_pack_map : as_map_foreach : %d", rc);
-	}
-
-	LOG("as_msgpack_pack_map : end : %d", rc);
-	return rc;
-}
-
-static int as_msgpack_pack_rec(msgpack_packer * pk, as_rec * r)
-{
-	LOG("as_msgpack_pack_rec : NOP");
 	return 1;
 }
 
-static int as_msgpack_pack_pair(msgpack_packer * pk, as_pair * p)
+static int as_pack_pair(as_packer * pk, as_pair * p)
 {
-	LOG("as_msgpack_pack_pair : start");
-	int rc = 0;
-
-	rc = msgpack_pack_array(pk, 2);
-	LOG_COND(rc, "as_msgpack_pack_pair : msgpack_pack_array : %d",rc);
-
-	if ( rc == 0 ) {
-		rc = as_msgpack_pack_val(pk, as_pair_1(p));
-		LOG_COND(rc, "as_msgpack_pack_pair : as_msgpack_pack_val : %d",rc);
-
-		if ( rc == 0 ) {
-			rc = as_msgpack_pack_val(pk, as_pair_2(p));
-			LOG_COND(rc, "as_msgpack_pack_pair : as_msgpack_pack_val : %d",rc);
+	unsigned char v = (unsigned char)(0x90 | 2);
+	int rc = as_pack_append(pk, &v, 1);
+		
+	if (rc == 0) {
+		rc = as_pack_val(pk, as_pair_1(p));
+		
+		if (rc == 0) {
+			rc = as_pack_val(pk, as_pair_2(p));
 		}
 	}
-
-	LOG("as_msgpack_pack_pair : end : %d", rc);
 	return rc;
 }
 
-
-static int as_msgpack_nil_to_val(as_val ** v)
+int as_pack_val(as_packer * pk, as_val * val)
 {
-	*v = (as_val *) &as_nil;
-	return 0;
-}
+	int rc = 0;
 
-static int as_msgpack_boolean_to_val(bool b, as_val ** v)
-{
-	// Aerospike does not support Boolean, so we convert it to Integer
-	*v = (as_val *) as_integer_new(b == true ? 1 : 0);
-	return 0;
-}
-
-static int as_msgpack_integer_to_val(int64_t i, as_val ** v)
-{
-	*v = (as_val *) as_integer_new(i);
-	return 0;
-}
-
-static int as_msgpack_raw_to_val(msgpack_object_raw * r, as_val ** v)
-{
-	const char * raw = r->ptr;
-	*v = 0;
-	// strings are special
-	if (*raw == AS_BYTES_STRING) {
-		*v = (as_val *) as_string_new(strndup(raw+1,r->size - 1),true);
+	if (val == NULL) {
+		rc = 1;
 	}
-	// everything else encoded as a bytes with the type set
+	else {	
+		switch (as_val_type(val)) {
+			case AS_NIL : 
+				rc = as_pack_byte(pk, 0xc0);
+				break;
+			case AS_BOOLEAN : 
+				rc = as_pack_boolean(pk, (as_boolean *) val);
+				break;
+			case AS_INTEGER : 
+				rc = as_pack_integer(pk, (as_integer *) val);
+				break;
+			case AS_STRING : 
+				rc = as_pack_string(pk, (as_string *) val);
+				break;
+			case AS_BYTES : 
+				rc = as_pack_bytes(pk, (as_bytes *) val);
+				break;
+			case AS_LIST : 
+				rc = as_pack_list(pk, (as_list *) val);
+				break;
+			case AS_MAP : 
+				rc = as_pack_map(pk, (as_map *) val);
+				break;
+			case AS_REC : 
+				rc = as_pack_rec(pk, (as_rec *) val);
+				break;
+			case AS_PAIR : 
+				rc = as_pack_pair(pk, (as_pair *) val);
+				break;
+			default : 
+				rc = 2;
+				break;
+		}
+	}
+	return rc;
+}
+
+/******************************************************************************
+ * UNPACK FUNCTIONS
+ ******************************************************************************/
+
+static inline uint16_t as_extract_uint16(as_unpacker * pk)
+{
+	uint16_t v = *(uint16_t*)(pk->buffer + pk->offset);
+	uint16_t swapped = cf_swap_from_be16(v);
+	pk->offset += 2;
+	return swapped;
+}
+
+static inline uint32_t as_extract_uint32(as_unpacker * pk)
+{
+	uint32_t v = *(uint32_t*)(pk->buffer + pk->offset);
+	uint32_t swapped = cf_swap_from_be32(v);
+	pk->offset += 4;
+	return swapped;
+}
+
+static inline uint64_t as_extract_uint64(as_unpacker * pk)
+{
+	uint64_t v = *(uint64_t*)(pk->buffer + pk->offset);
+	uint64_t swapped = cf_swap_from_be64(v);
+	pk->offset += 8;
+	return swapped;
+}
+
+static inline float as_extract_float(as_unpacker * pk)
+{
+	uint32_t v = *(uint32_t*)(pk->buffer + pk->offset);
+	uint32_t swapped = cf_swap_from_be32(v);
+	pk->offset += 4;
+	return *(float*)&swapped;
+}
+
+static inline double as_extract_double(as_unpacker * pk)
+{
+	uint64_t v = *(uint64_t*)(pk->buffer + pk->offset);
+	uint64_t swapped = cf_swap_from_be64(v);
+	pk->offset += 8;
+	return *(double*)&swapped;
+}
+
+static inline int as_unpack_nil(as_val ** v)
+{
+	*v = (as_val*) &as_nil;
+	return 0;
+}
+
+static inline int as_unpack_boolean(bool b, as_val ** v)
+{
+	// Aerospike does not support boolean, so we convert it to integer.
+	*v = (as_val*) as_integer_new(b == true ? 1 : 0);
+	return 0;
+}
+
+static inline int as_unpack_integer(int64_t i, as_val ** v)
+{
+	*v = (as_val*) as_integer_new(i);
+	return 0;
+}
+
+static int as_unpack_blob(as_unpacker * pk, int size, as_val ** val)
+{
+	unsigned char type = pk->buffer[pk->offset++];
+	size--;
+	
+	if (type == AS_BYTES_STRING) {
+		char* v = strndup((char*)pk->buffer + pk->offset, size);
+		*val = (as_val*) as_string_new(v, true);
+	}
 	else {
-		int len = r->size - 1;
-		uint8_t *buf = cf_malloc(len);
-		memcpy(buf, raw+1, len);
-		as_bytes *b = as_bytes_new_wrap(buf, len, true);
-		if ( b ) {
-			b->type = (as_bytes_type) *raw;
+		unsigned char* buf = cf_malloc(size);
+		memcpy(buf, pk->buffer + pk->offset, size);
+		as_bytes *b = as_bytes_new_wrap(buf, size, true);
+		if (b) {
+			b->type = (as_bytes_type) type;
 		}
-		*v = (as_val *) b;
+		*val = (as_val*)b;
 	}
+	pk->offset += size;
 	return 0;
 }
 
-static int as_msgpack_array_to_val(msgpack_object_array * a, as_val ** v)
+static int as_unpack_list(as_unpacker * pk, int size, as_val ** val)
 {
-	as_arraylist * l = as_arraylist_new(a->size, 8);
-	for ( int i = 0; i < a->size; i++) {
-		msgpack_object * o = a->ptr + i;
-		as_val * val = NULL;
-		as_msgpack_object_to_val(o, &val);
-		if ( val != NULL ) {
-			as_arraylist_set(l, i, val);
+	as_arraylist* list = as_arraylist_new(size, 8);
+	
+	for (int i = 0; i < size; i++) {
+		as_val* v = 0;
+		as_unpack_val(pk, &v);
+		
+		if (v) {
+			as_arraylist_set(list, i, v);
 		}
 	}
-	*v = (as_val *) l;
+	*val = (as_val*)list;
 	return 0;
 }
 
-static int as_msgpack_map_to_val(msgpack_object_map * o, as_val ** v)
+static int as_unpack_map(as_unpacker * pk, int size, as_val ** val)
 {
-	as_hashmap * m = as_hashmap_new(32);
-	for ( int i = 0; i < o->size; i++) {
-		msgpack_object_kv * kv = o->ptr + i;
-		as_val * key = NULL;
-		as_val * val = NULL;
-		as_msgpack_object_to_val(&kv->key, &key);
-		as_msgpack_object_to_val(&kv->val, &val);
-		if ( key != NULL && val != NULL ) {
-			as_hashmap_set(m, key, val);
+	as_hashmap* map = as_hashmap_new(32);
+	
+	for (int i = 0; i < size; i++) {
+		as_val* k = 0;
+		as_val* v = 0;
+		as_unpack_val(pk, &k);
+		as_unpack_val(pk, &v);
+		
+		if (k && v) {
+			as_hashmap_set(map, k, v);
+ 		}
+	}
+	*val = (as_val*)map;
+	return 0;
+}
+
+int as_unpack_val(as_unpacker * pk, as_val ** val)
+{
+	uint8_t type = pk->buffer[pk->offset++];
+	
+	switch (type) {
+		case 0xc0: { // nil
+			return as_unpack_nil(val);
+		}
+			
+		case 0xc3: { // boolean true
+			return as_unpack_boolean(true, val);
+		}
+			
+		case 0xc2: { // boolean false
+			return as_unpack_boolean(false, val);
+		}
+			
+		case 0xca: { // float
+			float v = as_extract_float(pk);
+			// Convert to integer because float is not currently supported.
+			return as_unpack_integer((int64_t)v, val);
+		}
+			
+		case 0xcb: { // double
+			double v = as_extract_double(pk);
+			// Convert to integer because double is not currently supported.
+			return as_unpack_integer((int64_t)v, val);
+		}
+		
+		case 0xd0:   // signed 8 bit integer
+		case 0xcc: { // unsigned 8 bit integer
+			uint8_t v = pk->buffer[pk->offset++];
+			return as_unpack_integer(v, val);
+		}
+		
+		case 0xd1:   // signed 16 bit integer
+		case 0xcd: { // unsigned 16 bit integer
+			uint16_t v = as_extract_uint16(pk);
+			return as_unpack_integer(v, val);
+		}
+		
+		case 0xd2:   // signed 32 bit integer
+		case 0xce: { // unsigned 32 bit integer
+			uint32_t v = as_extract_uint32(pk);
+			return as_unpack_integer(v, val);
+		}
+		
+		case 0xd3:   // signed 64 bit integer
+		case 0xcf: { // unsigned 64 bit integer
+			uint64_t v = as_extract_uint64(pk);
+			return as_unpack_integer(v, val);
+		}
+			
+		case 0xda: { // raw bytes with 16 bit header
+			uint16_t length = as_extract_uint16(pk);
+			return as_unpack_blob(pk, length, val);
+		}
+			
+		case 0xdb: { // raw bytes with 32 bit header
+			uint32_t length = as_extract_uint32(pk);
+			return as_unpack_blob(pk, length, val);
+		}
+			
+		case 0xdc: { // list with 16 bit header
+			uint16_t length = as_extract_uint16(pk);
+			return as_unpack_list(pk, length, val);
+		}
+			
+		case 0xdd: { // list with 32 bit header
+			uint32_t length = as_extract_uint32(pk);
+			return as_unpack_list(pk, length, val);
+		}
+			
+		case 0xde: { // map with 16 bit header
+			uint16_t length = as_extract_uint16(pk);
+			return as_unpack_map(pk, length, val);
+		}
+			
+		case 0xdf: { // map with 32 bit header
+			uint32_t length = as_extract_uint32(pk);
+			return as_unpack_map(pk, length, val);
+		}
+			
+		default: {
+			if ((type & 0xe0) == 0xa0) { // raw bytes with 8 bit combined header
+				return as_unpack_blob(pk, type & 0x1f, val);
+			}
+			
+			if ((type & 0xf0) == 0x80) { // map with 8 bit combined header
+				return as_unpack_map(pk, type & 0x0f, val);
+			}
+			
+			if ((type & 0xf0) == 0x90) { // list with 8 bit combined header
+				return as_unpack_list(pk, type & 0x0f, val);
+			}
+			
+			if (type < 0x80) { // 8 bit combined unsigned integer
+				return as_unpack_integer(type, val);
+			}
+			
+			if (type >= 0xe0) { // 8 bit combined signed integer
+				return as_unpack_integer(type - 0xe0 - 32, val);
+			}
+			return 2;
 		}
 	}
-	*v = (as_val *) m;
-	return 0;
 }

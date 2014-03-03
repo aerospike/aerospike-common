@@ -21,36 +21,48 @@
  *****************************************************************************/
 #pragma once
 
-#include <aerospike/as_serializer.h>
+#if defined(__linux__)
 
-#define AS_PACKER_BUFFER_SIZE 8192
+#include <netinet/in.h>
+#include <asm/byteorder.h>
 
-typedef struct as_packer_buffer {
-	struct as_packer_buffer * next;
-	unsigned char * buffer;
-	int length;
-} as_packer_buffer;
+#define cf_swap_to_be16(_n) __cpu_to_be16(_n)
+#define cf_swap_from_be16(_n) __be16_to_cpu(_n)
 
-typedef struct as_packer {
-	struct as_packer_buffer * head;
-	struct as_packer_buffer * tail;
-	unsigned char * buffer;
-	int offset;
-	int capacity;
-} as_packer;
+#define cf_swap_to_be32(_n) __cpu_to_be32(_n)
+#define cf_swap_from_be32(_n) __be32_to_cpu(_n)
 
-typedef struct as_unpacker {
-	unsigned char * buffer;
-	int offset;
-	int length;
-} as_unpacker;
+#define cf_swap_to_be64(_n) __cpu_to_be64(_n)
+#define cf_swap_from_be64(_n) __be64_to_cpu(_n)
 
-/******************************************************************************
- * FUNCTIONS
- ******************************************************************************/
+#endif // __linux__
 
-as_serializer * as_msgpack_new();
-as_serializer * as_msgpack_init(as_serializer *);
+#if defined(__APPLE__)
+#include <libkern/OSByteOrder.h>
+#include <arpa/inet.h>
 
-int as_pack_val(as_packer * pk, as_val * val);
-int as_unpack_val(as_unpacker * pk, as_val ** val);
+#define cf_swap_to_be16(_n) OSSwapHostToBigInt16(_n)
+#define cf_swap_from_be16(_n) OSSwapBigToHostInt16(_n)
+
+#define cf_swap_to_be32(_n) OSSwapHostToBigInt32(_n)
+#define cf_swap_from_be32(_n) OSSwapBigToHostInt32(_n)
+
+#define cf_swap_to_be64(_n) OSSwapHostToBigInt64(_n)
+#define cf_swap_from_be64(_n) OSSwapBigToHostInt64(_n)
+
+#endif // __APPLE__
+
+#if defined(CF_WINDOWS)
+#include <stdint.h>
+#include <stdlib.h>
+#include <WinSock2.h>
+
+#define cf_swap_to_be16(_n) _byteswap_uint16(_n)
+#define cf_swap_from_be16(_n) _byteswap_uint16(_n)
+
+#define cf_swap_to_be32(_n) _byteswap_uint32(_n)
+#define cf_swap_from_be32(_n) _byteswap_uint32(_n)
+
+#define cf_swap_to_be64(_n) _byteswap_uint64(_n)
+#define cf_swap_from_be64(_n) _byteswap_uint64(_n)
+#endif // CF_WINDOWS

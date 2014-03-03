@@ -3,14 +3,21 @@ include project/settings.mk
 ##  SETTINGS                                                                 ##
 ###############################################################################
 
+OS := $(shell uname)
+
 # Modules
-MODULES := MSGPACK
+MODULES :=
 
 # Overrride optimizations via: make O=n
 O=3
 
 # Make-local Compiler Flags
+ifeq ($(OS),Darwin)
+CC_FLAGS = -std=gnu99 -g -Wall
+else
 CC_FLAGS = -std=gnu99 -g -rdynamic -Wall 
+endif
+
 CC_FLAGS += -fPIC -fno-common -fno-strict-aliasing
 CC_FLAGS += -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64 
 CC_FLAGS += -D_REENTRANT -D_GNU_SOURCE -DMEM_COUNT=1
@@ -37,7 +44,7 @@ ifeq ($(CF), )
 endif
 
 # Include Paths
-INC_PATH += $(MSGPACK)/src $(CF)/include
+INC_PATH += $(CF)/include
 
 # Library Paths
 # LIB_PATH +=

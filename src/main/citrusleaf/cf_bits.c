@@ -19,8 +19,6 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -46,9 +44,9 @@ int cf_bits_find_last_set(uint32_t v) {
 int cf_bits_find_last_set_64(uint64_t v) {
     uint64_t t;
     if ((t = v >> 32)) {
-        return cf_bits_find_last_set(t) + 32;
+        return cf_bits_find_last_set((uint32_t)t) + 32;
     }
     else {
-        return cf_bits_find_last_set(v);
+        return cf_bits_find_last_set((uint32_t)v);
     }
 }

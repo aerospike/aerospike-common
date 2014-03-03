@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include <citrusleaf/alloc.h>
-
+#include <citrusleaf/cf_types.h>
 #include <aerospike/as_integer.h>
 
 /******************************************************************************
@@ -80,7 +80,7 @@ void as_integer_val_destroy(as_val * v)
 uint32_t as_integer_val_hashcode(const as_val * v)
 {
 	as_integer * i = as_integer_fromval(v);
-	return i != NULL ? i->value : 0;
+	return i != NULL ? (uint32_t)i->value : 0;
 }
 
 char * as_integer_val_tostring(const as_val * v)
@@ -88,6 +88,6 @@ char * as_integer_val_tostring(const as_val * v)
 	as_integer * i = (as_integer *) v;
 	char * str = (char *) cf_malloc(sizeof(char) * 32);
 	bzero(str, 32);
-	sprintf(str,"%ld",i->value);
+	sprintf(str, "%" PRId64, i->value);
 	return str;
 }

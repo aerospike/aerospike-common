@@ -19,53 +19,92 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
 #include <citrusleaf/cf_clock.h>
+
+#ifdef __APPLE__
+#include <mach/mach.h>
+#include <mach/mach_time.h>
+#endif
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
 cf_clock cf_getms() {
+#ifdef __APPLE__
+	// mach_absolute_time() currently returns nano-seconds, but is not guaranteed to do so.
+	// This code may have to be revised at a later date.
+	return mach_absolute_time() / 1000000;
+#else
 	struct timespec ts;
 	clock_gettime( CLOCK_MONOTONIC, &ts);
 	return ( CF_TIMESPEC_TO_MS (ts) );
+#endif
 }
 
 cf_clock cf_getmicros() {
+#ifdef __APPLE__
+	return mach_absolute_time() / 1000;
+#else
 	struct timespec ts = { 0, 0};
 	clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &ts);
 	uint64_t micro = (ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
 	return(micro);
+#endif
 }
 
 cf_clock cf_getus() {
+#ifdef __APPLE__
+	return mach_absolute_time() / 1000;
+#else
 	struct timespec ts;
 	clock_gettime( CLOCK_MONOTONIC, &ts);
 	return ( CF_TIMESPEC_TO_US (ts) );
-}	
+#endif
+}
 
 cf_clock cf_clock_getabsolute() {
+#ifdef __APPLE__
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000);
+#else
 	struct timespec ts;
 	clock_gettime(CLOCK_REALTIME, &ts);
 	return(CF_TIMESPEC_TO_MS(ts));
+#endif
 }
 
 cf_clock cf_clock_getabsoluteus() {
+#ifdef __APPLE__
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return (tv.tv_sec * 1000000 + tv.tv_usec);
+#else
 	struct timespec ts;
 	clock_gettime(CLOCK_REALTIME, &ts);
 	return(CF_TIMESPEC_TO_US(ts));
+#endif
 }
 
 cf_clock cf_get_seconds() {
+#ifdef __APPLE__
+	return mach_absolute_time() / 1000000000;
+#else
 	struct timespec ts;
 	clock_gettime( CLOCK_MONOTONIC, &ts);
 	return ( ts.tv_sec );
+#endif
 }
 
 cf_clock cf_secs_since_clepoch() {
+#ifdef __APPLE__
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return (tv.tv_sec - CITRUSLEAF_EPOCH);
+#else
 	struct timespec ts;
 	clock_gettime(CLOCK_REALTIME, &ts);
 	return (ts.tv_sec - CITRUSLEAF_EPOCH);
+#endif
 }
-

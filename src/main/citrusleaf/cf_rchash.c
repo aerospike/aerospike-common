@@ -1097,7 +1097,7 @@ void cf_rchash_destroy_elements_v(cf_rchash *h) {
 	}
 }
 
-#ifdef DEBUG
+#ifdef DEBUG_HASH
 
 /*
  *  Print contents of an rchash table.

@@ -105,7 +105,7 @@ static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, 
 	as_map_val_tostring_data * data = (as_map_val_tostring_data *) udata;
 
 	char * keystr = as_val_tostring(key);
-	size_t keylen = strlen(keystr);
+	int keylen = (int)strlen(keystr);
 	if (!keystr) {
 		return false;
 	}
@@ -114,7 +114,7 @@ static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, 
     if (!valstr) {
     	return false;
     }
-	size_t vallen = strlen(valstr);
+	int vallen = (int)strlen(valstr);
 
 	if ( data->sep ) {
 		data->buf[data->pos] = ',';
@@ -122,7 +122,7 @@ static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, 
 		data->pos += 2;
 	}
 
-	size_t entlen = keylen + 2 + vallen + 2;
+	int entlen = keylen + 2 + vallen + 2;
 
 	if ( data->pos + entlen >= data->cap ) {
 		uint32_t adj = entlen > data->blk ? entlen : data->blk;

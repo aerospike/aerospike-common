@@ -36,6 +36,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef __APPLE__
+// Openssl is deprecated on mac, but the library is still included.
+// Since RIPEMD160 is not supported by the new mac common cryto system library,
+// openssl is still used.  Save old settings and disable deprecated warnings.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -140,4 +148,9 @@ static inline cl_partition_id cl_partition_getid(uint32_t n_partitions, const cf
 
 #ifdef __cplusplus
 } // end extern "C"
+#endif
+
+#ifdef __APPLE__
+// Restore old settings.
+#pragma GCC diagnostic pop
 #endif

@@ -28,12 +28,18 @@
 extern "C" {
 #endif
 
-#ifndef CF_WINDOWS
+#ifdef __linux__
 #include <time.h>
 #include <bits/time.h>
-#else // ifdef CF_WINDOWS
+#endif
+    
+#ifdef __APPLE__
+#include <sys/time.h>
+#endif
+    
+#ifdef CF_WINDOWS
 #include <citrusleaf/cf_clock_win.h>
-#endif // ifndef CF_WINDOWS
+#endif
 
 /******************************************************************************
  * TYPES
@@ -91,9 +97,15 @@ static inline void CF_TIMESPEC_ADD_MS(struct timespec *ts, uint ms) {
 }
 
 static inline uint32_t cf_clepoch_seconds() {
+#ifdef __APPLE__
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint32_t)(tv.tv_sec - CITRUSLEAF_EPOCH);
+#else
     struct timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     return (uint32_t)(ts.tv_sec - CITRUSLEAF_EPOCH);
+#endif
 }
 
 /******************************************************************************/
