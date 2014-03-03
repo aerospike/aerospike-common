@@ -14,16 +14,15 @@ O=3
 # Make-local Compiler Flags
 ifeq ($(OS),Darwin)
 CC_FLAGS = -std=gnu99 -g -Wall
+LD_FLAGS = $(LDFLAGS) -undefined dynamic_lookup -lm -fPIC 
 else
 CC_FLAGS = -std=gnu99 -g -rdynamic -Wall 
+LD_FLAGS = $(LDFLAGS) -lm -fPIC 
 endif
 
 CC_FLAGS += -fPIC -fno-common -fno-strict-aliasing
 CC_FLAGS += -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64 
 CC_FLAGS += -D_REENTRANT -D_GNU_SOURCE -DMEM_COUNT=1
-
-# Make-local Linker Flags
-LD_FLAGS = $(LDFLAGS) -undefined dynamic_lookup -lm -fPIC 
 
 # DEBUG Settings
 ifdef DEBUG
