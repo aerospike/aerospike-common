@@ -403,7 +403,7 @@ as_arraylist * as_arraylist_take(const as_arraylist * list, uint32_t n)
 {
 	uint32_t		sz		= list->size;
 	uint32_t		c		= n < sz ? n : sz;
-	as_arraylist *	list2	= as_arraylist_new(sz-c, list->block_size);
+	as_arraylist *	list2	= as_arraylist_new(c, list->block_size);
 
 	list2->size = c;
 	for(int i = 0; i < c; i++) {
