@@ -4,8 +4,7 @@
 
 TEST_VALGRIND = --tool=memcheck --leak-check=yes --show-reachable=yes --num-callers=20 --track-fds=yes -v
 
-TEST_CFLAGS =  -DMEM_COUNT=1
-TEST_CFLAGS += -I$(TARGET_INCL)
+TEST_CFLAGS = -I$(TARGET_INCL)
 
 ifeq ($(OS),Darwin)
 TEST_LDFLAGS = -lssl -lcrypto -lpthread -lm
@@ -25,7 +24,6 @@ TEST_AEROSPIKE += test.c
 TEST_AEROSPIKE += test_common.c
 TEST_AEROSPIKE += types/*.c
 TEST_AEROSPIKE += msgpack/*.c
-TEST_AEROSPIKE += util/*.c
 
 TEST_SOURCE = $(wildcard $(addprefix $(SOURCE_TEST)/, $(TEST_AEROSPIKE)))
 
