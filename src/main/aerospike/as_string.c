@@ -86,6 +86,75 @@ size_t as_string_len(as_string * string)
 	return string->len;
 }
 
+#ifdef CF_WINDOWS
+#define FILE_SEPARATOR '\\'
+#else
+#define FILE_SEPARATOR '/'
+#endif
+
+const char* as_basename(as_string * filename, const char* path)
+{
+	if (path == 0 || *path == 0) {
+		// Found empty string.  Return current directory constant.
+		char* value = ".";
+		as_string_cons(filename, false, value, false);
+		return value;
+	}
+	
+	const char* p = path;
+	const char* begin = 0;
+
+	// Skip till end of string.
+	while (*p) {
+		if (*p == FILE_SEPARATOR) {
+			begin = p + 1;
+		}
+		p++;
+	}
+	
+	if (begin == 0) {
+		// No slashes found.  Return original string.
+		as_string_cons(filename, false, (char*)path, false);
+		return path;
+	}
+	
+	if (begin == p) {
+		// Found trailing slashes.
+		// Create new string to hold filename without slashes.
+		p--;
+		
+		while (*p == FILE_SEPARATOR) {
+			if (p == path) {
+				// String contains all slashes. Return slash constant.
+				char* value = "/";
+				as_string_cons(filename, false, value, false);
+				return value;
+			}
+			p--;
+		}
+		const char* end = p;
+				
+		while (p != path && *p != FILE_SEPARATOR) {
+			p--;
+		}
+		
+		if (*p == FILE_SEPARATOR) {
+			p++;
+		}
+		
+		int len = (int)(end - p) + 1;
+		char* str = cf_malloc(len + 1);
+		memcpy(str, p, len);
+		*(str + len) = 0;
+		as_string_cons(filename, false, str, true);
+		return str;
+	}
+	
+	// Return begin of filename.
+	as_string_cons(filename, false, (char*)begin, false);
+	return begin;
+}
+
 /******************************************************************************
  *	as_val FUNCTIONS
  ******************************************************************************/

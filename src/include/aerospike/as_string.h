@@ -232,6 +232,18 @@ inline char * as_string_tostring(const as_string * string)
 	return as_string_getorelse(string, NULL);
 }
 
+/**
+ *	Return filename component of full path.
+ *
+ *	If path is empty, the current directory is returned.
+ *	If path contains trailing directory slashes, create new string to hold
+ *	filename without slashes.  The input path is guaranteed not to be modified.
+ *	as_string_destroy() must be called when finished with filename.
+ *
+ *	@relatesalso as_string
+ */
+const char* as_basename(as_string * filename, const char* path);
+
 /******************************************************************************
  *	CONVERSION FUNCTIONS
  ******************************************************************************/
