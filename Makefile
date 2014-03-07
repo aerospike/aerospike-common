@@ -21,8 +21,11 @@ LD_FLAGS = $(LDFLAGS) -lm -fPIC
 endif
 
 CC_FLAGS += -fPIC -fno-common -fno-strict-aliasing
-CC_FLAGS += -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64 
-CC_FLAGS += -D_REENTRANT -D_GNU_SOURCE -DMEM_COUNT=1
+CC_FLAGS += -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64
+ifneq ($(CF), )
+  CF_CFLAGS = -I$(CF)/include
+endif
+CC_FLAGS += -D_REENTRANT -D_GNU_SOURCE $(EXT_CFLAGS) $(CF_CFLAGS)
 
 # DEBUG Settings
 ifdef DEBUG
@@ -37,14 +40,8 @@ CFLAGS = -O$(O)
 # Make-tree Linker Flags
 # LDFLAGS = 
 
-# If CF is not passed in, use the default allocator.
-ifeq ($(CF), )
-  CF = src/default
-  USE_DEFAULT_ALLOC = 1
-endif
-
 # Include Paths
-INC_PATH += $(CF)/include
+# INC_PATH +=
 
 # Library Paths
 # LIB_PATH +=
@@ -97,6 +94,7 @@ AEROSPIKE-OBJECTS += as_hashmap_iterator_hooks.o
 
 
 CITRUSLEAF-OBJECTS =
+CITRUSLEAF-OBJECTS += cf_alloc.o
 CITRUSLEAF-OBJECTS += cf_b64.o
 CITRUSLEAF-OBJECTS += cf_bits.o
 CITRUSLEAF-OBJECTS += cf_clock.o
@@ -108,11 +106,7 @@ CITRUSLEAF-OBJECTS += cf_rchash.o
 CITRUSLEAF-OBJECTS += cf_shash.o
 CITRUSLEAF-OBJECTS += cf_vector.o
 
-ifeq ($(USE_DEFAULT_ALLOC),1)
-  CITRUSLEAF-OBJECTS += cf_alloc.o
-endif
-
-OBJECTS = 
+OBJECTS =
 OBJECTS += $(AEROSPIKE-OBJECTS:%=$(TARGET_OBJ)/common/aerospike/%) 
 OBJECTS += $(CITRUSLEAF-OBJECTS:%=$(TARGET_OBJ)/common/citrusleaf/%)
 
