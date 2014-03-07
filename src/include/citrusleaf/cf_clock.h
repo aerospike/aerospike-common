@@ -58,6 +58,7 @@ cf_clock cf_getus();
 cf_clock cf_clock_getabsolute();
 cf_clock cf_get_seconds();
 cf_clock cf_secs_since_clepoch();
+void cf_set_wait_timespec(int ms_wait, struct timespec* tp);
 
 /******************************************************************************
  * INLINE FUNCTIONS

@@ -22,11 +22,9 @@
 #pragma once
 
 /*
- * A simple priority queue implementation, which is simply a set of queues
- * underneath
+ * A simple priority queue implementation, which is simply a set of queues underneath.
  * This currently doesn't support 'delete' and 'reduce' functionality
  */
-
 #include "cf_queue.h"
 
 #ifdef __cplusplus
@@ -52,12 +50,8 @@ struct cf_queue_priority_s {
     cf_queue *      low_q;
     cf_queue *      medium_q;
     cf_queue *      high_q;
-#ifdef EXTERNAL_LOCKS
-    void *          LOCK;
-#else   
     pthread_mutex_t LOCK;
     pthread_cond_t  CV;
-#endif
 };
 
 /******************************************************************************

@@ -22,7 +22,7 @@ TEST( types_bytes_empty, "as_bytes containing \"\"" ) {
 
 TEST( types_bytes_random, "as_bytes containing a value" ) {
 	uint8_t test_str[] = "dskghseoighweg";
-    size_t test_len = sizeof(test_str);;
+    uint32_t test_len = sizeof(test_str);
 
     as_bytes b;
     as_bytes_init_wrap(&b, test_str, test_len,false);
@@ -35,7 +35,7 @@ TEST( types_bytes_random, "as_bytes containing a value" ) {
 TEST( types_bytes_get_set, "as_bytes getting and setting" ) {
 
 	uint8_t test_str[] = "dskghseoighweg";
-    size_t test_len = sizeof(test_str);;
+    uint32_t test_len = sizeof(test_str);
     
     uint8_t v;
 

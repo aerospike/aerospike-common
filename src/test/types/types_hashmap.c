@@ -247,7 +247,7 @@ bool types_hashmap_foreach_callback(const as_val * key, const as_val * val, void
 	int * sum = (int *) udata;
 	as_integer * i = as_integer_fromval(val);
 	if ( i ) {
-		(*sum) = (*sum) + as_integer_get(i);
+		(*sum) = (*sum) + (int)as_integer_get(i);
 	}
 	return true;
 }

@@ -21,11 +21,7 @@
  *****************************************************************************/
 #pragma once
 
-#include "cf_types.h"
 #include <pthread.h>
-#include <stddef.h>
-#include <stdint.h>
-
 #include <citrusleaf/cf_types.h>
 
 #ifdef __cplusplus
@@ -55,7 +51,6 @@ extern "C" {
  * TYPES
  ******************************************************************************/
 
-
 typedef int (*cf_queue_reduce_fn) (void *buf, void *udata);
 
 /**
@@ -69,12 +64,8 @@ struct cf_queue_s {
                                     // write is always greater than or equal to read
     unsigned int    read_offset;    // 
     size_t          elementsz;      // number of bytes in an element
-#ifdef EXTERNAL_LOCKS
-    void *          LOCK;           // the lock object
-#else
     pthread_mutex_t LOCK;           // the mutex lock
-    pthread_cond_t  CV;             // hte condvar
-#endif // EXTERNAL_LOCKS
+    pthread_cond_t  CV;             // the condvar
     byte *          queue;          // the actual bytes that make up the queue
 };
 

@@ -2,7 +2,7 @@
 <Workspace
    version = "1.0">
    <FileRef
-      location = "group:aerospike-common/aerospike-common.xcodeproj">
+      location = "group:aerospike-common-test/aerospike-common-test.xcodeproj">
    </FileRef>
    <FileRef
       location = "group:../src">
