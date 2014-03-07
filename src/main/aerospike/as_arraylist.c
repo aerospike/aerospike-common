@@ -263,7 +263,7 @@ int as_arraylist_set_int64(as_arraylist * list, const uint32_t i, int64_t value)
 
 int as_arraylist_set_str(as_arraylist * list, const uint32_t i, const char * value) 
 {
-	return as_arraylist_set(list, i, (as_val *) as_string_new(strdup(value), true));
+	return as_arraylist_set(list, i, (as_val *) as_string_new_strdup(value));
 }
 
 extern inline int as_arraylist_set_integer(as_arraylist * list, const uint32_t i, as_integer * value);
@@ -294,7 +294,7 @@ int as_arraylist_append_int64(as_arraylist * list, int64_t value)
 
 int as_arraylist_append_str(as_arraylist * list, const char * value) 
 {
-	return as_arraylist_append(list, (as_val *) as_string_new(strdup(value), true));
+	return as_arraylist_append(list, (as_val *) as_string_new_strdup(value));
 }
 
 extern inline int as_arraylist_append_integer(as_arraylist * list, as_integer * value);
@@ -332,7 +332,7 @@ int as_arraylist_prepend_int64(as_arraylist * list, int64_t value)
 
 int as_arraylist_prepend_str(as_arraylist * list, const char * value) 
 {
-	return as_arraylist_prepend(list, (as_val *) as_string_new(strdup(value), true));
+	return as_arraylist_prepend(list, (as_val *) as_string_new_strdup(value));
 }
 
 
