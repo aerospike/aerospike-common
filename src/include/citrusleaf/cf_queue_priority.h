@@ -63,6 +63,7 @@ void cf_queue_priority_destroy(cf_queue_priority *q);
 int cf_queue_priority_push(cf_queue_priority *q, void *ptr, int pri);
 int cf_queue_priority_pop(cf_queue_priority *q, void *buf, int mswait);
 int cf_queue_priority_sz(cf_queue_priority *q);
+int cf_queue_priority_reduce_pop(cf_queue_priority *priority_q,  void *buf, cf_queue_reduce_fn cb, void *udata);
 
 /******************************************************************************
  * MACROS

@@ -79,7 +79,12 @@ cf_queue * cf_queue_create(size_t elementsz, bool threadsafe);
 
 void cf_queue_destroy(cf_queue *q);
 
-/** 
+/**
+ * Get the number of elements currently in the queue
+ */
+int cf_queue_sz(cf_queue *q);
+	
+/**
  * Always pushes to the end of the queue
  */
 int cf_queue_push(cf_queue *q, void *ptr);
@@ -90,9 +95,14 @@ int cf_queue_push(cf_queue *q, void *ptr);
 bool cf_queue_push_limit(cf_queue *q, void *ptr, uint limit);
 
 /**
- * Get the number of elements currently in the queue
+ * Same as cf_queue_push() except it's a no-op if element is already queued.
  */
-int cf_queue_sz(cf_queue *q);
+int cf_queue_push_unique(cf_queue *q, void *ptr);
+	
+/**
+ * Push head goes to the front, which currently means memcpying the entire queue contents.
+ */
+int cf_queue_push_head(cf_queue *q, void *ptr);
 
 /**
  * POP pops from the end of the queue, which is the most efficient
@@ -102,16 +112,26 @@ int cf_queue_sz(cf_queue *q);
 int cf_queue_pop(cf_queue *q, void *buf, int mswait);
 
 /**
- * Queue Reduce
- * Run the entire queue, calling the callback, with the lock held
- * You can return values in the callback to cause deletes
- * Great for purging dying stuff out of a queue synchronously
+ * Run the entire queue, calling the callback, with the lock held.
+ * You can return values in the callback to cause deletes.
+ * Great for purging dying stuff out of a queue synchronously.
  * 
- * Return -2 from the callback to trigger a delete
+ * return -2 from the callback to trigger a delete
  * return -1 stop iterating the queue
  * return 0 for success
  */
 int cf_queue_reduce(cf_queue *q, cf_queue_reduce_fn cb, void *udata);
+
+/**
+ * Run the entire queue in reverse order, calling the callback, with the lock held.
+ * You can return values in the callback to cause deletes.
+ * Great for purging dying stuff out of a queue synchronously.
+ *
+ * return -2 from the callback to trigger a delete
+ * return -1 stop iterating the queue
+ * return 0 for success
+ */
+int cf_queue_reduce_reverse(cf_queue *q, cf_queue_reduce_fn cb, void *udata);
 
 /**
  * The most common reason to want to 'reduce' is delete - so provide
@@ -119,10 +139,12 @@ int cf_queue_reduce(cf_queue *q, cf_queue_reduce_fn cb, void *udata);
  */
 int cf_queue_delete(cf_queue *q, void *buf, bool only_one);
 
+/**
+ * Delete all items in queue.
+ */
+int cf_queue_delete_all(cf_queue *q);
 
 void cf_queue_delete_offset(cf_queue *q, uint index);
-
-int cf_queue_test();
 
 /******************************************************************************
  * MACROS

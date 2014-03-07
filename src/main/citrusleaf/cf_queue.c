@@ -95,7 +95,7 @@ int cf_queue_sz(cf_queue *q)
 // Internal function. Call with new size with lock held.
 // This function only works on full queues.
 //
-int cf_queue_resize(cf_queue *q, uint new_sz)
+static int cf_queue_resize(cf_queue *q, uint new_sz)
 {
 	// check if queue is not full
 	if (CF_Q_SZ(q) != q->allocsz) {
@@ -139,7 +139,7 @@ int cf_queue_resize(cf_queue *q, uint new_sz)
 // I really expect this will never get called....
 // HOWEVER it can be a symptom of a queue getting really, really deep
 //
-void cf_queue_unwrap(cf_queue *q)
+static void cf_queue_unwrap(cf_queue *q)
 {
 	int sz = CF_Q_SZ(q);
 	q->read_offset %= q->allocsz;
