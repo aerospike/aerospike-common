@@ -9,23 +9,29 @@ OS := $(shell uname)
 MODULES :=
 
 # Overrride optimizations via: make O=n
-O=3
+O = 3
 
 # Make-local Compiler Flags
+CC_FLAGS = -std=gnu99 -g -Wall -fPIC -fno-common -fno-strict-aliasing
+CC_FLAGS += -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64
+CC_FLAGS += -D_REENTRANT -D_GNU_SOURCE $(EXT_CFLAGS)
+
 ifeq ($(OS),Darwin)
-CC_FLAGS = -std=gnu99 -g -Wall
-LD_FLAGS = $(LDFLAGS) -undefined dynamic_lookup -lm -fPIC 
+CC_FLAGS += -D_DARWIN_UNLIMITED_SELECT
 else
-CC_FLAGS = -std=gnu99 -g -rdynamic -Wall 
-LD_FLAGS = $(LDFLAGS) -lm -fPIC 
+CC_FLAGS += -rdynamic
 endif
 
-CC_FLAGS += -fPIC -fno-common -fno-strict-aliasing
-CC_FLAGS += -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64
 ifneq ($(CF), )
-  CF_CFLAGS = -I$(CF)/include
+CC_FLAGS += -I$(CF)/include
 endif
-CC_FLAGS += -D_REENTRANT -D_GNU_SOURCE $(EXT_CFLAGS) $(CF_CFLAGS)
+
+# Linker flags
+LD_FLAGS = $(LDFLAGS) -lm -fPIC 
+
+ifeq ($(OS),Darwin)
+LD_FLAGS += -undefined dynamic_lookup
+endif
 
 # DEBUG Settings
 ifdef DEBUG
@@ -35,7 +41,7 @@ LD_FLAGS += -pg -fprofile-arcs -lgcov
 endif
 
 # Make-tree Compiler Flags
-CFLAGS = -O$(O)
+CFLAGS = -O$(O) 
 
 # Make-tree Linker Flags
 # LDFLAGS = 
