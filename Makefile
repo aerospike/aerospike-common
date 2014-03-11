@@ -8,13 +8,14 @@ OS := $(shell uname)
 # Modules
 MODULES :=
 
-# Overrride optimizations via: make O=n
+# Override optimizations via: make O=n
 O = 3
 
 # Make-local Compiler Flags
-CC_FLAGS = -std=gnu99 -g -Wall -fPIC -fno-common -fno-strict-aliasing
-CC_FLAGS += -DMARCH_$(ARCH) -D_FILE_OFFSET_BITS=64
-CC_FLAGS += -D_REENTRANT -D_GNU_SOURCE $(EXT_CFLAGS)
+CC_FLAGS = -std=gnu99 -g -Wall -fPIC 
+CC_FLAGS += -fno-common -fno-strict-aliasing -finline-functions
+CC_FLAGS += -march=nocona -DMARCH_$(ARCH)
+CC_FLAGS += -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D_GNU_SOURCE $(EXT_CFLAGS)
 
 ifeq ($(OS),Darwin)
 CC_FLAGS += -D_DARWIN_UNLIMITED_SELECT
@@ -27,7 +28,7 @@ CC_FLAGS += -I$(CF)/include
 endif
 
 # Linker flags
-LD_FLAGS = $(LDFLAGS) -lm -fPIC 
+LD_FLAGS = $(LDFLAGS) -lm -fPIC
 
 ifeq ($(OS),Darwin)
 LD_FLAGS += -undefined dynamic_lookup
