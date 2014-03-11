@@ -3,8 +3,6 @@ include project/settings.mk
 ##  SETTINGS                                                                 ##
 ###############################################################################
 
-OS := $(shell uname)
-
 # Modules
 MODULES :=
 
