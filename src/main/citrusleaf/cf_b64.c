@@ -104,10 +104,12 @@ static const uint8_t base64_decode_a[256] = {
  * FUNCTIONS
  ******************************************************************************/
 
+/*
 static inline bool base64_valid_char(uint8_t c)
 {
 	return(base64_valid_a[c]);
 }
+*/
 
 bool cf_base64_validate_input(const uint8_t *b, const int len)
 {
