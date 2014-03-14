@@ -138,16 +138,16 @@ build-clean:
 	@rm -rf $(TARGET_LIB)
 	@rm -rf $(TARGET_OBJ)
 
-.PHONY: libaerospike-common libaerospike-common.a libaerospike-common.so
-libaerospike-common: libaerospike-common.a libaerospike-common.so
+.PHONY: libaerospike-common libaerospike-common.a libaerospike-common.$(DYNAMIC_SUFFIX)
+libaerospike-common: libaerospike-common.a libaerospike-common.$(DYNAMIC_SUFFIX)
 libaerospike-common.a: $(TARGET_LIB)/libaerospike-common.a
-libaerospike-common.so: $(TARGET_LIB)/libaerospike-common.so
+libaerospike-common.$(DYNAMIC_SUFFIX): $(TARGET_LIB)/libaerospike-common.$(DYNAMIC_SUFFIX)
 
 
-.PHONY: libaerospike-common-hooked libaerospike-common-hooked.a libaerospike-common-hooked.so
-libaerospike-common-hooked: libaerospike-common-hooked.a libaerospike-common-hooked.so
+.PHONY: libaerospike-common-hooked libaerospike-common-hooked.a libaerospike-common-hooked.$(DYNAMIC_SUFFIX)
+libaerospike-common-hooked: libaerospike-common-hooked.a libaerospike-common-hooked.$(DYNAMIC_SUFFIX)
 libaerospike-common-hooked.a: $(TARGET_LIB)/libaerospike-common-hooked.a
-libaerospike-common-hooked.so: $(TARGET_LIB)/libaerospike-common-hooked.so
+libaerospike-common-hooked.$(DYNAMIC_SUFFIX): $(TARGET_LIB)/libaerospike-common-hooked.$(DYNAMIC_SUFFIX)
 
 ###############################################################################
 ##  BUILD TARGETS                                                            ##
@@ -161,7 +161,7 @@ $(TARGET_OBJ)/common/aerospike/%.o: $(SOURCE_MAIN)/aerospike/%.c $(SOURCE_INCL)/
 $(TARGET_OBJ)/common/citrusleaf/%.o: $(SOURCE_MAIN)/citrusleaf/%.c $(SOURCE_INCL)/citrusleaf/*.h | modules 
 	$(object)
 
-$(TARGET_LIB)/libaerospike-common.so: $(OBJECTS) | modules 
+$(TARGET_LIB)/libaerospike-common.$(DYNAMIC_SUFFIX): $(OBJECTS) | modules 
 	$(library)
 
 $(TARGET_LIB)/libaerospike-common.a: $(OBJECTS) | modules 
@@ -173,7 +173,7 @@ $(TARGET_OBJ)/common-hooked/citrusleaf/%.o: CC_FLAGS += -DEXTERNAL_LOCKS
 $(TARGET_OBJ)/common-hooked/citrusleaf/%.o: $(SOURCE_MAIN)/citrusleaf/%.c $(SOURCE_INCL)/citrusleaf/*.h | modules
 	$(object)
 
-$(TARGET_LIB)/libaerospike-common-hooked.so: $(HOOKED-OBJECTS) | modules 
+$(TARGET_LIB)/libaerospike-common-hooked.$(DYNAMIC_SUFFIX): $(HOOKED-OBJECTS) | modules 
 	$(library)
 
 $(TARGET_LIB)/libaerospike-common-hooked.a: $(HOOKED-OBJECTS) | modules 
