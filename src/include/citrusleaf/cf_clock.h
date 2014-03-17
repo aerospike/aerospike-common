@@ -109,6 +109,23 @@ static inline uint32_t cf_clepoch_seconds() {
 #endif
 }
 
+// Special client-only conversion utility.
+static inline uint32_t cf_server_void_time_to_ttl(uint32_t server_void_time) {
+	// This is the server's flag indicating the record never expires...
+	if (server_void_time == 0) {
+		// ... converted to the new client-side convention for "never expires":
+		return (uint32_t)-1;
+	}
+
+	uint32_t now = cf_clepoch_seconds();
+
+	// Record may not have expired on server, but delay or clock differences may
+	// cause it to look expired on client. (We give the record to the app anyway
+	// to avoid internal cleanup complications.) Floor at 1, not 0, to avoid old
+	// "never expires" interpretation.
+	return server_void_time > now ? server_void_time - now : 1;
+}
+
 /******************************************************************************/
 
 #ifdef __cplusplus
