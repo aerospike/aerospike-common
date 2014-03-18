@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		BFBB6C7818C8005500756BB0 /* libaerospike-common.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BFBB6C7518C7FF2F00756BB0 /* libaerospike-common.a */; };
+		BF48302818D7DDEE00032348 /* libaerospike-common.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BF48302318D7DB7700032348 /* libaerospike-common.a */; };
 		BFBB6C8018C8028500756BB0 /* common.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB6C7918C8028500756BB0 /* common.c */; };
 		BFBB6C8118C8028500756BB0 /* test_common.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB6C7B18C8028500756BB0 /* test_common.c */; };
 		BFBB6C8218C8028500756BB0 /* test.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB6C7D18C8028500756BB0 /* test.c */; };
@@ -21,14 +21,14 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		BFBB6C7418C7FF2F00756BB0 /* PBXContainerItemProxy */ = {
+		BF48302218D7DB7700032348 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BFBB6C7018C7FF2F00756BB0 /* aerospike-common.xcodeproj */;
 			proxyType = 2;
 			remoteGlobalIDString = BFBB7EEF18BFFD2D0080851E;
 			remoteInfo = "aerospike-common";
 		};
-		BFBB6C7618C8003A00756BB0 /* PBXContainerItemProxy */ = {
+		BF48302618D7DDE700032348 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BFBB6C7018C7FF2F00756BB0 /* aerospike-common.xcodeproj */;
 			proxyType = 1;
@@ -51,19 +51,19 @@
 
 /* Begin PBXFileReference section */
 		BFBB6C6418C7FE9D00756BB0 /* aerospike-common-test */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "aerospike-common-test"; sourceTree = BUILT_PRODUCTS_DIR; };
-		BFBB6C7018C7FF2F00756BB0 /* aerospike-common.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = "aerospike-common.xcodeproj"; path = "../aerospike-common/aerospike-common.xcodeproj"; sourceTree = "<group>"; };
-		BFBB6C7918C8028500756BB0 /* common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = common.c; path = ../../src/test/common.c; sourceTree = "<group>"; };
-		BFBB6C7B18C8028500756BB0 /* test_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = test_common.c; path = ../../src/test/test_common.c; sourceTree = "<group>"; };
-		BFBB6C7C18C8028500756BB0 /* test_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = test_common.h; path = ../../src/test/test_common.h; sourceTree = "<group>"; };
-		BFBB6C7D18C8028500756BB0 /* test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = test.c; path = ../../src/test/test.c; sourceTree = "<group>"; };
-		BFBB6C7E18C8028500756BB0 /* test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = test.h; path = ../../src/test/test.h; sourceTree = "<group>"; };
-		BFBB6C8418C80A3E00756BB0 /* types_arraylist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_arraylist.c; path = ../../src/test/types/types_arraylist.c; sourceTree = "<group>"; };
-		BFBB6C8518C80A3E00756BB0 /* types_boolean.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_boolean.c; path = ../../src/test/types/types_boolean.c; sourceTree = "<group>"; };
-		BFBB6C8618C80A3E00756BB0 /* types_bytes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_bytes.c; path = ../../src/test/types/types_bytes.c; sourceTree = "<group>"; };
-		BFBB6C8718C80A3E00756BB0 /* types_hashmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_hashmap.c; path = ../../src/test/types/types_hashmap.c; sourceTree = "<group>"; };
-		BFBB6C8818C80A3E00756BB0 /* types_integer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_integer.c; path = ../../src/test/types/types_integer.c; sourceTree = "<group>"; };
-		BFBB6C8918C80A3E00756BB0 /* types_string.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_string.c; path = ../../src/test/types/types_string.c; sourceTree = "<group>"; };
-		BFBB6C9018C80A5700756BB0 /* msgpack_rountrip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = msgpack_rountrip.c; path = ../../src/test/msgpack/msgpack_rountrip.c; sourceTree = "<group>"; };
+		BFBB6C7018C7FF2F00756BB0 /* aerospike-common.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = "aerospike-common.xcodeproj"; sourceTree = "<group>"; };
+		BFBB6C7918C8028500756BB0 /* common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = common.c; path = ../src/test/common.c; sourceTree = "<group>"; };
+		BFBB6C7B18C8028500756BB0 /* test_common.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = test_common.c; path = ../src/test/test_common.c; sourceTree = "<group>"; };
+		BFBB6C7C18C8028500756BB0 /* test_common.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = test_common.h; path = ../src/test/test_common.h; sourceTree = "<group>"; };
+		BFBB6C7D18C8028500756BB0 /* test.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = test.c; path = ../src/test/test.c; sourceTree = "<group>"; };
+		BFBB6C7E18C8028500756BB0 /* test.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = test.h; path = ../src/test/test.h; sourceTree = "<group>"; };
+		BFBB6C8418C80A3E00756BB0 /* types_arraylist.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_arraylist.c; path = ../src/test/types/types_arraylist.c; sourceTree = "<group>"; };
+		BFBB6C8518C80A3E00756BB0 /* types_boolean.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_boolean.c; path = ../src/test/types/types_boolean.c; sourceTree = "<group>"; };
+		BFBB6C8618C80A3E00756BB0 /* types_bytes.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_bytes.c; path = ../src/test/types/types_bytes.c; sourceTree = "<group>"; };
+		BFBB6C8718C80A3E00756BB0 /* types_hashmap.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_hashmap.c; path = ../src/test/types/types_hashmap.c; sourceTree = "<group>"; };
+		BFBB6C8818C80A3E00756BB0 /* types_integer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_integer.c; path = ../src/test/types/types_integer.c; sourceTree = "<group>"; };
+		BFBB6C8918C80A3E00756BB0 /* types_string.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_string.c; path = ../src/test/types/types_string.c; sourceTree = "<group>"; };
+		BFBB6C9018C80A5700756BB0 /* msgpack_rountrip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = msgpack_rountrip.c; path = ../src/test/msgpack/msgpack_rountrip.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -71,13 +71,21 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				BFBB6C7818C8005500756BB0 /* libaerospike-common.a in Frameworks */,
+				BF48302818D7DDEE00032348 /* libaerospike-common.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		BF48301F18D7DB7700032348 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BF48302318D7DB7700032348 /* libaerospike-common.a */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
 		BFBB6C5B18C7FE9D00756BB0 = {
 			isa = PBXGroup;
 			children = (
@@ -106,14 +114,6 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		BFBB6C7118C7FF2F00756BB0 /* Products */ = {
-			isa = PBXGroup;
-			children = (
-				BFBB6C7518C7FF2F00756BB0 /* libaerospike-common.a */,
-			);
-			name = Products;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -128,7 +128,7 @@
 			buildRules = (
 			);
 			dependencies = (
-				BFBB6C7718C8003A00756BB0 /* PBXTargetDependency */,
+				BF48302718D7DDE700032348 /* PBXTargetDependency */,
 			);
 			name = "aerospike-common-test";
 			productName = "aerospike-common-test";
@@ -156,7 +156,7 @@
 			projectDirPath = "";
 			projectReferences = (
 				{
-					ProductGroup = BFBB6C7118C7FF2F00756BB0 /* Products */;
+					ProductGroup = BF48301F18D7DB7700032348 /* Products */;
 					ProjectRef = BFBB6C7018C7FF2F00756BB0 /* aerospike-common.xcodeproj */;
 				},
 			);
@@ -168,11 +168,11 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
-		BFBB6C7518C7FF2F00756BB0 /* libaerospike-common.a */ = {
+		BF48302318D7DB7700032348 /* libaerospike-common.a */ = {
 			isa = PBXReferenceProxy;
 			fileType = archive.ar;
 			path = "libaerospike-common.a";
-			remoteRef = BFBB6C7418C7FF2F00756BB0 /* PBXContainerItemProxy */;
+			remoteRef = BF48302218D7DB7700032348 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
@@ -198,10 +198,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		BFBB6C7718C8003A00756BB0 /* PBXTargetDependency */ = {
+		BF48302718D7DDE700032348 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = "aerospike-common";
-			targetProxy = BFBB6C7618C8003A00756BB0 /* PBXContainerItemProxy */;
+			targetProxy = BF48302618D7DDE700032348 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -280,8 +280,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					../../src/include,
-					../../src/default/include,
+					../src/include,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				OTHER_LDFLAGS = (
@@ -299,8 +298,7 @@
 				HEADER_SEARCH_PATHS = (
 					"$(inherited)",
 					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
-					../../src/include,
-					../../src/default/include,
+					../src/include,
 				);
 				MACOSX_DEPLOYMENT_TARGET = 10.8;
 				OTHER_LDFLAGS = (
