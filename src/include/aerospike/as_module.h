@@ -28,7 +28,6 @@
 #include <aerospike/as_result.h>
 #include <aerospike/as_types.h>
 #include <aerospike/as_logger.h>
-#include <aerospike/as_memtracker.h>
 
 /*****************************************************************************
  * TYPES
@@ -114,7 +113,6 @@ typedef struct as_module_hooks_s {
 typedef struct as_module_s {
     const void *            source;
     as_logger *             logger;
-    as_memtracker *         memtracker;
     const as_module_hooks * hooks;
 } as_module;
 
