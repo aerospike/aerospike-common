@@ -79,13 +79,13 @@ int as_module_validate(as_module * m, as_aerospike * as, const char * filename, 
 /**
  * Applies a UDF to a record with provided arguments.
  */
-int as_module_apply_record(as_module * m, as_aerospike * as, const char * filename, const char * function, as_rec * r, as_list * args, as_result * res) {
-    return as_util_hook(apply_record, 1, m, as, filename, function, r, args, res);
+int as_module_apply_record(as_module * m, as_udf_context *ctx, const char * filename, const char * function, as_rec * r, as_list * args, as_result * res) {
+    return as_util_hook(apply_record, 1, m, ctx, filename, function, r, args, res);
 }
 
 /**
  * Applies a UDF to a stream with provided arguments.
  */
-int as_module_apply_stream(as_module * m, as_aerospike * as, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream) {
-    return as_util_hook(apply_stream, 1, m, as, filename, function, istream, args, ostream);
+int as_module_apply_stream(as_module * m, as_udf_context * ctx, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream) {
+    return as_util_hook(apply_stream, 1, m, ctx, filename, function, istream, args, ostream);
 }
