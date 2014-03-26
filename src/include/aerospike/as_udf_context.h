@@ -30,22 +30,8 @@
  * TYPES
  ******************************************************************************/
 
-typedef struct as_udf_context_s as_udf_context;
-typedef struct as_udf_context_hook_s as_udf_context_hooks;
-
-struct as_udf_context_s {
+typedef struct as_udf_context_s {
 	as_aerospike  * as;
-	as_memtracker * memtracker;
 	as_timer      * timer; 
-	const         as_udf_context_hooks * hooks;
-};
-
-struct as_udf_context_hook_s {
-	as_aerospike  * (* get_aerospike)(const as_udf_context *);
-	as_memtracker * (* get_memtracker)(const as_udf_context *);
-	as_timer      * (* get_timer)(const as_udf_context *);
-};
-
-extern as_aerospike * as_udf_context_get_aerospike(const as_udf_context *ctx); 
-extern as_memtracker * as_udf_context_get_memtracker(const as_udf_context *ctx); 
-extern as_timer * as_udf_context_get_timer(const as_udf_context *ctx);
+	as_memtracker * memtracker;
+} as_udf_context;
