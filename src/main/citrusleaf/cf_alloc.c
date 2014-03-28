@@ -64,7 +64,7 @@ void cf_free(void *p) {
 
 /* cf_rc_count
  * Get the reservation count for a memory region */
-cf_rc_counter cf_rc_count(void *addr) {
+cf_atomic_int_t cf_rc_count(void *addr) {
 	cf_rc_counter *rc = (cf_rc_counter *) (((uint8_t *)addr) - sizeof(cf_rc_counter));
 
 	return *rc;

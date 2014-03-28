@@ -83,7 +83,7 @@ typedef struct {
 
 void *cf_rc_alloc(size_t sz);
 void cf_rc_free(void *addr);
-cf_rc_counter cf_rc_count(void *addr);
+cf_atomic_int_t cf_rc_count(void *addr);
 int cf_rc_reserve(void *addr);
 int cf_rc_release(void *addr);
 int cf_rc_releaseandfree(void *addr);
