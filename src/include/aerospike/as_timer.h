@@ -30,33 +30,28 @@
  * TYPES
  *****************************************************************************/
 
-struct as_timer_hooks_s;
-typedef struct as_timer_hooks_s as_timer_hooks;
-
 struct as_timer_s;
-typedef struct as_timer_s as_timer;
-
 /**
  * The interface which all timer should implement.
  */
-struct as_timer_hooks_s {
+typedef struct as_timer_hooks_s {
     /**
      * The destroy should free resources associated with the timer's source.
      * The destroy should not free the timer itself.
      */
-    int      (* destroy)(as_timer *);
-    bool     (* timedout)(const as_timer *);
-	uint64_t (* timeslice)(const as_timer *);
-};
+    int      (* destroy)(struct as_timer_s *);
+    bool     (* timedout)(const struct as_timer_s *);
+	uint64_t (* timeslice)(const struct as_timer_s *);
+} as_timer_hooks;
 
 /**
  * Timer handle
  */
-struct as_timer_s {
+typedef struct as_timer_s {
     bool                    is_malloc;
     void *                  source;
     const as_timer_hooks  * hooks;
-};
+} as_timer;
 
 /*****************************************************************************
  * FUNCTIONS
