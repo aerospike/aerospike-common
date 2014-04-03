@@ -28,7 +28,7 @@
 #include <aerospike/as_result.h>
 #include <aerospike/as_types.h>
 #include <aerospike/as_logger.h>
-#include <aerospike/as_memtracker.h>
+#include <aerospike/as_udf_context.h>
 
 /*****************************************************************************
  * TYPES
@@ -94,12 +94,12 @@ typedef struct as_module_hooks_s {
     /**
      * Apply a function to a record
      */
-    int (* apply_record)(struct as_module_s * m, as_aerospike * as, const char * filename, const char * function, as_rec * rec, as_list * args, as_result * res);
+    int (* apply_record)(struct as_module_s * m, as_udf_context *ctx, const char * filename, const char * function, as_rec * rec, as_list * args, as_result * res);
 
     /**
      * Apply a function to a stream.
      */
-    int (* apply_stream)(struct as_module_s * m, as_aerospike * as, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream);
+    int (* apply_stream)(struct as_module_s * m, as_udf_context *ctx, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream);
 
 } as_module_hooks;
 
@@ -114,7 +114,6 @@ typedef struct as_module_hooks_s {
 typedef struct as_module_s {
     const void *            source;
     as_logger *             logger;
-    as_memtracker *         memtracker;
     const as_module_hooks * hooks;
 } as_module;
 
@@ -185,7 +184,7 @@ int as_module_validate(as_module * m, as_aerospike * as, const char * filename, 
  * Applies a UDF to a stream with provided arguments.
  *
  * @param m 			Module from which the fqn will be resolved.
- * @param as 			aerospike object to be used.
+ * @param ctx 			aerospike udf execution context
  * @param filename		The name of the udf module containing the function to be executed.
  * @param function		The name of the udf function to be executed.
  * @param r 			record to apply to the function.
@@ -194,7 +193,7 @@ int as_module_validate(as_module * m, as_aerospike * as, const char * filename, 
  *
  * @return 0 on success, otherwise 1
  */
-int as_module_apply_record(as_module * m, as_aerospike * as, const char * filename, const char * function, as_rec * r, as_list * args, as_result * res);
+int as_module_apply_record(as_module * m, as_udf_context * ctx, const char * filename, const char * function, as_rec * r, as_list * args, as_result * res);
 
 /**
  * Applies function to a stream and set of arguments. Pushes the results into an output stream.
@@ -202,7 +201,7 @@ int as_module_apply_record(as_module * m, as_aerospike * as, const char * filena
  * Proxies to `m->hooks->apply_stream(m, ...)`
  *
  * @param m 			Module from which the fqn will be resolved.
- * @param as 			aerospike object to be used.
+ * @param ctx			aerospike udf execution context
  * @param filename		The name of the udf module containing the function to be executed.
  * @param function		The name of the udf function to be executed.
  * @param istream 		pointer to a readable stream, that will provides values.
@@ -212,7 +211,7 @@ int as_module_apply_record(as_module * m, as_aerospike * as, const char * filena
  *
  * @return 0 on success, otherwise 1
  */
-int as_module_apply_stream(as_module * m, as_aerospike * as, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream);
+int as_module_apply_stream(as_module * m, as_udf_context * ctx, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream);
 
 /**
  * Return lua error in string format when error code is passed in
