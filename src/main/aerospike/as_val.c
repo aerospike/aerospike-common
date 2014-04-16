@@ -41,6 +41,7 @@
 
 typedef void		(* as_val_destroy_callback)(as_val * v);
 typedef uint32_t	(* as_val_hashcode_callback)(const as_val * v);
+typedef as_val *	(* as_val_reserve_callback)(as_val * v);
 typedef char *	(* as_val_tostring_callback)(const as_val * v);
 
 /******************************************************************************
@@ -57,6 +58,8 @@ extern inline as_val * as_val_cons(as_val * val, as_val_t type, bool free);
 static void     as_val_destroy_noop(as_val *);
 static uint32_t as_val_hashcode_noop(const as_val *);
 static char *   as_val_tostring_noop(const as_val *);
+static as_val * as_val_reserve_noop(as_val * v);
+static as_val * as_val_reserve_count(as_val * v);
 
 /******************************************************************************
  *	VARIABLES
@@ -101,6 +104,19 @@ static const as_val_hashcode_callback as_val_hashcode_callbacks[] = {
 	[AS_PAIR]		= as_pair_val_hashcode
 };
 
+static const as_val_reserve_callback as_val_reserve_callbacks[] = {
+	[AS_UNKNOWN]	= as_val_reserve_noop,
+	[AS_NIL]		= as_val_reserve_noop,
+	[AS_BOOLEAN]	= as_val_reserve_noop,
+	[AS_INTEGER]	= as_val_reserve_count,
+	[AS_STRING]		= as_val_reserve_count,
+	[AS_BYTES]		= as_val_reserve_count,
+	[AS_LIST]		= as_val_reserve_count,
+	[AS_MAP]		= as_val_reserve_count,
+	[AS_REC]		= as_val_reserve_count,
+	[AS_PAIR]		= as_val_reserve_count
+};
+
 /******************************************************************************
  *	FUNCTIONS
  *****************************************************************************/
@@ -108,6 +124,19 @@ static const as_val_hashcode_callback as_val_hashcode_callbacks[] = {
 static void as_val_destroy_noop(as_val * v)
 {
 	return;
+}
+
+static as_val * as_val_reserve_noop(as_val * v)
+{
+	// return without ref-counting !!
+	return v;
+}
+
+static as_val * as_val_reserve_count(as_val * v)
+{
+	// return after ref-counting !!
+	cf_atomic32_add(&(v->count),1);
+	return v;
 }
 
 static uint32_t as_val_hashcode_noop(const as_val * v)
@@ -123,9 +152,9 @@ static char * as_val_tostring_noop(const as_val * v)
 as_val * as_val_val_reserve(as_val * v) 
 {
 	if ( !v ) return v;
-
-	cf_atomic32_add(&(v->count),1);
-	return v;
+	return as_val_reserve_callbacks[ v->type ](v);
+	// cf_atomic32_add(&(v->count),1);
+	// return v;
 }
 
 as_val * as_val_val_destroy(as_val * v)
