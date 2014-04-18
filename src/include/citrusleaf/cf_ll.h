@@ -45,16 +45,17 @@ extern "C" {
  * CONSTANTS
  ******************************************************************************/
 
-#define CF_LL_REDUCE_DELETE (1)
-#define CF_LL_REDUCE_INSERT (2)
-
+#define CF_LL_REDUCE_DELETE      (1)
+#define CF_LL_REDUCE_INSERT      (2)
+#define CF_LL_REDUCE_MATCHED     (3)
+#define CF_LL_REDUCE_NOT_MATCHED (4)
 /******************************************************************************
  * TYPES
  ******************************************************************************/
 
 typedef struct cf_ll_s cf_ll;
 typedef struct cf_ll_element_s cf_ll_element;
-
+typedef struct cf_ll_iterator_s cf_ll_iterator;
 typedef int (*cf_ll_reduce_fn) (cf_ll_element * e, void *udata);
 typedef void (*cf_ll_destructor) (cf_ll_element * e);
  
@@ -69,13 +70,21 @@ struct cf_ll_element_s {
 };
 
 /**
+ * cf_ll_iterator
+ * the linked list iterator
+ */
+struct cf_ll_iterator_s {
+	cf_ll_element *     next;
+	bool                forward;
+};
+/**
  * cf_ll
  * the linked list container
  */
 struct cf_ll_s {
 	cf_ll_element * 	head;
 	cf_ll_element * 	tail;
-	cf_ll_destructor 	destroy_fn;
+ 	cf_ll_destructor 	destroy_fn;
 	uint32_t			sz;
 	bool				uselock;
 #ifdef EXTERNAL_LOCKS
@@ -136,7 +145,31 @@ void cf_ll_insert_before(cf_ll *ll, cf_ll_element *cur, cf_ll_element *ins);
 void cf_ll_delete(cf_ll *ll, cf_ll_element *e );
 
 uint32_t cf_ll_size(cf_ll *ll);
+/*
+ * Create a iterator for linked list. Will move from head to tail 
+ * if forward is true else from tail to head
+ */
+cf_ll_iterator * cf_ll_getIterator(cf_ll * ll, bool forward);
 
+/*
+ * Get next element of linked list pointed by iterator
+ */
+cf_ll_element * cf_ll_getNext(cf_ll_iterator *iter);
+
+/*
+ * Release iterator
+ */
+void cf_ll_releaseIterator(cf_ll_iterator *iter);
+
+/*
+ * Search an element in the linked list.
+ */
+cf_ll_element * cf_ll_search(cf_ll *ll, cf_ll_element *e, bool forward, cf_ll_reduce_fn fn);
+
+/*
+ * Get the linked list element through indexing
+ */
+cf_ll_element *cf_ll_index(cf_ll *ll, int index);
 /**
  * The way these reduces work:
  * ** If you're reducing and you want to delete this element, return CF_LL_REDUCE_DELETE

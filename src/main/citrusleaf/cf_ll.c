@@ -35,6 +35,7 @@
 #include <unistd.h>
 
 #include <citrusleaf/cf_ll.h>
+#include <citrusleaf/alloc.h>
 
 /**
  * SYNOPSIS
@@ -282,6 +283,93 @@ uint32_t cf_ll_size(cf_ll *ll) {
 	LL_UNLOCK(ll);
 	return(sz);
 }	
+
+cf_ll_element * cf_ll_search_lockfree(cf_ll *ll, cf_ll_element *e, bool forward, cf_ll_reduce_fn fn) {
+	if (ll->head == NULL) {
+		return NULL;
+	}
+	int rv = 0;
+	cf_ll_element *cur = forward ? ll->head : ll->tail;
+	
+	while (cur) {
+		rv = (*fn) (cur, (void*)e);
+
+		if (rv == CF_LL_REDUCE_MATCHED) {
+			return cur;
+		}
+		else if (rv == CF_LL_REDUCE_NOT_MATCHED) {
+			cur = forward ? cur->next : cur->prev;
+			rv = 0;
+		}
+		else {
+			return NULL;
+		}
+	}
+	return NULL;
+}
+
+cf_ll_element * cf_ll_search(cf_ll *ll, cf_ll_element *e, bool forward, cf_ll_reduce_fn fn) 
+{
+	LL_LOCK(ll);
+	
+	cf_ll_element * ele = NULL;
+	ele = cf_ll_search_lockfree(ll, e, forward, fn);
+
+	LL_UNLOCK(ll);
+
+	return ele;
+}
+
+cf_ll_iterator * cf_ll_getIterator(cf_ll * ll, bool forward)
+{
+	cf_ll_iterator *iter = NULL;
+	iter = (cf_ll_iterator *)cf_malloc(sizeof(cf_ll_iterator));
+	if (iter == NULL) {
+		return NULL;
+	}
+	iter->forward = forward;
+	iter->next = iter->forward ? ll->head : ll->tail;
+	return iter;
+}
+
+void cf_ll_releaseIterator(cf_ll_iterator *iter)
+{
+	if (iter) cf_free(iter);
+}
+
+cf_ll_element * cf_ll_getNext(cf_ll_iterator *iter)
+{
+	if (!iter) return NULL;
+	cf_ll_element * ele = iter->next;
+	if (ele != NULL) {
+		iter->next = iter->forward ? ele->next : ele->prev;
+	}
+	return ele;
+}
+
+/* Return the element at the specified zero-based index
+ * where 0 is the head, 1 is the element next to head
+ * and so on. Negative integers are used in order to count
+ * from the tail, -1 is the last element, -2 the penultimante
+ * and so on. If the index is out of range NULL is returned. */
+cf_ll_element *cf_ll_index(cf_ll *ll, int index)
+{
+	cf_ll_element *ele = NULL;
+	if (index < 0) {
+		index = (-index) - 1;
+		ele = ll->tail;
+		while (index-- && ele) {
+			ele = ele->prev;
+		}
+	}
+	else {
+		ele = ll->head;
+		while (index-- && ele) {
+			ele = ele->next;
+		}
+	}
+	return ele;
+}
 
 int  cf_ll_init(cf_ll *ll, cf_ll_destructor destroy_fn, bool uselock) {
 	ll->head = 0;
