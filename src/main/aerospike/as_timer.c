@@ -23,6 +23,8 @@
 #include <stdarg.h>
 #include <stdio.h>
 
+#include <citrusleaf/alloc.h>
+
 #include <aerospike/as_timer.h>
 #include <aerospike/as_util.h>
 
@@ -44,7 +46,7 @@ as_timer * as_timer_init(as_timer * timer, void * source, const as_timer_hooks *
  * Heap allocate and initialize a timer
  */
 as_timer * as_timer_new(void * source, const as_timer_hooks * hooks) {
-    as_timer * timer = (as_timer *) malloc(sizeof(as_timer));
+    as_timer * timer = (as_timer *) cf_malloc(sizeof(as_timer));
     if (!timer) return timer;
     timer->source = source;
     timer->hooks = hooks;
@@ -59,7 +61,7 @@ as_timer * as_timer_new(void * source, const as_timer_hooks * hooks) {
 int as_timer_destroy(as_timer * timer) {
     int rc = as_util_hook(destroy, 1, timer);
     if ( rc == 0 && timer->is_malloc ) {
-        free(timer);
+        cf_free(timer);
     }
     return rc;
 }
