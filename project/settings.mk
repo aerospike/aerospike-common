@@ -88,6 +88,7 @@ TARGET_BIN 	= $(TARGET_BASE)/bin
 TARGET_DOC 	= $(TARGET_BASE)/doc
 TARGET_LIB 	= $(TARGET_BASE)/lib
 TARGET_OBJ 	= $(TARGET_BASE)/obj
+TARGET_M4	= $(TARGET_BASE)/m4
 TARGET_SRC 	= $(TARGET_BASE)/src
 TARGET_INCL = $(TARGET_BASE)/include
 TARGET_TEST = $(TARGET_BASE)/test
@@ -156,6 +157,8 @@ define executable
 	)
 endef
 
+ifneq ($(PREPRO),1)
+ifneq ($(MEXP_PHASE),1)
 define archive
 	@if [ ! -d `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(strip $(AR) \
@@ -166,7 +169,11 @@ define archive
 		$(filter %.o, $^) \
 	)
 endef
+endif
+endif
 
+ifneq ($(PREPRO),1)
+ifneq ($(MEXP_PHASE),1)
 define library
 	@if [ ! -d `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(strip $(CC) $(DYNAMIC_FLAG) \
@@ -180,7 +187,29 @@ define library
 		$(filter %.o, $^) \
 	)
 endef
+endif
+endif
 
+ifeq ($(MEXP_PHASE),1)
+define object
+	@if [ ! -d `dirname $(TARGET_M4)/$<` ]; then mkdir -p `dirname $(TARGET_M4)/$<`; fi
+	$(TOOLS_DIR)/mexp $< $(TARGET_M4)/$<
+endef
+else ifeq ($(MEXP_PHASE),2)
+define object
+	@if [ ! -d `dirname $@` ]; then mkdir -p `dirname $@`; fi
+	$(strip $(CC) \
+		$(addprefix -I, $(INC_PATH)) \
+		$(addprefix -I, $(SOURCE_MAIN)/aerospike) \
+		$(addprefix -L, $(SUBMODULES:%=%/$(TARGET_LIB))) \
+		$(addprefix -L, $(LIB_PATH)) \
+		$(CC_FLAGS) \
+		$(CFLAGS) \
+		-o $@ \
+		-c $(TARGET_M4)/$< \
+	)
+endef
+else
 define object
 	@if [ ! -d `dirname $@` ]; then mkdir -p `dirname $@`; fi
 	$(strip $(CC) \
@@ -189,10 +218,11 @@ define object
 		$(addprefix -L, $(LIB_PATH)) \
 		$(CC_FLAGS) \
 		$(CFLAGS) \
-		-o $@ \
+		-o $@$(SUFFIX) \
 		-c $(filter %.c %.cpp, $^)  \
 	)
 endef
+endif
 
 define make_each
 	@for i in $(1); do \

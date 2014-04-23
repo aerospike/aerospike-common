@@ -15,6 +15,13 @@ CC_FLAGS += -fno-common -fno-strict-aliasing -finline-functions
 CC_FLAGS += -march=nocona -DMARCH_$(ARCH)
 CC_FLAGS += -D_FILE_OFFSET_BITS=64 -D_REENTRANT -D_GNU_SOURCE $(EXT_CFLAGS)
 
+PREPRO_SUFFIX = .cpp
+ifeq ($(PREPRO),1)
+  SUFFIX = $(PREPRO_SUFFIX)
+  CC_FLAGS += -E -DPREPRO=$(PREPRO) -DGEN_TAG=$(GEN_TAG)"\
+"
+endif
+
 ifeq ($(OS),Darwin)
 CC_FLAGS += -D_DARWIN_UNLIMITED_SELECT
 else
