@@ -26,7 +26,7 @@
 
 #ifdef MEM_COUNT
 
-#include <citrusleaf/mem_count.h>
+#include "mem_count.h"
 
 #endif // defined(MEM_COUNT)
 
@@ -39,7 +39,7 @@ static inline uint32_t ptr_hash_fn(void *key) {
 
 #ifdef ENHANCED_ALLOC
 
-#include <citrusleaf/enhanced_alloc.h>
+#include "enhanced_alloc.h"
 
 #else // !defined(ENHANCED_ALLOC)
 
