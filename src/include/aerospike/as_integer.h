@@ -178,7 +178,7 @@ as_integer * as_integer_new(int64_t value);
  *
  *	@relatesalso as_integer
  */
-inline void as_integer_destroy(as_integer * integer) {
+static inline void as_integer_destroy(as_integer * integer) {
 	as_val_destroy((as_val *) integer);
 }
 
@@ -191,7 +191,7 @@ inline void as_integer_destroy(as_integer * integer) {
  *
  *	@relatesalso as_integer
  */
-inline int64_t as_integer_getorelse(const as_integer * integer, int64_t fallback) {
+static inline int64_t as_integer_getorelse(const as_integer * integer, int64_t fallback) {
 	return integer ? integer->value : fallback;
 }
 
@@ -200,7 +200,7 @@ inline int64_t as_integer_getorelse(const as_integer * integer, int64_t fallback
  *
  *	@relatesalso as_integer
  */
-inline int64_t as_integer_get(const as_integer * integer) {
+static inline int64_t as_integer_get(const as_integer * integer) {
 	return as_integer_getorelse(integer, 0);
 }
 
@@ -210,7 +210,7 @@ inline int64_t as_integer_get(const as_integer * integer) {
  *
  *	@relatesalso as_integer
  */
-inline int64_t as_integer_toint(const as_integer * integer) {
+static inline int64_t as_integer_toint(const as_integer * integer) {
 	return as_integer_getorelse(integer, 0);
 }
 
@@ -223,7 +223,7 @@ inline int64_t as_integer_toint(const as_integer * integer) {
  *
  *	@relatesalso as_integer
  */
-inline as_val * as_integer_toval(const as_integer * i) {
+static inline as_val * as_integer_toval(const as_integer * i) {
 	return (as_val *) i;
 }
 
@@ -232,7 +232,7 @@ inline as_val * as_integer_toval(const as_integer * i) {
  *
  *	@relatesalso as_integer
  */
-inline as_integer * as_integer_fromval(const as_val * v) {
+static inline as_integer * as_integer_fromval(const as_val * v) {
 	return as_util_fromval(v, AS_INTEGER, as_integer);
 }
 

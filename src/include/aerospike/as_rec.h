@@ -202,7 +202,7 @@ as_rec * as_rec_new(void * data, const as_rec_hooks * hooks);
  *
  *	@relatesalso as_rec
  */
-inline void as_rec_destroy(as_rec * rec) 
+static inline void as_rec_destroy(as_rec * rec) 
 {
 	as_val_destroy((as_val *) rec);
 }
@@ -216,7 +216,7 @@ inline void as_rec_destroy(as_rec * rec)
  *
  *	@relatesalso as_rec
  */
-inline void * as_rec_source(const as_rec * rec) 
+static inline void * as_rec_source(const as_rec * rec) 
 {
 	return rec ? rec->data : NULL;
 }
@@ -231,7 +231,7 @@ inline void * as_rec_source(const as_rec * rec)
  *
  *	@relatesalso as_rec
  */
-inline int as_rec_remove(const as_rec * rec, const char * name) 
+static inline int as_rec_remove(const as_rec * rec, const char * name) 
 {
 	return as_util_hook(remove, 1, rec, name);
 }
@@ -241,7 +241,7 @@ inline int as_rec_remove(const as_rec * rec, const char * name)
  *
  *	@relatesalso as_rec
  */
-inline uint32_t as_rec_ttl(const as_rec * rec) 
+static inline uint32_t as_rec_ttl(const as_rec * rec) 
 {
 	return as_util_hook(ttl, 0, rec);
 }
@@ -251,7 +251,7 @@ inline uint32_t as_rec_ttl(const as_rec * rec)
  *
  *	@relatesalso as_rec
  */
-inline uint16_t as_rec_gen(const as_rec * rec) 
+static inline uint16_t as_rec_gen(const as_rec * rec) 
 {
 	return as_util_hook(gen, 0, rec);
 }
@@ -261,7 +261,7 @@ inline uint16_t as_rec_gen(const as_rec * rec)
  *
  *	@relatesalso as_rec
  */
-inline uint16_t as_rec_numbins(const as_rec * rec) 
+static inline uint16_t as_rec_numbins(const as_rec * rec) 
 {
 	return as_util_hook(numbins, 0, rec);
 }
@@ -271,7 +271,7 @@ inline uint16_t as_rec_numbins(const as_rec * rec)
  *
  *	@relatesalso as_rec
  */
-inline as_bytes * as_rec_digest(const as_rec * rec) 
+static inline as_bytes * as_rec_digest(const as_rec * rec) 
 {
 	return as_util_hook(digest, 0, rec);
 }
@@ -281,7 +281,7 @@ inline as_bytes * as_rec_digest(const as_rec * rec)
  *
  *	@relatesalso as_rec
  */
-inline int  as_rec_set_flags(const as_rec * rec, const char * name, uint8_t flags) 
+static inline int  as_rec_set_flags(const as_rec * rec, const char * name, uint8_t flags) 
 {
 	return as_util_hook(set_flags, 0, rec, name, flags);
 }
@@ -291,7 +291,7 @@ inline int  as_rec_set_flags(const as_rec * rec, const char * name, uint8_t flag
  *
  *	@relatesalso as_rec
  */
-inline int as_rec_set_type(const as_rec * rec, uint8_t rec_type) 
+static inline int as_rec_set_type(const as_rec * rec, uint8_t rec_type) 
 {
 	return as_util_hook(set_type, 0, rec, rec_type);
 }
@@ -310,7 +310,7 @@ inline int as_rec_set_type(const as_rec * rec, uint8_t rec_type)
  *
  *	@relatesalso as_rec
  */
-inline as_val * as_rec_get(const as_rec * rec, const char * name) 
+static inline as_val * as_rec_get(const as_rec * rec, const char * name) 
 {
 	return as_util_hook(get, NULL, rec, name);
 }
@@ -325,7 +325,7 @@ inline as_val * as_rec_get(const as_rec * rec, const char * name)
  *
  *	@relatesalso as_rec
  */
-inline int64_t as_rec_get_int64(const as_rec * rec, const char * name) 
+static inline int64_t as_rec_get_int64(const as_rec * rec, const char * name) 
 {
 	as_val * v = as_util_hook(get, NULL, rec, name);
 	as_integer * i = as_integer_fromval(v);
@@ -342,7 +342,7 @@ inline int64_t as_rec_get_int64(const as_rec * rec, const char * name)
  *
  *	@relatesalso as_rec
  */
-inline char * as_rec_get_str(const as_rec * rec, const char * name) 
+static inline char * as_rec_get_str(const as_rec * rec, const char * name) 
 {
 	as_val * v = as_util_hook(get, NULL, rec, name);
 	as_string * s = as_string_fromval(v);
@@ -359,7 +359,7 @@ inline char * as_rec_get_str(const as_rec * rec, const char * name)
  *
  *	@relatesalso as_rec
  */
-inline as_integer * as_rec_get_integer(const as_rec * rec, const char * name) 
+static inline as_integer * as_rec_get_integer(const as_rec * rec, const char * name) 
 {
 	as_val * v = as_util_hook(get, NULL, rec, name);
 	return as_integer_fromval(v);
@@ -375,7 +375,7 @@ inline as_integer * as_rec_get_integer(const as_rec * rec, const char * name)
  *
  *	@relatesalso as_rec
  */
-inline as_string * as_rec_get_string(const as_rec * rec, const char * name) 
+static inline as_string * as_rec_get_string(const as_rec * rec, const char * name) 
 {
 	as_val * v = as_util_hook(get, NULL, rec, name);
 	return as_string_fromval(v);
@@ -391,7 +391,7 @@ inline as_string * as_rec_get_string(const as_rec * rec, const char * name)
  *
  *	@relatesalso as_rec
  */
-inline as_bytes * as_rec_get_bytes(const as_rec * rec, const char * name) 
+static inline as_bytes * as_rec_get_bytes(const as_rec * rec, const char * name) 
 {
 	as_val * v = as_util_hook(get, NULL, rec, name);
 	return as_bytes_fromval(v);
@@ -407,7 +407,7 @@ inline as_bytes * as_rec_get_bytes(const as_rec * rec, const char * name)
  *
  *	@relatesalso as_rec
  */
-inline as_list * as_rec_get_list(const as_rec * rec, const char * name) 
+static inline as_list * as_rec_get_list(const as_rec * rec, const char * name) 
 {
 	as_val * v = as_util_hook(get, NULL, rec, name);
 	return as_list_fromval(v);
@@ -423,7 +423,7 @@ inline as_list * as_rec_get_list(const as_rec * rec, const char * name)
  *
  *	@relatesalso as_rec
  */
-inline as_map * as_rec_get_map(const as_rec * rec, const char * name) 
+static inline as_map * as_rec_get_map(const as_rec * rec, const char * name) 
 {
 	as_val * v = as_util_hook(get, NULL, rec, name);
 	return as_map_fromval(v);
@@ -444,7 +444,7 @@ inline as_map * as_rec_get_map(const as_rec * rec, const char * name)
  *
  *	@relatesalso as_rec
  */
-inline int as_rec_set(const as_rec * rec, const char * name, const as_val * value) 
+static inline int as_rec_set(const as_rec * rec, const char * name, const as_val * value) 
 {
 	return as_util_hook(set, 1, rec, name, value);
 }
@@ -460,7 +460,7 @@ inline int as_rec_set(const as_rec * rec, const char * name, const as_val * valu
  *
  *	@relatesalso as_rec
  */
-inline int as_rec_set_int64(const as_rec * rec, const char * name, int64_t value) 
+static inline int as_rec_set_int64(const as_rec * rec, const char * name, int64_t value) 
 {
 	return as_util_hook(set, 1, rec, name, (as_val *) as_integer_new(value));
 }
@@ -476,7 +476,7 @@ inline int as_rec_set_int64(const as_rec * rec, const char * name, int64_t value
  *
  *	@relatesalso as_rec
  */
-inline int as_rec_set_str(const as_rec * rec, const char * name, const char * value) 
+static inline int as_rec_set_str(const as_rec * rec, const char * name, const char * value) 
 {
 	return as_util_hook(set, 1, rec, name, (as_val *) as_string_new_strdup(value));
 }
@@ -492,7 +492,7 @@ inline int as_rec_set_str(const as_rec * rec, const char * name, const char * va
  *
  *	@relatesalso as_rec
  */
-inline int as_rec_set_integer(const as_rec * rec, const char * name, const as_integer * value) 
+static inline int as_rec_set_integer(const as_rec * rec, const char * name, const as_integer * value) 
 {
 	return as_util_hook(set, 1, rec, name, (as_val *) value);
 }
@@ -508,7 +508,7 @@ inline int as_rec_set_integer(const as_rec * rec, const char * name, const as_in
  *
  *	@relatesalso as_rec
  */
-inline int as_rec_set_string(const as_rec * rec, const char * name, const as_string * value) 
+static inline int as_rec_set_string(const as_rec * rec, const char * name, const as_string * value) 
 {
 	return as_util_hook(set, 1, rec, name, (as_val *) value);
 }
@@ -524,7 +524,7 @@ inline int as_rec_set_string(const as_rec * rec, const char * name, const as_str
  *
  *	@relatesalso as_rec
  */
-inline int as_rec_set_bytes(const as_rec * rec, const char * name, const as_bytes * value) 
+static inline int as_rec_set_bytes(const as_rec * rec, const char * name, const as_bytes * value) 
 {
 	return as_util_hook(set, 1, rec, name, (as_val *) value);
 }
@@ -540,7 +540,7 @@ inline int as_rec_set_bytes(const as_rec * rec, const char * name, const as_byte
  *
  *	@relatesalso as_rec
  */
-inline int as_rec_set_list(const as_rec * rec, const char * name, const as_list * value) 
+static inline int as_rec_set_list(const as_rec * rec, const char * name, const as_list * value) 
 {
 	return as_util_hook(set, 1, rec, name, (as_val *) value);
 }
@@ -556,7 +556,7 @@ inline int as_rec_set_list(const as_rec * rec, const char * name, const as_list 
  *
  *	@relatesalso as_rec
  */
-inline int as_rec_set_map(const as_rec * rec, const char * name, const as_map * value) 
+static inline int as_rec_set_map(const as_rec * rec, const char * name, const as_map * value) 
 {
 	return as_util_hook(set, 1, rec, name, (as_val *) value);
 }
@@ -576,7 +576,7 @@ inline int as_rec_set_map(const as_rec * rec, const char * name, const as_map * 
  *
  *	@relatesalso as_rec
  */
-inline bool as_rec_foreach(const as_rec * rec, as_rec_foreach_callback callback, void * udata) 
+static inline bool as_rec_foreach(const as_rec * rec, as_rec_foreach_callback callback, void * udata) 
 {
 	return as_util_hook(foreach, false, rec, callback, udata);
 }
@@ -590,7 +590,7 @@ inline bool as_rec_foreach(const as_rec * rec, as_rec_foreach_callback callback,
  *
  *	@relatesalso as_rec
  */
-inline as_val * as_rec_toval(const as_rec * rec) 
+static inline as_val * as_rec_toval(const as_rec * rec) 
 {
 	return (as_val *) rec;
 }
@@ -600,7 +600,7 @@ inline as_val * as_rec_toval(const as_rec * rec)
  *
  *	@relatesalso as_rec
  */
-inline as_rec * as_rec_fromval(const as_val * v) 
+static inline as_rec * as_rec_fromval(const as_val * v) 
 {
 	return as_util_fromval(v, AS_REC, as_rec);
 }

@@ -96,7 +96,7 @@ as_pair * as_pair_init(as_pair * pair, as_val * _1, as_val * _2);
  *
  *	@relatesalso as_pair
  */
-inline void as_pair_destroy(as_pair * pair)
+static inline void as_pair_destroy(as_pair * pair)
 {
 	as_val_destroy((as_val *) pair);
 }
@@ -110,7 +110,7 @@ inline void as_pair_destroy(as_pair * pair)
  *
  *	@relatesalso as_pair
  */
-inline as_val * as_pair_1(as_pair * pair) 
+static inline as_val * as_pair_1(as_pair * pair) 
 {
 	return pair ? pair->_1 : NULL;
 }
@@ -118,7 +118,7 @@ inline as_val * as_pair_1(as_pair * pair)
 /**
  *	Get the second value of the pair
  */
-inline as_val * as_pair_2(as_pair * pair) 
+static inline as_val * as_pair_2(as_pair * pair) 
 {
 	return pair ? pair->_2 : NULL;
 }
@@ -132,7 +132,7 @@ inline as_val * as_pair_2(as_pair * pair)
  *
  *	@relatesalso as_pair
  */
-inline as_val * as_pair_toval(const as_pair * pair) 
+static inline as_val * as_pair_toval(const as_pair * pair) 
 {
 	return (as_val *) pair;
 }
@@ -142,7 +142,7 @@ inline as_val * as_pair_toval(const as_pair * pair)
  *
  *	@relatesalso as_pair
  */
-inline as_pair * as_pair_fromval(const as_val * v) 
+static inline as_pair * as_pair_fromval(const as_val * v) 
 {
 	return as_util_fromval(v, AS_PAIR, as_pair);
 }

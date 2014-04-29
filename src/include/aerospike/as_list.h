@@ -386,7 +386,7 @@ as_list * as_list_new(void * data, const as_list_hooks * hooks);
  *	@param list 	The list to destroy.
  *	@relatesalso as_list
  */
-inline void as_list_destroy(as_list * list) 
+static inline void as_list_destroy(as_list * list) 
 {
 	as_val_destroy((as_val *) list);
 }
@@ -403,7 +403,7 @@ inline void as_list_destroy(as_list * list)
  *	@return The hashcode of the list.
  *	@relatesalso as_list
  */
-inline uint32_t as_list_hashcode(as_list * list) 
+static inline uint32_t as_list_hashcode(as_list * list) 
 {
 	return as_util_hook(hashcode, 0, list);
 }
@@ -416,7 +416,7 @@ inline uint32_t as_list_hashcode(as_list * list)
  *	@return The size of the list.
  *	@relatesalso as_list
  */
-inline uint32_t as_list_size(as_list * list) 
+static inline uint32_t as_list_size(as_list * list) 
 {
 	return as_util_hook(size, 0, list);
 }
@@ -433,7 +433,7 @@ inline uint32_t as_list_size(as_list * list)
  *	@return The first value of the list on success. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline as_val * as_list_head(const as_list * list) 
+static inline as_val * as_list_head(const as_list * list) 
 {
 	return as_util_hook(head, NULL, list);
 }
@@ -446,7 +446,7 @@ inline as_val * as_list_head(const as_list * list)
  *	@return On success, the tail of the list. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline as_list * as_list_tail(const as_list * list) 
+static inline as_list * as_list_tail(const as_list * list) 
 {
 	return as_util_hook(tail, NULL, list);
 }
@@ -460,7 +460,7 @@ inline as_list * as_list_tail(const as_list * list)
  *	@return On success, a new list containing the remaining elements. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline as_list * as_list_drop(const as_list * list, uint32_t n) 
+static inline as_list * as_list_drop(const as_list * list, uint32_t n) 
 {
 	return as_util_hook(drop, NULL, list, n);
 }
@@ -474,7 +474,7 @@ inline as_list * as_list_drop(const as_list * list, uint32_t n)
  *	@return On success, a new list containing the selected elements. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline as_list * as_list_take(const as_list * list, uint32_t n) 
+static inline as_list * as_list_take(const as_list * list, uint32_t n) 
 {
 	return as_util_hook(take, NULL, list, n);
 }
@@ -492,7 +492,7 @@ inline as_list * as_list_take(const as_list * list, uint32_t n)
  *	@return On success, the value at the given index. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline as_val * as_list_get(const as_list * list, const uint32_t i) 
+static inline as_val * as_list_get(const as_list * list, const uint32_t i) 
 {
 	return as_util_hook(get, NULL, list, i);
 }
@@ -506,7 +506,7 @@ inline as_val * as_list_get(const as_list * list, const uint32_t i)
  *	@return On success, the value at the given index. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline int64_t as_list_get_int64(const as_list * list, const uint32_t i) 
+static inline int64_t as_list_get_int64(const as_list * list, const uint32_t i) 
 {
 	return as_util_hook(get_int64, 0, list, i);
 }
@@ -520,7 +520,7 @@ inline int64_t as_list_get_int64(const as_list * list, const uint32_t i)
  *	@return On success, the value at the given index. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline char * as_list_get_str(const as_list * list, const uint32_t i) 
+static inline char * as_list_get_str(const as_list * list, const uint32_t i) 
 {
 	return as_util_hook(get_str, NULL, list, i);
 }
@@ -534,7 +534,7 @@ inline char * as_list_get_str(const as_list * list, const uint32_t i)
  *	@return On success, the value at the given index. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline as_integer * as_list_get_integer(const as_list * list, const uint32_t i) 
+static inline as_integer * as_list_get_integer(const as_list * list, const uint32_t i) 
 {
 	return as_integer_fromval(as_list_get(list, i));
 }
@@ -548,7 +548,7 @@ inline as_integer * as_list_get_integer(const as_list * list, const uint32_t i)
  *	@return On success, the value at the given index. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline as_string * as_list_get_string(const as_list * list, const uint32_t i) 
+static inline as_string * as_list_get_string(const as_list * list, const uint32_t i) 
 {
 	return as_string_fromval(as_list_get(list, i));
 }
@@ -562,7 +562,7 @@ inline as_string * as_list_get_string(const as_list * list, const uint32_t i)
  *	@return On success, the value at the given index. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline as_bytes * as_list_get_bytes(const as_list * list, const uint32_t i) 
+static inline as_bytes * as_list_get_bytes(const as_list * list, const uint32_t i) 
 {
 	return as_bytes_fromval(as_list_get(list, i));
 }
@@ -576,7 +576,7 @@ inline as_bytes * as_list_get_bytes(const as_list * list, const uint32_t i)
  *	@return On success, the value at the given index. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline as_list * as_list_get_list(const as_list * list, const uint32_t i) 
+static inline as_list * as_list_get_list(const as_list * list, const uint32_t i) 
 {
 	as_val * v = as_list_get(list, i);
 	return (as_list *) (v && v->type == AS_LIST ? v : NULL);
@@ -591,7 +591,7 @@ inline as_list * as_list_get_list(const as_list * list, const uint32_t i)
  *	@return On success, the value at the given index. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline struct as_map_s * as_list_get_map(const as_list * list, const uint32_t i) 
+static inline struct as_map_s * as_list_get_map(const as_list * list, const uint32_t i) 
 {
 	as_val * v = as_list_get(list, i);
 	return (struct as_map_s *) (v && v->type == AS_MAP ? v : NULL);
@@ -612,7 +612,7 @@ inline struct as_map_s * as_list_get_map(const as_list * list, const uint32_t i)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_set(as_list * list, const uint32_t i, as_val * value) 
+static inline int as_list_set(as_list * list, const uint32_t i, as_val * value) 
 {
 	return as_util_hook(set, 1, list, i, value);
 }
@@ -627,7 +627,7 @@ inline int as_list_set(as_list * list, const uint32_t i, as_val * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_set_int64(as_list * list, const uint32_t i, int64_t value) 
+static inline int as_list_set_int64(as_list * list, const uint32_t i, int64_t value) 
 {
 	return as_util_hook(set_int64, 1, list, i, value);
 }
@@ -642,7 +642,7 @@ inline int as_list_set_int64(as_list * list, const uint32_t i, int64_t value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_set_str(as_list * list, const uint32_t i, const char * value) 
+static inline int as_list_set_str(as_list * list, const uint32_t i, const char * value) 
 {
 	return as_util_hook(set_str, 1, list, i, value);
 }
@@ -657,7 +657,7 @@ inline int as_list_set_str(as_list * list, const uint32_t i, const char * value)
  *	@return 0 on success. Otherwise an error ocucrred.
  *	@relatesalso as_list
  */
-inline int as_list_set_integer(as_list * list, const uint32_t i, as_integer * value) 
+static inline int as_list_set_integer(as_list * list, const uint32_t i, as_integer * value) 
 {
 	return as_list_set(list, i, (as_val *) value);
 }
@@ -672,7 +672,7 @@ inline int as_list_set_integer(as_list * list, const uint32_t i, as_integer * va
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_set_string(as_list * list, const uint32_t i, as_string * value) 
+static inline int as_list_set_string(as_list * list, const uint32_t i, as_string * value) 
 {
 	return as_list_set(list, i, (as_val *) value);
 }
@@ -687,7 +687,7 @@ inline int as_list_set_string(as_list * list, const uint32_t i, as_string * valu
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_set_bytes(as_list * list, const uint32_t i, as_bytes * value) 
+static inline int as_list_set_bytes(as_list * list, const uint32_t i, as_bytes * value) 
 {
 	return as_list_set(list, i, (as_val *) value);
 }
@@ -702,7 +702,7 @@ inline int as_list_set_bytes(as_list * list, const uint32_t i, as_bytes * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_set_list(as_list * list, const uint32_t i, as_list * value) 
+static inline int as_list_set_list(as_list * list, const uint32_t i, as_list * value) 
 {
 	return as_list_set(list, i, (as_val *) value);
 }
@@ -717,7 +717,7 @@ inline int as_list_set_list(as_list * list, const uint32_t i, as_list * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_set_map(as_list * list, const uint32_t i, struct as_map_s * value) 
+static inline int as_list_set_map(as_list * list, const uint32_t i, struct as_map_s * value) 
 {
 	return as_list_set(list, i, (as_val *) value);
 }
@@ -735,7 +735,7 @@ inline int as_list_set_map(as_list * list, const uint32_t i, struct as_map_s * v
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_append(as_list * list, as_val * value) 
+static inline int as_list_append(as_list * list, as_val * value) 
 {
 	return as_util_hook(append, 1, list, value);
 }
@@ -749,7 +749,7 @@ inline int as_list_append(as_list * list, as_val * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_append_int64(as_list * list, int64_t value) 
+static inline int as_list_append_int64(as_list * list, int64_t value) 
 {
 	return as_util_hook(append_int64, 1, list, value);
 }
@@ -763,7 +763,7 @@ inline int as_list_append_int64(as_list * list, int64_t value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_append_str(as_list * list, const char * value) 
+static inline int as_list_append_str(as_list * list, const char * value) 
 {
 	return as_util_hook(append_str, 1, list, value);
 }
@@ -777,7 +777,7 @@ inline int as_list_append_str(as_list * list, const char * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_append_integer(as_list * list, as_integer * value) 
+static inline int as_list_append_integer(as_list * list, as_integer * value) 
 {
 	return as_list_append(list, (as_val *) value);
 }
@@ -791,7 +791,7 @@ inline int as_list_append_integer(as_list * list, as_integer * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_append_string(as_list * list, as_string * value) 
+static inline int as_list_append_string(as_list * list, as_string * value) 
 {
 	return as_list_append(list, (as_val *) value);
 }
@@ -805,7 +805,7 @@ inline int as_list_append_string(as_list * list, as_string * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_append_bytes(as_list * list, as_bytes * value) 
+static inline int as_list_append_bytes(as_list * list, as_bytes * value) 
 {
 	return as_list_append(list, (as_val *) value);
 }
@@ -819,7 +819,7 @@ inline int as_list_append_bytes(as_list * list, as_bytes * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_append_list(as_list * list, as_list * value) 
+static inline int as_list_append_list(as_list * list, as_list * value) 
 {
 	return as_list_append(list, (as_val *) value);
 }
@@ -833,7 +833,7 @@ inline int as_list_append_list(as_list * list, as_list * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_append_map(as_list * list, struct as_map_s * value) 
+static inline int as_list_append_map(as_list * list, struct as_map_s * value) 
 {
 	return as_list_append(list, (as_val *) value);
 }
@@ -851,7 +851,7 @@ inline int as_list_append_map(as_list * list, struct as_map_s * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_prepend(as_list * list, as_val * value) 
+static inline int as_list_prepend(as_list * list, as_val * value) 
 {
 	return as_util_hook(prepend, 1, list, value);
 }
@@ -865,7 +865,7 @@ inline int as_list_prepend(as_list * list, as_val * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_prepend_int64(as_list * list, int64_t value) 
+static inline int as_list_prepend_int64(as_list * list, int64_t value) 
 {
 	return as_util_hook(prepend_int64, 1, list, value);
 }
@@ -879,7 +879,7 @@ inline int as_list_prepend_int64(as_list * list, int64_t value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_prepend_str(as_list * list, const char * value) 
+static inline int as_list_prepend_str(as_list * list, const char * value) 
 {
 	return as_util_hook(prepend_str, 1, list, value);
 }
@@ -893,7 +893,7 @@ inline int as_list_prepend_str(as_list * list, const char * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_prepend_integer(as_list * list, as_integer * value) 
+static inline int as_list_prepend_integer(as_list * list, as_integer * value) 
 {
 	return as_list_prepend(list, (as_val *) value);
 }
@@ -907,7 +907,7 @@ inline int as_list_prepend_integer(as_list * list, as_integer * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_prepend_string(as_list * list, as_string * value) 
+static inline int as_list_prepend_string(as_list * list, as_string * value) 
 {
 	return as_list_prepend(list, (as_val *) value);
 }
@@ -921,7 +921,7 @@ inline int as_list_prepend_string(as_list * list, as_string * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_prepend_bytes(as_list * list, as_bytes * value)
+static inline int as_list_prepend_bytes(as_list * list, as_bytes * value)
 {
 	return as_list_prepend(list, (as_val *) value);
 }
@@ -935,7 +935,7 @@ inline int as_list_prepend_bytes(as_list * list, as_bytes * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_prepend_list(as_list * list, as_list * value) 
+static inline int as_list_prepend_list(as_list * list, as_list * value) 
 {
 	return as_list_prepend(list, (as_val *) value);
 }
@@ -949,7 +949,7 @@ inline int as_list_prepend_list(as_list * list, as_list * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-inline int as_list_prepend_map(as_list * list, struct as_map_s * value) 
+static inline int as_list_prepend_map(as_list * list, struct as_map_s * value) 
 {
 	return as_list_prepend(list, (as_val *) value);
 }
@@ -969,7 +969,7 @@ inline int as_list_prepend_map(as_list * list, struct as_map_s * value)
  *
  *	@relatesalso as_list
  */
-inline bool as_list_foreach(const as_list * list, as_list_foreach_callback callback, void * udata) 
+static inline bool as_list_foreach(const as_list * list, as_list_foreach_callback callback, void * udata) 
 {
 	return as_util_hook(foreach, false, list, callback, udata);
 }
@@ -982,7 +982,7 @@ inline bool as_list_foreach(const as_list * list, as_list_foreach_callback callb
  *	@return On success, a new as_iterator. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline union as_list_iterator_u * as_list_iterator_new(const as_list * list) 
+static inline union as_list_iterator_u * as_list_iterator_new(const as_list * list) 
 {
 	return as_util_hook(iterator_new, NULL, list);
 }
@@ -997,7 +997,7 @@ inline union as_list_iterator_u * as_list_iterator_new(const as_list * list)
  *	@return On success, the initializes as_iterator. Otherwise NULL.
  *	@relatesalso as_list
  */
-inline union as_list_iterator_u * as_list_iterator_init(union as_list_iterator_u * it, const as_list * list) 
+static inline union as_list_iterator_u * as_list_iterator_init(union as_list_iterator_u * it, const as_list * list) 
 {
 	return as_util_hook(iterator_init, NULL, list, it);
 }
@@ -1010,7 +1010,7 @@ inline union as_list_iterator_u * as_list_iterator_init(union as_list_iterator_u
  *	Convert to an as_val.
  *	@relatesalso as_list
  */
-inline as_val * as_list_toval(as_list * list) 
+static inline as_val * as_list_toval(as_list * list) 
 {
 	return (as_val *) list;
 }
@@ -1019,7 +1019,7 @@ inline as_val * as_list_toval(as_list * list)
  *	Convert from an as_val.
  *	@relatesalso as_list
  */
-inline as_list * as_list_fromval(as_val * v) 
+static inline as_list * as_list_fromval(as_val * v) 
 {
 	return as_util_fromval(v, AS_LIST, as_list);
 }

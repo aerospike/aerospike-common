@@ -68,7 +68,7 @@ as_timer * as_timer_init(as_timer * timer, void * source, const as_timer_hooks *
 as_timer * as_timer_new(void * source, const as_timer_hooks * hooks);
 
 
-inline void * as_timer_source(const as_timer * tt) {
+static inline void * as_timer_source(const as_timer * tt) {
     return (tt ? tt->source : NULL);
 }
 

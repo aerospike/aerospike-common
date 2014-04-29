@@ -181,7 +181,7 @@ as_string * as_string_new_strdup(const char * value);
  *
  *	@relatesalso as_string
  */
-inline void as_string_destroy(as_string * string) 
+static inline void as_string_destroy(as_string * string) 
 {
 	as_val_destroy((as_val *) string);
 }
@@ -206,7 +206,7 @@ size_t as_string_len(as_string * string);
  *
  *	@relatesalso as_string
  */
-inline char * as_string_getorelse(const as_string * string, char * fallback) 
+static inline char * as_string_getorelse(const as_string * string, char * fallback) 
 {
 	return string ? string->value : fallback;
 }
@@ -216,7 +216,7 @@ inline char * as_string_getorelse(const as_string * string, char * fallback)
  *
  *	@relatesalso as_string
  */
-inline char * as_string_get(const as_string * string) 
+static inline char * as_string_get(const as_string * string) 
 {
 	return as_string_getorelse(string, NULL);
 }
@@ -227,7 +227,7 @@ inline char * as_string_get(const as_string * string)
  *
  *	@relatesalso as_string
  */
-inline char * as_string_tostring(const as_string * string) 
+static inline char * as_string_tostring(const as_string * string) 
 {
 	return as_string_getorelse(string, NULL);
 }
@@ -253,7 +253,7 @@ const char* as_basename(as_string * filename, const char* path);
  *
  *	@relatesalso as_string
  */
-inline as_val * as_string_toval(const as_string * s) 
+static inline as_val * as_string_toval(const as_string * s) 
 {
 	return (as_val *) s;
 }
@@ -263,7 +263,7 @@ inline as_val * as_string_toval(const as_string * s)
  *
  *	@relatesalso as_string
  */
-inline as_string * as_string_fromval(const as_val * v) 
+static inline as_string * as_string_fromval(const as_val * v) 
 {
 	return as_util_fromval(v, AS_STRING, as_string);
 }

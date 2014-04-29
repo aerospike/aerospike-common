@@ -103,7 +103,7 @@ void as_iterator_destroy(as_iterator * iterator);
  *
  *	@return true if there are more values, otherwise false.
  */
-inline bool as_iterator_has_next(const as_iterator * iterator)
+static inline bool as_iterator_has_next(const as_iterator * iterator)
 {
 	return as_util_hook(has_next, false, iterator);
 }
@@ -116,7 +116,7 @@ inline bool as_iterator_has_next(const as_iterator * iterator)
  *
  *	@return the next value available in the iterator.
  */
-inline const as_val * as_iterator_next(as_iterator * iterator)
+static inline const as_val * as_iterator_next(as_iterator * iterator)
 {
 	return as_util_hook(next, NULL, iterator);
 }

@@ -75,7 +75,7 @@ as_memtracker * as_memtracker_init(as_memtracker * memtracker, void * source, co
 as_memtracker * as_memtracker_new(void * source, const as_memtracker_hooks * hooks);
 
 
-inline void * as_memtracker_source(const as_memtracker * mt) {
+static inline void * as_memtracker_source(const as_memtracker * mt) {
     return (mt ? mt->source : NULL);
 }
 

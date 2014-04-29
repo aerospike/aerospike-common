@@ -82,12 +82,12 @@ void as_serializer_destroy(as_serializer *);
  * INLINE FUNCTIONS
  *****************************************************************************/
 
-inline int as_serializer_serialize(as_serializer * serializer, as_val * val, as_buffer * buffer)
+static inline int as_serializer_serialize(as_serializer * serializer, as_val * val, as_buffer * buffer)
 {
     return as_util_hook(serialize, 1, serializer, val, buffer);
 }
 
-inline int as_serializer_deserialize(as_serializer * serializer, as_buffer * buffer, as_val ** val) 
+static inline int as_serializer_deserialize(as_serializer * serializer, as_buffer * buffer, as_val ** val) 
 {
     return as_util_hook(deserialize, 1, serializer, buffer, val);
 }

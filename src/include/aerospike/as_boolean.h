@@ -115,7 +115,7 @@ as_boolean * as_boolean_new(bool value);
  *
  *	@relatesalso as_boolean
  */
-inline void as_boolean_destroy(as_boolean * boolean) {
+static inline void as_boolean_destroy(as_boolean * boolean) {
 	as_val_destroy((as_val *) boolean);
 }
 
@@ -128,7 +128,7 @@ inline void as_boolean_destroy(as_boolean * boolean) {
  *
  *	@relatesalso as_boolean
  */
-inline bool as_boolean_getorelse(const as_boolean * boolean, bool fallback) {
+static inline bool as_boolean_getorelse(const as_boolean * boolean, bool fallback) {
 	return boolean ? boolean->value : fallback;
 }
 
@@ -137,7 +137,7 @@ inline bool as_boolean_getorelse(const as_boolean * boolean, bool fallback) {
  *
  *	@relatesalso as_boolean
  */
-inline bool as_boolean_get(const as_boolean * boolean) {
+static inline bool as_boolean_get(const as_boolean * boolean) {
 	return as_boolean_getorelse(boolean, false);
 }
 
@@ -147,7 +147,7 @@ inline bool as_boolean_get(const as_boolean * boolean) {
  *
  *	@relatesalso as_boolean
  */
-inline bool as_boolean_tobool(const as_boolean * boolean) {
+static inline bool as_boolean_tobool(const as_boolean * boolean) {
 	return as_boolean_getorelse(boolean, false);
 }
 
@@ -160,7 +160,7 @@ inline bool as_boolean_tobool(const as_boolean * boolean) {
  *
  *	@relatesalso as_boolean
  */
-inline as_val * as_boolean_toval(const as_boolean * boolean) {
+static inline as_val * as_boolean_toval(const as_boolean * boolean) {
 	return (as_val *) boolean;
 }
 
@@ -169,7 +169,7 @@ inline as_val * as_boolean_toval(const as_boolean * boolean) {
  *
  *	@relatesalso as_boolean
  */
-inline as_boolean * as_boolean_fromval(const as_val * v) {
+static inline as_boolean * as_boolean_fromval(const as_val * v) {
 	return as_util_fromval(v, AS_BOOLEAN, as_boolean);
 }
 

@@ -49,7 +49,7 @@
 /**
  *	Set the specified key's value to an as_val.
  */
-inline int as_stringmap_set(as_map * m, const char * k, as_val * v) 
+static inline int as_stringmap_set(as_map * m, const char * k, as_val * v) 
 {
 	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), v);
 }
@@ -57,7 +57,7 @@ inline int as_stringmap_set(as_map * m, const char * k, as_val * v)
 /**
  *	Set the specified key's value to an int64_t.
  */
-inline int as_stringmap_set_int64(as_map * m, const char * k, int64_t v) 
+static inline int as_stringmap_set_int64(as_map * m, const char * k, int64_t v) 
 {
 	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) as_integer_new(v));
 }
@@ -65,7 +65,7 @@ inline int as_stringmap_set_int64(as_map * m, const char * k, int64_t v)
 /**
  *	Set the specified key's value to a NULL terminated string.
  */
-inline int as_stringmap_set_str(as_map * m, const char * k, const char * v) 
+static inline int as_stringmap_set_str(as_map * m, const char * k, const char * v) 
 {
 	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) as_string_new_strdup(v));
 }
@@ -73,7 +73,7 @@ inline int as_stringmap_set_str(as_map * m, const char * k, const char * v)
 /**
  *	Set the specified key's value to an as_integer.
  */
-inline int as_stringmap_set_integer(as_map * m, const char * k, as_integer * v) 
+static inline int as_stringmap_set_integer(as_map * m, const char * k, as_integer * v) 
 {
 	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) v);
 }
@@ -81,7 +81,7 @@ inline int as_stringmap_set_integer(as_map * m, const char * k, as_integer * v)
 /**
  *	Set the specified key's value to an as_string.
  */
-inline int as_stringmap_set_string(as_map * m, const char * k, as_string * v) 
+static inline int as_stringmap_set_string(as_map * m, const char * k, as_string * v) 
 {
 	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) v);
 }
@@ -89,7 +89,7 @@ inline int as_stringmap_set_string(as_map * m, const char * k, as_string * v)
 /**
  *	Set the specified key's value to an as_bytes.
  */
-inline int as_stringmap_set_bytes(as_map * m, const char * k, as_bytes * v) 
+static inline int as_stringmap_set_bytes(as_map * m, const char * k, as_bytes * v) 
 {
 	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) v);
 }
@@ -97,7 +97,7 @@ inline int as_stringmap_set_bytes(as_map * m, const char * k, as_bytes * v)
 /**
  *	Set the specified key's value to an as_list.
  */
-inline int as_stringmap_set_list(as_map * m, const char * k, as_list * v) 
+static inline int as_stringmap_set_list(as_map * m, const char * k, as_list * v) 
 {
 	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) v);
 }
@@ -105,7 +105,7 @@ inline int as_stringmap_set_list(as_map * m, const char * k, as_list * v)
 /**
  *	Set the specified key's value to an as_map.
  */
-inline int as_stringmap_set_map(as_map * m, const char * k, as_map * v) 
+static inline int as_stringmap_set_map(as_map * m, const char * k, as_map * v) 
 {
 	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) v);
 }
@@ -117,7 +117,7 @@ inline int as_stringmap_set_map(as_map * m, const char * k, as_map * v)
 /**
  *	Get the specified key's value as an as_val.
  */
-inline as_val * as_stringmap_get(as_map * m, const char * k) 
+static inline as_val * as_stringmap_get(as_map * m, const char * k) 
 {
 	as_string key;
 	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
@@ -127,7 +127,7 @@ inline as_val * as_stringmap_get(as_map * m, const char * k)
 /**
  *	Get the specified key's value as an int64_t.
  */
-inline int64_t as_stringmap_get_int64(as_map * m, const char * k) 
+static inline int64_t as_stringmap_get_int64(as_map * m, const char * k) 
 {
 	as_string key;
 	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
@@ -138,7 +138,7 @@ inline int64_t as_stringmap_get_int64(as_map * m, const char * k)
 /**
  *	Get the specified key's value as a NULL terminated string.
  */
-inline char * as_stringmap_get_str(as_map * m, const char * k) 
+static inline char * as_stringmap_get_str(as_map * m, const char * k) 
 {
 	as_string key;
 	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
@@ -149,7 +149,7 @@ inline char * as_stringmap_get_str(as_map * m, const char * k)
 /**
  *	Get the specified key's value as an as_integer.
  */
-inline as_integer * as_stringmap_get_integer(as_map * m, const char * k) 
+static inline as_integer * as_stringmap_get_integer(as_map * m, const char * k) 
 {
 	as_string key;
 	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
@@ -159,7 +159,7 @@ inline as_integer * as_stringmap_get_integer(as_map * m, const char * k)
 /**
  *	Get the specified key's value as an as_string.
  */
-inline as_string * as_stringmap_get_string(as_map * m, const char * k) 
+static inline as_string * as_stringmap_get_string(as_map * m, const char * k) 
 {
 	as_string key;
 	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
@@ -169,7 +169,7 @@ inline as_string * as_stringmap_get_string(as_map * m, const char * k)
 /**
  *	Get the specified key's value as an as_bytes.
  */
-inline as_bytes * as_stringmap_get_bytes(as_map * m, const char * k) 
+static inline as_bytes * as_stringmap_get_bytes(as_map * m, const char * k) 
 {
 	as_string key;
 	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
@@ -179,7 +179,7 @@ inline as_bytes * as_stringmap_get_bytes(as_map * m, const char * k)
 /**
  *	Get the specified key's value as an as_list.
  */
-inline as_list * as_stringmap_get_list(as_map * m, const char * k) 
+static inline as_list * as_stringmap_get_list(as_map * m, const char * k) 
 {
 	as_string key;
 	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
@@ -189,7 +189,7 @@ inline as_list * as_stringmap_get_list(as_map * m, const char * k)
 /**
  *	Get the specified key's value as an as_map.
  */
-inline as_map * as_stringmap_get_map(as_map * m, const char * k) 
+static inline as_map * as_stringmap_get_map(as_map * m, const char * k) 
 {
 	as_string key;
 	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));

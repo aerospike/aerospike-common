@@ -337,7 +337,7 @@ char * as_arraylist_get_str(const as_arraylist * list, const uint32_t index);
  *	@return The value at given index, if it exists. Otherwise NULL.
  *	@relatesalso as_arraylist
  */
-inline as_integer * as_arraylist_get_integer(const as_arraylist * list, const uint32_t index) 
+static inline as_integer * as_arraylist_get_integer(const as_arraylist * list, const uint32_t index) 
 {
 	return as_integer_fromval(as_arraylist_get(list, index));
 }
@@ -351,7 +351,7 @@ inline as_integer * as_arraylist_get_integer(const as_arraylist * list, const ui
  *	@return The value at given index, if it exists. Otherwise NULL.
  *	@relatesalso as_arraylist
  */
-inline as_string * as_arraylist_get_string(const as_arraylist * list, const uint32_t index) 
+static inline as_string * as_arraylist_get_string(const as_arraylist * list, const uint32_t index) 
 {
 	return as_string_fromval(as_arraylist_get(list, index));
 }
@@ -365,7 +365,7 @@ inline as_string * as_arraylist_get_string(const as_arraylist * list, const uint
  *	@return The value at given index, if it exists. Otherwise NULL.
  *	@relatesalso as_arraylist
  */
-inline as_bytes * as_arraylist_get_bytes(const as_arraylist * list, const uint32_t index) 
+static inline as_bytes * as_arraylist_get_bytes(const as_arraylist * list, const uint32_t index) 
 {
 	return as_bytes_fromval(as_arraylist_get(list, index));
 }
@@ -379,7 +379,7 @@ inline as_bytes * as_arraylist_get_bytes(const as_arraylist * list, const uint32
  *	@return The value at given index, if it exists. Otherwise NULL.
  *	@relatesalso as_arraylist
  */
-inline as_list * as_arraylist_get_list(const as_arraylist * list, const uint32_t index) 
+static inline as_list * as_arraylist_get_list(const as_arraylist * list, const uint32_t index) 
 {
 	return as_list_fromval(as_arraylist_get(list, index));
 }
@@ -393,7 +393,7 @@ inline as_list * as_arraylist_get_list(const as_arraylist * list, const uint32_t
  *	@return The value at given index, if it exists. Otherwise NULL.
  *	@relatesalso as_arraylist
  */
-inline as_map * as_arraylist_get_map(const as_arraylist * list, const uint32_t index) 
+static inline as_map * as_arraylist_get_map(const as_arraylist * list, const uint32_t index) 
 {
 	return as_map_fromval(as_arraylist_get(list, index));
 }
@@ -454,7 +454,7 @@ int as_arraylist_set_str(as_arraylist * list, const uint32_t index, const char *
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_set_integer(as_arraylist * list, const uint32_t index, as_integer * value) 
+static inline int as_arraylist_set_integer(as_arraylist * list, const uint32_t index, as_integer * value) 
 {
 	return as_arraylist_set(list, index, (as_val *) value);
 }
@@ -469,7 +469,7 @@ inline int as_arraylist_set_integer(as_arraylist * list, const uint32_t index, a
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_set_string(as_arraylist * list, const uint32_t index, as_string * value) 
+static inline int as_arraylist_set_string(as_arraylist * list, const uint32_t index, as_string * value) 
 {
 	return as_arraylist_set(list, index, (as_val *) value);
 }
@@ -484,7 +484,7 @@ inline int as_arraylist_set_string(as_arraylist * list, const uint32_t index, as
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_set_bytes(as_arraylist * list, const uint32_t index, as_bytes * value) 
+static inline int as_arraylist_set_bytes(as_arraylist * list, const uint32_t index, as_bytes * value) 
 {
 	return as_arraylist_set(list, index, (as_val *) value);
 }
@@ -499,7 +499,7 @@ inline int as_arraylist_set_bytes(as_arraylist * list, const uint32_t index, as_
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_set_list(as_arraylist * list, const uint32_t index, as_list * value) 
+static inline int as_arraylist_set_list(as_arraylist * list, const uint32_t index, as_list * value) 
 {
 	return as_arraylist_set(list, index, (as_val *) value);
 }
@@ -514,7 +514,7 @@ inline int as_arraylist_set_list(as_arraylist * list, const uint32_t index, as_l
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_set_map(as_arraylist * list, const uint32_t index, as_map * value) 
+static inline int as_arraylist_set_map(as_arraylist * list, const uint32_t index, as_map * value) 
 {
 	return as_arraylist_set(list, index, (as_val *) value);
 }
@@ -565,7 +565,7 @@ int as_arraylist_append_str(as_arraylist * list, const char * value);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_append_integer(as_arraylist * list, as_integer * value) 
+static inline int as_arraylist_append_integer(as_arraylist * list, as_integer * value) 
 {
 	return as_arraylist_append(list, (as_val *) value);
 }
@@ -579,7 +579,7 @@ inline int as_arraylist_append_integer(as_arraylist * list, as_integer * value)
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_append_string(as_arraylist * list, as_string * value) 
+static inline int as_arraylist_append_string(as_arraylist * list, as_string * value) 
 {
 	return as_arraylist_append(list, (as_val *) value);
 }
@@ -593,7 +593,7 @@ inline int as_arraylist_append_string(as_arraylist * list, as_string * value)
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_append_bytes(as_arraylist * list, as_bytes * value) 
+static inline int as_arraylist_append_bytes(as_arraylist * list, as_bytes * value) 
 {
 	return as_arraylist_append(list, (as_val *) value);
 }
@@ -607,7 +607,7 @@ inline int as_arraylist_append_bytes(as_arraylist * list, as_bytes * value)
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_append_list(as_arraylist * list, as_list * value) 
+static inline int as_arraylist_append_list(as_arraylist * list, as_list * value) 
 {
 	return as_arraylist_append(list, (as_val *) value);
 }
@@ -621,7 +621,7 @@ inline int as_arraylist_append_list(as_arraylist * list, as_list * value)
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_append_map(as_arraylist * list, as_map * value) 
+static inline int as_arraylist_append_map(as_arraylist * list, as_map * value) 
 {
 	return as_arraylist_append(list, (as_val *) value);
 }
@@ -672,7 +672,7 @@ int as_arraylist_prepend_str(as_arraylist * list, const char * value);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_prepend_integer(as_arraylist * list, as_integer * value) 
+static inline int as_arraylist_prepend_integer(as_arraylist * list, as_integer * value) 
 {
 	return as_arraylist_prepend(list, (as_val *) value);
 }
@@ -686,7 +686,7 @@ inline int as_arraylist_prepend_integer(as_arraylist * list, as_integer * value)
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_prepend_string(as_arraylist * list, as_string * value) 
+static inline int as_arraylist_prepend_string(as_arraylist * list, as_string * value) 
 {
 	return as_arraylist_prepend(list, (as_val *) value);
 }
@@ -700,7 +700,7 @@ inline int as_arraylist_prepend_string(as_arraylist * list, as_string * value)
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_prepend_bytes(as_arraylist * list, as_bytes * value) 
+static inline int as_arraylist_prepend_bytes(as_arraylist * list, as_bytes * value) 
 {
 	return as_arraylist_prepend(list, (as_val *) value);
 }
@@ -714,7 +714,7 @@ inline int as_arraylist_prepend_bytes(as_arraylist * list, as_bytes * value)
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_prepend_list(as_arraylist * list, as_list * value) 
+static inline int as_arraylist_prepend_list(as_arraylist * list, as_list * value) 
 {
 	return as_arraylist_prepend(list, (as_val *) value);
 }
@@ -728,7 +728,7 @@ inline int as_arraylist_prepend_list(as_arraylist * list, as_list * value)
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-inline int as_arraylist_prepend_map(as_arraylist * list, as_map * value) 
+static inline int as_arraylist_prepend_map(as_arraylist * list, as_map * value) 
 {
 	return as_arraylist_prepend(list, (as_val *) value);
 }

@@ -387,7 +387,7 @@ as_bytes * as_bytes_new_wrap(uint8_t * value, uint32_t size, bool free);
  *
  *	@relatesalso as_bytes
  */
-inline void as_bytes_destroy(as_bytes * bytes) 
+static inline void as_bytes_destroy(as_bytes * bytes) 
 {
 	as_val_destroy((as_val *) bytes);
 }
@@ -405,7 +405,7 @@ inline void as_bytes_destroy(as_bytes * bytes)
  *
  *	@relatesalso as_bytes
  */
-inline uint32_t as_bytes_size(const as_bytes * bytes)
+static inline uint32_t as_bytes_size(const as_bytes * bytes)
 {
 	if ( !bytes ) return 0;
 	return bytes->size;
@@ -420,7 +420,7 @@ inline uint32_t as_bytes_size(const as_bytes * bytes)
  *
  *	@relatesalso as_bytes
  */
-inline uint32_t as_bytes_capacity(const as_bytes * bytes)
+static inline uint32_t as_bytes_capacity(const as_bytes * bytes)
 {
 	if ( !bytes ) return 0;
 	return bytes->capacity;
@@ -435,7 +435,7 @@ inline uint32_t as_bytes_capacity(const as_bytes * bytes)
  *
  *	@relatesalso as_bytes
  */
-inline as_bytes_type as_bytes_get_type(const as_bytes * bytes)
+static inline as_bytes_type as_bytes_get_type(const as_bytes * bytes)
 {
 	if ( !bytes ) return AS_BYTES_UNDEF;
 	return bytes->type;
@@ -449,7 +449,7 @@ inline as_bytes_type as_bytes_get_type(const as_bytes * bytes)
  *
  *	@relatesalso as_bytes
  */
-inline void as_bytes_set_type(as_bytes * bytes, as_bytes_type type)
+static inline void as_bytes_set_type(as_bytes * bytes, as_bytes_type type)
 {
 	if ( !bytes ) return;
 	bytes->type = type;
@@ -471,7 +471,7 @@ inline void as_bytes_set_type(as_bytes * bytes, as_bytes_type type)
  *
  *	@relatesalso as_bytes
  */
-inline uint8_t * as_bytes_getorelse(const as_bytes * bytes, uint8_t * fallback)
+static inline uint8_t * as_bytes_getorelse(const as_bytes * bytes, uint8_t * fallback)
 {
 	return bytes ? bytes->value : fallback;
 }
@@ -489,7 +489,7 @@ inline uint8_t * as_bytes_getorelse(const as_bytes * bytes, uint8_t * fallback)
  *
  *	@relatesalso as_bytes
  */
-inline uint8_t * as_bytes_get(const as_bytes * bytes)
+static inline uint8_t * as_bytes_get(const as_bytes * bytes)
 {
 	return as_bytes_getorelse(bytes, NULL);
 }
@@ -541,7 +541,7 @@ uint32_t as_bytes_copy(const as_bytes * bytes, uint32_t index, uint8_t * value, 
  *
  *	@relatesalso as_bytes
  */
-inline uint32_t as_bytes_get_byte(const as_bytes * bytes, uint32_t index, uint8_t * value)
+static inline uint32_t as_bytes_get_byte(const as_bytes * bytes, uint32_t index, uint8_t * value)
 {
 	return as_bytes_copy(bytes, index, (uint8_t *) value, 1);
 }
@@ -562,7 +562,7 @@ inline uint32_t as_bytes_get_byte(const as_bytes * bytes, uint32_t index, uint8_
  *
  *	@relatesalso as_bytes
  */
-inline uint32_t as_bytes_get_int16(const as_bytes * bytes, uint32_t index, int16_t * value)
+static inline uint32_t as_bytes_get_int16(const as_bytes * bytes, uint32_t index, int16_t * value)
 {
 	return as_bytes_copy(bytes, index, (uint8_t *) value, 2);
 }
@@ -583,7 +583,7 @@ inline uint32_t as_bytes_get_int16(const as_bytes * bytes, uint32_t index, int16
  *
  *	@relatesalso as_bytes
  */
-inline uint32_t as_bytes_get_int32(const as_bytes * bytes, uint32_t index, int32_t * value)
+static inline uint32_t as_bytes_get_int32(const as_bytes * bytes, uint32_t index, int32_t * value)
 {
 	return as_bytes_copy(bytes, index, (uint8_t *) value, 4);
 }
@@ -604,7 +604,7 @@ inline uint32_t as_bytes_get_int32(const as_bytes * bytes, uint32_t index, int32
  *
  *	@relatesalso as_bytes
  */
-inline uint32_t as_bytes_get_int64(const as_bytes * bytes, uint32_t index, int64_t * value)
+static inline uint32_t as_bytes_get_int64(const as_bytes * bytes, uint32_t index, int64_t * value)
 {
 	return as_bytes_copy(bytes, index, (uint8_t *) value, 8);
 }
@@ -643,7 +643,7 @@ bool as_bytes_set(as_bytes * bytes, uint32_t index, const uint8_t * value, uint3
  *
  *	@relatesalso as_bytes
  */
-inline bool as_bytes_set_byte(as_bytes * bytes, uint32_t index, uint8_t value)
+static inline bool as_bytes_set_byte(as_bytes * bytes, uint32_t index, uint8_t value)
 {
 	return as_bytes_set(bytes, index, (uint8_t *) &value, 1);
 }
@@ -659,7 +659,7 @@ inline bool as_bytes_set_byte(as_bytes * bytes, uint32_t index, uint8_t value)
  *
  *	@relatesalso as_bytes
  */
-inline bool as_bytes_set_int16(as_bytes * bytes, uint32_t index, int16_t value)
+static inline bool as_bytes_set_int16(as_bytes * bytes, uint32_t index, int16_t value)
 {
 	return as_bytes_set(bytes, index, (uint8_t *) &value, 2);
 }
@@ -675,7 +675,7 @@ inline bool as_bytes_set_int16(as_bytes * bytes, uint32_t index, int16_t value)
  *
  *	@relatesalso as_bytes
  */
-inline bool as_bytes_set_int32(as_bytes * bytes, uint32_t index, int32_t value)
+static inline bool as_bytes_set_int32(as_bytes * bytes, uint32_t index, int32_t value)
 {
 	return as_bytes_set(bytes, index, (uint8_t *) &value, 4);
 }
@@ -691,7 +691,7 @@ inline bool as_bytes_set_int32(as_bytes * bytes, uint32_t index, int32_t value)
  *
  *	@relatesalso as_bytes
  */
-inline bool as_bytes_set_int64(as_bytes * bytes, uint32_t index, int64_t value)
+static inline bool as_bytes_set_int64(as_bytes * bytes, uint32_t index, int64_t value)
 {
 	return as_bytes_set(bytes, index, (uint8_t *) &value, 8);
 }
@@ -731,7 +731,7 @@ bool as_bytes_append(as_bytes * bytes, const uint8_t * value, uint32_t size);
  *
  *	@relatesalso as_bytes
  */
-inline bool as_bytes_append_byte(as_bytes * bytes, uint8_t value)
+static inline bool as_bytes_append_byte(as_bytes * bytes, uint8_t value)
 {
 	return as_bytes_append(bytes, (uint8_t *) &value, 1);
 }
@@ -747,7 +747,7 @@ inline bool as_bytes_append_byte(as_bytes * bytes, uint8_t value)
  *
  *	@relatesalso as_bytes
  */
-inline bool as_bytes_append_int16(as_bytes * bytes, int16_t value)
+static inline bool as_bytes_append_int16(as_bytes * bytes, int16_t value)
 {
 	return as_bytes_append(bytes, (uint8_t *) &value, 2);
 }
@@ -763,7 +763,7 @@ inline bool as_bytes_append_int16(as_bytes * bytes, int16_t value)
  *
  *	@relatesalso as_bytes
  */
-inline bool as_bytes_append_int32(as_bytes * bytes, int32_t value)
+static inline bool as_bytes_append_int32(as_bytes * bytes, int32_t value)
 {
 	return as_bytes_append(bytes, (uint8_t *) &value, 4);
 }
@@ -779,7 +779,7 @@ inline bool as_bytes_append_int32(as_bytes * bytes, int32_t value)
  *
  *	@relatesalso as_bytes
  */
-inline bool as_bytes_append_int64(as_bytes * bytes, int64_t value)
+static inline bool as_bytes_append_int64(as_bytes * bytes, int64_t value)
 {
 	return as_bytes_append(bytes, (uint8_t *) &value, 8);
 }
@@ -848,7 +848,7 @@ bool as_bytes_ensure(as_bytes * bytes, uint32_t n, bool resize);
  *
  *	@relatesalso as_bytes
  */
-inline uint8_t * as_bytes_tobytes(const as_bytes * bytes, uint32_t * size) 
+static inline uint8_t * as_bytes_tobytes(const as_bytes * bytes, uint32_t * size) 
 {
 	if ( !bytes ) return NULL;
 
@@ -868,7 +868,7 @@ inline uint8_t * as_bytes_tobytes(const as_bytes * bytes, uint32_t * size)
  *
  *	@relatesalso as_bytes
  */
-inline as_val * as_bytes_toval(const as_bytes * b) 
+static inline as_val * as_bytes_toval(const as_bytes * b) 
 {
 	return (as_val *) b;
 }
@@ -878,7 +878,7 @@ inline as_val * as_bytes_toval(const as_bytes * b)
  *
  *	@relatesalso as_bytes
  */
-inline as_bytes * as_bytes_fromval(const as_val * v) 
+static inline as_bytes * as_bytes_fromval(const as_val * v) 
 {
 	return as_util_fromval(v, AS_BYTES, as_bytes);
 }

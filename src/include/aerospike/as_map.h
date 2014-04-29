@@ -244,7 +244,7 @@ as_map * as_map_new(void * data, const as_map_hooks * hooks);
  *	Destroy the as_map and associated resources.
  *	@relatesalso as_map
  */
-inline void as_map_destroy(as_map * map) 
+static inline void as_map_destroy(as_map * map) 
 {
 	as_val_destroy((as_val *) map);
 }
@@ -261,7 +261,7 @@ inline void as_map_destroy(as_map * map)
  *	@return The hashcode value of the map.
  *	@relatesalso as_map
  */
-inline uint32_t as_map_hashcode(const as_map * map) 
+static inline uint32_t as_map_hashcode(const as_map * map) 
 {
 	return as_util_hook(hashcode, 0, map);
 }
@@ -274,7 +274,7 @@ inline uint32_t as_map_hashcode(const as_map * map)
  *	@return The size of the map.
  *	@relatesalso as_map
  */
-inline uint32_t as_map_size(const as_map * map) 
+static inline uint32_t as_map_size(const as_map * map) 
 {
 	return as_util_hook(size, 0, map);
 }
@@ -292,7 +292,7 @@ inline uint32_t as_map_size(const as_map * map)
  *	@return The value for the specified key on success. Otherwise NULL.
  *	@relatesalso as_map
  */
-inline as_val * as_map_get(const as_map * map, const as_val * key)
+static inline as_val * as_map_get(const as_map * map, const as_val * key)
 {
 	return as_util_hook(get, NULL, map, key);
 }
@@ -307,7 +307,7 @@ inline as_val * as_map_get(const as_map * map, const as_val * key)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_map
  */
-inline int as_map_set(as_map * map, const as_val * key, const as_val * val) 
+static inline int as_map_set(as_map * map, const as_val * key, const as_val * val) 
 {
 	return as_util_hook(set, 1, map, key, val);
 }
@@ -320,7 +320,7 @@ inline int as_map_set(as_map * map, const as_val * key, const as_val * val)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_map
  */
-inline int as_map_clear(as_map * map)
+static inline int as_map_clear(as_map * map)
 {
 	return as_util_hook(clear, 1, map);
 }
@@ -335,7 +335,7 @@ inline int as_map_clear(as_map * map)
  *
  *	@relatesalso as_map
  */
-inline int as_map_remove(as_map * map, const as_val * key)
+static inline int as_map_remove(as_map * map, const as_val * key)
 {
 	return as_util_hook(remove, 1, map, key);
 }
@@ -355,7 +355,7 @@ inline int as_map_remove(as_map * map, const as_val * key)
  *
  *	@relatesalso as_map
  */
-inline bool as_map_foreach(const as_map * map, as_map_foreach_callback callback, void * udata) 
+static inline bool as_map_foreach(const as_map * map, as_map_foreach_callback callback, void * udata) 
 {
 	return as_util_hook(foreach, false, map, callback, udata);
 }
@@ -368,7 +368,7 @@ inline bool as_map_foreach(const as_map * map, as_map_foreach_callback callback,
  *	@return On success, a new as_iterator. Otherwise NULL.
  *	@relatesalso as_map
  */
-inline union as_map_iterator_u * as_map_iterator_new(const as_map * map) 
+static inline union as_map_iterator_u * as_map_iterator_new(const as_map * map) 
 {
 	return as_util_hook(iterator_new, NULL, map);
 }
@@ -382,7 +382,7 @@ inline union as_map_iterator_u * as_map_iterator_new(const as_map * map)
  *	@return On success, the initializes as_iterator. Otherwise NULL.
  *	@relatesalso as_map
  */
-inline union as_map_iterator_u * as_map_iterator_init(union as_map_iterator_u * it, const as_map * map) 
+static inline union as_map_iterator_u * as_map_iterator_init(union as_map_iterator_u * it, const as_map * map) 
 {
 	return as_util_hook(iterator_init, NULL, map, it);
 }
@@ -395,7 +395,7 @@ inline union as_map_iterator_u * as_map_iterator_init(union as_map_iterator_u * 
  *	Convert to an as_val.
  *	@relatesalso as_map
  */
-inline as_val * as_map_toval(const as_map * map) 
+static inline as_val * as_map_toval(const as_map * map) 
 {
 	return (as_val *) map;
 }
@@ -404,7 +404,7 @@ inline as_val * as_map_toval(const as_map * map)
  *	Convert from an as_val.
  *	@relatesalso as_map
  */
-inline as_map * as_map_fromval(const as_val * val) 
+static inline as_map * as_map_fromval(const as_val * val) 
 {
 	return as_util_fromval(val, AS_MAP, as_map);
 }
