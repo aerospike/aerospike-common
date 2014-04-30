@@ -500,25 +500,25 @@ int as_unpack_val(as_unpacker * pk, as_val ** val)
 		
 		case 0xd0:   // signed 8 bit integer
 		case 0xcc: { // unsigned 8 bit integer
-			uint8_t v = pk->buffer[pk->offset++];
+			int8_t v = pk->buffer[pk->offset++];
 			return as_unpack_integer(v, val);
 		}
 		
 		case 0xd1:   // signed 16 bit integer
 		case 0xcd: { // unsigned 16 bit integer
-			uint16_t v = as_extract_uint16(pk);
+			int16_t v = as_extract_uint16(pk);
 			return as_unpack_integer(v, val);
 		}
 		
 		case 0xd2:   // signed 32 bit integer
 		case 0xce: { // unsigned 32 bit integer
-			uint32_t v = as_extract_uint32(pk);
+			int32_t v = as_extract_uint32(pk);
 			return as_unpack_integer(v, val);
 		}
 		
 		case 0xd3:   // signed 64 bit integer
 		case 0xcf: { // unsigned 64 bit integer
-			uint64_t v = as_extract_uint64(pk);
+			int64_t v = as_extract_uint64(pk);
 			return as_unpack_integer(v, val);
 		}
 			

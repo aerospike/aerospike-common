@@ -190,8 +190,8 @@ char * as_list_val_tostring(const as_val * v)
 
 	data.buf = (char *) cf_calloc(data.cap, sizeof(char));
 
-	strcpy(data.buf, "List(");
-	data.pos += 5;
+	strcpy(data.buf, "[");
+	data.pos += 1;
 
 	if ( v ) {
 		as_list_foreach((as_list *) v, as_list_val_tostring_foreach, &data);
@@ -202,7 +202,7 @@ char * as_list_val_tostring(const as_val * v)
 		data.cap += 2;
 	}
 
-	data.buf[data.pos] = ')';
+	data.buf[data.pos] = ']';
 	data.buf[data.pos + 1] = 0;
 	
 	return data.buf;
