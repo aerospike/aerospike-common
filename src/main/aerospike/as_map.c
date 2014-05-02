@@ -134,8 +134,8 @@ static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, 
 	strncpy(data->buf + data->pos, keystr, keylen);
 	data->pos += keylen;
 
-	strcpy(data->buf + data->pos, "->");
-	data->pos += 2;
+	strcpy(data->buf + data->pos, ":");
+	data->pos += 1;
 
 	strncpy(data->buf + data->pos, valstr, vallen);
 	data->pos += vallen;
@@ -163,8 +163,8 @@ char * as_map_val_tostring(const as_val * v)
 
 	data.buf = (char *) cf_calloc(data.cap, sizeof(char));
 
-	strcpy(data.buf, "Map(");
-	data.pos += 4;
+	strcpy(data.buf, "{");
+	data.pos += 1;
 	
 	if ( v ) {
 		as_map_foreach((as_map *) v, as_map_val_tostring_foreach, &data);
@@ -175,7 +175,7 @@ char * as_map_val_tostring(const as_val * v)
 		data.cap += 2;
 	}
 
-	data.buf[data.pos] = ')';
+	data.buf[data.pos] = '}';
 	data.buf[data.pos + 1] = 0;
 	
 	return data.buf;
