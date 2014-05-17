@@ -12,6 +12,7 @@ PLAN( common ) {
     plan_add( types_arraylist );
     plan_add( types_hashmap );
     plan_add( types_nil );
+    plan_add( types_vector );
 
     /**
      * msgpack - tests msgpack

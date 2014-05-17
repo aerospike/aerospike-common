@@ -99,6 +99,7 @@ AEROSPIKE-OBJECTS += as_hashmap_hooks.o
 AEROSPIKE-OBJECTS += as_hashmap_iterator.o
 AEROSPIKE-OBJECTS += as_hashmap_iterator_hooks.o
 
+AEROSPIKE-OBJECTS += as_vector.o
 
 CITRUSLEAF-OBJECTS =
 CITRUSLEAF-OBJECTS += cf_alloc.o
