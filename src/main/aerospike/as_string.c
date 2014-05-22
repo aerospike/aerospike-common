@@ -199,3 +199,25 @@ char * as_string_val_tostring(const as_val * v)
 	*(str + 1 + sl + 1) = '\0';
 	return str;
 }
+
+/******************************************************************************
+ *	String utilities
+ ******************************************************************************/
+
+bool
+as_strncpy(char* trg, const char* src, int len)
+{
+	int max = len - 1;
+	int i = 0;
+	
+	while (*src) {
+		if (i >= max) {
+			*trg = 0;
+			return true;
+		}
+		*trg++ = *src++;
+		i++;
+	}
+	*trg = 0;
+	return false;
+}

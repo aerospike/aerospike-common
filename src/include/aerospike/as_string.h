@@ -289,3 +289,15 @@ uint32_t as_string_val_hashcode(const as_val * v);
  *	Internal helper function for getting the string representation of an as_val.
  */
 char * as_string_val_tostring(const as_val * v);
+
+/******************************************************************************
+ *	String utilities
+ ******************************************************************************/
+
+/**
+ *	@private
+ *	Copy null terminated src to trg up to a maximum length.
+ *	If maximum length reached, null terminate last character and
+ *  and return true that truncation occurred.
+ */
+bool as_strncpy(char* trg, const char* src, int len);
