@@ -299,5 +299,8 @@ char * as_string_val_tostring(const as_val * v);
  *	Copy null terminated src to trg up to a maximum length.
  *	If maximum length reached, null terminate last character and
  *  and return true that truncation occurred.
+ *
+ *  as_strncpy does not pad unused bytes with zeroes like the 
+ *  standard strncpy.
  */
 bool as_strncpy(char* trg, const char* src, int len);
