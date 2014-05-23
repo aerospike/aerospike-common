@@ -867,7 +867,51 @@ void shash_deleteall_lockfree(shash *h) {
 		}
 		e_table = (shash_elem *) (((uint8_t *)e_table) + SHASH_ELEM_SZ(h));
 	}
-}	
+}
+
+void shash_deleteall(shash *h) {
+	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
+	
+	pthread_mutex_t *big_lock = 0;
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
+		big_lock = &h->biglock;
+	}
+	
+	shash_elem *e_table = h->table;
+	for (uint i=0;i<h->table_len;i++) {
+		pthread_mutex_t *l = 0;
+		if (h->flags & SHASH_CR_MT_MANYLOCK) {
+			l = &(h->lock_table[i]);
+			pthread_mutex_lock( l );
+		}
+		
+		if (e_table->next) {
+			shash_elem *e = e_table->next;
+			shash_elem *t;
+			while (e) {
+				t = e->next;
+				if (mem_tracked)
+				  cf_free(e);
+				else
+				  free(e);
+				e = t;
+			}
+			// The head element of each hash bucket overflow chain also
+			// contains data. But we should not free it as it is·
+			// allocated as part of the overall hash table. So, just mark
+			// it so that it is re-used.
+			e_table->next = NULL;
+			e_table->in_use = false;
+		}
+		if (l) {
+			pthread_mutex_unlock(l);
+		}
+		e_table = (shash_elem *) (((uint8_t *)e_table) + SHASH_ELEM_SZ(h));
+	}
+	if (big_lock) {
+		pthread_mutex_unlock(big_lock);
+	}
+}
 
 /**
  * shash_destroy

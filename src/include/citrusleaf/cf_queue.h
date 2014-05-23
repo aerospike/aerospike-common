@@ -46,6 +46,8 @@ extern "C" {
 // mswait > 0 wait that number of ms
 #define CF_QUEUE_FOREVER -1
 #define CF_QUEUE_NOWAIT 0
+#define CF_QUEUE_WAIT_1SEC 1000
+#define CF_QUEUE_WAIT_30SEC 30000
 
 /******************************************************************************
  * TYPES
