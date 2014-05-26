@@ -245,6 +245,11 @@ int shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata);
 void shash_deleteall_lockfree(shash *h);
 
 /**
+ * Delete all the data from the entire hash - after getting lock - complete cleanup
+ */
+void shash_deleteall(shash *h);
+
+/**
  * Destroy the entire hash - all memory will be freed
  */
 void shash_destroy(shash *h);
