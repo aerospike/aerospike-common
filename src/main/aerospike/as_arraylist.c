@@ -242,7 +242,11 @@ int as_arraylist_set(as_arraylist * list, const uint32_t index, as_val * value)
 			return rc;
 		}
 	}
-	as_val_destroy(list->elements[index]);
+	// Make sure that, before we free (destroy) something, it is within the
+	// legal bounds of the object.
+	if( index < list->size ) {
+		as_val_destroy(list->elements[index]);
+	}
 	list->elements[index] = value;
 	if( index  >= list->size ){
 		list->size = index + 1;
