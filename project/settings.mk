@@ -15,11 +15,8 @@ OS = $(shell uname)
 ARCH = $(shell arch)
 
 PROJECT = project
-MODULES = modules
 SOURCE  = src
 TARGET  = target
-
-MODULES = 
 
 ###############################################################################
 ##  BUILD TOOLS                                                              ##
@@ -148,12 +145,11 @@ define executable
 		$(addprefix -L, $(SUBMODULES:%=%/$(TARGET_LIB))) \
 		$(addprefix -L, $(LIB_PATH)) \
 		$(addprefix -l, $(LIBRARIES)) \
-		$(LD_FLAGS) \
-		$(LDFLAGS) \
 		$(CC_FLAGS) \
 		$(CFLAGS) \
 		-o $@ \
 		$(filter %.o %.a %.so, $^) \
+		$(LD_FLAGS) \
 	)
 endef
 

@@ -33,7 +33,7 @@ CC_FLAGS += -I$(CF)/include
 endif
 
 # Linker flags
-LD_FLAGS = $(LDFLAGS) -lm -fPIC
+LD_FLAGS = $(LDFLAGS)
 
 ifeq ($(OS),Darwin)
 LD_FLAGS += -undefined dynamic_lookup
