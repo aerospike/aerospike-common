@@ -100,6 +100,8 @@ AEROSPIKE-OBJECTS += as_hashmap_iterator.o
 AEROSPIKE-OBJECTS += as_hashmap_iterator_hooks.o
 
 AEROSPIKE-OBJECTS += as_vector.o
+AEROSPIKE-OBJECTS += as_password.o
+AEROSPIKE-OBJECTS += crypt_blowfish.o
 
 CITRUSLEAF-OBJECTS =
 CITRUSLEAF-OBJECTS += cf_alloc.o

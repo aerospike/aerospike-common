@@ -14,6 +14,8 @@ PLAN( common ) {
     plan_add( types_nil );
     plan_add( types_vector );
 
+    plan_add( password );
+	
     /**
      * msgpack - tests msgpack
      */

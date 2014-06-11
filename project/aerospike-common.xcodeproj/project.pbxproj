@@ -10,6 +10,9 @@
 		BF6B7B281926E7F10081A75F /* as_timer.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B7B261926E7F10081A75F /* as_timer.c */; };
 		BF6B7B291926E7F10081A75F /* as_vector.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B7B271926E7F10081A75F /* as_vector.c */; };
 		BFB7BC5E18CA4AB500F0D4A0 /* cf_queue_priority.c in Sources */ = {isa = PBXBuildFile; fileRef = BFB7BC5D18CA4AB500F0D4A0 /* cf_queue_priority.c */; };
+		BFBA04BB1947DE0800F9924E /* as_password.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBA04B91947DE0800F9924E /* as_password.c */; };
+		BFBA04BC1947DE0800F9924E /* crypt_blowfish.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBA04BA1947DE0800F9924E /* crypt_blowfish.c */; };
+		BFBA04C01947E1BB00F9924E /* cf_random.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBA04BF1947E1BB00F9924E /* cf_random.c */; };
 		BFBB6C9318C80E3E00756BB0 /* cf_alloc.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB6C9218C80E3E00756BB0 /* cf_alloc.c */; };
 		BFBB7F1518C001560080851E /* as_aerospike.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7EF618C001560080851E /* as_aerospike.c */; };
 		BFBB7F1618C001560080851E /* as_arraylist_hooks.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7EF718C001560080851E /* as_arraylist_hooks.c */; };
@@ -59,6 +62,9 @@
 		BF6B7B261926E7F10081A75F /* as_timer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_timer.c; path = ../src/main/aerospike/as_timer.c; sourceTree = "<group>"; };
 		BF6B7B271926E7F10081A75F /* as_vector.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_vector.c; path = ../src/main/aerospike/as_vector.c; sourceTree = "<group>"; };
 		BFB7BC5D18CA4AB500F0D4A0 /* cf_queue_priority.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_queue_priority.c; path = ../src/main/citrusleaf/cf_queue_priority.c; sourceTree = "<group>"; };
+		BFBA04B91947DE0800F9924E /* as_password.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_password.c; path = ../src/main/aerospike/as_password.c; sourceTree = "<group>"; };
+		BFBA04BA1947DE0800F9924E /* crypt_blowfish.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = crypt_blowfish.c; path = ../src/main/aerospike/crypt_blowfish.c; sourceTree = "<group>"; };
+		BFBA04BF1947E1BB00F9924E /* cf_random.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_random.c; path = ../src/main/citrusleaf/cf_random.c; sourceTree = "<group>"; };
 		BFBB6C9218C80E3E00756BB0 /* cf_alloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_alloc.c; path = ../src/main/citrusleaf/cf_alloc.c; sourceTree = "<group>"; };
 		BFBB7EEF18BFFD2D0080851E /* libaerospike-common.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libaerospike-common.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BFBB7EF618C001560080851E /* as_aerospike.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_aerospike.c; path = ../src/main/aerospike/as_aerospike.c; sourceTree = "<group>"; };
@@ -119,6 +125,9 @@
 		BFBB7EE618BFFD2D0080851E = {
 			isa = PBXGroup;
 			children = (
+				BFBA04BF1947E1BB00F9924E /* cf_random.c */,
+				BFBA04B91947DE0800F9924E /* as_password.c */,
+				BFBA04BA1947DE0800F9924E /* crypt_blowfish.c */,
 				BF6B7B261926E7F10081A75F /* as_timer.c */,
 				BF6B7B271926E7F10081A75F /* as_vector.c */,
 				BFB7BC5D18CA4AB500F0D4A0 /* cf_queue_priority.c */,
@@ -254,6 +263,7 @@
 				BFBB7F2B18C001560080851E /* as_pair.c in Sources */,
 				BFBB7F2318C001560080851E /* as_list.c in Sources */,
 				BFBB7F2918C001560080851E /* as_msgpack.c in Sources */,
+				BFBA04BC1947DE0800F9924E /* crypt_blowfish.c in Sources */,
 				BFBB7F4318C0018F0080851E /* cf_hooks.c in Sources */,
 				BFBB7F1618C001560080851E /* as_arraylist_hooks.c in Sources */,
 				BFBB7F4518C0018F0080851E /* cf_rchash.c in Sources */,
@@ -269,6 +279,7 @@
 				BFBB7F1D18C001560080851E /* as_hashmap_hooks.c in Sources */,
 				BFBB7F2A18C001560080851E /* as_nil.c in Sources */,
 				BFBB7F4018C0018F0080851E /* cf_clock.c in Sources */,
+				BFBA04C01947E1BB00F9924E /* cf_random.c in Sources */,
 				BFBB7F2218C001560080851E /* as_iterator.c in Sources */,
 				BFBB7F1A18C001560080851E /* as_boolean.c in Sources */,
 				BFBB7F4118C0018F0080851E /* cf_crypto.c in Sources */,
@@ -276,6 +287,7 @@
 				BFBB7F3218C001560080851E /* as_val.c in Sources */,
 				BF6B7B291926E7F10081A75F /* as_vector.c in Sources */,
 				BFBB7F2718C001560080851E /* as_module.c in Sources */,
+				BFBA04BB1947DE0800F9924E /* as_password.c in Sources */,
 				BFBB7F2118C001560080851E /* as_integer.c in Sources */,
 				BFBB7F2E18C001560080851E /* as_serializer.c in Sources */,
 				BFBB7F1E18C001560080851E /* as_hashmap_iterator_hooks.c in Sources */,
