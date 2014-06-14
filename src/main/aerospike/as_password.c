@@ -15,11 +15,16 @@
  * the License.
  */
 #include <aerospike/as_password.h>
+#include <aerospike/as_string.h>
 #include <citrusleaf/cf_random.h>
+#include <stdio.h>
+#include <termios.h>
+#include <string.h>
 #include "crypt_blowfish.h"
 
 #define BCRYPT_RAND_LEN 16
 #define BCRYPT_WORK_FACTOR 10
+#define BCRYPT_SALT "$2a$10$X8&%g1#h194HnDl@"
 
 bool
 as_password_gen_salt(char* salt)
@@ -36,4 +41,62 @@ as_password_gen_hash(const char* password, const char* salt, char* hash)
 {
 	// Create BCrypt password hash.
 	return (bool) _crypt_blowfish_rn(password, salt, hash, AS_PASSWORD_HASH_SIZE);
+}
+
+bool
+as_password_gen_constant_hash(const char* password, char* hash)
+{
+	// Create BCrypt password hash.
+	return (bool) _crypt_blowfish_rn(password, BCRYPT_SALT, hash, AS_PASSWORD_HASH_SIZE);
+}
+
+static void
+as_password_prompt(char* password, int size)
+{
+	// Turn off echo.
+    struct termios oldt;
+    tcgetattr(STDIN_FILENO, &oldt);
+	
+    struct termios newt = oldt;
+    newt.c_lflag &= ~ECHO;
+    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
+	
+	// Prompt for password.
+	printf("Enter Password: ");
+	fflush(stdout);
+	
+	// Read password until newline.
+	fgets(password, size, stdin);
+	int len = (int)strlen(password);
+	
+	if (password[len-1] == '\n') {
+		password[--len] = 0;
+	}
+	
+	// Restore echo.
+    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	printf("\n");
+}
+
+bool
+as_password_prompt_hash(const char* input, char* output)
+{
+	char password[AS_PASSWORD_HASH_SIZE];
+	
+	if (input && *input) {
+		as_strncpy(password, input, sizeof(password));
+	}
+	else {
+		as_password_prompt(password, sizeof(password));
+	}
+	
+	if (strlen(password) == 60 && memcmp(password, "$2a$", 4)) {
+		// Password already hashed.
+		strcpy(output, password);
+		return true;
+	}
+	else {
+		// Hash password.
+		return as_password_gen_constant_hash(password, output);
+	}
 }

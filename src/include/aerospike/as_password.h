@@ -43,6 +43,21 @@ bool
 as_password_gen_hash(const char* password, const char* salt, char* hash);
 
 /**
+ *	Create bcrypt hash of password with constant salt.
+ *	Return true if hash was generated.
+ */
+bool
+as_password_gen_constant_hash(const char* password, char* hash);
+
+/**
+ *	Convert input password to bcrypt hashed password output.
+ *	Prompt for input password from command line if input password is empty.
+ *	Return true if hash was generated.
+ */
+bool
+as_password_prompt_hash(const char* input, char* output);
+
+/**
  *	Verify password hash. Hash length should always be 60.
  *	Return true if hashes are equal.
  */
