@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2008-2014 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -50,12 +50,19 @@ bool
 as_password_gen_constant_hash(const char* password, char* hash);
 
 /**
- *	Convert input password to bcrypt hashed password output.
- *	Prompt for input password from command line if input password is empty.
- *	Return true if hash was generated.
+ *	If the input password is not hashed, convert to bcrypt hashed password.
+ *	Return true if hash was successful.
  */
 bool
-as_password_prompt_hash(const char* input, char* output);
+as_password_get_constant_hash(const char* password, char* hash);
+
+/**
+ *	Prompt for input password from command line if input password is empty.
+ *	If the input password is not hashed, convert to bcrypt hashed password.
+ *	Return true if hash was successful.
+ */
+bool
+as_password_prompt_hash(const char* password, char* hash);
 
 /**
  *	Verify password hash. Hash length should always be 60.

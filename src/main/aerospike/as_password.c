@@ -50,6 +50,24 @@ as_password_gen_constant_hash(const char* password, char* hash)
 	return (bool) _crypt_blowfish_rn(password, BCRYPT_SALT, hash, AS_PASSWORD_HASH_SIZE);
 }
 
+bool
+as_password_get_constant_hash(const char* password, char* hash)
+{
+	if (! password) {
+		password = "";
+	}
+	
+	if (strlen(password) == 60 && memcmp(password, "$2a$", 4) == 0) {
+		// Password already hashed.
+		strcpy(hash, password);
+		return true;
+	}
+	else {
+		// Hash password.
+		return as_password_gen_constant_hash(password, hash);
+	}
+}
+
 static void
 as_password_prompt(char* password, int size)
 {
@@ -79,24 +97,16 @@ as_password_prompt(char* password, int size)
 }
 
 bool
-as_password_prompt_hash(const char* input, char* output)
+as_password_prompt_hash(const char* password, char* hash)
 {
-	char password[AS_PASSWORD_HASH_SIZE];
+	char pass[AS_PASSWORD_HASH_SIZE];
 	
-	if (input && *input) {
-		as_strncpy(password, input, sizeof(password));
+	if (password && *password) {
+		as_strncpy(pass, password, sizeof(pass));
 	}
 	else {
-		as_password_prompt(password, sizeof(password));
+		as_password_prompt(pass, sizeof(pass));
 	}
 	
-	if (strlen(password) == 60 && memcmp(password, "$2a$", 4) == 0) {
-		// Password already hashed.
-		strcpy(output, password);
-		return true;
-	}
-	else {
-		// Hash password.
-		return as_password_gen_constant_hash(password, output);
-	}
+	return as_password_get_constant_hash(pass, hash);
 }
