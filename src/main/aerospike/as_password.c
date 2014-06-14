@@ -24,7 +24,7 @@
 
 #define BCRYPT_RAND_LEN 16
 #define BCRYPT_WORK_FACTOR 10
-#define BCRYPT_SALT "$2a$10$X8&%g1#h194HnDl@"
+#define BCRYPT_SALT "$2a$10$7EqJtq98hPqEX7fNZaFWoO"
 
 bool
 as_password_gen_salt(char* salt)
