@@ -90,7 +90,7 @@ as_password_prompt_hash(const char* input, char* output)
 		as_password_prompt(password, sizeof(password));
 	}
 	
-	if (strlen(password) == 60 && memcmp(password, "$2a$", 4)) {
+	if (strlen(password) == 60 && memcmp(password, "$2a$", 4) == 0) {
 		// Password already hashed.
 		strcpy(output, password);
 		return true;
