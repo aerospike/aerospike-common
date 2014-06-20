@@ -94,7 +94,7 @@ typedef struct as_module_hooks_s {
     /**
      * Apply a function to a stream.
      */
-    int (* apply_stream)(struct as_module_s * m, as_udf_context *ctx, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream);
+    int (* apply_stream)(struct as_module_s * m, as_udf_context *ctx, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream, as_result *res);
 
 } as_module_hooks;
 
@@ -206,7 +206,7 @@ int as_module_apply_record(as_module * m, as_udf_context * ctx, const char * fil
  *
  * @return 0 on success, otherwise 1
  */
-int as_module_apply_stream(as_module * m, as_udf_context * ctx, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream);
+int as_module_apply_stream(as_module * m, as_udf_context * ctx, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream, as_result *res);
 
 /**
  * Return lua error in string format when error code is passed in
