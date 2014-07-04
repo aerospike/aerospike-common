@@ -429,6 +429,18 @@ cf_b64_decode_in_place(uint8_t* in_out, uint32_t in_len, uint32_t* out_size)
 	uint32_t i = 0;
 	uint32_t j = 0;
 
+	uint32_t d = 0;
+
+	if (out_size && in_len != 0) {
+		if (in_out[in_len - 1] == '=') {
+			d++;
+		}
+
+		if (in_out[in_len - 2] == '=') {
+			d++;
+		}
+	}
+
 	while (i < in_len) {
 		uint8_t i0 = in_out[i];
 		uint8_t i1 = in_out[i + 1];
@@ -448,17 +460,7 @@ cf_b64_decode_in_place(uint8_t* in_out, uint32_t in_len, uint32_t* out_size)
 	}
 
 	if (out_size) {
-		if (i != 0) {
-			if (in_out[i - 1] == '=') {
-				j--;
-			}
-
-			if (in_out[i - 2] == '=') {
-				j--;
-			}
-		}
-
-		*out_size = j;
+		*out_size = j - d;
 	}
 }
 
