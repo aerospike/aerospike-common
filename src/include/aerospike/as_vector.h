@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2008-2014 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -33,7 +33,7 @@ typedef struct as_vector_s {
 	 *	The items of the vector.
 	 */
 	void* list;
-
+	
 	/**
 	 *	The total number items allocated.
 	 */
@@ -43,7 +43,7 @@ typedef struct as_vector_s {
 	 *	The number of items used.
 	 */
 	uint32_t size;
-
+	
 	/**
 	 *	The size of a single item.
 	 */
@@ -60,16 +60,16 @@ typedef struct as_vector_s {
  ******************************************************************************/
 
 /**
- *	Initialize a stack allocated as_vector, with item storage on the stack. 
+ *	Initialize a stack allocated as_vector, with item storage on the stack.
  *  as_vector_inita() will transfer stack memory to the heap if a resize is
  *  required.
  */
 #define as_vector_inita(__vector, __item_size, __capacity)\
-	(__vector)->list = alloca((__capacity) * (__item_size));\
-	(__vector)->capacity = __capacity;\
-	(__vector)->item_size = __item_size;\
-	(__vector)->size = 0;\
-	(__vector)->flags = 0;
+(__vector)->list = alloca((__capacity) * (__item_size));\
+(__vector)->capacity = __capacity;\
+(__vector)->item_size = __item_size;\
+(__vector)->size = 0;\
+(__vector)->flags = 0;
 
 /*******************************************************************************
  *	INSTANCE FUNCTIONS
@@ -115,7 +115,7 @@ as_vector_clear(as_vector* vector)
 static inline void*
 as_vector_get(as_vector* vector, uint32_t index)
 {
-	return vector->list + (vector->item_size * index);
+	return (void *) ((byte *)vector->list + (vector->item_size * index));
 }
 
 /**
@@ -124,7 +124,7 @@ as_vector_get(as_vector* vector, uint32_t index)
 static inline void*
 as_vector_get_ptr(as_vector* vector, uint32_t index)
 {
-	return *(void**)(vector->list + (vector->item_size * index));
+	return *(void**) ((byte *)vector->list + (vector->item_size * index));
 }
 
 /**
@@ -139,7 +139,7 @@ as_vector_increase_capacity(as_vector* vector);
 static inline void
 as_vector_set(as_vector* vector, uint32_t index, void* value)
 {
-	memcpy(vector->list + (index * vector->item_size), value, vector->item_size);
+	memcpy((byte *)vector->list + (index * vector->item_size), value, vector->item_size);
 }
 
 /**
@@ -151,7 +151,7 @@ as_vector_append(as_vector* vector, void* value)
 	if (vector->size >= vector->capacity) {
 		as_vector_increase_capacity(vector);
 	}
-	memcpy(vector->list + (vector->size * vector->item_size), value, vector->item_size);
+	memcpy((byte *)vector->list + (vector->size * vector->item_size), value, vector->item_size);
 	vector->size++;
 }
 
@@ -167,5 +167,5 @@ as_vector_append_unique(as_vector* vector, void* value);
 static inline void
 as_vector_move(as_vector* vector, uint32_t source, uint32_t target)
 {
-	memcpy(vector->list + (target * vector->item_size), vector->list + (source * vector->item_size), vector->item_size);
+	memcpy((byte *)vector->list + (target * vector->item_size), (byte *)vector->list + (source * vector->item_size), vector->item_size);
 }
