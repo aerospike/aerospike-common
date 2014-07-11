@@ -291,11 +291,18 @@ char * as_string_val_tostring(const as_val * v);
 
 /**
  *	@private
- *	Copy null terminated src to trg up to a maximum length.
- *	If maximum length reached, null terminate last character and
+ *	Copy null terminated src to trg up to a maximum size.
+ *	If maximum size reached, null terminate last character and
  *  and return true that truncation occurred.
  *
- *  as_strncpy does not pad unused bytes with zeroes like the 
+ *  as_strncpy does not pad unused bytes with zeroes like the
  *  standard strncpy.
+ *
+ *	~~~~~~~~~~{.c}
+ *		char target[64];
+ *		as_strncpy(target, "source string", sizeof(target));
+ *	~~~~~~~~~~
+ *
+ *	@relatesalso as_string
  */
-bool as_strncpy(char* trg, const char* src, int len);
+bool as_strncpy(char* trg, const char* src, int size);

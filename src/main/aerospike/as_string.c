@@ -200,9 +200,9 @@ char * as_string_val_tostring(const as_val * v)
  ******************************************************************************/
 
 bool
-as_strncpy(char* trg, const char* src, int len)
+as_strncpy(char* trg, const char* src, int size)
 {
-	int max = len - 1;
+	int max = size - 1;
 	int i = 0;
 	
 	while (*src) {
