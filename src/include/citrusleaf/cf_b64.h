@@ -27,20 +27,6 @@ extern "C" {
  * FUNCTIONS
  ******************************************************************************/
 
-// TODO - deprecate these:
-
-bool cf_base64_validate_input(const uint8_t *b, const int len);
-int cf_base64_encode_maxlen(int len);
-void cf_base64_encode(uint8_t * in_bytes, uint8_t *out_bytes, int *len_r);
-void cf_base64_tostring(uint8_t * in_bytes, char *out_bytes, int *len_r);
-int cf_base64_decode_inplace(uint8_t *bytes, int *len_r, bool validate);
-int cf_base64_decode(uint8_t *in_bytes, uint8_t *out_bytes, int *len_r, bool validate);
-int cf_base64_test();
-
-
-
-// TODO - switch usage to these:
-
 // Our base-64 encoding always pads with '=' so encoded length will always be a
 // multiple of 4 bytes. Note that the length returned here does NOT include an
 // extra byte for making a null-terminated string.

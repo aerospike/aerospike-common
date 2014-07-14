@@ -15,36 +15,15 @@
  * the License.
  */
 
-/**
- *  A general purpose base64 encoder and decoder that's C flavored
- */
-
 #include "citrusleaf/cf_b64.h"
 
 #include <stdbool.h>
 #include <stdint.h>
-#include <stdio.h>
+
 
 /******************************************************************************
  * CONSTANTS
  ******************************************************************************/
-
-#define da base64_decode_a
-
-#define TEST_LEN_1 100
-
-/******************************************************************************
- * VARIABLES
- ******************************************************************************/
-
-
-static const uint8_t base64_bytes[] = { 
-	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
-	'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z', 
-	'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n',
-	'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
-};
 
 static const char base64_chars[] = { 
 	'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N',
@@ -54,8 +33,8 @@ static const char base64_chars[] = {
 	'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '+', '/'
 };
 
-static const bool base64_valid_a[256] = {
-	    /*00*/ /*01*/ /*02*/ /*03*/ /*04*/ /*05*/ /*06*/ /*07*/   /*08*/ /*09*/ /*0A*/ /*0B*/ /*0C*/ /*0D*/ /*0E*/ /*0F*/
+static const bool base64_valid_a[] = {
+		/*00*/ /*01*/ /*02*/ /*03*/ /*04*/ /*05*/ /*06*/ /*07*/   /*08*/ /*09*/ /*0A*/ /*0B*/ /*0C*/ /*0D*/ /*0E*/ /*0F*/
 /*00*/	false, false, false, false, false, false, false, false,   false, false, false, false, false, false, false, false,
 /*10*/  false, false, false, false, false, false, false, false,   false, false, false, false, false, false, false, false,
 /*20*/	false, false, false, false, false, false, false, false,   false, false, false,  true, false, false, false,  true,
@@ -74,8 +53,8 @@ static const bool base64_valid_a[256] = {
 /*F0*/	false, false, false, false, false, false, false, false,   false, false, false, false, false, false, false, false
 };
 
-static const uint8_t base64_decode_a[256] = {
-	    /*00*/ /*01*/ /*02*/ /*03*/ /*04*/ /*05*/ /*06*/ /*07*/   /*08*/ /*09*/ /*0A*/ /*0B*/ /*0C*/ /*0D*/ /*0E*/ /*0F*/
+static const uint8_t base64_decode_a[] = {
+		/*00*/ /*01*/ /*02*/ /*03*/ /*04*/ /*05*/ /*06*/ /*07*/   /*08*/ /*09*/ /*0A*/ /*0B*/ /*0C*/ /*0D*/ /*0E*/ /*0F*/
 /*00*/	    0,     0,     0,     0,     0,     0,     0,     0,       0,     0,     0,     0,     0,     0,     0,     0,
 /*10*/      0,     0,     0,     0,     0,     0,     0,     0,       0,     0,     0,     0,     0,     0,     0,     0,
 /*20*/	    0,     0,     0,     0,     0,     0,     0,     0,       0,     0,     0,    62,     0,     0,     0,    63,
@@ -94,252 +73,15 @@ static const uint8_t base64_decode_a[256] = {
 /*F0*/	    0,     0,     0,     0,     0,     0,     0,     0,       0,     0,     0,     0,     0,     0,     0,     0
 };
 
+// Shortcuts:
+#define EA base64_chars
+#define VA base64_valid_a
+#define DA base64_decode_a
+
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
-
-/*
-static inline bool base64_valid_char(uint8_t c)
-{
-	return(base64_valid_a[c]);
-}
-*/
-
-bool cf_base64_validate_input(const uint8_t *b, const int len)
-{
-	// length must be 4-aligned
-	if (len % 4 != 0) {
-		fprintf(stderr, "base64 validate input: bad length %d must be 4 length\n",len);
-		return(false);
-	}
-
-	for (int i=0;i<len - 2;i++) {
-		if (! base64_valid_a[ b[i] ] ) {
-			fprintf(stderr, "base64: bad character offset %d\n",i);
-			return(false);
-		}
-	}
-
-	// last one or two are allowed to be '=' but [0] only if [1]
-	if (b[1] == '=' && b[0] == '=')	return(true);
-
-	// if they're not '=', still need to validate
-	if (! base64_valid_a[ b[0] ] ) {
-		fprintf(stderr, "next to last not = nor valid: is %c\n",b[0]);
-		return(false);
-	}
-	if (! base64_valid_a[ b[1] ] ) {
-		fprintf(stderr, " last not = nor valid: is %c\n",b[1]);
-		return(false);
-	}
-	
-	// check last four for correct '=' pattern - only l
-	
-	return(true);
-}
-
-// use this function to make sure you're allocating enough space to the encode function
-int cf_base64_encode_maxlen(int len)
-{
-	len = (len + 2) / 3;
-	len <<= 2;
-	return(len+1);
-}
-
-
-// Assumes the output buffer has been allocated to a good size: everyone should know it needs be 4/3 bigger
-void cf_base64_encode(uint8_t * in_bytes, uint8_t *out_bytes, int *len_r) {
-	
-    int len = *len_r;
-    int i = 0;
-    int j = 0;
-
-    while (len >= 3) {
-        out_bytes[j+0] = base64_bytes[ (in_bytes[i+0] & 0xfc) >> 2 ];
-        out_bytes[j+1] = base64_bytes[ ((in_bytes[i+0] & 0x03) << 4) + ((in_bytes[i+1] & 0xf0) >> 4) ];
-        out_bytes[j+2] = base64_bytes[ ((in_bytes[i+1] & 0x0f) << 2) + ((in_bytes[i+2] & 0xc0) >> 6) ];
-        out_bytes[j+3] = base64_bytes[ in_bytes[i+2] & 0x3f ];
-
-        i += 3;
-        j += 4;
-        len -= 3;
-    }
-
-    if (len == 1) {
-        out_bytes[j+0] = base64_bytes[ (in_bytes[i+0] & 0xfc) >> 2 ];
-        out_bytes[j+1] = base64_bytes[ ((in_bytes[i+0] & 0x03) << 4) ];
-        out_bytes[j+2] = '=';
-        out_bytes[j+3] = '=';
-        j += 4;
-    }
-    else if (len == 2) {
-        out_bytes[j+0] = base64_bytes[ (in_bytes[i+0] & 0xfc) >> 2 ];
-        out_bytes[j+1] = base64_bytes[ ((in_bytes[i+0] & 0x03) << 4) + ((in_bytes[i+1] & 0xf0) >> 4) ];
-        out_bytes[j+2] = base64_bytes[ ((in_bytes[i+1] & 0x0f) << 2) ];
-        out_bytes[j+3] = '=';
-        j += 4;
-    }
-
-    *len_r = j;
-
-}
-
-void cf_base64_tostring(uint8_t * in_bytes, char *out_bytes, int *len_r) {
-	
-    int len = *len_r;
-    int i = 0;
-    int j = 0;
-
-    while (len >= 3) {
-        out_bytes[j+0] = base64_chars[ (in_bytes[i+0] & 0xfc) >> 2 ];
-        out_bytes[j+1] = base64_chars[ ((in_bytes[i+0] & 0x03) << 4) + ((in_bytes[i+1] & 0xf0) >> 4) ];
-        out_bytes[j+2] = base64_chars[ ((in_bytes[i+1] & 0x0f) << 2) + ((in_bytes[i+2] & 0xc0) >> 6) ];
-        out_bytes[j+3] = base64_chars[ in_bytes[i+2] & 0x3f ];
-
-        i += 3;
-        j += 4;
-        len -= 3;
-    }
-
-    if (len == 1) {
-        out_bytes[j+0] = base64_chars[ (in_bytes[i+0] & 0xfc) >> 2 ];
-        out_bytes[j+1] = base64_chars[ ((in_bytes[i+0] & 0x03) << 4) ];
-        out_bytes[j+2] = '=';
-        out_bytes[j+3] = '=';
-        j += 4;
-    }
-    else if (len == 2) {
-        out_bytes[j+0] = base64_chars[ (in_bytes[i+0] & 0xfc) >> 2 ];
-        out_bytes[j+1] = base64_chars[ ((in_bytes[i+0] & 0x03) << 4) + ((in_bytes[i+1] & 0xf0) >> 4) ];
-        out_bytes[j+2] = base64_chars[ ((in_bytes[i+1] & 0x0f) << 2) ];
-        out_bytes[j+3] = '=';
-        j += 4;
-    }
-
-    out_bytes[j] = 0;
-
-    *len_r = j;
-
-}
-
-
-// outbuf always shorter than inbuf, use it?
-
-int cf_base64_decode_inplace(uint8_t *bytes, int *len_r, bool validate)
-{
-	if (validate) {
-		if (true != cf_base64_validate_input(bytes, *len_r)) {
-			fprintf(stderr, "base64 decode: length must be 4 aligned\n");
-			return(-1);
-		}
-	}
-
-	
-    int len = *len_r;
-    int i = 0;
-    int j = 0;
-
-    int len_cor;
-    if (bytes[len-1] == '=') {
-        len_cor = 1;
-        if (bytes[len-2] == '=') {
-            len_cor = 2;
-        }
-    }
-    else {
-        len_cor = 0;
-    }
-
-    while (i < len) {
-        uint8_t b0, b1, b2;
-        b0 = (da[ bytes[i+0] ] << 2) | (da[ bytes[i+1]]  >> 4);
-        b1 = (da[ bytes[i+1] ] << 4) | (da[ bytes[i+2] ] >> 2);
-        b2 = (da[ bytes[i+2] ] << 6) |  da[ bytes[i+3] ];
-
-        bytes[j] = b0;
-        bytes[j+1] = b1;
-        bytes[j+2] = b2;
-
-        i += 4;
-        j += 3;
-    }
-
-    *len_r = j - len_cor;
-    return(0);
-
-}
-
-int cf_base64_decode(uint8_t *in_bytes, uint8_t *out_bytes, int *len_r, bool validate) {
-
-	if (validate) {
-		if (true != cf_base64_validate_input(in_bytes, *len_r)) {
-			fprintf(stderr, "base64 decode: length must be 4 aligned\n");
-			return(-1);
-		}
-	}
-
-    int len = *len_r;
-    int i = 0;
-    int j = 0;
-
-    while (i < len) {
-        out_bytes[j+0] = (da[ in_bytes[i+0] ] << 2) | (da[ in_bytes[i+1]]  >> 4);
-        out_bytes[j+1] = (da[ in_bytes[i+1] ] << 4) | (da[ in_bytes[i+2] ] >> 2);
-        out_bytes[j+2] = (da[ in_bytes[i+2] ] << 6) |  da[ in_bytes[i+3] ];
-
-        i += 4;
-        j += 3;
-    }
-
-    if (in_bytes[i-1] == '=') j--;
-    if (in_bytes[i-2] == '=') j--;
-
-    *len_r = j;
-    return(0);
-}
-
-//
-// Unit test
-//
-
-int cf_base64_test() {
-	uint8_t buf[TEST_LEN_1];
-	for (int i=0 ; i < sizeof(buf) ; i++) {
-		buf[i] = i;
-    }
-	
-	uint8_t b64_buf[ cf_base64_encode_maxlen( sizeof(buf) ) ];
-	int len = sizeof(buf);
-	cf_base64_encode( buf , b64_buf , &len);
-	b64_buf[len] = 0;
-	
-	fprintf(stderr, "b64 test: encoded. start len %zd new len %d\n",sizeof(buf), len);
-	fprintf(stderr, "  %s\n",b64_buf);
-	
-	cf_base64_decode_inplace(b64_buf, &len, true);
-	
-	if (len != sizeof(buf) ) {
-		fprintf(stderr, " test fail: length should be %zd is %d\n",sizeof(buf),len);
-		return(-1);
-	}
-	
-	for (int i=0 ; i < sizeof(buf) ; i++) {
-		if (buf[i] != b64_buf[i]) {
-			fprintf(stderr, " test fail: byte %d is %02x should be %02x\n",i,buf[i],b64_buf[i]);
-		}
-	}
-	
-	return(0);
-}
-
-
-
-// TODO - switch usage to these:
-
-#define EA base64_chars
-#define DA base64_decode_a
-#define VA base64_valid_a
 
 // Must have allocated big enough 'out' - e.g. use cf_b64_encoded_len(in_size).
 void
@@ -386,7 +128,8 @@ cf_b64_encode(const uint8_t* in, uint32_t in_size, char* out)
 // Must have allocated big enough 'out' - e.g. use cf_b64_decoded_buf_size().
 // Note that 'in_len' must be a padded encoded size - an exact multiple of 4.
 // 'out_size' returns the decoded size after padding has been accounted for -
-// i.e. it may be 1 or 2 less than the 'out' buffer size.
+// i.e. it may be 1 or 2 less than the 'out' buffer size. Also, 'in_len' = 0 is
+// handled, and gives 'out_size' = 0.
 void
 cf_b64_decode(const char* in, uint32_t in_len, uint8_t* out, uint32_t* out_size)
 {
@@ -465,7 +208,8 @@ cf_b64_decode_in_place(uint8_t* in_out, uint32_t in_len, uint32_t* out_size)
 }
 
 // Make sure the length is ok and all characters are valid base64 characters,
-// including any '=' padding at the end.
+// including any '=' padding at the end. Note that 'in_len' = 0 is considered
+// invalid.
 static bool
 is_valid_encoded(const char* in, uint32_t in_len)
 {
