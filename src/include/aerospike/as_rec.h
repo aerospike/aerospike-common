@@ -142,6 +142,11 @@ typedef struct as_rec_hooks_s {
 	int (* set_type)(const as_rec * rec,  uint8_t type);
 
 	/**
+	 *	Set the time to live (ttl) of the record.
+	 */
+	int (* set_ttl)(const as_rec * rec,  uint32_t ttl);
+
+	/**
 	 *	Iterate over each bin in the record.
 	 */
 	bool (* foreach)(const as_rec * rec, as_rec_foreach_callback callback, void * udata);
@@ -289,6 +294,16 @@ static inline int  as_rec_set_flags(const as_rec * rec, const char * name, uint8
 static inline int as_rec_set_type(const as_rec * rec, uint8_t rec_type) 
 {
 	return as_util_hook(set_type, 0, rec, rec_type);
+}
+
+/**
+ *	Set the time to live (ttl).
+ *
+ *	@relatesalso as_rec
+ */
+static inline int as_rec_set_ttl(const as_rec * rec, uint32_t ttl)
+{
+	return as_util_hook(set_ttl, 0, rec, ttl);
 }
 
 /******************************************************************************
