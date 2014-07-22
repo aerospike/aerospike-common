@@ -50,6 +50,7 @@ typedef cf_atomic64 cf_atomic_clock;
 cf_clock cf_getms();
 cf_clock cf_getmicros();
 cf_clock cf_getus();
+cf_clock cf_getns();
 cf_clock cf_clock_getabsolute();
 cf_clock cf_get_seconds();
 cf_clock cf_secs_since_clepoch();
@@ -81,6 +82,10 @@ static inline cf_clock CF_TIMESPEC_TO_US( struct timespec ts ) {
     uint64_t r2 = ts.tv_sec;
     r2 *= 1000000;
     return ( r1 + r2 );
+}
+
+static inline cf_clock CF_TIMESPEC_TO_NS( struct timespec ts ) {
+    return (uint64_t)ts.tv_nsec + ((uint64_t)ts.tv_sec * 1000000000);
 }
 
 static inline void CF_TIMESPEC_ADD_MS(struct timespec *ts, uint ms) {

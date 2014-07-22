@@ -58,6 +58,16 @@ cf_clock cf_getus() {
 #endif
 }
 
+cf_clock cf_getns() {
+#ifdef __APPLE__
+	return mach_absolute_time();
+#else
+	struct timespec ts;
+	clock_gettime(CLOCK_MONOTONIC, &ts);
+	return CF_TIMESPEC_TO_NS(ts);
+#endif
+}
+
 cf_clock cf_clock_getabsolute() {
 #ifdef __APPLE__
 	struct timeval tv;
