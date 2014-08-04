@@ -147,6 +147,11 @@ typedef struct as_rec_hooks_s {
 	int (* set_ttl)(const as_rec * rec,  uint32_t ttl);
 
 	/**
+	 *	Discard the record's key.
+	 */
+	int (* drop_key)(const as_rec * rec);
+
+	/**
 	 *	Iterate over each bin in the record.
 	 */
 	bool (* foreach)(const as_rec * rec, as_rec_foreach_callback callback, void * udata);
@@ -304,6 +309,16 @@ static inline int as_rec_set_type(const as_rec * rec, uint8_t rec_type)
 static inline int as_rec_set_ttl(const as_rec * rec, uint32_t ttl)
 {
 	return as_util_hook(set_ttl, 0, rec, ttl);
+}
+
+/**
+ *	Drop the record's key.
+ *
+ *	@relatesalso as_rec
+ */
+static inline int as_rec_drop_key(const as_rec * rec)
+{
+	return as_util_hook(drop_key, 0, rec);
 }
 
 /******************************************************************************
