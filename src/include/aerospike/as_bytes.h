@@ -584,25 +584,6 @@ static inline uint32_t as_bytes_get_int32(const as_bytes * bytes, uint32_t index
 }
 
 /**
- *	Get an integer that was encoded in 7-bit format.
- *	The high bit tells the reader whether to continue reading more bytes.
- *
- *	~~~~~~~~~~{.c}
- *	int32_t value = 0;
- *	uint32_t sz = as_bytes_get_int32_var(&bytes, 0, &value);
- *	if ( sz == 0 ) {
- *		// sz == 0, means that an error occurred
- *	}
- *	~~~~~~~~~~
- *
- *	@return The number of bytes read and stored into value. 0 (zero) indicates
- * 			an error has occurred.
- *
- *	@relatesalso as_bytes
- */
-uint32_t as_bytes_get_int32_var(const as_bytes * bytes, uint32_t index, int32_t * value);
-
-/**
  *	Read an int64_t from the given bytes.
  *
  *	~~~~~~~~~~{.c}
@@ -622,6 +603,24 @@ static inline uint32_t as_bytes_get_int64(const as_bytes * bytes, uint32_t index
 {
 	return as_bytes_copy(bytes, index, (uint8_t *) value, 8);
 }
+
+/**
+ *	Decode an integer in variable 7-bit format.
+ *	The high bit indicates if more bytes are used.
+ *
+ *	~~~~~~~~~~{.c}
+ *	uint32_t value = 0;
+ *	uint32_t sz = as_bytes_get_var_int(&bytes, 0, &value);
+ *	if ( sz == 0 ) {
+ *		// sz == 0, means that an error occurred
+ *	}
+ *	~~~~~~~~~~
+ *
+ *	@return The number of bytes copied in to value.
+ *
+ *	@relatesalso as_bytes
+ */
+uint32_t as_bytes_get_var_int(const as_bytes * bytes, uint32_t index, uint32_t * value);
 
 /******************************************************************************
  *	SET AT INDEX
@@ -710,6 +709,23 @@ static inline bool as_bytes_set_int64(as_bytes * bytes, uint32_t index, int64_t 
 	return as_bytes_set(bytes, index, (uint8_t *) &value, 8);
 }
 
+/**
+ *	Encode an integer in 7-bit format.
+ *	The high bit indicates if more bytes are used.
+ *
+ *	~~~~~~~~~~{.c}
+ *	as_bytes_set_var_int(&bytes, 0, 36);
+ *	~~~~~~~~~~
+ *
+ *	The `bytes` must be sufficiently sized for the data being written.
+ *	To ensure the `bytes` is allocated sufficiently, you will need to call
+ *	`as_bytes_ensure()`.
+ *
+ *	@return The number of bytes copied into byte array.
+ *
+ *	@relatesalso as_bytes
+ */
+uint32_t as_bytes_set_var_int(const as_bytes * bytes, uint32_t index, uint32_t value);
 
 /******************************************************************************
  *	APPEND TO THE END
