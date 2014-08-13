@@ -583,7 +583,26 @@ static inline uint32_t as_bytes_get_int32(const as_bytes * bytes, uint32_t index
 	return as_bytes_copy(bytes, index, (uint8_t *) value, 4);
 }
 
-/** 
+/**
+ *	Get an integer that was encoded in 7-bit format.
+ *	The high bit tells the reader whether to continue reading more bytes.
+ *
+ *	~~~~~~~~~~{.c}
+ *	int32_t value = 0;
+ *	uint32_t sz = as_bytes_get_int32_var(&bytes, 0, &value);
+ *	if ( sz == 0 ) {
+ *		// sz == 0, means that an error occurred
+ *	}
+ *	~~~~~~~~~~
+ *
+ *	@return The number of bytes read and stored into value. 0 (zero) indicates
+ * 			an error has occurred.
+ *
+ *	@relatesalso as_bytes
+ */
+uint32_t as_bytes_get_int32_var(const as_bytes * bytes, uint32_t index, int32_t * value);
+
+/**
  *	Read an int64_t from the given bytes.
  *
  *	~~~~~~~~~~{.c}
