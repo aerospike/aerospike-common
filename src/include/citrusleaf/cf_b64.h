@@ -46,6 +46,8 @@ cf_b64_decoded_buf_size(uint32_t in_len)
 	return (in_len * 3) >> 2;
 }
 
+int	base64_encode_maxlen(int len);
+int	base64_decode_maxlen(int len);
 void cf_b64_decode(const char* in, uint32_t in_len, uint8_t* out, uint32_t* out_size);
 void cf_b64_decode_in_place(uint8_t* in_out, uint32_t in_len, uint32_t* out_size);
 bool cf_b64_validate_and_decode(const char* in, uint32_t in_len, uint8_t* out, uint32_t* out_size);

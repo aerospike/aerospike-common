@@ -83,6 +83,28 @@ static const uint8_t base64_decode_a[] = {
  * FUNCTIONS
  ******************************************************************************/
 
+// Calculate expected encode length
+int             
+base64_encode_maxlen(int len)
+{                   
+	len = (len + 2) / 3;
+	len <<= 2;      
+	return(len+1);  
+}
+
+// Calculate expected decode length
+int
+base64_decode_maxlen(int len)
+{
+	if( (len % 4) != 0) {
+		return -1;
+	} else {
+		len >>= 2;
+		len = len * 3;
+		return len;
+	}
+}
+
 // Must have allocated big enough 'out' - e.g. use cf_b64_encoded_len(in_size).
 void
 cf_b64_encode(const uint8_t* in, uint32_t in_size, char* out)
