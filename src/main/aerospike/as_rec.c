@@ -36,6 +36,7 @@ extern inline uint32_t		as_rec_ttl(const as_rec * rec);
 extern inline uint16_t		as_rec_gen(const as_rec * rec);
 extern inline as_bytes *	as_rec_digest(const as_rec * rec);
 extern inline uint16_t		as_rec_numbins(const as_rec * rec);
+extern inline as_list *		as_rec_bin_names(const as_rec * rec);
 extern inline int			as_rec_set_flags(const as_rec * rec, const char * name, uint8_t flags);
 extern inline int			as_rec_set_type(const as_rec * rec, uint8_t rec_type);
 extern inline int			as_rec_set_ttl(const as_rec * rec, uint32_t ttl);
