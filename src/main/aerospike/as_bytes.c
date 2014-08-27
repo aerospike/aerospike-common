@@ -224,10 +224,9 @@ uint32_t as_bytes_get_var_int(const as_bytes * bytes, uint32_t index, uint32_t *
 	uint8_t b;
 	
 	do {
-		b = *p;
+		b = *p++;
 		val |= (b & 0x7F) << shift;
 		shift += 7;
-		p++;
 	} while ((b & 0x80));
 	
 	*value = val;
