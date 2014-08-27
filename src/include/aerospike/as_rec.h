@@ -35,6 +35,17 @@
 struct as_rec_hooks_s;
 
 /**
+ *	Callback function for `as_rec_bin_names()`.  Used for porting bin names
+ *	to Lua.
+ *
+ *	@param bin_names 		A string containing the (null-terminated) bin names.
+ *	@param nbins 			The number of bins in the record.
+ *	@param max_name_size	The maximum length of a bin name.
+ *	@param udata			User-provided data.
+ */
+typedef void (* as_rec_bin_names_callback) (char * bin_names, uint32_t nbins, uint16_t max_name_size, void * udata);
+
+/**
  *	Callback function for `as_rec_foreach()`. Called for each bin in the 
  *	record.
  *	
@@ -129,7 +140,7 @@ typedef struct as_rec_hooks_s {
 	/**
 	 *	Get a list of the record's bin names.
 	 */
-	as_list * (* bin_names)(const as_rec * rec);
+	int (* bin_names)(const as_rec * rec, as_rec_bin_names_callback callback, void * udata);
 
 	/**
 	 *	Get the digest of the record.
@@ -281,9 +292,9 @@ static inline uint16_t as_rec_numbins(const as_rec * rec)
  *
  *	@relatesalso as_rec
  */
-static inline as_list * as_rec_bin_names(const as_rec * rec)
+static inline int as_rec_bin_names(const as_rec * rec, as_rec_bin_names_callback callback, void * udata)
 {
-	return as_util_hook(bin_names, 0, rec);
+	return as_util_hook(bin_names, 0, rec, callback, udata);
 }
 
 /**
