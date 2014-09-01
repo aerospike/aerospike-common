@@ -18,6 +18,7 @@
 #pragma once
 
 #include <aerospike/as_hashmap_iterator.h>
+#include <aerospike/as_val_hashmap_iterator.h>
 
 /******************************************************************************
  *	TYPES
@@ -28,6 +29,7 @@
  */
 typedef union as_map_iterator_u {
 	
-	as_hashmap_iterator 	hashmap;
+	as_hashmap_iterator 	_hashmap;
+	as_val_hashmap_iterator	_val_hashmap;
 
 } as_map_iterator;
