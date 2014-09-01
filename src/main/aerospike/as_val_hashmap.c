@@ -318,6 +318,25 @@ uint32_t as_val_hashmap_hashcode(const as_val_hashmap *map)
 }
 
 /**
+ * Remove all mappings from map
+ *
+ * @param map	target map
+ * @return	always returns 0
+ */
+int as_val_hashmap_clear(as_val_hashmap *map)
+{
+	size_t new_cap;
+
+	map->size = 0;
+	map->nr_fr = map->cap;
+	memset(map->st, ST_FREE, map->cap);
+
+	new_cap = choose_shrink_cap(map);
+	resize_hash_map(map, new_cap);
+	return 0;
+}
+
+/**
  * Retrive mapping for key
  *
  * @param map	target map

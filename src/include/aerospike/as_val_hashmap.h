@@ -51,7 +51,7 @@ static inline uint32_t as_val_hashmap_size(const as_val_hashmap *map)
 	return map->size;
 }
 
-extern void as_val_hashmap_clear(as_val_hashmap *map);
+extern int as_val_hashmap_clear(as_val_hashmap *map);
 
 extern as_val *as_val_hashmap_get(const as_val_hashmap *map, const as_val *k);
 extern as_val *as_val_hashmap_set(as_val_hashmap *map, as_val *k, as_val *v);
