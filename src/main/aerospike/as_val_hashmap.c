@@ -38,7 +38,8 @@ static const as_map_hooks map_hooks = {
 	__hook(set,		as_val_hashmap_set),
 	__hook(get,		as_val_hashmap_get),
 	__hook(remove,		as_val_hashmap_remove),
-	__hook(clear,		as_val_hashmap_clear)
+	__hook(clear,		as_val_hashmap_clear),
+	__hook(foreach,		as_val_hashmap_foreach)
 };
 
 /**
