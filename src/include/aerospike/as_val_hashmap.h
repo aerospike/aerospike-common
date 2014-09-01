@@ -13,6 +13,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef AS_VAL_HASHMAP_PRIVATE
+enum {
+	ST_FREE = 0,
+	ST_FULL,
+	ST_REMOVED
+};
+#endif
+
 typedef struct _as_val_hashmap {
 	/* private: internal use only */
 	as_map _;

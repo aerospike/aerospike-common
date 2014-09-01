@@ -10,6 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* we need state constants (ST_FREE, etc.) */
+#define AS_VAL_HASHMAP_PRIVATE 1
+
 #include <citrusleaf/alloc.h>
 #include <aerospike/as_boolean.h>
 #include <aerospike/as_integer.h>
@@ -21,13 +24,6 @@
 
 #define DEFAULT_MAX_LOAD_FACTOR		0.75f
 #define DEFAULT_MIN_LOAD_FACTOR		0.50f
-
-/* table entry states */
-enum {
-	ST_FREE = 0,
-	ST_FULL,
-	ST_REMOVED
-};
 
 /* as_map fn hook table */
 #define __hook(t, n) .t = (typeof(map_hooks.t)) n
