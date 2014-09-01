@@ -231,7 +231,10 @@ as_val_hashmap *__as_val_hashmap_init(as_val_hashmap *map, size_t cap)
 		return NULL;
 
 	/* calculate next prime capacity from initial capacity */
-	cap = next_prime(cap);
+	if (cap < 3)
+		cap = 3;
+	else
+		cap = next_prime(cap);
 
 	/* set default values if not present or invalid */
 	if (map->max_lf <= 0.0f || map->max_lf > 1.0f)
