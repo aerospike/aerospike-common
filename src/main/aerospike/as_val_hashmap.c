@@ -32,7 +32,7 @@ enum {
 /* as_map fn hook table */
 #define __hook(t, n) .t = (typeof(map_hooks.t)) n
 static const as_map_hooks map_hooks = {
-	__hook(destroy,		as_val_hashmap_destroy),
+	__hook(destroy,		as_val_hashmap_release),
 	__hook(hashcode,	as_val_hashmap_hashcode),
 	__hook(size,		as_val_hashmap_size),
 	__hook(set,		as_val_hashmap_set),
@@ -67,7 +67,7 @@ static inline size_t choose_lowm(const as_val_hashmap *map)
 static inline size_t choose_grow_cap(const as_val_hashmap *map)
 {
 	size_t sz = map->size + 1;
-	size_t x = sz + 1;
+	size_t x = sz + 2;
 	size_t y = (size_t) ((4 * sz) / (3 * map->min_lf + map->max_lf));
 	return next_prime(x > y ? x : y);
 }
@@ -78,7 +78,7 @@ static inline size_t choose_grow_cap(const as_val_hashmap *map)
 static inline size_t choose_shrink_cap(const as_val_hashmap *map)
 {
 	size_t sz = map->size;
-	size_t x = sz + 1;
+	size_t x = sz + 2;
 	size_t y = (size_t) ((4 * sz) / (map->min_lf + 3 * map->max_lf));
 	return next_prime(x > y ? x : y);
 }
@@ -195,6 +195,13 @@ static void resize_hash_map(as_val_hashmap *map, size_t cap)
 	size_t i, j;
 	as_val_hashmap old_map = *map;
 
+	/*
+	 * decrement value calculated with (hash % (cap - 2)),
+	 * if cap <= 2, results in arith exception
+	 */
+	if (cap < 3)
+		cap = 3;
+
 	map->cap = cap;
 	map->nr_fr = cap - map->size;
 	map->lo_wm = choose_lowm(map);
@@ -218,14 +225,7 @@ static void resize_hash_map(as_val_hashmap *map, size_t cap)
 	cf_free(old_map.val_tbl);
 }
 
-/**
- * Initialize hash map structure.
- *
- * @param map	target map
- * @param cap	initial capacity
- * @return	on success @map is returned, otherwise NULL.
- */
-as_val_hashmap *as_val_hashmap_init(as_val_hashmap *map, size_t cap)
+as_val_hashmap *__as_val_hashmap_init(as_val_hashmap *map, size_t cap)
 {
 	if (!map)
 		return NULL;
@@ -258,8 +258,6 @@ as_val_hashmap *as_val_hashmap_init(as_val_hashmap *map, size_t cap)
 
 	memset(map->st, ST_FREE, cap);
 
-	/* initialize parent map structure */
-	as_map_cons((as_map *) map, false, NULL, &map_hooks);
 	return map;
 out_val_tbl:
 	cf_free(map->val_tbl);
@@ -267,6 +265,23 @@ out_key_tbl:
 	cf_free(map->key_tbl);
 out_mem:
 	return NULL;
+}
+
+/**
+ * Initialize hash map structure.
+ *
+ * @param map	target map
+ * @param cap	initial capacity
+ * @return	on success @map is returned, otherwise NULL.
+ */
+as_val_hashmap *as_val_hashmap_init(as_val_hashmap *map, size_t cap)
+{
+	map = __as_val_hashmap_init(map, cap);
+	if (!map)
+		return NULL;
+	/* initialize parent map structure */
+	as_map_cons((as_map *) map, false, NULL, &map_hooks);
+	return map;
 }
 
 /**
@@ -279,12 +294,20 @@ out_mem:
  */
 as_val_hashmap *as_val_hashmap_new(float min_lf, float max_lf, size_t inicap)
 {
+	as_val_hashmap *ret;
 	as_val_hashmap *map = cf_malloc(sizeof(as_val_hashmap));
 	if (!map)
 		return NULL;
 	map->min_lf = min_lf;
 	map->max_lf = max_lf;
-	return as_val_hashmap_init(map, inicap);
+	ret = __as_val_hashmap_init(map, inicap);
+	if (!ret) {
+		cf_free(map);
+		return NULL;
+	}
+	/* initialize parent map structure */
+	as_map_cons((as_map *) map, true, NULL, &map_hooks);
+	return ret;
 }
 
 /**
@@ -292,12 +315,22 @@ as_val_hashmap *as_val_hashmap_new(float min_lf, float max_lf, size_t inicap)
  *
  * @param map	target map
  */
-bool as_val_hashmap_destroy(as_val_hashmap *map)
+bool as_val_hashmap_release(as_val_hashmap *map)
 {
 	cf_free(map->st);
 	cf_free(map->key_tbl);
 	cf_free(map->val_tbl);
 	return true;
+}
+
+/**
+ * Destroy hash map
+ *
+ * @param map	target map
+ */
+void as_val_hashmap_destroy(as_val_hashmap *map)
+{
+	as_map_destroy((as_map *) map);
 }
 
 /**

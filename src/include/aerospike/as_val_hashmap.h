@@ -35,7 +35,8 @@ typedef struct _as_val_hashmap {
 extern as_val_hashmap *as_val_hashmap_init(as_val_hashmap *map, size_t inicap);
 extern as_val_hashmap *as_val_hashmap_new(float min_lf, float max_lf,
 					  size_t inicap);
-extern bool as_val_hashmap_destroy(as_val_hashmap *map);
+extern bool as_val_hashmap_release(as_val_hashmap *map);
+extern void as_val_hashmap_destroy(as_val_hashmap *map);
 
 extern uint32_t as_val_hashmap_hashcode(const as_val_hashmap *map);
 
