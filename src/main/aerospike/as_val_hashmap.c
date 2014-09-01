@@ -26,15 +26,27 @@
 #define DEFAULT_MAX_LOAD_FACTOR		0.75f
 #define DEFAULT_MIN_LOAD_FACTOR		0.50f
 
+static int __as_map_set(as_val_hashmap *m, const as_val *k, const as_val *v)
+{
+	as_val_hashmap_set(m, (as_val *) k, (as_val *) v);
+	return 0;
+}
+
+static int __as_map_remove(as_val_hashmap *m, const as_val *k)
+{
+	as_val_hashmap_remove(m, (as_val *) k);
+	return 0;
+}
+
 /* as_map fn hook table */
 #define __hook(t, n) .t = (typeof(map_hooks.t)) n
 static const as_map_hooks map_hooks = {
 	__hook(destroy,		as_val_hashmap_release),
 	__hook(hashcode,	as_val_hashmap_hashcode),
 	__hook(size,		as_val_hashmap_size),
-	__hook(set,		as_val_hashmap_set),
+	__hook(set,		__as_map_set),
 	__hook(get,		as_val_hashmap_get),
-	__hook(remove,		as_val_hashmap_remove),
+	__hook(remove,		__as_map_remove),
 	__hook(clear,		as_val_hashmap_clear),
 	__hook(foreach,		as_val_hashmap_foreach),
 	__hook(iterator_new,	as_val_hashmap_iterator_new),
