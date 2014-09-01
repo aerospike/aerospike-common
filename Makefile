@@ -99,6 +99,10 @@ AEROSPIKE-OBJECTS += as_hashmap_hooks.o
 AEROSPIKE-OBJECTS += as_hashmap_iterator.o
 AEROSPIKE-OBJECTS += as_hashmap_iterator_hooks.o
 
+# val_hashmap
+AEROSPIKE-OBJECTS += primes.o
+AEROSPIKE-OBJECTS += as_val_hashmap.o
+
 AEROSPIKE-OBJECTS += as_vector.o
 AEROSPIKE-OBJECTS += as_password.o
 AEROSPIKE-OBJECTS += crypt_blowfish.o
