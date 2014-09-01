@@ -20,6 +20,7 @@
 #include <aerospike/as_pair.h>
 #include <aerospike/as_val_hashmap.h>
 #include <aerospike/as_val_hashmap_iterator.h>
+#include <aerospike/as_map_iterator.h>
 
 #include "primes.h"
 
@@ -38,6 +39,12 @@ static int __as_map_remove(as_val_hashmap *m, const as_val *k)
 	return 0;
 }
 
+static as_map_iterator *__as_map_iter_init(as_val_hashmap *map,
+					   as_val_hashmap_iterator *itr)
+{
+	return (as_map_iterator *) as_val_hashmap_iterator_init(itr, map);
+}
+
 /* as_map fn hook table */
 #define __hook(t, n) .t = (typeof(map_hooks.t)) n
 static const as_map_hooks map_hooks = {
@@ -50,7 +57,7 @@ static const as_map_hooks map_hooks = {
 	__hook(clear,		as_val_hashmap_clear),
 	__hook(foreach,		as_val_hashmap_foreach),
 	__hook(iterator_new,	as_val_hashmap_iterator_new),
-	__hook(iterator_init,	as_val_hashmap_iterator_init)
+	__hook(iterator_init,	__as_map_iter_init)
 };
 
 /**
