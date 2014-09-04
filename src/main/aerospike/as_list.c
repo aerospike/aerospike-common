@@ -150,6 +150,11 @@ static bool as_list_val_tostring_foreach(as_val * val, void * udata)
 	as_list_val_tostring_data * data = (as_list_val_tostring_data *) udata;
 
 	char * str = as_val_tostring(val);
+
+	if ( !str ) {
+		str = "<NULL>";
+	}
+
 	int len = (int)strlen(str);
 
 	if ( data->pos + len + 2 >= data->cap ) {

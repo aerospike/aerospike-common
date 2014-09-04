@@ -100,10 +100,10 @@ static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, 
 	as_map_val_tostring_data * data = (as_map_val_tostring_data *) udata;
 
 	char * keystr = as_val_tostring(key);
-	int keylen = (int)strlen(keystr);
 	if (!keystr) {
 		return false;
 	}
+	int keylen = (int)strlen(keystr);
 
 	char * valstr = as_val_tostring(val);
     if (!valstr) {

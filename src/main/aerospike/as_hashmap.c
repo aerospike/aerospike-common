@@ -95,6 +95,8 @@ as_hashmap * as_hashmap_new(uint32_t capacity)
 
 bool as_hashmap_release(as_hashmap * map)
 {
+	if ( !map ) return false;
+
 	shash_reduce((shash *) map->htable, as_hashmap_shash_destroy, NULL);
 	shash_destroy((shash *) map->htable);
 	return true;
@@ -118,6 +120,8 @@ uint32_t as_hashmap_hashcode(const as_hashmap * map)
 
 uint32_t as_hashmap_size(const as_hashmap * map)
 {
+	if ( !map ) return 0;
+
 	return shash_get_size((shash *) map->htable);
 }
 
@@ -127,6 +131,8 @@ uint32_t as_hashmap_size(const as_hashmap * map)
 
 int as_hashmap_set(as_hashmap * map, const as_val * k, const as_val * v)
 {
+	if ( !map ) return SHASH_ERR;
+
 	uint32_t h = as_val_hashcode(k);
 	as_pair * p = NULL;
 
@@ -140,6 +146,8 @@ int as_hashmap_set(as_hashmap * map, const as_val * k, const as_val * v)
 
 as_val * as_hashmap_get(const as_hashmap * map, const as_val * k)
 {
+	if ( !map ) return NULL;
+
 	uint32_t h = as_val_hashcode(k);
 	as_pair * p = NULL;
 
@@ -152,12 +160,16 @@ as_val * as_hashmap_get(const as_hashmap * map, const as_val * k)
 
 int as_hashmap_clear(as_hashmap * map)
 {
+	if ( !map ) return -1;
+
 	shash_reduce_delete((shash *) map->htable, as_hashmap_shash_clear, NULL);
 	return 0;
 }
 
 int as_hashmap_remove(as_hashmap * map, const as_val * k)
 {
+	if ( !map ) return -1;
+
 	uint32_t h = as_val_hashcode(k);
 	shash_delete_lockfree((shash *) map->htable, &h);
 	return 0;
@@ -169,6 +181,8 @@ int as_hashmap_remove(as_hashmap * map, const as_val * k)
 
 bool as_hashmap_foreach(const as_hashmap * map, as_map_foreach_callback callback, void * udata)
 {
+	if ( !map ) return false;
+
 	as_hashmap_shash_foreach_context ctx = {
 		.udata = udata,
 		.callback = callback

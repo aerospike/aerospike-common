@@ -199,6 +199,40 @@ uint32_t as_bytes_copy(const as_bytes * bytes, uint32_t index, uint8_t * value, 
     return sz;
 }
 
+/**
+ *	Decode an integer in variable 7-bit format.
+ *	The high bit indicates if more bytes are used.
+ *
+ *	~~~~~~~~~~{.c}
+ *	uint32_t value = 0;
+ *	uint32_t sz = as_bytes_get_var_int(&bytes, 0, &value);
+ *	if ( sz == 0 ) {
+ *		// sz == 0, means that an error occurred
+ *	}
+ *	~~~~~~~~~~
+ *
+ *	@return The number of bytes copied in to value.
+ *
+ *	@relatesalso as_bytes
+ */
+uint32_t as_bytes_get_var_int(const as_bytes * bytes, uint32_t index, uint32_t * value)
+{
+	uint8_t* begin = bytes->value + index;
+	uint8_t* p = begin;
+	uint32_t val = 0;
+	uint32_t shift = 0;
+	uint8_t b;
+	
+	do {
+		b = *p++;
+		val |= (b & 0x7F) << shift;
+		shift += 7;
+	} while ((b & 0x80));
+	
+	*value = val;
+	return (uint32_t)(p - begin);
+}
+
 /******************************************************************************
  *	SET AT INDEX
  *****************************************************************************/
@@ -230,6 +264,40 @@ bool as_bytes_set(as_bytes * bytes, uint32_t index, const uint8_t * value, uint3
     	bytes->size = index + size;
     }
     return true;
+}
+
+/**
+ *	Encode an integer in 7-bit format.
+ *	The high bit indicates if more bytes are used.
+ *
+ *	~~~~~~~~~~{.c}
+ *	as_bytes_set_var_int(&bytes, 0, 36);
+ *	~~~~~~~~~~
+ *
+ *	The `bytes` must be sufficiently sized for the data being written.
+ *	To ensure the `bytes` is allocated sufficiently, you will need to call
+ *	`as_bytes_ensure()`.
+ *
+ *	@return The number of bytes copied into byte array.
+ *
+ *	@relatesalso as_bytes
+ */
+uint32_t as_bytes_set_var_int(const as_bytes * bytes, uint32_t index, uint32_t value)
+{
+	uint8_t* begin = bytes->value + index;
+	uint8_t* end = bytes->value + bytes->capacity;
+	uint8_t* p = begin;
+	
+	while (p < end && value >= 0x80) {
+		*p++ = (uint8_t)(value | 0x80);
+		value >>= 7;
+	}
+	
+	if (p < end) {
+		*p++ = (uint8_t)value;
+		return (uint32_t)(p - begin);
+	}
+	return 0;
 }
 
 /******************************************************************************
