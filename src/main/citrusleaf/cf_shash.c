@@ -858,10 +858,11 @@ void shash_deleteall_lockfree(shash *h) {
 			// allocated as part of the overall hash table. So, just mark
 			// it so that it is re-used.
 			e_table->next = NULL;
-			e_table->in_use = false;
 		}
+		e_table->in_use = false;
 		e_table = (shash_elem *) (((uint8_t *)e_table) + SHASH_ELEM_SZ(h));
 	}
+	h->elements = 0;
 }
 
 void shash_deleteall(shash *h) {
@@ -896,13 +897,14 @@ void shash_deleteall(shash *h) {
 			// allocated as part of the overall hash table. So, just mark
 			// it so that it is re-used.
 			e_table->next = NULL;
-			e_table->in_use = false;
 		}
+		e_table->in_use = false;
 		if (l) {
 			pthread_mutex_unlock(l);
 		}
 		e_table = (shash_elem *) (((uint8_t *)e_table) + SHASH_ELEM_SZ(h));
 	}
+	h->elements = 0;
 	if (big_lock) {
 		pthread_mutex_unlock(big_lock);
 	}
