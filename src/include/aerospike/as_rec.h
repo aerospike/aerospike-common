@@ -35,6 +35,17 @@
 struct as_rec_hooks_s;
 
 /**
+ *	Callback function for `as_rec_bin_names()`.  Used for porting bin names
+ *	to Lua.
+ *
+ *	@param bin_names 		A string containing the (null-terminated) bin names.
+ *	@param nbins 			The number of bins in the record.
+ *	@param max_name_size	The maximum length of a bin name.
+ *	@param udata			User-provided data.
+ */
+typedef void (* as_rec_bin_names_callback) (char * bin_names, uint32_t nbins, uint16_t max_name_size, void * udata);
+
+/**
  *	Callback function for `as_rec_foreach()`. Called for each bin in the 
  *	record.
  *	
@@ -61,8 +72,8 @@ typedef struct as_rec_s {
 
 	/**
 	 *	@private
-	 *	as_boolean is a subtype of as_val.
-	 *	You can cast as_boolean to as_val.
+	 *	as_rec is a subtype of as_val.
+	 *	You can cast as_rec to as_val.
 	 */
 	as_val _;
 
@@ -125,6 +136,11 @@ typedef struct as_rec_hooks_s {
 	 *	Get the number of bins of the record.
 	 */
 	uint16_t (* numbins)(const as_rec * rec);
+
+	/**
+	 *	Get a list of the record's bin names.
+	 */
+	int (* bin_names)(const as_rec * rec, as_rec_bin_names_callback callback, void * udata);
 
 	/**
 	 *	Get the digest of the record.
@@ -269,6 +285,16 @@ static inline uint16_t as_rec_gen(const as_rec * rec)
 static inline uint16_t as_rec_numbins(const as_rec * rec) 
 {
 	return as_util_hook(numbins, 0, rec);
+}
+
+/**
+ *	Get a list of the bin names in the record.
+ *
+ *	@relatesalso as_rec
+ */
+static inline int as_rec_bin_names(const as_rec * rec, as_rec_bin_names_callback callback, void * udata)
+{
+	return as_util_hook(bin_names, 0, rec, callback, udata);
 }
 
 /**
