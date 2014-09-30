@@ -11,6 +11,7 @@ PLAN( common ) {
     plan_add( types_bytes );
     plan_add( types_arraylist );
     plan_add( types_hashmap );
+    plan_add( types_val_hashmap );
     plan_add( types_nil );
     plan_add( types_vector );
 
