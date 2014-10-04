@@ -448,7 +448,7 @@ static int as_unpack_list(as_unpacker * pk, int size, as_val ** val)
 
 static int as_unpack_map(as_unpacker * pk, int size, as_val ** val)
 {
-	as_hashmap* map = as_hashmap_new(32);
+	as_hashmap* map = as_hashmap_new(size > 32 ? size : 32);
 	
 	for (int i = 0; i < size; i++) {
 		as_val* k = 0;
