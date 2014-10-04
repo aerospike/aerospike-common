@@ -19,8 +19,10 @@
 
 #include <aerospike/as_hashmap.h>
 #include <aerospike/as_iterator.h>
+#include <aerospike/as_pair.h>
 
 #include <stdbool.h>
+#include <stdint.h>
 
 /******************************************************************************
  *	TYPES
@@ -80,6 +82,13 @@
  *	functions. So, calling `as_iterator_destroy()` is equivalent to calling
  *	`as_hashmap_iterator_destroy()`.
  *
+ *	Notes:
+ *
+ *	as_hashmap_iterator_next() returns an as_pair pointer. The as_pair contains
+ *	the key and value pointers of the current map element. This one as_pair
+ *	"container" is re-used for all the iterations, i.e. the contents will be
+ *	overwritten and are only valid until the next iteration.
+ *
  *	@extends as_iterator
  */
 typedef struct as_hashmap_iterator_s {
@@ -89,27 +98,24 @@ typedef struct as_hashmap_iterator_s {
 	/**
 	 *	The hashmap
 	 */
-	void * htable;
+	const as_hashmap * map;
 
 	/**
 	 *	Current entry
 	 */
-	void * curr;
+	as_hashmap_element * curr;
 
 	/**
-	 *	Next entry
+	 *	Internal counters
 	 */
-	void * next;
+	uint32_t count;
+	uint32_t table_pos;
+	uint32_t extras_pos;
 
 	/**
-	 *	Position
+	 *	Last returned key & value
 	 */
-	uint32_t pos;
-
-	/**
-	 *	Number of entries
-	 */
-	uint32_t size;
+	as_pair pair;
 
 } as_hashmap_iterator;
 

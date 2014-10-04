@@ -27,6 +27,15 @@
  ******************************************************************************/
 
 /**
+ * Internal structure only for use by as_hashmap and as_hashmap_iterator.
+ */
+typedef struct as_hashmap_element_s {
+	as_val * p_key;
+	as_val * p_val;
+	uint32_t next;
+} as_hashmap_element;
+
+/**
  *	A hashtable based implementation of `as_map`.
  *
  *	To use the map, you can either initialize a stack allocated map, 
@@ -70,6 +79,22 @@
  *	So, calling `as_map_destroy()` is equivalent to calling 
  *	`as_hashmap_destroy()`.
  *
+ *	Notes:
+ *
+ *	This hashmap implementation is NOT threadsafe.
+ *
+ *	Internally, the hashmap stores keys' and values' pointers - it does NOT copy
+ *	the keys or values, so the caller must ensure these keys and values are not
+ *	destroyed while the hashmap is still in use.
+ *
+ *	Further, the hashmap does not increment ref-counts of the keys or values.
+ *	However when an element is removed from the hashmap, the hashmap will call
+ *	as_val_destroy() on both the key and value. And when the hashmap is cleared
+ *	or destroyed, as_val_destroy() will be called for all keys and values.
+ *	Therefore if the caller inserts keys and values in the hashmap without extra
+ *	ref-counts, the caller is effectively handing off ownership of these objects
+ *	to the hashmap.
+ *
  *	@extends as_map
  *	@ingroup aerospike_t
  */
@@ -83,9 +108,26 @@ typedef struct as_hashmap_s {
 	as_map _;
 
 	/**
-	 *	Hashtable
+	 * Number of elements in the map.
 	 */
-	void * htable;
+	uint32_t count;
+
+	/**
+	 * The "main" table - elements go here unless their key hash collides with
+	 * that of an existing element's key.
+	 */
+	uint32_t table_capacity;
+	as_hashmap_element * table;
+
+	/**
+	 * The "extra" slots - elements go here when their key hash collides with
+	 * that of an existing element's key.
+	 */
+	uint32_t capacity_step;
+	uint32_t extra_capacity;
+	as_hashmap_element * extras;
+	uint32_t insert_at;
+	uint32_t free_q;
 
 } as_hashmap;
 

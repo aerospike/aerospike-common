@@ -218,10 +218,13 @@ TEST( types_hashmap_iterator, "as_hashmap w/ as_iterator ops" ) {
 	as_hashmap * m = as_hashmap_new(10);
 	assert_int_eq( as_map_size((as_map *) m), 0 );
 
-	as_hashmap_set(m, (as_val *) as_string_new_strdup("a"), (as_val *) as_integer_new(1));
-	as_hashmap_set(m, (as_val *) as_string_new_strdup("b"), (as_val *) as_integer_new(2));
-	as_hashmap_set(m, (as_val *) as_string_new_strdup("c"), (as_val *) as_integer_new(3));
-	assert_int_eq( as_map_size((as_map *) m), 3 );
+	as_hashmap_set(m, (as_val *) as_string_new_strdup("R"), (as_val *) as_integer_new(1));
+	as_hashmap_set(m, (as_val *) as_string_new_strdup("a"), (as_val *) as_integer_new(2));
+	as_hashmap_set(m, (as_val *) as_string_new_strdup("N"), (as_val *) as_integer_new(3));
+	as_hashmap_set(m, (as_val *) as_string_new_strdup("d"), (as_val *) as_integer_new(4));
+	as_hashmap_set(m, (as_val *) as_string_new_strdup("o"), (as_val *) as_integer_new(5));
+	as_hashmap_set(m, (as_val *) as_string_new_strdup("M"), (as_val *) as_integer_new(6));
+	assert_int_eq( as_map_size((as_map *) m), 6 );
 
 	as_iterator * i = (as_iterator *) as_hashmap_iterator_new(m);
 
