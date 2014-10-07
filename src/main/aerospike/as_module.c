@@ -32,14 +32,6 @@ void * as_module_source(as_module * m) {
 }
 
 /**
- * Get the logger for this module.
- */
-as_logger * as_module_logger(as_module * m) {
-    return (m ? (void *) m->logger : NULL);
-}
-
-
-/**
  * Module Destroyer.
  */
 int as_module_destroy(as_module * m) {
