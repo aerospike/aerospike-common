@@ -38,7 +38,7 @@ extern inline as_bytes *	as_rec_digest(const as_rec * rec);
 extern inline uint16_t		as_rec_numbins(const as_rec * rec);
 extern inline int			as_rec_bin_names(const as_rec * rec, as_rec_bin_names_callback callback, void * udata);
 extern inline int			as_rec_set_flags(const as_rec * rec, const char * name, uint8_t flags);
-extern inline int			as_rec_set_type(const as_rec * rec, uint8_t rec_type);
+extern inline int			as_rec_set_type(const as_rec * rec, int8_t rec_type);
 extern inline int			as_rec_set_ttl(const as_rec * rec, uint32_t ttl);
 extern inline int			as_rec_drop_key(const as_rec * rec);
 

@@ -155,7 +155,7 @@ typedef struct as_rec_hooks_s {
 	/**
 	 *	Set the type of record.
 	 */
-	int (* set_type)(const as_rec * rec,  uint8_t type);
+	int (* set_type)(const as_rec * rec, int8_t type);
 
 	/**
 	 *	Set the time to live (ttl) of the record.
@@ -322,7 +322,7 @@ static inline int  as_rec_set_flags(const as_rec * rec, const char * name, uint8
  *
  *	@relatesalso as_rec
  */
-static inline int as_rec_set_type(const as_rec * rec, uint8_t rec_type) 
+static inline int as_rec_set_type(const as_rec * rec, int8_t rec_type) 
 {
 	return as_util_hook(set_type, 0, rec, rec_type);
 }
