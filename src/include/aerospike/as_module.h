@@ -22,7 +22,6 @@
 #include <aerospike/as_stream.h>
 #include <aerospike/as_result.h>
 #include <aerospike/as_types.h>
-#include <aerospike/as_logger.h>
 #include <aerospike/as_udf_context.h>
 
 /*****************************************************************************
@@ -108,7 +107,6 @@ typedef struct as_module_hooks_s {
  */
 typedef struct as_module_s {
     const void *            source;
-    as_logger *             logger;
     const as_module_hooks * hooks;
 } as_module;
 
@@ -123,11 +121,6 @@ typedef struct as_module_s {
  * @param m the module to get the source from.
  */
 void * as_module_source(as_module * m);
-
-/**
- * Get the logger for this module.
- */
-as_logger * as_module_logger(as_module * m);
 
 /**
  * Module Destroyer.
