@@ -21,3 +21,11 @@
  *****************************************************************************/
 
 as_log g_as_log = {AS_LOG_LEVEL_INFO, 0};
+
+const char* as_log_level_strings[] = {
+	[AS_LOG_LEVEL_ERROR]	= "ERROR",
+	[AS_LOG_LEVEL_WARN]		= "WARN",
+	[AS_LOG_LEVEL_INFO]		= "INFO",
+	[AS_LOG_LEVEL_DEBUG]	= "DEBUG",
+	[AS_LOG_LEVEL_TRACE]	= "TRACE"
+};

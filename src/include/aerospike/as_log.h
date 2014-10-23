@@ -143,6 +143,7 @@ typedef struct as_log_s {
  *****************************************************************************/
 
 extern as_log g_as_log;
+extern const char* as_log_level_strings[];
 
 /******************************************************************************
  *	FUNCTIONS
@@ -172,4 +173,17 @@ static inline void
 as_log_set_callback(as_log_callback callback)
 {
 	g_as_log.callback = callback;
+}
+
+/**
+ *	Convert log level to a string.
+ *
+ *	@param level 	The log level.
+ *
+ *	@relates as_log
+ */
+static inline const char*
+as_log_level_tostring(as_log_level level)
+{
+	return as_log_level_strings[level];
 }
