@@ -19,6 +19,16 @@
 #define FLAGS_HEAP 1
 #define FLAGS_CREATED 2
 
+void
+as_vector_init(as_vector* vector, uint32_t item_size, uint32_t capacity)
+{
+	vector->list = cf_malloc(capacity * item_size);
+	vector->capacity = capacity;
+	vector->item_size = item_size;
+	vector->size = 0;
+	vector->flags = 1;
+}
+
 as_vector*
 as_vector_create(uint32_t item_size, uint32_t capacity)
 {

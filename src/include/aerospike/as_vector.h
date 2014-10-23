@@ -78,15 +78,8 @@ typedef struct as_vector_s {
 /**
  *	Initialize a stack allocated as_vector, with item storage on the heap.
  */
-static inline void
-as_vector_init(as_vector* vector, uint32_t item_size, uint32_t capacity)
-{
-	vector->list = cf_malloc(capacity * item_size);
-	vector->capacity = capacity;
-	vector->item_size = item_size;
-	vector->size = 0;
-	vector->flags = 1;
-}
+void
+as_vector_init(as_vector* vector, uint32_t item_size, uint32_t capacity);
 
 /**
  *	Create a heap allocated as_vector, with item storage on the heap.
