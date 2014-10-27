@@ -29,7 +29,7 @@
 #define as_log_trace_enabled() (g_as_log.callback && AS_LOG_LEVEL_TRACE <= g_as_log.level)
 
 #define as_log_error(__fmt, ... ) \
-	if (g_as_log.callback && AS_LOG_LEVEL_ERROR <= g_as_log.level) {\
+	if (g_as_log.callback) {\
 		(g_as_log.callback) (AS_LOG_LEVEL_ERROR, __func__, __FILE__, __LINE__, __fmt, ##__VA_ARGS__);\
 	}
 
