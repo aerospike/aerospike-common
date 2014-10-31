@@ -53,10 +53,9 @@ extern const as_map_hooks as_hashmap_map_hooks;
 static as_hashmap * as_hashmap_cons(as_hashmap * map, uint32_t capacity)
 {
 	map->count = 0;
-
 	map->table_capacity = capacity > MIN_CAPACITY ? capacity : MIN_CAPACITY;
 
-	size_t size = capacity * sizeof(as_hashmap_element);
+	size_t size = map->table_capacity * sizeof(as_hashmap_element);
 
 	map->table = (as_hashmap_element *)cf_malloc(size);
 
