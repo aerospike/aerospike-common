@@ -338,7 +338,10 @@ int as_hashmap_clear(as_hashmap * map)
 	if (! map ) {
 		return -1;
 	}
-
+	if(map->count == 0)
+	{
+		return 0;
+	}
 	for (uint32_t i = 0; i < map->table_capacity; i++) {
 		as_hashmap_element * e = &map->table[i];
 
@@ -467,6 +470,10 @@ bool as_hashmap_foreach(const as_hashmap * map, as_map_foreach_callback callback
 {
 	if (! map) {
 		return false;
+	}
+	if(map->count == 0)
+	{
+		return true;
 	}
 
 	for (uint32_t i = 0; i < map->table_capacity; i++) {
