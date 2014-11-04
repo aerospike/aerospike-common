@@ -60,17 +60,17 @@ static uint32_t _as_arraylist_list_size(const as_list * l)
  *	GET FUNCTIONS
  ******************************************************************************/
 
-static as_val * _as_arraylist_list_get(const as_list * l, const uint32_t i) 
+static as_val * _as_arraylist_list_get(const as_list * l, uint32_t i)
 {
 	return as_arraylist_get((as_arraylist *) l, i);
 }
 
-static int64_t _as_arraylist_list_get_int64(const as_list * l, const uint32_t i) 
+static int64_t _as_arraylist_list_get_int64(const as_list * l, uint32_t i)
 {
 	return as_arraylist_get_int64((as_arraylist *) l, i);
 }
 
-static char * _as_arraylist_list_get_str(const as_list * l, const uint32_t i) 
+static char * _as_arraylist_list_get_str(const as_list * l, uint32_t i)
 {
 	return as_arraylist_get_str((as_arraylist *) l, i);
 }
@@ -79,19 +79,38 @@ static char * _as_arraylist_list_get_str(const as_list * l, const uint32_t i)
  *	SET FUNCTIONS
  ******************************************************************************/
 
-static int _as_arraylist_list_set(as_list * l, const uint32_t i, as_val * v) 
+static int _as_arraylist_list_set(as_list * l, uint32_t i, as_val * v)
 {
 	return as_arraylist_set((as_arraylist *) l, i, v);
 }
 
-static int _as_arraylist_list_set_int64(as_list * l, const uint32_t i, int64_t v) 
+static int _as_arraylist_list_set_int64(as_list * l, uint32_t i, int64_t v)
 {
 	return as_arraylist_set_int64((as_arraylist *) l, i, v);
 }
 
-static int _as_arraylist_list_set_str(as_list * l, const uint32_t i, const char * v) 
+static int _as_arraylist_list_set_str(as_list * l, uint32_t i, const char * v)
 {
 	return as_arraylist_set_str((as_arraylist *) l, i, v);
+}
+
+/*******************************************************************************
+ *	INSERT FUNCTIONS
+ ******************************************************************************/
+
+static int _as_arraylist_list_insert(as_list * l, uint32_t i, as_val * v)
+{
+	return as_arraylist_insert((as_arraylist *) l, i, v);
+}
+
+static int _as_arraylist_list_insert_int64(as_list * l, uint32_t i, int64_t v)
+{
+	return as_arraylist_insert_int64((as_arraylist *) l, i, v);
+}
+
+static int _as_arraylist_list_insert_str(as_list * l, uint32_t i, const char * v)
+{
+	return as_arraylist_insert_str((as_arraylist *) l, i, v);
 }
 
 /*******************************************************************************
@@ -114,7 +133,7 @@ static int _as_arraylist_list_append_str(as_list * l, const char * v)
 }
 
 /*******************************************************************************
- *	APPEND FUNCTIONS
+ *	PREPEND FUNCTIONS
  ******************************************************************************/
 
 static int _as_arraylist_list_prepend(as_list * l, as_val * v) 
@@ -133,8 +152,27 @@ static int _as_arraylist_list_prepend_str(as_list * l, const char * v)
 }
 
 /*******************************************************************************
+ *	DELETE FUNCTION
+ ******************************************************************************/
+
+static int _as_arraylist_list_delete(as_list * l, uint32_t i)
+{
+	return as_arraylist_delete((as_arraylist *) l, i);
+}
+
+/*******************************************************************************
  *	ACCESSOR AND MODIFIER FUNCTIONS
  ******************************************************************************/
+
+static int _as_arraylist_list_concat(as_list * l, const as_list * l2)
+{
+	return as_arraylist_concat((as_arraylist *) l, (const as_arraylist *) l2);
+}
+
+static int _as_arraylist_list_trim(as_list * l, uint32_t i)
+{
+	return as_arraylist_trim((as_arraylist *) l, i);
+}
 
 static as_val * _as_arraylist_list_head(const as_list * l) 
 {
@@ -211,6 +249,14 @@ const as_list_hooks as_arraylist_list_hooks = {
 	.set_str	= _as_arraylist_list_set_str,
 
 	/***************************************************************************
+	 *	insert hooks
+	 **************************************************************************/
+
+	.insert			= _as_arraylist_list_insert,
+	.insert_int64	= _as_arraylist_list_insert_int64,
+	.insert_str		= _as_arraylist_list_insert_str,
+
+	/***************************************************************************
 	 *	append hooks
 	 **************************************************************************/
 
@@ -225,11 +271,19 @@ const as_list_hooks as_arraylist_list_hooks = {
 	.prepend		= _as_arraylist_list_prepend,
 	.prepend_int64	= _as_arraylist_list_prepend_int64,
 	.prepend_str	= _as_arraylist_list_prepend_str,
-	
+
+	/***************************************************************************
+	 *	delete hook
+	 **************************************************************************/
+
+	.delete		= _as_arraylist_list_delete,
+
 	/***************************************************************************
 	 *	accessor and modifier hooks
 	 **************************************************************************/
 
+	.concat		= _as_arraylist_list_concat,
+	.trim		= _as_arraylist_list_trim,
 	.head		= _as_arraylist_list_head,
 	.tail		= _as_arraylist_list_tail,
 	.drop		= _as_arraylist_list_drop,

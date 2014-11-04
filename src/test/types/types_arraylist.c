@@ -187,7 +187,58 @@ TEST( types_arraylist_1, "as_arraylist w/ as_arraylist ops" ) {
     assert( as_integer_toint(d_0) == as_integer_toint(l_5) );
 
     as_arraylist_destroy(d);
-    
+
+    rc = as_arraylist_insert(&l, 5, (as_val *) as_integer_new(99));
+    assert_int_eq( rc, AS_ARRAYLIST_OK );
+    assert_int_eq( l.size, 11 );
+    assert_int_eq(6, as_integer_toint((as_integer *) as_arraylist_get(&l, 4)));
+    assert_int_eq(99, as_integer_toint((as_integer *) as_arraylist_get(&l, 5)));
+    assert_int_eq(1, as_integer_toint((as_integer *) as_arraylist_get(&l, 6)));
+    assert_int_eq(5, as_integer_toint((as_integer *) as_arraylist_get(&l, 10)));
+    // list is now: 10 9 8 7 6 99 1 2 3 4  5
+    // indexes:      0 1 2 3 4  5 6 7 8 9 10
+
+    rc = as_arraylist_delete(&l, 11);
+    assert_int_eq( rc, AS_ARRAYLIST_ERR_INDEX );
+    rc = as_arraylist_delete(&l, 4);
+    assert_int_eq( rc, AS_ARRAYLIST_OK );
+    assert_int_eq( l.size, 10 );
+    assert_int_eq(7, as_integer_toint((as_integer *) as_arraylist_get(&l, 3)));
+    assert_int_eq(99, as_integer_toint((as_integer *) as_arraylist_get(&l, 4)));
+    assert_int_eq(1, as_integer_toint((as_integer *) as_arraylist_get(&l, 5)));
+    assert_int_eq(5, as_integer_toint((as_integer *) as_arraylist_get(&l, 9)));
+    // list is now: 10 9 8 7 99 1 2 3 4 5
+    // indexes:      0 1 2 3  4 5 6 7 8 9
+
+    as_arraylist c;
+    as_arraylist_init((as_arraylist *) &c, 10, 10);
+
+    for ( int i = 1; i < 4; i++) {
+        rc = as_arraylist_append(&c, (as_val *) as_integer_new(100 + i));
+        assert_int_eq( rc, AS_ARRAYLIST_OK );
+    }
+
+    assert_int_eq( c.size, 3 );
+    rc = as_arraylist_concat(&l, &c);
+    assert_int_eq( rc, AS_ARRAYLIST_OK );
+    assert_int_eq( l.size, 13 );
+    assert_int_eq(5, as_integer_toint((as_integer *) as_arraylist_get(&l, 9)));
+    assert_int_eq(101, as_integer_toint((as_integer *) as_arraylist_get(&l, 10)));
+    assert_int_eq(103, as_integer_toint((as_integer *) as_arraylist_get(&l, 12)));
+    // list is now: 10 9 8 7 99 1 2 3 4 5 101 102 103
+    // indexes:      0 1 2 3  4 5 6 7 8 9  10  11  12
+
+    as_arraylist_destroy(&c);
+
+    rc = as_arraylist_trim(&l, 13);
+    assert_int_eq( rc, AS_ARRAYLIST_ERR_INDEX );
+    rc = as_arraylist_trim(&l, 7);
+    assert_int_eq( rc, AS_ARRAYLIST_OK );
+    assert_int_eq( l.size, 7 );
+    assert_int_eq(2, as_integer_toint((as_integer *) as_arraylist_get(&l, 6)));
+    // list is now: 10 9 8 7 99 1 2
+    // indexes:      0 1 2 3  4 5 6
+
     as_arraylist_destroy(&l);
 }
 
@@ -255,7 +306,58 @@ TEST( types_arraylist_list, "as_arraylist w/ as_list ops" ) {
     assert( as_integer_toint(d_0) == as_integer_toint(l_5) );
 
     as_list_destroy((as_list *) d);
-    
+
+    rc = as_list_insert((as_list *) &l, 5, (as_val *) as_integer_new(99));
+    assert_int_eq( rc, AS_ARRAYLIST_OK );
+    assert_int_eq( l.size, 11 );
+    assert_int_eq(6, as_integer_toint((as_integer *) as_list_get((as_list *) &l, 4)));
+    assert_int_eq(99, as_integer_toint((as_integer *) as_list_get((as_list *) &l, 5)));
+    assert_int_eq(1, as_integer_toint((as_integer *) as_list_get((as_list *) &l, 6)));
+    assert_int_eq(5, as_integer_toint((as_integer *) as_list_get((as_list *) &l, 10)));
+    // list is now: 10 9 8 7 6 99 1 2 3 4  5
+    // indexes:      0 1 2 3 4  5 6 7 8 9 10
+
+    rc = as_list_delete((as_list *) &l, 11);
+    assert_int_eq( rc, AS_ARRAYLIST_ERR_INDEX );
+    rc = as_list_delete((as_list *) &l, 4);
+    assert_int_eq( rc, AS_ARRAYLIST_OK );
+    assert_int_eq( l.size, 10 );
+    assert_int_eq(7, as_integer_toint((as_integer *) as_list_get((as_list *) &l, 3)));
+    assert_int_eq(99, as_integer_toint((as_integer *) as_list_get((as_list *) &l, 4)));
+    assert_int_eq(1, as_integer_toint((as_integer *) as_list_get((as_list *) &l, 5)));
+    assert_int_eq(5, as_integer_toint((as_integer *) as_list_get((as_list *) &l, 9)));
+    // list is now: 10 9 8 7 99 1 2 3 4 5
+    // indexes:      0 1 2 3  4 5 6 7 8 9
+
+    as_arraylist c;
+    as_arraylist_init(&c, 10, 10);
+
+    for ( int i = 1; i < 4; i++) {
+        rc = as_list_append((as_list *) &c, (as_val *) as_integer_new(100 + i));
+        assert_int_eq( rc, AS_ARRAYLIST_OK );
+    }
+
+    assert_int_eq( c.size, 3 );
+    rc = as_list_concat((as_list *) &l, (const as_list *) &c);
+    assert_int_eq( rc, AS_ARRAYLIST_OK );
+    assert_int_eq( l.size, 13 );
+    assert_int_eq(5, as_integer_toint((as_integer *) as_list_get((as_list *) &l, 9)));
+    assert_int_eq(101, as_integer_toint((as_integer *) as_list_get((as_list *) &l, 10)));
+    assert_int_eq(103, as_integer_toint((as_integer *) as_list_get((as_list *) &l, 12)));
+    // list is now: 10 9 8 7 99 1 2 3 4 5 101 102 103
+    // indexes:      0 1 2 3  4 5 6 7 8 9  10  11  12
+
+    as_arraylist_destroy(&c);
+
+    rc = as_list_trim((as_list *) &l, 13);
+    assert_int_eq( rc, AS_ARRAYLIST_ERR_INDEX );
+    rc = as_list_trim((as_list *) &l, 7);
+    assert_int_eq( rc, AS_ARRAYLIST_OK );
+    assert_int_eq( l.size, 7 );
+    assert_int_eq(2, as_integer_toint((as_integer *) as_list_get((as_list *) &l, 6)));
+    // list is now: 10 9 8 7 99 1 2
+    // indexes:      0 1 2 3  4 5 6
+
     as_list_destroy((as_list *) &l);
 }
 
