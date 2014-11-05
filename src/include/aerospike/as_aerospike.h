@@ -43,6 +43,7 @@ struct as_aerospike_hooks_s {
 
 	int (*log)(const as_aerospike *, const char *, const int, const int, const char *);
 	cf_clock (* get_current_time)( const as_aerospike * );
+	int (*set_context) ( const as_aerospike *, const as_rec *, const uint32_t context );
 
 	as_rec *(* create_subrec)(const as_aerospike *, const as_rec *);
 	as_rec *(* open_subrec)(const as_aerospike *, const as_rec *, const char *);
@@ -93,6 +94,11 @@ static inline int as_aerospike_log(const as_aerospike * a, const char * name, co
 static inline cf_clock as_aerospike_get_current_time(const as_aerospike * a )
 {
 	return as_util_hook(get_current_time, 0, a);
+}
+
+static inline int as_aerospike_set_context(const as_aerospike * a, const as_rec *r, const uint32_t context )
+{
+	return as_util_hook(set_context, 2, a, r, context);
 }
 
 static inline as_rec * as_aerospike_crec_create(const as_aerospike * a, const as_rec * r) {
