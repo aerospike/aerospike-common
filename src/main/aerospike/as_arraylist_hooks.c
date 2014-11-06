@@ -152,12 +152,12 @@ static int _as_arraylist_list_prepend_str(as_list * l, const char * v)
 }
 
 /*******************************************************************************
- *	DELETE FUNCTION
+ *	REMOVE FUNCTION
  ******************************************************************************/
 
-static int _as_arraylist_list_delete(as_list * l, uint32_t i)
+static int _as_arraylist_list_remove(as_list * l, uint32_t i)
 {
-	return as_arraylist_delete((as_arraylist *) l, i);
+	return as_arraylist_remove((as_arraylist *) l, i);
 }
 
 /*******************************************************************************
@@ -273,10 +273,10 @@ const as_list_hooks as_arraylist_list_hooks = {
 	.prepend_str	= _as_arraylist_list_prepend_str,
 
 	/***************************************************************************
-	 *	delete hook
+	 *	remove hook
 	 **************************************************************************/
 
-	.delete		= _as_arraylist_list_delete,
+	.remove		= _as_arraylist_list_remove,
 
 	/***************************************************************************
 	 *	accessor and modifier hooks

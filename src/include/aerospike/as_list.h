@@ -294,21 +294,21 @@ typedef struct as_list_hooks_s {
 	int (* prepend_str)(as_list * list, const char * value);
 
 	/***************************************************************************
-	 *	delete hook
+	 *	remove hook
 	 **************************************************************************/
 
 	/**
-	 *	Delete element at specified index.
+	 *	Remove element at specified index.
 	 *
 	 *	Any elements beyond specified index will be shifted so their indexes
 	 *	decrease by 1. The element at specified index will be destroyed.
 	 *
 	 *	@param list 	The list.
-	 *	@param index 	The index of the element to delete.
+	 *	@param index 	The index of the element to remove.
 	 *
 	 *	@return 0 on success. Otherwise an error occurred.
 	 */
-	int (* delete)(as_list * list, uint32_t index);
+	int (* remove)(as_list * list, uint32_t index);
 
 	/***************************************************************************
 	 *	accessor and modifier hooks
@@ -1181,24 +1181,24 @@ static inline int as_list_prepend_map(as_list * list, struct as_map_s * value)
 }
 
 /******************************************************************************
- *	DELETE FUNCTION
+ *	REMOVE FUNCTION
  *****************************************************************************/
 
 /**
- *	Delete element at specified index.
+ *	Remove element at specified index.
  *
  *	Any elements beyond specified index will be shifted so their indexes
  *	decrease by 1. The element at specified index will be destroyed.
  *
  *	@param list 	The list.
- *	@param index 	The index of the element to delete.
+ *	@param index 	The index of the element to remove.
  *
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-static inline int as_list_delete(as_list * list, uint32_t i)
+static inline int as_list_remove(as_list * list, uint32_t i)
 {
-	return as_util_hook(delete, 1, list, i);
+	return as_util_hook(remove, 1, list, i);
 }
 
 /******************************************************************************

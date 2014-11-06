@@ -218,12 +218,6 @@ char * as_arraylist_get_str(const as_arraylist * list, uint32_t index)
 	return as_string_get(as_string_fromval(as_arraylist_get(list, index)));
 }
 
-extern inline as_integer * as_arraylist_get_integer(const as_arraylist * list, uint32_t index);
-extern inline as_string * as_arraylist_get_string(const as_arraylist * list, uint32_t index);
-extern inline as_bytes * as_arraylist_get_bytes(const as_arraylist * list, uint32_t index);
-extern inline as_list * as_arraylist_get_list(const as_arraylist * list, uint32_t index);
-extern inline as_map * as_arraylist_get_map(const as_arraylist * list, uint32_t index);
-
 /*******************************************************************************
  *	SET FUNCTIONS
  ******************************************************************************/
@@ -268,12 +262,6 @@ int as_arraylist_set_str(as_arraylist * list, uint32_t index, const char * value
 	return as_arraylist_set(list, index, (as_val *) as_string_new_strdup(value));
 }
 
-extern inline int as_arraylist_set_integer(as_arraylist * list, uint32_t index, as_integer * value);
-extern inline int as_arraylist_set_string(as_arraylist * list, uint32_t index, as_string * value);
-extern inline int as_arraylist_set_bytes(as_arraylist * list, uint32_t index, as_bytes * value);
-extern inline int as_arraylist_set_list(as_arraylist * list, uint32_t index, as_list * value);
-extern inline int as_arraylist_set_map(as_arraylist * list, uint32_t index, as_map * value);
-
 /*******************************************************************************
  *	INSERT FUNCTIONS
  ******************************************************************************/
@@ -317,12 +305,6 @@ int as_arraylist_insert_str(as_arraylist * list, uint32_t index, const char * va
 	return as_arraylist_insert(list, index, (as_val *) as_string_new_strdup(value));
 }
 
-extern inline int as_arraylist_insert_integer(as_arraylist * list, uint32_t index, as_integer * value);
-extern inline int as_arraylist_insert_string(as_arraylist * list, uint32_t index, as_string * value);
-extern inline int as_arraylist_insert_bytes(as_arraylist * list, uint32_t index, as_bytes * value);
-extern inline int as_arraylist_insert_list(as_arraylist * list, uint32_t index, as_list * value);
-extern inline int as_arraylist_insert_map(as_arraylist * list, uint32_t index, as_map * value);
-
 /*******************************************************************************
  *	APPEND FUNCTIONS
  ******************************************************************************/
@@ -344,12 +326,6 @@ int as_arraylist_append_str(as_arraylist * list, const char * value)
 {
 	return as_arraylist_append(list, (as_val *) as_string_new_strdup(value));
 }
-
-extern inline int as_arraylist_append_integer(as_arraylist * list, as_integer * value);
-extern inline int as_arraylist_append_string(as_arraylist * list, as_string * value);
-extern inline int as_arraylist_append_bytes(as_arraylist * list, as_bytes * value);
-extern inline int as_arraylist_append_list(as_arraylist * list, as_list * value);
-extern inline int as_arraylist_append_map(as_arraylist * list, as_map * value);
 
 /*******************************************************************************
  *	PREPEND FUNCTIONS
@@ -373,22 +349,16 @@ int as_arraylist_prepend_str(as_arraylist * list, const char * value)
 	return as_arraylist_prepend(list, (as_val *) as_string_new_strdup(value));
 }
 
-extern inline int as_arraylist_prepend_integer(as_arraylist * list, as_integer * value);
-extern inline int as_arraylist_prepend_string(as_arraylist * list, as_string * value);
-extern inline int as_arraylist_prepend_bytes(as_arraylist * list, as_bytes * value);
-extern inline int as_arraylist_prepend_list(as_arraylist * list, as_list * value);
-extern inline int as_arraylist_prepend_map(as_arraylist * list, as_map * value);
-
 /*******************************************************************************
- *	DELETE FUNCTION
+ *	REMOVE FUNCTION
  ******************************************************************************/
 
 /**
- *	Delete element at specified index. Any elements beyond specified index will
+ *	Remove element at specified index. Any elements beyond specified index will
  *	be shifted so their indexes decrease by 1. The element at specified index
  *	will be destroyed via as_val_destroy().
  */
-int as_arraylist_delete(as_arraylist * list, uint32_t index)
+int as_arraylist_remove(as_arraylist * list, uint32_t index)
 {
 	if (index >= list->size) {
 		return AS_ARRAYLIST_ERR_INDEX;

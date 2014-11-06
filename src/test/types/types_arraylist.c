@@ -198,9 +198,9 @@ TEST( types_arraylist_1, "as_arraylist w/ as_arraylist ops" ) {
     // list is now: 10 9 8 7 6 99 1 2 3 4  5
     // indexes:      0 1 2 3 4  5 6 7 8 9 10
 
-    rc = as_arraylist_delete(&l, 11);
+    rc = as_arraylist_remove(&l, 11);
     assert_int_eq( rc, AS_ARRAYLIST_ERR_INDEX );
-    rc = as_arraylist_delete(&l, 4);
+    rc = as_arraylist_remove(&l, 4);
     assert_int_eq( rc, AS_ARRAYLIST_OK );
     assert_int_eq( l.size, 10 );
     assert_int_eq(7, as_integer_toint((as_integer *) as_arraylist_get(&l, 3)));
@@ -317,9 +317,9 @@ TEST( types_arraylist_list, "as_arraylist w/ as_list ops" ) {
     // list is now: 10 9 8 7 6 99 1 2 3 4  5
     // indexes:      0 1 2 3 4  5 6 7 8 9 10
 
-    rc = as_list_delete((as_list *) &l, 11);
+    rc = as_list_remove((as_list *) &l, 11);
     assert_int_eq( rc, AS_ARRAYLIST_ERR_INDEX );
-    rc = as_list_delete((as_list *) &l, 4);
+    rc = as_list_remove((as_list *) &l, 4);
     assert_int_eq( rc, AS_ARRAYLIST_OK );
     assert_int_eq( l.size, 10 );
     assert_int_eq(7, as_integer_toint((as_integer *) as_list_get((as_list *) &l, 3)));

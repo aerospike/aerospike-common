@@ -876,22 +876,22 @@ static inline int as_arraylist_prepend_map(as_arraylist * list, as_map * value)
 }
 
 /*******************************************************************************
- *	DELETE FUNCTION
+ *	REMOVE FUNCTION
  ******************************************************************************/
 
 /**
- *	Delete element at specified index.
+ *	Remove element at specified index.
  *
  *	Any elements beyond specified index will be shifted so their indexes
  *	decrease by 1. The element at specified index will be destroyed.
  *
  *	@param list 	The list.
- *	@param index 	The index of the element to delete.
+ *	@param index 	The index of the element to remove.
  *
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_delete(as_arraylist * list, uint32_t index);
+int as_arraylist_remove(as_arraylist * list, uint32_t index);
 
 /******************************************************************************
  *	ITERATION FUNCTIONS

@@ -31,61 +31,6 @@
 #include "internal.h"
 
 /******************************************************************************
- *	INLINE FUNCTIONS
- *****************************************************************************/
-
-extern inline void			as_list_destroy(as_list * l);
-
-extern inline uint32_t		as_list_size(as_list * l);
-extern inline as_val *		as_list_head(const as_list * l);
-extern inline as_list *		as_list_tail(const as_list * l);
-extern inline as_list *		as_list_drop(const as_list * l, uint32_t n);
-extern inline as_list *		as_list_take(const as_list * l, uint32_t n);
-
-extern inline as_val *		as_list_get(const as_list * l, const uint32_t i);
-extern inline int64_t 		as_list_get_int64(const as_list * l, const uint32_t i);
-extern inline char *		as_list_get_str(const as_list * l, const uint32_t i);
-extern inline as_integer *	as_list_get_integer(const as_list * l, const uint32_t i);
-extern inline as_string *	as_list_get_string(const as_list * l, const uint32_t i);
-extern inline as_bytes *	as_list_get_bytes(const as_list * l, const uint32_t i);
-extern inline as_list *		as_list_get_list(const as_list * l, const uint32_t i);
-extern inline as_map *		as_list_get_map(const as_list * l, const uint32_t i);
-
-extern inline int			as_list_set(as_list * l, const uint32_t i, as_val * v);
-extern inline int			as_list_set_int64(as_list * l, const uint32_t i, int64_t v);
-extern inline int			as_list_set_str(as_list * l, const uint32_t i, const char * v);
-extern inline int			as_list_set_integer(as_list * l, const uint32_t i, as_integer * v);
-extern inline int			as_list_set_string(as_list * l, const uint32_t i, as_string * v);
-extern inline int			as_list_set_bytes(as_list * l, const uint32_t i, as_bytes * v);
-extern inline int			as_list_set_list(as_list * l, const uint32_t i, as_list * v);
-extern inline int			as_list_set_map(as_list * l, const uint32_t i, as_map * v);
-
-extern inline int 			as_list_append(as_list * l, as_val * v);
-extern inline int 			as_list_append_int64(as_list * l, int64_t v);
-extern inline int 			as_list_append_str(as_list * l, const char * v);
-extern inline int 			as_list_append_integer(as_list * l, as_integer * v);
-extern inline int 			as_list_append_string(as_list * l, as_string * v);
-extern inline int 			as_list_append_bytes(as_list * l, as_bytes * v);
-extern inline int 			as_list_append_list(as_list * l, as_list * v);
-extern inline int 			as_list_append_map(as_list * l, as_map * v);
-
-extern inline int 			as_list_prepend(as_list * l, as_val * v);
-extern inline int 			as_list_prepend_int64(as_list * l, int64_t v);
-extern inline int 			as_list_prepend_str(as_list * l, const char * v);
-extern inline int 			as_list_prepend_integer(as_list * l, as_integer * v);
-extern inline int 			as_list_prepend_string(as_list * l, as_string * v);
-extern inline int 			as_list_prepend_bytes(as_list * l, as_bytes * v);
-extern inline int 			as_list_prepend_list(as_list * l, as_list * v);
-extern inline int 			as_list_prepend_map(as_list * l, as_map * v);
-
-extern inline bool					as_list_foreach(const as_list * l, as_list_foreach_callback callback, void * udata);
-extern inline as_list_iterator *	as_list_iterator_new(const as_list * l);
-extern inline as_list_iterator *	as_list_iterator_init(as_list_iterator * it, const as_list * l);
-
-extern inline as_val *		as_list_toval(as_list * l);
-extern inline as_list *		as_list_fromval(as_val * v);
-
-/******************************************************************************
  *	FUNCTIONS
  *****************************************************************************/
 
