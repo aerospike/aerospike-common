@@ -142,7 +142,7 @@ void as_arraylist_destroy(as_arraylist * l)
  *	@param l – the list to be ensure the capacity of.
  *	@param delta – the number of elements to be added.
  */
-static int as_arraylist_ensure(as_arraylist * list, uint32_t delta) 
+static int as_arraylist_ensure(as_arraylist * list, uint32_t delta)
 {
 	// Check for capacity (in terms of elements, NOT size in bytes), and if we
 	// need to allocate more, do a realloc.
@@ -234,7 +234,7 @@ int as_arraylist_set(as_arraylist * list, uint32_t index, as_val * value)
 {
 	int rc = AS_ARRAYLIST_OK;
 	if ( index >= list->capacity ) {
-		rc = as_arraylist_ensure(list, (index + 1) - list->capacity);
+		rc = as_arraylist_ensure(list, (index + 1) - list->size);
 		if ( rc != AS_ARRAYLIST_OK ) {
 			return rc;
 		}

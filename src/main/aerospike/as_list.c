@@ -90,6 +90,8 @@ typedef struct as_list_val_tostring_data_s {
 	bool		sep;
 } as_list_val_tostring_data;
 
+const char NULL_STR[] = "<NULL>";
+
 static bool as_list_val_tostring_foreach(as_val * val, void * udata)
 {
 	as_list_val_tostring_data * data = (as_list_val_tostring_data *) udata;
@@ -97,7 +99,7 @@ static bool as_list_val_tostring_foreach(as_val * val, void * udata)
 	char * str = as_val_tostring(val);
 
 	if ( !str ) {
-		str = "<NULL>";
+		str = (char *)NULL_STR;
 	}
 
 	int len = (int)strlen(str);
@@ -118,7 +120,9 @@ static bool as_list_val_tostring_foreach(as_val * val, void * udata)
 	data->pos += len;
 	data->sep = true;
 
-	cf_free(str);
+	if ( str != NULL_STR ) {
+		cf_free(str);
+	}
 
 	return true;
 }
