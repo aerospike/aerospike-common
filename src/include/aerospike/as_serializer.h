@@ -59,6 +59,7 @@ typedef struct as_serializer_hooks_s {
     void    (* destroy)(as_serializer *);
     int     (* serialize)(as_serializer *, as_val *, as_buffer *);
     int     (* deserialize)(as_serializer *, as_buffer *, as_val **);
+    uint32_t (* serialize_getsize)(as_serializer *, as_val *);
 } as_serializer_hooks;
 
 /******************************************************************************
@@ -85,4 +86,9 @@ static inline int as_serializer_serialize(as_serializer * serializer, as_val * v
 static inline int as_serializer_deserialize(as_serializer * serializer, as_buffer * buffer, as_val ** val) 
 {
     return as_util_hook(deserialize, 1, serializer, buffer, val);
+}
+
+static inline uint32_t as_serializer_serialize_getsize(as_serializer * serializer, as_val * val)
+{
+    return as_util_hook(serialize_getsize, 1, serializer, val);
 }

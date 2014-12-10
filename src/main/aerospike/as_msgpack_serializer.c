@@ -23,18 +23,20 @@
  * STATIC FUNCTIONS
  *****************************************************************************/
 
-static void as_msgpack_serializer_destroy(as_serializer *);
-static int  as_msgpack_serializer_serialize(as_serializer *, as_val *, as_buffer *);
-static int  as_msgpack_serializer_deserialize(as_serializer *, as_buffer *, as_val **);
+static void     as_msgpack_serializer_destroy(as_serializer *);
+static int      as_msgpack_serializer_serialize(as_serializer *, as_val *, as_buffer *);
+static int      as_msgpack_serializer_deserialize(as_serializer *, as_buffer *, as_val **);
+static uint32_t as_msgpack_serializer_serialize_getsize(as_serializer *, as_val *);
 
 /******************************************************************************
  * VARIABLES
  *****************************************************************************/
 
 static const as_serializer_hooks as_msgpack_serializer_hooks = {
-    .destroy        = as_msgpack_serializer_destroy,
-    .serialize      = as_msgpack_serializer_serialize,
-    .deserialize    = as_msgpack_serializer_deserialize
+    .destroy           = as_msgpack_serializer_destroy,
+    .serialize         = as_msgpack_serializer_serialize,
+    .deserialize       = as_msgpack_serializer_deserialize,
+    .serialize_getsize = as_msgpack_serializer_serialize_getsize,
 };
 
 /******************************************************************************
@@ -56,6 +58,20 @@ as_serializer * as_msgpack_init(as_serializer * s) {
 
 static void as_msgpack_serializer_destroy(as_serializer * s) {
     return;
+}
+
+static uint32_t as_msgpack_serializer_serialize_getsize(as_serializer * s, as_val * v) {
+	as_packer packer;
+	// No buffer means the request is for size
+	packer.buffer   = NULL;
+	packer.capacity = 0;
+	packer.offset   = 0;
+	packer.head     = 0;
+	packer.tail     = 0;
+	int rc = as_pack_val(&packer, v);
+	if (rc)
+		return 0;
+	return packer.offset;
 }
 
 static int as_msgpack_serializer_serialize(as_serializer * s, as_val * v, as_buffer * buff) {

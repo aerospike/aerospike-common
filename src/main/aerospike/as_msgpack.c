@@ -59,80 +59,92 @@ static int as_pack_resize(as_packer * pk, int length)
 
 static inline int as_pack_append(as_packer * pk, const unsigned char * src, int length)
 {
-	if (pk->offset + length > pk->capacity) {
-		if (as_pack_resize(pk, length)) {
-			return -1;
+	if (pk->buffer) {
+		if (pk->offset + length > pk->capacity) {
+			if (as_pack_resize(pk, length)) {
+				return -1;
+			}
 		}
+		memcpy(pk->buffer + pk->offset, src, length);
 	}
-	memcpy(pk->buffer + pk->offset, src, length);
 	pk->offset += length;
 	return 0;
 }
 
 static inline int as_pack_byte(as_packer * pk, uint8_t val) {
-	if (pk->offset + 1 > pk->capacity) {
-		if (as_pack_resize(pk, 1)) {
-			return -1;
+	if (pk->buffer) {
+		if (pk->offset + 1 > pk->capacity) {
+			if (as_pack_resize(pk, 1)) {
+				return -1;
+			}
 		}
+		*(pk->buffer + pk->offset) = val;
 	}
-	*(pk->buffer + pk->offset) = val;
 	pk->offset++;
 	return 0;
 }
 
 static inline int as_pack_int8(as_packer * pk, unsigned char type, uint8_t val) {
-	if (pk->offset + 2 > pk->capacity) {
-		if (as_pack_resize(pk, 2)) {
-			return -1;
+	if (pk->buffer) {
+		if (pk->offset + 2 > pk->capacity) {
+			if (as_pack_resize(pk, 2)) {
+				return -1;
+			}
 		}
+		unsigned char* p = pk->buffer + pk->offset;
+		*p++ = type;
+		*p = val;
 	}
-	unsigned char* p = pk->buffer + pk->offset;
-	*p++ = type;
-	*p = val;
 	pk->offset += 2;
 	return 0;
 }
 
 static inline int as_pack_int16(as_packer * pk, unsigned char type, uint16_t val) {
-	if (pk->offset + 3 > pk->capacity) {
-		if (as_pack_resize(pk, 3)) {
-			return -1;
+	if (pk->buffer) {
+		if (pk->offset + 3 > pk->capacity) {
+			if (as_pack_resize(pk, 3)) {
+				return -1;
+			}
 		}
+		uint16_t swapped = cf_swap_to_be16(val);
+		unsigned char* s = (unsigned char*)&swapped;
+		unsigned char* p = pk->buffer + pk->offset;
+		*p++ = type;
+		*p++ = *s++;
+		*p = *s;
 	}
-	uint16_t swapped = cf_swap_to_be16(val);
-	unsigned char* s = (unsigned char*)&swapped;
-	unsigned char* p = pk->buffer + pk->offset;
-	*p++ = type;
-	*p++ = *s++;
-	*p = *s;
 	pk->offset += 3;
 	return 0;
 }
 
 static inline int as_pack_int32(as_packer * pk, unsigned char type, uint32_t val) {
-	if (pk->offset + 5 > pk->capacity) {
-		if (as_pack_resize(pk, 5)) {
-			return -1;
+	if (pk->buffer) {
+		if (pk->offset + 5 > pk->capacity) {
+			if (as_pack_resize(pk, 5)) {
+				return -1;
+			}
 		}
+		uint32_t swapped = cf_swap_to_be32(val);
+		unsigned char* p = pk->buffer + pk->offset;
+		*p++ = type;
+		memcpy(p, &swapped, 4);
 	}
-	uint32_t swapped = cf_swap_to_be32(val);
-	unsigned char* p = pk->buffer + pk->offset;
-	*p++ = type;
-	memcpy(p, &swapped, 4);
 	pk->offset += 5;
 	return 0;
 }
 
 static inline int as_pack_int64(as_packer * pk, unsigned char type, uint64_t val) {
-	if (pk->offset + 9 > pk->capacity) {
-		if (as_pack_resize(pk, 9)) {
-			return -1;
+	if (pk->buffer) {
+		if (pk->offset + 9 > pk->capacity) {
+			if (as_pack_resize(pk, 9)) {
+				return -1;
+			}
 		}
+		uint64_t swapped = cf_swap_to_be64(val);
+		unsigned char* p = pk->buffer + pk->offset;
+		*p++ = type;
+		memcpy(p, &swapped, 8);
 	}
-	uint64_t swapped = cf_swap_to_be64(val);
-	unsigned char* p = pk->buffer + pk->offset;
-	*p++ = type;
-	memcpy(p, &swapped, 8);
 	pk->offset += 9;
 	return 0;
 }
