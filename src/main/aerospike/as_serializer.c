@@ -25,6 +25,8 @@
 
 extern inline int as_serializer_serialize(as_serializer * serializer, as_val * val, as_buffer * buffer);
 
+extern inline uint32_t as_serializer_serialize_getsize(as_serializer * serializer, as_val * val);
+
 extern inline int as_serializer_deserialize(as_serializer * serializer, as_buffer * buffer, as_val ** val);
 
 /******************************************************************************
