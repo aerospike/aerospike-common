@@ -24,6 +24,7 @@
  */
 
 #include <citrusleaf/alloc.h>
+#include <citrusleaf/cf_atomic.h>
 #include <citrusleaf/cf_types.h>
 #include <inttypes.h>
 #include <stdint.h>
@@ -43,6 +44,7 @@ extern "C" {
 #define CF_RCHASH_ERR_BUFSZ -2
 #define CF_RCHASH_ERR -1
 #define CF_RCHASH_OK 0
+#define CF_RCHASH_REDUCE_DELETE 1
 
 /**
  * support resizes (will sometimes hang for long periods)
@@ -84,11 +86,6 @@ extern "C" {
  */
 #define CF_RCHASH_CR_MT_LOCKPOOL 0x08
 
-/**
- * indicate that a delete should be done during reduction
- */
-#define CF_RCHASH_REDUCE_DELETE (1)
-
 /******************************************************************************
  * TYPES
  ******************************************************************************/
@@ -103,9 +100,12 @@ typedef struct cf_rchash_elem_f_s cf_rchash_elem_f;
 typedef uint32_t (*cf_rchash_hash_fn) (void *value, uint32_t value_len);
 
 /**
- * Typedef for a "reduce" fuction that is called on every node
- * (Note about return value: some kinds of reduces can manipulate the hash table,
- *  allowing deletion. See the particulars of the reduce call.)
+ * Typedef for a "reduce" function that is called on every node.
+ * Note that the function's return value has the following effect
+ * within cf_rchash_reduce():
+ *     CF_RCHASH_OK (0) - continue iterating.
+ *     CF_RCHASH_REDUCE_DELETE (1) - delete the current node.
+ *     Anything else (e.g. CF_RCHASH_ERR) - stop iterating.
  */
 typedef int (*cf_rchash_reduce_fn) (void *key, uint32_t keylen, void *object, void *udata);
 
@@ -145,18 +145,10 @@ struct cf_rchash_elem_f_s {
 
 
 /**
- * An interesting tradeoff regarding 'get_size'
- * In the case of many-locks, there's no real size at any given instant,
- * because the hash is parallelized. Yet, the overhead of creating
- * an atomic for the elements is silly.
- * Thus, when 'manylock', the elements field is not useful because
- * its not protected by a lock - it will *typically* get boned up.
- * Thus, get_size has to slowly troop through the hashset
- * This seems reasonable because 'get_size' with many lock can't be important,
- * since it's always an estimate anyway.
+ * Private data.
  */
 struct cf_rchash_s {
-	uint32_t 				elements;   		// INVALID IF MANYLOCK
+	cf_atomic32 			elements;
 	uint32_t 				key_len;    		// if key_len == 0, then use the variable size functions
 	uint 					flags;
 	cf_rchash_hash_fn		h_fn;
@@ -211,22 +203,13 @@ int cf_rchash_delete(cf_rchash *h, void *key, uint32_t key_len);
 */
 uint32_t cf_rchash_get_size(cf_rchash *h);
 
-
 /*
 ** Map/Reduce pattern - call the callback on every element in the hash
 ** Warning: the entire traversal can hold the lock in the 'biglock' case,
-** so make the reduce_fn lightweight! Consider queuing or soemthing if you
+** so make the reduce_fn lightweight! Consider queuing or something if you
 ** want to do something fancy
 */
 void cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata);
-
-/*
-** Map/Reduce pattern - call the callback on every element in the hash
-** This instance allows deletion of hash elements during the reduce:
-** return -1 to cause the deletion of the element visisted
-*/
-void cf_rchash_reduce_delete(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata);
-
 
 /*
  * Destroy the entire hash - all memory will be freed

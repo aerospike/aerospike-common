@@ -43,6 +43,7 @@ typedef enum as_module_event_type_e {
     AS_MODULE_EVENT_FILE_SCAN     = 1,
     AS_MODULE_EVENT_FILE_ADD      = 2,
     AS_MODULE_EVENT_FILE_REMOVE   = 3,
+    AS_MODULE_EVENT_CLEAR_CACHE   = 4
 } as_module_event_type;
 
 typedef struct as_module_event_data_s {

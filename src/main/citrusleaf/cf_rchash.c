@@ -28,13 +28,14 @@
  * ... that's what he said about shash!
  */
 
-#include <inttypes.h>
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdbool.h>
-
 #include <citrusleaf/cf_rchash.h>
+
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <citrusleaf/alloc.h>
 #include <citrusleaf/cf_atomic.h>
 
@@ -453,89 +454,40 @@ Out:
 	return(rv);
 }
 
-// Call the function over every node in the tree
-// Can be lock-expensive at the moment, until we improve the lockfree code
+// Call the given function (reduce_fn) over every node in the tree.
+// Can be lock-expensive at the moment, until we improve the lockfree code.
+// The value returned by reduce_fn governs behavior as follows:
+//     CF_RCHASH_OK (0) - continue iterating.
+//     CF_RCHASH_REDUCE_DELETE (1) - delete the current node.
+//     Anything else (e.g. CF_RCHASH_ERR) - stop iterating.
 
 void cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) {
-    if (h->key_len == 0)    {
-        cf_rchash_reduce_v(h,reduce_fn, udata);
-        return;
-    }
-	
-	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK)
-		pthread_mutex_lock(&h->biglock);
-	
-	for (uint i=0; i<h->table_len ; i++) {
-		pthread_mutex_t *l = 0;
-		if (h->flags & CF_RCHASH_CR_MT_MANYLOCK) {
-			l = &(h->lock_table[i]);
-			pthread_mutex_lock( l );
-		}
-
-		cf_rchash_elem_f *list_he = get_bucket(h, i);
-
-		while (list_he) {
-			
-			// 0 length means an unused head pointer - break
-			if (list_he->object == 0)
-				break;
-			
-#ifdef VALIDATE
-			cf_atomic_int_t rc;
-			if ((rc = cf_rc_count(list_he->object)) < 1) {
-				as_log_info("cf_rchash %p: internal bad reference count (%d) on %p", h, rc, list_he->object);
-			}
-#endif		
-
-			if (0 != reduce_fn(list_he->key, h->key_len, list_he->object, udata)) {
-				if (l)		pthread_mutex_unlock(l);
-				goto Out;
-			}
-			
-			list_he = list_he->next;
-		}
-		
-		if (l)	pthread_mutex_unlock(l);
-		
+	if (h->key_len == 0) {
+		cf_rchash_reduce_v(h, reduce_fn, udata);
+		return;
 	}
 
-Out:	
-	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK)
-		pthread_mutex_unlock(&h->biglock);
-
-	return;
-}
-
-// A special version of 'reduce' that supports deletion
-// In this case, if you return '-1' from the reduce fn, that node will be
-// deleted
-void cf_rchash_reduce_delete(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) {
-	if (h->key_len == 0) {
-        cf_rchash_reduce_delete_v(h,reduce_fn, udata);
-        return;
-    }
-    
-	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK)
+	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_lock(&h->biglock);
+	}
 
-	for (uint i=0; i<h->table_len ; i++) {
+	for (uint32_t i = 0; i < h->table_len; i++) {
+		pthread_mutex_t *l = NULL;
 
-		pthread_mutex_t *l = 0;
 		if (h->flags & CF_RCHASH_CR_MT_MANYLOCK) {
 			l = &(h->lock_table[i]);
-			pthread_mutex_lock( l );
+			pthread_mutex_lock(l);
 		}
-		
+
 		cf_rchash_elem_f *list_he = get_bucket(h, i);
-		cf_rchash_elem_f *prev_he = 0;
-		int rv;
+		cf_rchash_elem_f *prev_he = NULL;
 
 		while (list_he) {
-			// This kind of structure might have the head as an empty element,
-			// that's a signal to move along
-			if (list_he->object == 0)
+			if (! list_he->object) {
+				// Nothing (more) in this row.
 				break;
-			
+			}
+
 #ifdef VALIDATE
 			cf_atomic_int_t rc;
 			if ((rc = cf_rc_count(list_he->object)) < 1) {
@@ -544,62 +496,66 @@ void cf_rchash_reduce_delete(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *
 				return;
 			}
 #endif		
-			
-			rv = reduce_fn(list_he->key, h->key_len, list_he->object, udata);
-			
-			// Delete is requested
-			// Leave the pointers in a "next" state
-			if (rv == CF_RCHASH_REDUCE_DELETE) {
-                
+
+			int rv = reduce_fn(list_he->key, h->key_len, list_he->object, udata);
+
+			if (rv == CF_RCHASH_OK) {
+				// Most common case - keep going.
+				prev_he = list_he;
+				list_he = list_he->next;
+			}
+			else if (rv == CF_RCHASH_REDUCE_DELETE) {
 				cf_rchash_free(h, list_he->object);
-				
-				if (h->flags & CF_RCHASH_CR_MT_MANYLOCK)
+
+				if (h->flags & CF_RCHASH_CR_MT_MANYLOCK) {
 					cf_atomic32_decr(&h->elements);
-				else
+				}
+				else {
 					h->elements--;
-                
-				// patchup pointers & free element if not head
+				}
+
 				if (prev_he) {
 					prev_he->next = list_he->next;
 					cf_free(list_he);
 					list_he = prev_he->next;
 				}
-				// am at head - more complicated
 				else {
-					// at head with no next - easy peasy!
-					if (0 == list_he->next) {
+					// At head with no next.
+					if (! list_he->next) {
 						memset(list_he, 0, sizeof(cf_rchash_elem_f));
-						list_he = 0;
+						list_he = NULL;
 					}
-					// at head with a next - more complicated -
-					// copy next into current and free next
-					// (the old trick of how to delete from a singly
-					// linked list without a prev pointer)
-					// Somewhat confusingly, prev_he stays 0
-					// and list_he stays where it is
+					// At head with a next. Copy next into current and free
+					// next. prev_he stays NULL, list_he stays unchanged.
 					else {
 						cf_rchash_elem_f *_t = list_he->next;
-						memcpy(list_he, list_he->next, sizeof(cf_rchash_elem_f)+h->key_len);
+						memcpy(list_he, list_he->next, sizeof(cf_rchash_elem_f) + h->key_len);
 						cf_free(_t);
 					}
 				}
-
 			}
-			else { // don't delete, just forward everything
-				prev_he = list_he;
-				list_he = list_he->next;
-			}	
-				
+			else {
+				// Stop iterating.
+				if (l) {
+					pthread_mutex_unlock(l);
+				}
+
+				if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
+					pthread_mutex_unlock(&h->biglock);
+				}
+
+				return;
+			}
 		}
-		
-		if (l) pthread_mutex_unlock(l);
-		
+
+		if (l) {
+			pthread_mutex_unlock(l);
+		}
 	}
 
-	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK)
+	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_unlock(&h->biglock);
-
-	return;
+	}
 }
 
 void cf_rchash_destroy_elements(cf_rchash *h) {
@@ -930,85 +886,36 @@ Out:
 	return(rv);
 }
 
-/**
- * Call the function over every node in the tree
- * Can be lock-expensive at the moment, until we improve the lockfree code
- */
+// Call the given function (reduce_fn) over every node in the tree.
+// Can be lock-expensive at the moment, until we improve the lockfree code.
+// The value returned by reduce_fn governs behavior as follows:
+//     CF_RCHASH_OK (0) - continue iterating.
+//     CF_RCHASH_REDUCE_DELETE (1) - delete the current node.
+//     Anything else (e.g. CF_RCHASH_ERR) - stop iterating.
+
 void cf_rchash_reduce_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) {
-	
-	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK)
+
+	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_lock(&h->biglock);
-	
-	for (uint i=0; i<h->table_len ; i++) {
-
-		pthread_mutex_t *l = 0;
-		if (h->flags & CF_RCHASH_CR_MT_MANYLOCK) {
-			l = &(h->lock_table[i]);
-			pthread_mutex_lock( l );
-		}
-
-		cf_rchash_elem_v *list_he = get_bucket_v(h, i);
-
-		while (list_he) {
-			
-			// 0 length means an unused head pointer - break
-			if (list_he->object == 0)
-				break;
-			
-#ifdef VALIDATE
-			cf_atomic_int_t rc;
-			if ((rc = cf_rc_count(list_he->object)) < 1) {
-				as_log_info("cf_rchash %p: internal bad reference count (%d) on %p", h, rc, list_he->object);
-			}
-#endif		
-
-			if (0 != reduce_fn(list_he->key, list_he->key_len, list_he->object, udata)) {
-				if (l)		pthread_mutex_unlock(l);
-				goto Out;
-			}
-			
-			list_he = list_he->next;
-		}
-		
-		if (l)	pthread_mutex_unlock(l);
-		
 	}
 
-Out:	
-	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK)
-		pthread_mutex_unlock(&h->biglock);
+	for (uint32_t i = 0; i < h->table_len; i++) {
+		pthread_mutex_t *l = NULL;
 
-	return;
-}
-
-/**
- * A special version of 'reduce' that supports deletion
- * In this case, if you return '-1' from the reduce fn, that node will be
- * deleted
- */
-void cf_rchash_reduce_delete_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) {
-	
-	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK)
-		pthread_mutex_lock(&h->biglock);
-
-	for (uint i=0; i<h->table_len ; i++) {
-
-		pthread_mutex_t *l = 0;
 		if (h->flags & CF_RCHASH_CR_MT_MANYLOCK) {
 			l = &(h->lock_table[i]);
-			pthread_mutex_lock( l );
+			pthread_mutex_lock(l);
 		}
-		
+
 		cf_rchash_elem_v *list_he = get_bucket_v(h, i);
-		cf_rchash_elem_v *prev_he = 0;
-		int rv;
+		cf_rchash_elem_v *prev_he = NULL;
 
 		while (list_he) {
-			// This kind of structure might have the head as an empty element,
-			// that's a signal to move along
-			if (list_he->key_len == 0)
+			if (list_he->key_len == 0) {
+				// Nothing (more) in this row.
 				break;
-			
+			}
+
 #ifdef VALIDATE
 			cf_atomic_int_t rc;
 			if ((rc = cf_rc_count(list_he->object)) < 1) {
@@ -1017,59 +924,67 @@ void cf_rchash_reduce_delete_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void
 				return;
 			}
 #endif		
-			
-			rv = reduce_fn(list_he->key, list_he->key_len, list_he->object, udata);
-			
-			// Delete is requested
-			// Leave the pointers in a "next" state
-			if (rv == CF_RCHASH_REDUCE_DELETE) {
-                
+
+			int rv = reduce_fn(list_he->key, list_he->key_len, list_he->object, udata);
+
+			if (rv == CF_RCHASH_OK) {
+				// Most common case - keep going.
+				prev_he = list_he;
+				list_he = list_he->next;
+			}
+			else if (rv == CF_RCHASH_REDUCE_DELETE) {
 				cf_free(list_he->key);
 				cf_rchash_free(h, list_he->object);
-                h->elements--;
-                
-				// patchup pointers & free element if not head
+
+				if (h->flags & CF_RCHASH_CR_MT_MANYLOCK) {
+					cf_atomic32_decr(&h->elements);
+				}
+				else {
+					h->elements--;
+				}
+
 				if (prev_he) {
 					prev_he->next = list_he->next;
 					cf_free(list_he);
 					list_he = prev_he->next;
 				}
-				// am at head - more complicated
 				else {
-					// at head with no next - easy peasy!
-					if (0 == list_he->next) {
+					// At head with no next.
+					if (! list_he->next) {
 						memset(list_he, 0, sizeof(cf_rchash_elem_v));
-						list_he = 0;
+						list_he = NULL;
 					}
-					// at head with a next - more complicated -
-					// copy next into current and free next
-					// (the old trick of how to delete from a singly
-					// linked list without a prev pointer)
-					// Somewhat confusingly, prev_he stays 0
-					// and list_he stays where it is
+					// At head with a next. Copy next into current and free
+					// next. prev_he stays NULL, list_he stays unchanged.
 					else {
 						cf_rchash_elem_v *_t = list_he->next;
 						memcpy(list_he, list_he->next, sizeof(cf_rchash_elem_v));
 						cf_free(_t);
 					}
 				}
-
 			}
-			else { // don't delete, just forward everything
-				prev_he = list_he;
-				list_he = list_he->next;
-			}	
-				
+			else {
+				// Stop iterating.
+				if (l) {
+					pthread_mutex_unlock(l);
+				}
+
+				if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
+					pthread_mutex_unlock(&h->biglock);
+				}
+
+				return;
+			}
 		}
-		
-		if (l) pthread_mutex_unlock(l);
-		
+
+		if (l) {
+			pthread_mutex_unlock(l);
+		}
 	}
 
-	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK)
+	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_unlock(&h->biglock);
-
-	return;
+	}
 }
 
 void cf_rchash_destroy_elements_v(cf_rchash *h) {
