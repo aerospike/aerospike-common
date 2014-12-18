@@ -124,7 +124,7 @@ void cf_set_wait_timespec(int ms_wait, struct timespec* out)
 	struct timeval now;
 	gettimeofday(&now, NULL);
 	out->tv_sec = now.tv_sec + (ms_wait / 1000);
-	out->tv_nsec = now.tv_usec * 1000 + (ms_wait % 1000) * 1000 * 1000;;
+	out->tv_nsec = now.tv_usec * 1000 + (ms_wait % 1000) * 1000 * 1000;
 #else // linux
     clock_gettime(CLOCK_REALTIME, out);
     out->tv_sec += ms_wait / 1000;
