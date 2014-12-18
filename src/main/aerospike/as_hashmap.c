@@ -261,6 +261,9 @@ int as_hashmap_set(as_hashmap * map, const as_val * k, const as_val * v)
 
 	// No space on the free-q, must insert at end.
 
+	map->count++;
+	prev_e->next = map->insert_at;
+
 	// First grow the extra capacity if necessary.
 	if (map->insert_at >= map->extra_capacity) {
 		size_t orig_size = map->extra_capacity * sizeof(as_hashmap_element);
@@ -284,9 +287,6 @@ int as_hashmap_set(as_hashmap * map, const as_val * k, const as_val * v)
 			memset(map->extras, 0, size);
 		}
 	}
-
-	map->count++;
-	prev_e->next = map->insert_at;
 
 	e = &map->extras[map->insert_at++];
 
