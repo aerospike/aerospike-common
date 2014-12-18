@@ -126,7 +126,7 @@ void cf_set_wait_timespec(int ms_wait, struct timespec* out)
 	out->tv_sec = now.tv_sec + (ms_wait / 1000);
 	out->tv_nsec = now.tv_usec * 1000 + (ms_wait % 1000) * 1000 * 1000;;
 #else // linux
-    clock_gettime(CLOCK_REALTIME, tp);
+    clock_gettime(CLOCK_REALTIME, out);
     out->tv_sec += ms_wait / 1000;
     out->tv_nsec += (ms_wait % 1000) * 1000 * 1000;
 #endif
@@ -151,7 +151,7 @@ void cf_clock_current_add(struct timespec* delta, struct timespec* out)
 #else // linux
     clock_gettime(CLOCK_REALTIME, out);
     out->tv_sec += delta->tv_sec;
-    out->tv_nsec += delta.tv_nsec;
+    out->tv_nsec += delta->tv_nsec;
 #endif
 	
     if (out->tv_nsec > (1000 * 1000 * 1000)) {
