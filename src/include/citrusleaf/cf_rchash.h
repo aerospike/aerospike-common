@@ -186,10 +186,10 @@ int cf_rchash_put(cf_rchash *h, void *key, uint32_t key_len, void *value);
 
 int cf_rchash_put_unique(cf_rchash *h, void *key, uint32_t key_len, void *value);
 
-/* If you think you know how much space it will take, 
- * call with the buffer you want filled
- * If you're wrong about the space, you'll get a BUFSZ error, but the *value_len
- * will be filled in with the value you should have passed
+/* If the key is found and a value pointer is returned in "object", the value's
+ * ref count will be incremented. The caller must release this when finished.
+ * If the "object" parameter is null, the function simply checks for key
+ * existence, and if the key exists the value's ref count is not increased.
  */
 int cf_rchash_get(cf_rchash *h, void *key, uint32_t key_len, void **object);
 

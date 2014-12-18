@@ -318,7 +318,7 @@ Copy:
 }
 
 int cf_rchash_get(cf_rchash *h, void *key, uint32_t key_len, void **object) {
-	if (!h || !key || !object) return(CF_RCHASH_ERR);
+	if (!h || !key) return(CF_RCHASH_ERR);
     if (h->key_len == 0)    return(cf_rchash_get_v(h,key,key_len,object));
 	if (h->key_len != key_len) return(CF_RCHASH_ERR);
 
@@ -355,8 +355,10 @@ int cf_rchash_get(cf_rchash *h, void *key, uint32_t key_len, void **object) {
 #endif
 
 		if ( memcmp(key, e->key, key_len) == 0) {
-			cf_rc_reserve( e->object );
-			*object = e->object;
+			if (object) {
+				cf_rc_reserve( e->object );
+				*object = e->object;
+			}
 			rv = CF_RCHASH_OK; 
 			goto Out;
 		}
@@ -792,8 +794,10 @@ int cf_rchash_get_v(cf_rchash *h, void *key, uint32_t key_len, void **object) {
 
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(key, e->key, key_len) == 0) ) {
-			cf_rc_reserve( e->object );
-			*object = e->object;
+			if (object) {
+				cf_rc_reserve( e->object );
+				*object = e->object;
+			}
 			rv = CF_RCHASH_OK; 
 			goto Out;
 		}
