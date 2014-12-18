@@ -117,21 +117,45 @@ cf_clock cf_secs_since_clepoch() {
 //
 // Set timespec to wait in milliseconds
 //
-void cf_set_wait_timespec(int ms_wait, struct timespec* tp)
+void cf_set_wait_timespec(int ms_wait, struct timespec* out)
 {
 #ifdef __APPLE__
-    // Use the cl generic functions defined in cf_clock.h. It is going to have
-    // slightly less resolution than the pure linux version.
-    uint64_t curms = cf_getms();
-    tp->tv_sec = (curms + ms_wait) / 1000;
-    tp->tv_nsec = (ms_wait % 1000) * 1000000;
+    // This code is going to have slightly less resolution than the pure linux version.
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	out->tv_sec = now.tv_sec + (ms_wait / 1000);
+	out->tv_nsec = now.tv_usec * 1000 + (ms_wait % 1000) * 1000 * 1000;;
 #else // linux
-    clock_gettime( CLOCK_REALTIME, tp);
-    tp->tv_sec += ms_wait / 1000;
-    tp->tv_nsec += (ms_wait % 1000) * 1000000;
-    if (tp->tv_nsec > 1000000000) {
-        tp->tv_nsec -= 1000000000;
-        tp->tv_sec++;
-    }
+    clock_gettime(CLOCK_REALTIME, tp);
+    out->tv_sec += ms_wait / 1000;
+    out->tv_nsec += (ms_wait % 1000) * 1000 * 1000;
 #endif
+	
+	if (out->tv_nsec > (1000 * 1000 * 1000)) {
+        out->tv_nsec -= 1000 * 1000 * 1000;
+        out->tv_sec++;
+    }
+}
+
+//
+// Add delta to current time to produce absolute time.
+//
+void cf_clock_current_add(struct timespec* delta, struct timespec* out)
+{
+#ifdef __APPLE__
+    // This code is going to have slightly less resolution than the pure linux version.
+	struct timeval now;
+	gettimeofday(&now, NULL);
+	out->tv_sec = now.tv_sec + delta->tv_sec;
+	out->tv_nsec = now.tv_usec * 1000 + delta->tv_nsec;
+#else // linux
+    clock_gettime(CLOCK_REALTIME, out);
+    out->tv_sec += delta->tv_sec;
+    out->tv_nsec += delta.tv_nsec;
+#endif
+	
+    if (out->tv_nsec > (1000 * 1000 * 1000)) {
+        out->tv_nsec -= 1000 * 1000 * 1000;
+        out->tv_sec++;
+    }
 }

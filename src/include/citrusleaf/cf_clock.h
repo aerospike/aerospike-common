@@ -54,11 +54,18 @@ cf_clock cf_getns();
 cf_clock cf_clock_getabsolute();
 cf_clock cf_get_seconds();
 cf_clock cf_secs_since_clepoch();
-void cf_set_wait_timespec(int ms_wait, struct timespec* tp);
+void cf_set_wait_timespec(int ms_wait, struct timespec* out);
+void cf_clock_current_add(struct timespec* delta, struct timespec* out);
 
 /******************************************************************************
  * INLINE FUNCTIONS
  ******************************************************************************/
+
+static inline void cf_clock_set_timespec_ms(int ms, struct timespec* out)
+{
+	out->tv_sec = ms / 1000;
+	out->tv_nsec = (ms % 1000) * 1000 * 1000;
+}
 
 static inline cf_clock CF_TIMESPEC_TO_MS_P( struct timespec *ts ) {
     uint64_t r1 = ts->tv_nsec;
