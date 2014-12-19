@@ -62,7 +62,7 @@ extern "C" {
 #define CF_RCHASH_CR_MT_BIGLOCK 0x04
 
 /**
- * support multithreaded access with a pool of object loccks
+ * support multithreaded access with a pool of object locks
  */
 #define CF_RCHASH_CR_MT_MANYLOCK 0x08
 
@@ -70,21 +70,6 @@ extern "C" {
  *don't calculate the size on every call, which makes 'getsize' expensive if you ever call it
  */
 #define CF_RCHASH_CR_NOSIZE 0x10
-
-/**
- * support resizes (will sometimes hang for long periods)
- */
-#define CF_RCHASH_CR_RESIZE 0x01
-
-/**
- * support multithreaded access with a single big lock
- */
-#define CF_RCHASH_CR_MT_BIGLOCK 0x04
-
-/**
- * support multithreaded access with a pool of object loccks
- */
-#define CF_RCHASH_CR_MT_LOCKPOOL 0x08
 
 /******************************************************************************
  * TYPES
@@ -209,7 +194,7 @@ uint32_t cf_rchash_get_size(cf_rchash *h);
 ** so make the reduce_fn lightweight! Consider queuing or something if you
 ** want to do something fancy
 */
-void cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata);
+int cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata);
 
 /*
  * Destroy the entire hash - all memory will be freed

@@ -45,7 +45,7 @@
 
 void cf_rchash_destroy_v(cf_rchash *h);
 void cf_rchash_reduce_delete_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata);
-void cf_rchash_reduce_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata);
+int cf_rchash_reduce_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata);
 int cf_rchash_delete_v(cf_rchash *h, void *key, uint32_t key_len);
 int cf_rchash_get_v(cf_rchash *h, void *key, uint32_t key_len, void **object);
 int cf_rchash_put_unique_v(cf_rchash *h, void *key, uint32_t key_len, void *object);
@@ -461,12 +461,12 @@ Out:
 // The value returned by reduce_fn governs behavior as follows:
 //     CF_RCHASH_OK (0) - continue iterating.
 //     CF_RCHASH_REDUCE_DELETE (1) - delete the current node.
-//     Anything else (e.g. CF_RCHASH_ERR) - stop iterating.
+//     Anything else (e.g. CF_RCHASH_ERR) - stop iterating and return
+//         reduce_fn's returned value.
 
-void cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) {
+int cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) {
 	if (h->key_len == 0) {
-		cf_rchash_reduce_v(h, reduce_fn, udata);
-		return;
+		return cf_rchash_reduce_v(h, reduce_fn, udata);
 	}
 
 	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
@@ -546,7 +546,7 @@ void cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) 
 					pthread_mutex_unlock(&h->biglock);
 				}
 
-				return;
+				return rv;
 			}
 		}
 
@@ -558,6 +558,8 @@ void cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) 
 	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_unlock(&h->biglock);
 	}
+
+	return CF_RCHASH_OK;
 }
 
 void cf_rchash_destroy_elements(cf_rchash *h) {
@@ -895,9 +897,10 @@ Out:
 // The value returned by reduce_fn governs behavior as follows:
 //     CF_RCHASH_OK (0) - continue iterating.
 //     CF_RCHASH_REDUCE_DELETE (1) - delete the current node.
-//     Anything else (e.g. CF_RCHASH_ERR) - stop iterating.
+//     Anything else (e.g. CF_RCHASH_ERR) - stop iterating and return
+//         reduce_fn's returned value.
 
-void cf_rchash_reduce_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) {
+int cf_rchash_reduce_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata) {
 
 	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_lock(&h->biglock);
@@ -977,7 +980,7 @@ void cf_rchash_reduce_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata
 					pthread_mutex_unlock(&h->biglock);
 				}
 
-				return;
+				return rv;
 			}
 		}
 
@@ -989,6 +992,8 @@ void cf_rchash_reduce_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata
 	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
 		pthread_mutex_unlock(&h->biglock);
 	}
+
+	return CF_RCHASH_OK;
 }
 
 void cf_rchash_destroy_elements_v(cf_rchash *h) {
