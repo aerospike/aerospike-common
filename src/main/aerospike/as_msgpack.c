@@ -426,7 +426,7 @@ static int as_unpack_blob(as_unpacker * pk, int size, as_val ** val)
 	size--;
 	
 	if (type == AS_BYTES_STRING) {
-		char* v = strndup((char*)pk->buffer + pk->offset, size);
+		char* v = cf_strndup((char*)pk->buffer + pk->offset, size);
 		*val = (as_val*) as_string_new(v, true);
 	}
 	else {
