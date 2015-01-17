@@ -39,26 +39,37 @@ extern inline as_string *	as_string_fromval(const as_val * v);
  *	INSTANCE FUNCTIONS
  *****************************************************************************/
 
-static inline as_string * as_string_cons(as_string * string, bool free, char * value, bool value_free)
+static inline as_string * as_string_cons(as_string * string, bool free, char * value, size_t len, bool value_free)
 {
 	if ( !string ) return string;
 
 	as_val_cons((as_val *) string, AS_STRING, free);
 	string->free = value_free;
 	string->value = value;
-	string->len = SIZE_MAX;
+	string->len = len;
 	return string;
 }
 
 as_string * as_string_init(as_string * string, char * value, bool free)
 {
-	return as_string_cons(string, false, value, free);
+	return as_string_cons(string, false, value, SIZE_MAX, free);
+}
+
+as_string * as_string_init_wlen(as_string * string, char * value, size_t len, bool free)
+{
+	return as_string_cons(string, false, value, len, free);
 }
 
 as_string * as_string_new(char * value, bool free)
 {
 	as_string * string = (as_string *) cf_malloc(sizeof(as_string));
-	return as_string_cons(string, true, value, free);
+	return as_string_cons(string, true, value, SIZE_MAX, free);
+}
+
+as_string * as_string_new_wlen(char * value, size_t len, bool free)
+{
+	as_string * string = (as_string *) cf_malloc(sizeof(as_string));
+	return as_string_cons(string, true, value, len, free);
 }
 
 as_string *as_string_new_strdup(const char * s)
@@ -92,7 +103,7 @@ const char* as_basename(as_string * filename, const char* path)
 	if (path == 0 || *path == 0) {
 		// Found empty string.  Return current directory constant.
 		char* value = ".";
-		as_string_cons(filename, false, value, false);
+		as_string_cons(filename, false, value, 1, false);
 		return value;
 	}
 	
@@ -109,7 +120,7 @@ const char* as_basename(as_string * filename, const char* path)
 	
 	if (begin == 0) {
 		// No slashes found.  Return original string.
-		as_string_cons(filename, false, (char*)path, false);
+		as_string_cons(filename, false, (char*)path, p - path, false);
 		return path;
 	}
 	
@@ -122,7 +133,7 @@ const char* as_basename(as_string * filename, const char* path)
 			if (p == path) {
 				// String contains all slashes. Return slash constant.
 				char* value = "/";
-				as_string_cons(filename, false, value, false);
+				as_string_cons(filename, false, value, 1, false);
 				return value;
 			}
 			p--;
@@ -137,16 +148,16 @@ const char* as_basename(as_string * filename, const char* path)
 			p++;
 		}
 		
-		int len = (int)(end - p) + 1;
+		size_t len = (end - p) + 1;
 		char* str = cf_malloc(len + 1);
 		memcpy(str, p, len);
 		*(str + len) = 0;
-		as_string_cons(filename, false, str, true);
+		as_string_cons(filename, false, str, len, true);
 		return str;
 	}
 	
 	// Return begin of filename.
-	as_string_cons(filename, false, (char*)begin, false);
+	as_string_cons(filename, false, (char*)begin, p - begin, false);
 	return begin;
 }
 

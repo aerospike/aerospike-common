@@ -147,6 +147,22 @@ typedef struct as_string_s {
 as_string * as_string_init(as_string * string, char * value, bool free);
 
 /**
+ *	Initialize a stack allocated `as_string` and its length.
+ *
+ *	If free is true, then the string value will be freed when the as_string is destroyed.
+ *
+ *	@param string	The stack allocated as_string to initialize
+ *	@param value 	The NULL terminated string of character.
+ *	@param len		The length of the string.
+ *	@param free		If true, then the value will be freed when as_string is destroyed.
+ *
+ *	@return On success, the initialized string. Otherwise NULL.
+ *
+ *	@relatesalso as_string
+ */
+as_string * as_string_init_wlen(as_string * string, char * value, size_t len, bool free);
+
+/**
  *	Create and initialize a new heap allocated `as_string`.
  *
  *	If free is true, then the string value will be freed when the as_string is destroyed.
@@ -159,6 +175,21 @@ as_string * as_string_init(as_string * string, char * value, bool free);
  *	@relatesalso as_string
  */
 as_string * as_string_new(char * value, bool free);
+
+/**
+ *	Create and initialize a new heap allocated `as_string` and its length.
+ *
+ *	If free is true, then the string value will be freed when the as_string is destroyed.
+ *
+ *	@param value 	The NULL terminated string of character.
+ *	@param len		The length of the string.
+ *	@param free		If true, then the value will be freed when as_string is destroyed.
+ *
+ *	@return On success, the new string. Otherwise NULL.
+ *
+ *	@relatesalso as_string
+ */
+as_string * as_string_new_wlen(char * value, size_t len, bool free);
 
 /**
  *	Create and initialize a new heap allocated `as_string`.
