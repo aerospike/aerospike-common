@@ -66,7 +66,6 @@ AEROSPIKE-OBJECTS += as_buffer.o
 AEROSPIKE-OBJECTS += as_pair.o
 AEROSPIKE-OBJECTS += as_stream.o
 AEROSPIKE-OBJECTS += as_iterator.o
-AEROSPIKE-OBJECTS += as_stringmap.o
 AEROSPIKE-OBJECTS += as_timer.o
 
 AEROSPIKE-OBJECTS += internal.o
