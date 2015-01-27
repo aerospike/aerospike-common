@@ -149,28 +149,26 @@ static int as_arraylist_ensure(as_arraylist * list, uint32_t delta)
 	if ( (list->size + delta) > list->capacity ) {
 		// by convention - we allocate more space ONLY when the unit of
 		// (new) allocation is > 0.
-		if ( list->block_size > 0 ) {
-			// Compute how much room we're missing for the new stuff
-			int new_room = (list->size + delta) - list->capacity;
-			// Compute new capacity in terms of multiples of block_size
-			// This will get us (conservatively) at least one block
-			int new_blocks = (new_room + list->block_size) / list->block_size;
-			int new_capacity = list->capacity + (new_blocks * list->block_size);
-			size_t new_bytes = sizeof(as_val *) * new_capacity;
-			as_val ** elements = (as_val **) cf_realloc(list->elements, new_bytes);
-			if ( elements != NULL ) {
-				// Zero everything beyond the old pointers.
-				size_t old_bytes = sizeof(as_val *) * list->capacity;
-				memset((uint8_t *)elements + old_bytes, 0, new_bytes - old_bytes);
-				// Set the new array pointer and capacity.
-				list->elements = elements;
-				list->capacity = new_capacity;
-				return AS_ARRAYLIST_OK;
-			}
-			list->elements = elements;
+		if ( list->block_size == 0 ) {
+			return AS_ARRAYLIST_ERR_MAX;
+		}
+		// Compute how much room we're missing for the new stuff
+		int new_room = (list->size + delta) - list->capacity;
+		// Compute new capacity in terms of multiples of block_size
+		// This will get us (conservatively) at least one block
+		int new_blocks = (new_room + list->block_size) / list->block_size;
+		int new_capacity = list->capacity + (new_blocks * list->block_size);
+		size_t new_bytes = sizeof(as_val *) * new_capacity;
+		as_val ** elements = (as_val **) cf_realloc(list->elements, new_bytes);
+		if ( ! elements ) {
 			return AS_ARRAYLIST_ERR_ALLOC;
 		}
-		return AS_ARRAYLIST_ERR_MAX;
+		// Zero everything beyond the old pointers.
+		size_t old_bytes = sizeof(as_val *) * list->capacity;
+		memset((uint8_t *)elements + old_bytes, 0, new_bytes - old_bytes);
+		// Set the new array pointer and capacity.
+		list->elements = elements;
+		list->capacity = new_capacity;
 	}
 
 	return AS_ARRAYLIST_OK;

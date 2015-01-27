@@ -261,32 +261,44 @@ int as_hashmap_set(as_hashmap * map, const as_val * k, const as_val * v)
 
 	// No space on the free-q, must insert at end.
 
-	map->count++;
+	uint32_t cur_end = prev_e->next;
+
+	// prev_e could be a pointer into extras, which might be realloc'd, so we
+	// modify prev_e->next first (but revert if malloc/realloc fails).
 	prev_e->next = map->insert_at;
 
 	// First grow the extra capacity if necessary.
+	// TODO - vertical scaling.
 	if (map->insert_at >= map->extra_capacity) {
 		size_t orig_size = map->extra_capacity * sizeof(as_hashmap_element);
-
-		map->extra_capacity += map->capacity_step;
-
-		size_t size = map->extra_capacity * sizeof(as_hashmap_element);
+		uint32_t extra_capacity = map->extra_capacity + map->capacity_step;
+		size_t size = extra_capacity * sizeof(as_hashmap_element);
 
 		if (map->extras) {
-			if (! (map->extras = (as_hashmap_element *)cf_realloc(map->extras, size))) {
+			as_hashmap_element * extras =
+					(as_hashmap_element *)cf_realloc(map->extras, size);
+
+			if (! extras) {
+				prev_e->next = cur_end;
 				return -1;
 			}
 
+			map->extras = extras;
 			memset((uint8_t*)map->extras + orig_size, 0, size - orig_size);
 		}
 		else {
 			if (! (map->extras = (as_hashmap_element *)cf_malloc(size))) {
+				prev_e->next = cur_end;
 				return -1;
 			}
 
 			memset(map->extras, 0, size);
 		}
+
+		map->extra_capacity = extra_capacity;
 	}
+
+	map->count++;
 
 	e = &map->extras[map->insert_at++];
 
