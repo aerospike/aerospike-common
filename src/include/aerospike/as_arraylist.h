@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,6 +16,10 @@
  */
 
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <aerospike/as_integer.h>
 #include <aerospike/as_string.h>
@@ -910,3 +914,6 @@ int as_arraylist_remove(as_arraylist * list, uint32_t index);
  */
 bool as_arraylist_foreach(const as_arraylist * list, as_list_foreach_callback callback, void * udata);
 
+#ifdef __cplusplus
+} // end extern "C"
+#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "citrusleaf/cf_types.h"
 
@@ -72,3 +76,7 @@ static inline bool
 as_password_verify(const char* hash1, const char* hash2) {
 	return ! memcmp(hash1, hash2, 60);
 }
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

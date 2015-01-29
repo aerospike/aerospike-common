@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <WinSock2.h>   // for struct timeval
 #include <pthread.h>    // for struct timespec
@@ -86,3 +90,7 @@ static inline int clock_gettime(int clock_type, struct timespec* p_ts)
 
     return 0;
 }
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

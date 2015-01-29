@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,6 +16,10 @@
  */
 
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <citrusleaf/cf_atomic.h>
 
@@ -183,3 +187,6 @@ static inline as_val * as_val_cons(as_val * val, as_val_t type, bool free)
     return val;
 }
 
+#ifdef __cplusplus
+} // end extern "C"
+#endif

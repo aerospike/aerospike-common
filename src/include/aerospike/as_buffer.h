@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,6 +16,10 @@
  */
 
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdint.h>
 
@@ -58,3 +62,7 @@ int as_buffer_init(as_buffer * b);
  *	Free the resources allocated to the buffer.
  */
 void as_buffer_destroy(as_buffer * b);
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

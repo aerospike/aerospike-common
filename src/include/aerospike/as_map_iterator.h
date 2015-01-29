@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -17,6 +17,10 @@
 
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <aerospike/as_hashmap_iterator.h>
 
 /******************************************************************************
@@ -31,3 +35,7 @@ typedef union as_map_iterator_u {
 	as_hashmap_iterator 	hashmap;
 
 } as_map_iterator;
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

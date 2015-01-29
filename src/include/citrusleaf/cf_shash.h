@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
  /*
   * A general purpose hashtable implementation
@@ -258,6 +262,10 @@ void shash_destroy(shash *h);
 #define SHASH_ELEM_SZ(_h) ( sizeof(shash_elem) + (_h->key_len) + (_h->value_len) )
 
 /******************************************************************************/
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif
 
 #ifdef __cplusplus
 } // end extern "C"

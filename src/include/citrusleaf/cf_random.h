@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,6 +16,10 @@
  */
 #pragma once
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <inttypes.h>
 
 /******************************************************************************
@@ -25,3 +29,7 @@
 extern int cf_get_rand_buf(uint8_t *buf, int len);
 extern uint64_t cf_get_rand64();
 extern uint32_t cf_get_rand32();
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

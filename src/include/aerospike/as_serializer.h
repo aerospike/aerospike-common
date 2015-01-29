@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,6 +16,10 @@
  */
 
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <aerospike/as_util.h>
 #include <aerospike/as_types.h>
@@ -92,3 +96,7 @@ static inline uint32_t as_serializer_serialize_getsize(as_serializer * serialize
 {
     return as_util_hook(serialize_getsize, 1, serializer, val);
 }
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

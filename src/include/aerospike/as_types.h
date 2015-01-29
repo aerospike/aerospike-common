@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,6 +16,10 @@
  */
 
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <aerospike/as_boolean.h>
 #include <aerospike/as_integer.h>
@@ -38,3 +42,7 @@
 #include <aerospike/as_hashmap_iterator.h>
 
 #include <aerospike/as_result.h>
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

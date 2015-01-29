@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,6 +16,10 @@
  */
 
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
@@ -163,3 +167,7 @@ uint32_t as_pair_val_hashcode(const as_val *);
  *	Internal helper function for getting the string representation of an as_val.
  */
 char * as_pair_val_tostring(const as_val *);
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

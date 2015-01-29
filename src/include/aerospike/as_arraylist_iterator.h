@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,6 +16,10 @@
  */
 
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <aerospike/as_arraylist.h>
 #include <aerospike/as_iterator.h>
@@ -165,3 +169,7 @@ bool as_arraylist_iterator_has_next(const as_arraylist_iterator * iterator);
  *	@relatesalso as_arraylist_iterator
  */
 const as_val * as_arraylist_iterator_next(as_arraylist_iterator * iterator);
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

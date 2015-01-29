@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdbool.h>
 
@@ -56,3 +60,7 @@ as_val * as_result_value(as_result *);
 
 as_result * as_result_setsuccess(as_result * r, as_val * v);
 as_result * as_result_setfailure(as_result * r, as_val * v);
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

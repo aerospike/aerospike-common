@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * SYNOPSIS
@@ -211,6 +215,10 @@ int cf_ll_insert_reduce(cf_ll *ll, cf_ll_element *e, bool forward, cf_ll_reduce_
 int cf_ll_init(cf_ll *ll, cf_ll_destructor destroy_fn, bool uselock);
 
 /******************************************************************************/
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif
 
 #ifdef __cplusplus
 } // end extern "C"

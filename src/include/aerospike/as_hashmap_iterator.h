@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,6 +16,10 @@
  */
 
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <aerospike/as_hashmap.h>
 #include <aerospike/as_iterator.h>
@@ -182,3 +186,7 @@ bool as_hashmap_iterator_has_next(const as_hashmap_iterator * iterator);
  *	@relatesalso as_hashmap_iterator
  */
 const as_val * as_hashmap_iterator_next(as_hashmap_iterator * iterator);
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdlib.h>
 
@@ -208,3 +212,7 @@ int as_module_apply_stream(as_module * m, as_udf_context * ctx, const char * fil
  * @param errno        The error code
  */
 char *as_module_err_string(int);
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

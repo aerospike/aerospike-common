@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <aerospike/as_msgpack.h>
 #include <aerospike/as_serializer.h>
@@ -32,3 +36,7 @@ as_serializer * as_msgpack_new();
  * Initializes a serializer for msgpack.
  */
 as_serializer * as_msgpack_init(as_serializer *);
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

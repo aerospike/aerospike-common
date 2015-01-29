@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <aerospike/as_log.h>
 
@@ -52,3 +56,7 @@
 	if (g_as_log.callback && AS_LOG_LEVEL_TRACE <= g_as_log.level) {\
 		(g_as_log.callback) (AS_LOG_LEVEL_TRACE, __func__, __FILE__, __LINE__, __fmt, ##__VA_ARGS__);\
 	}
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

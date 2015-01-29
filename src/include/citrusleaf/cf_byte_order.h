@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if defined(__linux__)
 
@@ -79,3 +83,7 @@
 #define cf_swap_from_be64(_n) _byteswap_uint64(_n)
 #define cf_swap_from_le64(_n) (_n)
 #endif // CF_WINDOWS
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

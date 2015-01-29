@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,6 +16,10 @@
  */
 
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
@@ -337,3 +341,7 @@ char * as_string_val_tostring(const as_val * v);
  *	@relatesalso as_string
  */
 bool as_strncpy(char* trg, const char* src, int size);
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

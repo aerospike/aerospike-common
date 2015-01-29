@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * A general purpose hashtable implementation
@@ -202,6 +206,10 @@ int cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata);
 void cf_rchash_destroy(cf_rchash *h);
 
 /******************************************************************************/
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif
 
 #ifdef __cplusplus
 } // end extern "C"

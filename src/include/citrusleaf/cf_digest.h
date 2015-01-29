@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * Cryptographic message digests
@@ -148,4 +152,8 @@ static inline cl_partition_id cl_partition_getid(uint32_t n_partitions, const cf
 #ifdef __APPLE__
 // Restore old settings.
 #pragma GCC diagnostic pop
+#endif
+
+#ifdef __cplusplus
+} // end extern "C"
 #endif

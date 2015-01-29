@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,6 +16,10 @@
  */
 
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdlib.h>
 
@@ -241,3 +245,7 @@ static inline bool as_stream_writable(const as_stream * stream)
 {
 	return stream != NULL && stream->hooks != NULL && stream->hooks->write;
 }
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

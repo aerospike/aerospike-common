@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdlib.h>
 #include <citrusleaf/cf_atomic.h>
@@ -84,3 +88,7 @@ int cf_rc_release(void *addr);
 int cf_rc_releaseandfree(void *addr);
 
 #endif // defined(ENHANCED_ALLOC)
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

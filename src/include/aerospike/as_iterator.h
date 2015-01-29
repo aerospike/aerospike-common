@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,6 +16,10 @@
  */
 
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
@@ -115,3 +119,7 @@ static inline const as_val * as_iterator_next(as_iterator * iterator)
 {
 	return as_util_hook(next, NULL, iterator);
 }
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

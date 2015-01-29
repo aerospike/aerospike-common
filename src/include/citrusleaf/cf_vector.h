@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * A general purpose vector
@@ -222,6 +226,10 @@ static inline int cf_vector_integer_append(cf_vector *v, int i) {
 #define cf_vector_reset( __v ) (__v)->len = 0; if ( (__v)->flags & VECTOR_FLAG_INITZERO) memset( (__v)->vector, 0, (__v)->alloc_len * (__v)->value_len);
 
 /******************************************************************************/
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif
 
 #ifdef __cplusplus
 } // end extern "C"

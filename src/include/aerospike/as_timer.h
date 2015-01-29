@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -83,3 +87,7 @@ bool as_timer_timedout(const as_timer * timer);
  * returns timeslice assigned for this timer
  */
 uint64_t as_timer_timeslice(const as_timer * timer);
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

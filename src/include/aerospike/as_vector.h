@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <citrusleaf/alloc.h>
 #include <citrusleaf/cf_types.h>
@@ -162,3 +166,7 @@ as_vector_move(as_vector* vector, uint32_t source, uint32_t target)
 {
 	memcpy((byte *)vector->list + (target * vector->item_size), (byte *)vector->list + (source * vector->item_size), vector->item_size);
 }
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

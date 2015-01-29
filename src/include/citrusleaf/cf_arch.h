@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -20,6 +20,10 @@
 extern "C" {
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /******************************************************************************
  * CONSTANTS
  ******************************************************************************/
@@ -33,6 +37,10 @@ extern "C" {
 #endif
 
 /******************************************************************************/
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif
 
 #ifdef __cplusplus
 } // end extern "C"

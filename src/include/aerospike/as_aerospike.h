@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,10 @@
  * the License.
  */
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <aerospike/as_util.h>
 #include <aerospike/as_types.h>
@@ -124,3 +128,7 @@ static inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec *
 {
 	return as_util_hook(close_subrec, 1, a, cr);
 }
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

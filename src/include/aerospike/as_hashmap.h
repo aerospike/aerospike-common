@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,6 +16,10 @@
  */
 
 #pragma once
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include <aerospike/as_map.h>
 
@@ -261,3 +265,7 @@ int as_hashmap_remove(as_hashmap * map, const as_val * key);
  *	@relatesalso as_hashmap
  */
 bool as_hashmap_foreach(const as_hashmap * map, as_map_foreach_callback callback, void * udata);
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif
