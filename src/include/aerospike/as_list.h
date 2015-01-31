@@ -14,7 +14,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 #pragma once
 
 #ifdef __cplusplus
@@ -1200,9 +1199,9 @@ static inline int as_list_prepend_map(as_list * list, struct as_map_s * value)
  *	@return 0 on success. Otherwise an error occurred.
  *	@relatesalso as_list
  */
-static inline int as_list_remove(as_list * list, uint32_t i)
+static inline int as_list_remove(as_list * list, uint32_t index)
 {
-	return as_util_hook(remove, 1, list, i);
+	return as_util_hook(remove, 1, list, index);
 }
 
 /******************************************************************************
