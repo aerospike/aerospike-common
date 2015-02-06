@@ -288,7 +288,13 @@ int as_arraylist_insert(as_arraylist * list, uint32_t index, as_val * value)
 	}
 
 	list->elements[index] = value;
-	list->size++;
+
+	if (index > list->size) {
+		list->size = index + 1;
+	}
+	else {
+		list->size++;
+	}
 
 	return AS_ARRAYLIST_OK;
 }
