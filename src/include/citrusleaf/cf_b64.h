@@ -16,10 +16,6 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -56,10 +52,6 @@ bool cf_b64_validate_and_decode(const char* in, uint32_t in_len, uint8_t* out, u
 bool cf_b64_validate_and_decode_in_place(uint8_t* in_out, uint32_t in_len, uint32_t* out_size);
 
 /******************************************************************************/
-
-#ifdef __cplusplus
-} // end extern "C"
-#endif
 
 #ifdef __cplusplus
 } // end extern "C"

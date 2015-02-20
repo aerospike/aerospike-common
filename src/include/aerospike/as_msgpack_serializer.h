@@ -16,12 +16,12 @@
  */
 #pragma once
 
+#include <aerospike/as_msgpack.h>
+#include <aerospike/as_serializer.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <aerospike/as_msgpack.h>
-#include <aerospike/as_serializer.h>
 
 /******************************************************************************
  * FUNCTIONS

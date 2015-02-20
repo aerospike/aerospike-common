@@ -16,12 +16,12 @@
  */
 #pragma once
 
+#include <WinSock2.h>   // for struct timeval
+#include <pthread.h>    // for struct timespec
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <WinSock2.h>   // for struct timeval
-#include <pthread.h>    // for struct timespec
 
 #define CLOCK_REALTIME              0
 #define CLOCK_MONOTONIC             1

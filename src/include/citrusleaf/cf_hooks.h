@@ -20,10 +20,6 @@
 extern "C" {
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 typedef struct cf_mutex_hooks_s {
     // Allocate and initialize new lock.
     void *(*alloc)(void);
@@ -58,10 +54,6 @@ static inline int cf_hooked_mutex_lock(void *lock) {
 static inline int cf_hooked_mutex_unlock(void *lock) {
     return lock ? g_mutex_hooks->unlock(lock) : 0;
 }
-
-#ifdef __cplusplus
-}
-#endif
 
 #ifdef __cplusplus
 } // end extern "C"

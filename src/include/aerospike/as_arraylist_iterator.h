@@ -17,15 +17,15 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <aerospike/as_arraylist.h>
 #include <aerospike/as_iterator.h>
 
 #include <stdbool.h>
 #include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /******************************************************************************
  *	TYPES

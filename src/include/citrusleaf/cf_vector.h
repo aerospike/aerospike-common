@@ -16,10 +16,6 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  * A general purpose vector
  * Uses locks, so only moderately fast
@@ -226,10 +222,6 @@ static inline int cf_vector_integer_append(cf_vector *v, int i) {
 #define cf_vector_reset( __v ) (__v)->len = 0; if ( (__v)->flags & VECTOR_FLAG_INITZERO) memset( (__v)->vector, 0, (__v)->alloc_len * (__v)->value_len);
 
 /******************************************************************************/
-
-#ifdef __cplusplus
-} // end extern "C"
-#endif
 
 #ifdef __cplusplus
 } // end extern "C"

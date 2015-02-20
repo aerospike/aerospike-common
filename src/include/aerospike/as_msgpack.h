@@ -16,11 +16,11 @@
  */
 #pragma once
 
+#include <aerospike/as_serializer.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <aerospike/as_serializer.h>
 
 #define AS_PACKER_BUFFER_SIZE 8192
 

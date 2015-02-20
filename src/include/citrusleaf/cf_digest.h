@@ -16,10 +16,6 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  * Cryptographic message digests
  * The intent is to provide an algorithm-neutral API for the computation of
@@ -152,8 +148,4 @@ static inline cl_partition_id cl_partition_getid(uint32_t n_partitions, const cf
 #ifdef __APPLE__
 // Restore old settings.
 #pragma GCC diagnostic pop
-#endif
-
-#ifdef __cplusplus
-} // end extern "C"
 #endif

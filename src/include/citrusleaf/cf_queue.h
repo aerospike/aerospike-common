@@ -16,10 +16,6 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <pthread.h>
 #include <citrusleaf/cf_types.h>
 
@@ -162,10 +158,6 @@ void cf_queue_delete_offset(cf_queue *q, uint index);
 #define CF_Q_ELEM_PTR(__q, __i) (&__q->queue[ (__i % __q->allocsz) * __q->elementsz ] )
 
 /******************************************************************************/
-
-#ifdef __cplusplus
-} // end extern "C"
-#endif
 
 #ifdef __cplusplus
 } // end extern "C"

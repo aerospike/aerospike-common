@@ -16,12 +16,12 @@
  */
 #pragma once
 
+#include <stdlib.h>
+#include <citrusleaf/cf_atomic.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <stdlib.h>
-#include <citrusleaf/cf_atomic.h>
 
 #ifdef MEM_COUNT
 

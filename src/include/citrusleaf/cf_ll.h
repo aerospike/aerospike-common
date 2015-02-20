@@ -16,10 +16,6 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  * SYNOPSIS
  * LinkedList
@@ -215,10 +211,6 @@ int cf_ll_insert_reduce(cf_ll *ll, cf_ll_element *e, bool forward, cf_ll_reduce_
 int cf_ll_init(cf_ll *ll, cf_ll_destructor destroy_fn, bool uselock);
 
 /******************************************************************************/
-
-#ifdef __cplusplus
-} // end extern "C"
-#endif
 
 #ifdef __cplusplus
 } // end extern "C"

@@ -17,11 +17,11 @@
 
 #pragma once
 
+#include <aerospike/as_arraylist_iterator.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include <aerospike/as_arraylist_iterator.h>
 
 /******************************************************************************
  *	TYPES
