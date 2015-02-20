@@ -16,13 +16,13 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <aerospike/as_memtracker.h>
 #include <aerospike/as_timer.h>
 #include <aerospike/as_aerospike.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /******************************************************************************
  * TYPES

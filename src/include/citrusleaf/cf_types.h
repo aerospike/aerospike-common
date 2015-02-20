@@ -16,10 +16,6 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
@@ -75,10 +71,6 @@ struct cf_bytearray_t {
 typedef struct cf_bytearray_t cf_bytearray;
 
 /******************************************************************************/
-
-#ifdef __cplusplus
-} // end extern "C"
-#endif
 
 #ifdef __cplusplus
 } // end extern "C"

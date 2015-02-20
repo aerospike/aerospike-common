@@ -16,10 +16,6 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <citrusleaf/cf_atomic.h>
 #include <citrusleaf/cf_types.h>
 #include <strings.h>
@@ -76,10 +72,6 @@ static inline uint64_t cf_roundup_64( uint64_t i, uint32_t modulus) {
 #define cf_max(__x, __y) ( (__x) > (__y) ? (__x) : (__y) )
 
 /******************************************************************************/
-
-#ifdef __cplusplus
-} // end extern "C"
-#endif
 
 #ifdef __cplusplus
 } // end extern "C"

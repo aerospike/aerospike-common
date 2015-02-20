@@ -16,14 +16,13 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h>
 
 #include <aerospike/as_val.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /******************************************************************************
  * TYPES

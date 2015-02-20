@@ -17,10 +17,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <aerospike/as_integer.h>
 #include <aerospike/as_string.h>
 #include <aerospike/as_bytes.h>
@@ -30,6 +26,10 @@ extern "C" {
 
 #include <stdbool.h>
 #include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /******************************************************************************
  *	TYPES

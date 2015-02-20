@@ -16,10 +16,6 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 #include <pthread.h>
 #include <stdbool.h>
@@ -43,10 +39,6 @@ extern "C" {
 bool cf_convert_sha1_to_hex(unsigned char * hash, unsigned char * sha1_hex_buff);
 
 /******************************************************************************/
-
-#ifdef __cplusplus
-} // end extern "C"
-#endif
 
 #ifdef __cplusplus
 } // end extern "C"

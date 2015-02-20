@@ -16,11 +16,11 @@
  */
 #pragma once
 
+#include "citrusleaf/cf_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "citrusleaf/cf_types.h"
 
 /**
  *	The user name size including null byte.

@@ -17,10 +17,6 @@
 
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <aerospike/as_boolean.h>
 #include <aerospike/as_integer.h>
 #include <aerospike/as_string.h>
@@ -42,7 +38,3 @@ extern "C" {
 #include <aerospike/as_hashmap_iterator.h>
 
 #include <aerospike/as_result.h>
-
-#ifdef __cplusplus
-} // end extern "C"
-#endif

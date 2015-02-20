@@ -16,13 +16,13 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <aerospike/as_util.h>
 #include <aerospike/as_types.h>
 #include <citrusleaf/cf_clock.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /******************************************************************************
  * TYPES

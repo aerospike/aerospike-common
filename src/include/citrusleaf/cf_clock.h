@@ -16,16 +16,8 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <citrusleaf/cf_atomic.h>
 #include <citrusleaf/cf_types.h>
-
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #ifdef __linux__
 #include <time.h>
@@ -38,6 +30,10 @@ extern "C" {
     
 #ifdef CF_WINDOWS
 #include <citrusleaf/cf_clock_win.h>
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /******************************************************************************
@@ -138,10 +134,6 @@ static inline uint32_t cf_server_void_time_to_ttl(uint32_t server_void_time) {
 }
 
 /******************************************************************************/
-
-#ifdef __cplusplus
-} // end extern "C"
-#endif
 
 #ifdef __cplusplus
 } // end extern "C"

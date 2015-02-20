@@ -16,10 +16,6 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * SYNOPSIS
  * Atomic memory operations
@@ -397,10 +393,6 @@ static inline int32_t cf_atomic32_setmax(cf_atomic32 *a, int32_t x) {
 #endif // ifndef CF_WINDOWS
 
 /*****************************************************************************/
-
-#ifdef __cplusplus
-} // end extern "C"
-#endif
 
 #ifdef __cplusplus
 } // end extern "C"

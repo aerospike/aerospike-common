@@ -16,10 +16,6 @@
  */
 #pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /*
  * A simple priority queue implementation, which is simply a set of queues underneath.
  * This currently doesn't support 'delete' and 'reduce' functionality
@@ -71,10 +67,6 @@ int cf_queue_priority_reduce_pop(cf_queue_priority *priority_q,  void *buf, cf_q
 #define CF_Q_PRI_EMPTY(__q) (CF_Q_EMPTY(__q->low_q) && CF_Q_EMPTY(__q->medium_q) && CF_Q_EMPTY(__q->high_q))
  
 /******************************************************************************/
-
-#ifdef __cplusplus
-} // end extern "C"
-#endif
 
 #ifdef __cplusplus
 } // end extern "C"
