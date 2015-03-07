@@ -11,6 +11,7 @@ TEST( types_nil_string_conversion, "as_nil's string conversion is a NIL" ) {
     as_val *v = (as_val *)&as_nil;
     char *str = as_nil_val_tostring(v);
 	assert_string_eq( str, "NIL" );
+	free (str);
 }
 
 TEST( types_nil_length_check, "as_nil having zero items" ) {

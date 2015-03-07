@@ -63,6 +63,7 @@ TEST( types_boolean_true_msgpack, "as_boolean is true w/ msgpack" ) {
 	assert( as_integer_getorelse(i,-1) == 1 );
 
 	as_integer_destroy(i);
+	as_buffer_destroy(&buf);
 }
 
 TEST( types_boolean_false_msgpack, "as_boolean is false w/ msgpack" ) {
@@ -85,6 +86,7 @@ TEST( types_boolean_false_msgpack, "as_boolean is false w/ msgpack" ) {
 	assert( as_integer_getorelse(i,-1) == 0 );
 
 	as_integer_destroy(i);
+	as_buffer_destroy(&buf);
 }
 
 

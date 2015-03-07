@@ -438,9 +438,11 @@ TEST( types_arraylist_msgpack, "as_arraylist msgpack" ) {
     assert_string_eq( as_arraylist_get_str(&l1, 4), "def" );
     assert_string_eq( as_arraylist_get_str(&l1, 5), "ghi" );
 
-    // as_arraylist_destroy(&l1);
+    as_arraylist_destroy(&l1);
     
-    // as_list_destroy(l2);
+    as_list_destroy(l2);
+    
+    as_buffer_destroy(&b);
 }
 
 /******************************************************************************

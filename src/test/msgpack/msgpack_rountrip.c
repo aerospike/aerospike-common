@@ -29,6 +29,7 @@ static as_val * roundtrip(as_val * in)
 
 	as_serializer_serialize(&ser, in, &b);
 	as_serializer_deserialize(&ser, &b, &out);
+	as_buffer_destroy(&b);
 
 	return out;
 }

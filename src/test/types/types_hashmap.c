@@ -307,6 +307,7 @@ TEST( types_hashmap_msgpack, "as_hashmap msgpack" ) {
 	
 	as_map_destroy(m2);
 	as_hashmap_destroy(m1);
+	as_buffer_destroy(&b);
 }
 
 TEST( types_hashmap_types, "as_hashmap types" ) {
