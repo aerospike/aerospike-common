@@ -309,6 +309,86 @@ TEST( types_hashmap_msgpack, "as_hashmap msgpack" ) {
 	as_hashmap_destroy(m1);
 }
 
+TEST( types_hashmap_types, "as_hashmap types" ) {
+
+	as_map * m = (as_map *) as_hashmap_new(5);	
+	assert_int_eq( as_map_size(m), 0 );
+
+	// Setting a map
+	as_map *map_data = (as_map *)as_hashmap_new(1);
+	as_map_set(map_data, (as_val *)as_integer_new(10), (as_val *)as_integer_new(20));
+	as_map_set(m, (as_val *) as_string_new_strdup("map_data"), (as_val *) map_data);
+	
+	// Setting a list
+	as_list *list_data = (as_list *) as_arraylist_new(1, 1);
+	as_arraylist_set_int64((as_arraylist *)list_data, 0, 20000);
+	as_map_set(m, (as_val *) as_string_new_strdup("list_data"), (as_val *) list_data);
+	
+	// Setting a string
+	as_map_set(m, (as_val *) as_string_new_strdup("string_data"), (as_val *) as_string_new_strdup("my string data"));
+	
+	// Setting an integer
+	as_map_set(m, (as_val *) as_string_new_strdup("integer_data"), (as_val *) as_integer_new(10000));
+
+	// Setting a blob
+	as_bytes *byte_data = as_bytes_new(20);
+	int i = 0; 
+	for (i = 0; i<20; i++) {
+		as_bytes_set_byte(byte_data,i,i);
+	}
+	as_map_set(m, (as_val *) as_string_new_strdup("byte_data"), (as_val *) byte_data);
+
+	assert_int_eq( as_map_size(m), 5 );
+
+	// check individual values
+	as_string key;
+	as_val    *val;
+	
+	// check map_data
+	as_string_init(&key,"map_data",false);
+	val = as_map_get(m, (as_val *)&key);
+	assert_not_null(val);
+	
+	as_integer subkey;
+	as_integer_init(&subkey, 10);
+	as_val 	*subval = as_map_get((as_map *)val, (as_val *)&subkey);
+	assert_int_eq (as_integer_get((as_integer *)subval), 20 );
+
+	// check list_data
+	as_string_init(&key,"list_data",false);
+	val = as_map_get(m, (as_val *)&key);
+	assert_not_null(val);
+	assert_int_eq (as_list_size((as_list *)val), 1);
+	assert_int_eq (as_list_get_int64((as_list *)val, 0), 20000);
+	
+	// check string data
+	as_string_init(&key,"string_data",false);
+	val = as_map_get(m, (as_val *)&key);
+	assert_not_null(val);
+	assert_string_eq (as_string_get((as_string *)val), "my string data");
+
+	// check integer data
+	as_string_init(&key,"integer_data",false);
+	val = as_map_get(m, (as_val *)&key);
+	assert_not_null(val);
+	assert_int_eq (as_integer_get((as_integer *)val), 10000);
+	
+	// check bytes data
+	as_string_init(&key,"byte_data",false);
+	val = as_map_get(m, (as_val *)&key);
+	assert_not_null(val);
+	assert_int_eq (as_bytes_size((as_bytes *)val), 20);
+	uint8_t *bytes = (uint8_t *)as_bytes_get((as_bytes *)val);
+	
+	for (i=0; i<20; i++) {
+		assert_int_eq (*bytes++,i);
+	}
+	
+	as_map_destroy(m);
+
+}
+
+
 /******************************************************************************
  * TEST SUITE
  *****************************************************************************/
@@ -316,6 +396,7 @@ TEST( types_hashmap_msgpack, "as_hashmap msgpack" ) {
 SUITE( types_hashmap, "as_hashmap" ) {
 	suite_add( types_hashmap_empty );
 	suite_add( types_hashmap_ops );
+	suite_add( types_hashmap_types );	
 	suite_add( types_hashmap_map_ops );
 	suite_add( types_hashmap_iterator );
 	suite_add( types_hashmap_foreach );
