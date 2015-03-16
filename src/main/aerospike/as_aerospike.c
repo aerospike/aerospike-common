@@ -36,6 +36,7 @@ extern inline int as_aerospike_rec_remove(const as_aerospike * a, const as_rec *
 extern inline int as_aerospike_log(const as_aerospike * a, const char * name, const int line, const int lvl, const char * msg);
 extern inline cf_clock as_aerospike_get_current_time(const as_aerospike * a );
 extern inline int as_aerospike_set_context(const as_aerospike *a, const as_rec *r, const uint32_t context);
+extern inline int as_aerospike_get_config(const as_aerospike *a, const as_rec *r, const char *);
 
 extern inline as_rec * as_aerospike_crec_create(const as_aerospike * a, const as_rec * r);
 extern inline as_rec * as_aerospike_crec_open(const as_aerospike * a, const as_rec *r, const char *);
