@@ -15,6 +15,7 @@ PLAN( common ) {
     plan_add( types_vector );
 
     plan_add( password );
+    plan_add( string_builder );
 	
     /**
      * msgpack - tests msgpack

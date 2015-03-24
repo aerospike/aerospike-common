@@ -55,6 +55,7 @@
 		BFBB7F4618C0018F0080851E /* cf_shash.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3C18C0018F0080851E /* cf_shash.c */; };
 		BFBB7F4718C0018F0080851E /* cf_vector.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3D18C0018F0080851E /* cf_vector.c */; };
 		BFE31C1018C96462002318FE /* cf_queue.c in Sources */ = {isa = PBXBuildFile; fileRef = BFE31C0F18C96462002318FE /* cf_queue.c */; };
+		BFE7C2441AC0EACD00C512F1 /* as_string_builder.c in Sources */ = {isa = PBXBuildFile; fileRef = BFE7C2431AC0EACD00C512F1 /* as_string_builder.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -107,6 +108,7 @@
 		BFBB7F3C18C0018F0080851E /* cf_shash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_shash.c; path = ../src/main/citrusleaf/cf_shash.c; sourceTree = "<group>"; };
 		BFBB7F3D18C0018F0080851E /* cf_vector.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_vector.c; path = ../src/main/citrusleaf/cf_vector.c; sourceTree = "<group>"; };
 		BFE31C0F18C96462002318FE /* cf_queue.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_queue.c; path = ../src/main/citrusleaf/cf_queue.c; sourceTree = "<group>"; };
+		BFE7C2431AC0EACD00C512F1 /* as_string_builder.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_string_builder.c; path = ../src/main/aerospike/as_string_builder.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -123,6 +125,7 @@
 		BFBB7EE618BFFD2D0080851E = {
 			isa = PBXGroup;
 			children = (
+				BFE7C2431AC0EACD00C512F1 /* as_string_builder.c */,
 				BF27197E19E4AF6B0059CE60 /* as_log.c */,
 				BFBA04BF1947E1BB00F9924E /* cf_random.c */,
 				BFBA04B91947DE0800F9924E /* as_password.c */,
@@ -257,6 +260,7 @@
 				BF6B7B281926E7F10081A75F /* as_timer.c in Sources */,
 				BFBB7F4718C0018F0080851E /* cf_vector.c in Sources */,
 				BFBB7F2B18C001560080851E /* as_pair.c in Sources */,
+				BFE7C2441AC0EACD00C512F1 /* as_string_builder.c in Sources */,
 				BFBB7F2318C001560080851E /* as_list.c in Sources */,
 				BFBB7F2918C001560080851E /* as_msgpack.c in Sources */,
 				BFBA04BC1947DE0800F9924E /* crypt_blowfish.c in Sources */,

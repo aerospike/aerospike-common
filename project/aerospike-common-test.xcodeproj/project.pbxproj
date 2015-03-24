@@ -21,6 +21,7 @@
 		BFBB6C8E18C80A3E00756BB0 /* types_integer.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB6C8818C80A3E00756BB0 /* types_integer.c */; };
 		BFBB6C8F18C80A3E00756BB0 /* types_string.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB6C8918C80A3E00756BB0 /* types_string.c */; };
 		BFBB6C9118C80A5700756BB0 /* msgpack_rountrip.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB6C9018C80A5700756BB0 /* msgpack_rountrip.c */; };
+		BFCF26B61AC1D4AD0062B75C /* string_builder.c in Sources */ = {isa = PBXBuildFile; fileRef = BFCF26B51AC1D4AD0062B75C /* string_builder.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -70,6 +71,7 @@
 		BFBB6C8818C80A3E00756BB0 /* types_integer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_integer.c; path = ../src/test/types/types_integer.c; sourceTree = "<group>"; };
 		BFBB6C8918C80A3E00756BB0 /* types_string.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_string.c; path = ../src/test/types/types_string.c; sourceTree = "<group>"; };
 		BFBB6C9018C80A5700756BB0 /* msgpack_rountrip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = msgpack_rountrip.c; path = ../src/test/msgpack/msgpack_rountrip.c; sourceTree = "<group>"; };
+		BFCF26B51AC1D4AD0062B75C /* string_builder.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = string_builder.c; path = ../src/test/types/string_builder.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -98,6 +100,7 @@
 				BF6B7B2A1926E8320081A75F /* types_nil.c */,
 				BF6B7B2C1926E9450081A75F /* types_vector.c */,
 				BFBA04BD1947DF8600F9924E /* password.c */,
+				BFCF26B51AC1D4AD0062B75C /* string_builder.c */,
 				BFBB6C9018C80A5700756BB0 /* msgpack_rountrip.c */,
 				BFBB6C8418C80A3E00756BB0 /* types_arraylist.c */,
 				BFBB6C8518C80A3E00756BB0 /* types_boolean.c */,
@@ -195,6 +198,7 @@
 				BFBB6C8D18C80A3E00756BB0 /* types_hashmap.c in Sources */,
 				BF6B7B2B1926E8320081A75F /* types_nil.c in Sources */,
 				BFBB6C9118C80A5700756BB0 /* msgpack_rountrip.c in Sources */,
+				BFCF26B61AC1D4AD0062B75C /* string_builder.c in Sources */,
 				BFBB6C8018C8028500756BB0 /* common.c in Sources */,
 				BFBB6C8E18C80A3E00756BB0 /* types_integer.c in Sources */,
 				BFBB6C8A18C80A3E00756BB0 /* types_arraylist.c in Sources */,

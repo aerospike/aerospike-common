@@ -83,6 +83,7 @@ AEROSPIKE-OBJECTS += as_list.o
 AEROSPIKE-OBJECTS += as_map.o
 AEROSPIKE-OBJECTS += as_rec.o
 AEROSPIKE-OBJECTS += as_string.o
+AEROSPIKE-OBJECTS += as_string_builder.o
 AEROSPIKE-OBJECTS += as_val.o
 
 # arraylist
