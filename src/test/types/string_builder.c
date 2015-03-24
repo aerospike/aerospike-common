@@ -58,7 +58,7 @@ TEST( string_builder_resize_stack, "string builder resize stack" ) {
 	assert(sb.capacity == 20);
 
 	// This append will force heap realloc.
-	status = as_string_builder_append(&sb, "x");
+	status = as_string_builder_append_char(&sb, 'x');
 	assert(status);
 	assert(strcmp(sb.data, "abcdefghij012345678x") == 0);
 	assert(sb.capacity == 40);

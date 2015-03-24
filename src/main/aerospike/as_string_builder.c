@@ -107,3 +107,18 @@ as_string_builder_append(as_string_builder* sb, const char* src)
 	sb->length = i - 1;
 	return true;
 }
+
+bool
+as_string_builder_append_char(as_string_builder* sb, char value)
+{
+	if (sb->length + 1 < sb->capacity) {
+		sb->data[sb->length++] = value;
+		return true;
+	}
+	
+	if (sb->resize) {
+		char buf[] = {value, '\0'};
+		return as_string_builder_append_increase(sb, buf);
+	}
+	return false;
+}

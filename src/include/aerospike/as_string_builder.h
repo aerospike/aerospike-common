@@ -89,11 +89,29 @@ void
 as_string_builder_destroy(as_string_builder* sb);
 
 /**
+ *	Initialize to empty string from current state.
+ *	Capacity remains unchanged.
+ */
+static inline void
+as_string_builder_reset(as_string_builder* sb)
+{
+	sb->data[0] = 0;
+	sb->length = 0;
+}
+
+/**
  *	Append null terminated string value to string buffer.
  *	Returns if successful or not.
  */
 bool
 as_string_builder_append(as_string_builder* sb, const char* value);
+
+/**
+ *	Append a single character to string buffer.
+ *	Returns if successful or not.
+ */
+bool
+as_string_builder_append_char(as_string_builder* sb, char value);
 
 #ifdef __cplusplus
 } // end extern "C"
