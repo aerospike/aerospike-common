@@ -102,6 +102,7 @@ AEROSPIKE-OBJECTS += as_log.o
 AEROSPIKE-OBJECTS += as_vector.o
 AEROSPIKE-OBJECTS += as_password.o
 AEROSPIKE-OBJECTS += crypt_blowfish.o
+AEROSPIKE-OBJECTS += threadpool.o
 
 CITRUSLEAF-OBJECTS =
 CITRUSLEAF-OBJECTS += cf_alloc.o
