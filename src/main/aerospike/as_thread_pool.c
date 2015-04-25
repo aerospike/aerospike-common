@@ -54,7 +54,7 @@ as_thread_pool_shutdown_threads(as_thread_pool* pool, uint32_t begin)
 	}
 }
 
-static void*
+void*
 as_thread_worker(void* data)
 {
 	as_thread_pool* pool = data;
