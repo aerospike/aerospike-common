@@ -33,10 +33,10 @@ extern "C" {
  */
 struct as_thread_pool {
 	pthread_mutex_t lock;
-	pthread_t* threads;
 	cf_queue* dispatch_queue;
-	uint32_t thread_capacity;
+	cf_queue* complete_queue;
 	uint32_t thread_size;
+	uint32_t initialized;
 };
 	
 typedef struct as_thread_pool as_thread_pool;
@@ -53,15 +53,16 @@ typedef void (*as_task_fn)(void* user_data);
 
 /**
  *	@private
- *	Initialize thread pool and start thread_capacity threads.
+ *	Initialize thread pool and start thread_size threads.
  *
  *	Returns:
  *	0  : Success
  *	-1 : Failed to initialize mutex lock
  *	-2 : Failed to lock mutex
+ *	-3 : Some threads failed to start
  */
 int
-as_thread_pool_init(as_thread_pool* pool, uint32_t thread_capacity);
+as_thread_pool_init(as_thread_pool* pool, uint32_t thread_size);
 
 /**
  *	@private
@@ -71,6 +72,7 @@ as_thread_pool_init(as_thread_pool* pool, uint32_t thread_capacity);
  *	0  : Success
  *	-1 : Failed to lock mutex
  *	-2 : Pool has already been closed
+ *	-3 : Some threads failed to start
  */
 int
 as_thread_pool_resize(as_thread_pool* pool, uint32_t thread_size);
