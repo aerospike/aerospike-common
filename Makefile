@@ -101,6 +101,7 @@ AEROSPIKE-OBJECTS += as_hashmap_iterator_hooks.o
 AEROSPIKE-OBJECTS += as_log.o
 AEROSPIKE-OBJECTS += as_vector.o
 AEROSPIKE-OBJECTS += as_password.o
+AEROSPIKE-OBJECTS += as_buffer_pool.o
 AEROSPIKE-OBJECTS += as_thread_pool.o
 AEROSPIKE-OBJECTS += crypt_blowfish.o
 

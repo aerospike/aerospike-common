@@ -8,13 +8,14 @@
 
 /* Begin PBXBuildFile section */
 		BF27197F19E4AF6B0059CE60 /* as_log.c in Sources */ = {isa = PBXBuildFile; fileRef = BF27197E19E4AF6B0059CE60 /* as_log.c */; };
+		BF6B745F1AFAB36E0014B530 /* as_thread_pool.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B745E1AFAB36E0014B530 /* as_thread_pool.c */; };
+		BF6B74611AFAB3B70014B530 /* as_buffer_pool.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B74601AFAB3B70014B530 /* as_buffer_pool.c */; };
 		BF6B7B281926E7F10081A75F /* as_timer.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B7B261926E7F10081A75F /* as_timer.c */; };
 		BF6B7B291926E7F10081A75F /* as_vector.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B7B271926E7F10081A75F /* as_vector.c */; };
 		BFB7BC5E18CA4AB500F0D4A0 /* cf_queue_priority.c in Sources */ = {isa = PBXBuildFile; fileRef = BFB7BC5D18CA4AB500F0D4A0 /* cf_queue_priority.c */; };
 		BFBA04BB1947DE0800F9924E /* as_password.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBA04B91947DE0800F9924E /* as_password.c */; };
 		BFBA04BC1947DE0800F9924E /* crypt_blowfish.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBA04BA1947DE0800F9924E /* crypt_blowfish.c */; };
 		BFBA04C01947E1BB00F9924E /* cf_random.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBA04BF1947E1BB00F9924E /* cf_random.c */; };
-		BFBA92741AE71D83004CDB9E /* threadpool.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBA92731AE71D83004CDB9E /* threadpool.c */; };
 		BFBB6C9318C80E3E00756BB0 /* cf_alloc.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB6C9218C80E3E00756BB0 /* cf_alloc.c */; };
 		BFBB7F1518C001560080851E /* as_aerospike.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7EF618C001560080851E /* as_aerospike.c */; };
 		BFBB7F1618C001560080851E /* as_arraylist_hooks.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7EF718C001560080851E /* as_arraylist_hooks.c */; };
@@ -61,13 +62,14 @@
 
 /* Begin PBXFileReference section */
 		BF27197E19E4AF6B0059CE60 /* as_log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_log.c; path = ../src/main/aerospike/as_log.c; sourceTree = "<group>"; };
+		BF6B745E1AFAB36E0014B530 /* as_thread_pool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_thread_pool.c; path = ../src/main/aerospike/as_thread_pool.c; sourceTree = "<group>"; };
+		BF6B74601AFAB3B70014B530 /* as_buffer_pool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_buffer_pool.c; path = ../src/main/aerospike/as_buffer_pool.c; sourceTree = "<group>"; };
 		BF6B7B261926E7F10081A75F /* as_timer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_timer.c; path = ../src/main/aerospike/as_timer.c; sourceTree = "<group>"; };
 		BF6B7B271926E7F10081A75F /* as_vector.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_vector.c; path = ../src/main/aerospike/as_vector.c; sourceTree = "<group>"; };
 		BFB7BC5D18CA4AB500F0D4A0 /* cf_queue_priority.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_queue_priority.c; path = ../src/main/citrusleaf/cf_queue_priority.c; sourceTree = "<group>"; };
 		BFBA04B91947DE0800F9924E /* as_password.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_password.c; path = ../src/main/aerospike/as_password.c; sourceTree = "<group>"; };
 		BFBA04BA1947DE0800F9924E /* crypt_blowfish.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = crypt_blowfish.c; path = ../src/main/aerospike/crypt_blowfish.c; sourceTree = "<group>"; };
 		BFBA04BF1947E1BB00F9924E /* cf_random.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_random.c; path = ../src/main/citrusleaf/cf_random.c; sourceTree = "<group>"; };
-		BFBA92731AE71D83004CDB9E /* threadpool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = threadpool.c; path = ../src/main/aerospike/threadpool.c; sourceTree = "<group>"; };
 		BFBB6C9218C80E3E00756BB0 /* cf_alloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_alloc.c; path = ../src/main/citrusleaf/cf_alloc.c; sourceTree = "<group>"; };
 		BFBB7EEF18BFFD2D0080851E /* libaerospike-common.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libaerospike-common.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		BFBB7EF618C001560080851E /* as_aerospike.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_aerospike.c; path = ../src/main/aerospike/as_aerospike.c; sourceTree = "<group>"; };
@@ -127,7 +129,8 @@
 		BFBB7EE618BFFD2D0080851E = {
 			isa = PBXGroup;
 			children = (
-				BFBA92731AE71D83004CDB9E /* threadpool.c */,
+				BF6B745E1AFAB36E0014B530 /* as_thread_pool.c */,
+				BF6B74601AFAB3B70014B530 /* as_buffer_pool.c */,
 				BFE7C2431AC0EACD00C512F1 /* as_string_builder.c */,
 				BF27197E19E4AF6B0059CE60 /* as_log.c */,
 				BFBA04BF1947E1BB00F9924E /* cf_random.c */,
@@ -253,6 +256,7 @@
 				BFBB7F1918C001560080851E /* as_arraylist.c in Sources */,
 				BFBB7F1B18C001560080851E /* as_buffer.c in Sources */,
 				BFBB7F4418C0018F0080851E /* cf_ll.c in Sources */,
+				BF6B74611AFAB3B70014B530 /* as_buffer_pool.c in Sources */,
 				BFBB7F3018C001560080851E /* as_string.c in Sources */,
 				BFBB7F2D18C001560080851E /* as_result.c in Sources */,
 				BFBB7F2818C001560080851E /* as_msgpack_serializer.c in Sources */,
@@ -277,6 +281,7 @@
 				BFBB6C9318C80E3E00756BB0 /* cf_alloc.c in Sources */,
 				BFBB7F1F18C001560080851E /* as_hashmap_iterator.c in Sources */,
 				BFBB7F2618C001560080851E /* as_memtracker.c in Sources */,
+				BF6B745F1AFAB36E0014B530 /* as_thread_pool.c in Sources */,
 				BF27197F19E4AF6B0059CE60 /* as_log.c in Sources */,
 				BFBB7F1C18C001560080851E /* as_bytes.c in Sources */,
 				BFBB7F3F18C0018F0080851E /* cf_bits.c in Sources */,
@@ -285,7 +290,6 @@
 				BFBB7F4018C0018F0080851E /* cf_clock.c in Sources */,
 				BFBA04C01947E1BB00F9924E /* cf_random.c in Sources */,
 				BFBB7F2218C001560080851E /* as_iterator.c in Sources */,
-				BFBA92741AE71D83004CDB9E /* threadpool.c in Sources */,
 				BFBB7F1A18C001560080851E /* as_boolean.c in Sources */,
 				BFBB7F4118C0018F0080851E /* cf_crypto.c in Sources */,
 				BFBB7F1818C001560080851E /* as_arraylist_iterator.c in Sources */,
