@@ -29,23 +29,24 @@ extern "C" {
 	
 /**
  *	@private
- *	Thread pool.
- */
-struct as_thread_pool {
-	pthread_mutex_t lock;
-	cf_queue* dispatch_queue;
-	cf_queue* complete_queue;
-	uint32_t thread_size;
-	uint32_t initialized;
-};
-	
-typedef struct as_thread_pool as_thread_pool;
-	
-/**
- *	@private
  *	Task function callback.
  */
 typedef void (*as_task_fn)(void* user_data);
+	
+/**
+ *	@private
+ *	Thread pool.
+ */
+typedef struct as_thread_pool_s {
+	pthread_mutex_t lock;
+	cf_queue* dispatch_queue;
+	cf_queue* complete_queue;
+	as_task_fn task_fn;
+	uint32_t task_size;
+	uint32_t task_complete_offset;
+	uint32_t thread_size;
+	uint32_t initialized;
+} as_thread_pool;
 
 /******************************************************************************
  *	FUNCTIONS
@@ -53,7 +54,8 @@ typedef void (*as_task_fn)(void* user_data);
 
 /**
  *	@private
- *	Initialize thread pool and start thread_size threads.
+ *	Initialize variable task thread pool and start thread_size threads.
+ *	Multiple task types can be handled in variable task thread pools.
  *
  *	Returns:
  *	0  : Success
@@ -63,6 +65,23 @@ typedef void (*as_task_fn)(void* user_data);
  */
 int
 as_thread_pool_init(as_thread_pool* pool, uint32_t thread_size);
+
+/**
+ *	@private
+ *	Initialize fixed task thread pool and start thread_size threads.
+ *	Only one task type structure can be handled in fixed task thread pools.
+ *	Fixed task thread pools do save an extra malloc when queuing the task, 
+ *	because a shallow copy is made when pushing the task onto the queue.
+ *
+ *	Returns:
+ *	0  : Success
+ *	-1 : Failed to initialize mutex lock
+ *	-2 : Failed to lock mutex
+ *	-3 : Some threads failed to start
+ */
+int
+as_thread_pool_init_fixed(as_thread_pool* pool, uint32_t thread_size, as_task_fn task_fn,
+						  uint32_t task_size, uint32_t task_complete_offset);
 
 /**
  *	@private
@@ -79,7 +98,7 @@ as_thread_pool_resize(as_thread_pool* pool, uint32_t thread_size);
 
 /**
  *	@private
- *	Queue a task onto thread pool.
+ *	Queue a variable task onto thread pool.
  *
  *	Returns:
  *	0  : Success
@@ -87,7 +106,19 @@ as_thread_pool_resize(as_thread_pool* pool, uint32_t thread_size);
  *	-2 : Failed to push task onto dispatch queue
  */
 int
-as_thread_pool_queue_task(as_thread_pool* pool, as_task_fn task_fn, void* udata);
+as_thread_pool_queue_task(as_thread_pool* pool, as_task_fn task_fn, void* task);
+
+/**
+ *	@private
+ *	Queue a fixed task onto thread pool.
+ *
+ *	Returns:
+ *	0  : Success
+ *	-1 : No threads are running to process task.
+ *	-2 : Failed to push task onto dispatch queue
+ */
+int
+as_thread_pool_queue_task_fixed(as_thread_pool* pool, void* task);
 
 /**
  *	@private

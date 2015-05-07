@@ -23,12 +23,10 @@
  * TYPES
  *****************************************************************************/
 
-struct as_thread_pool_task {
+typedef struct as_thread_pool_task_s {
 	as_task_fn task_fn;
-	void* udata;
-};
-
-typedef struct as_thread_pool_task as_thread_pool_task;
+	void* task_data;
+} as_thread_pool_task;
 
 /******************************************************************************
  * Functions
@@ -38,17 +36,37 @@ void*
 as_thread_worker(void* data)
 {
 	as_thread_pool* pool = data;
-	as_thread_pool_task task;
 	
-	// Retrieve tasks from queue and execute.
-	while (cf_queue_pop(pool->dispatch_queue, &task, CF_QUEUE_FOREVER) == CF_QUEUE_OK) {
-		// A null task indicates thread should be shut down.
-		if (! task.task_fn) {
-			break;
-		}
+	if (pool->task_size == 0) {
+		// Run variable tasks.
+		as_thread_pool_task task;
 		
-		// Run task
-		task.task_fn(task.udata);
+		// Retrieve tasks from queue and execute.
+		while (cf_queue_pop(pool->dispatch_queue, &task, CF_QUEUE_FOREVER) == CF_QUEUE_OK) {
+			// A null task indicates thread should be shut down.
+			if (! task.task_fn) {
+				break;
+			}
+			
+			// Run task
+			task.task_fn(task.task_data);
+		}
+	}
+	else {
+		// Run fixed tasks.
+		char* task = alloca(pool->task_size);
+		bool* shutdown = (bool*)(task + pool->task_complete_offset);
+		
+		// Retrieve tasks from queue and execute.
+		while (cf_queue_pop(pool->dispatch_queue, task, CF_QUEUE_FOREVER) == CF_QUEUE_OK) {
+			// Check if thread should be shut down.
+			if (*shutdown) {
+				break;
+			}
+			
+			// Run task
+			pool->task_fn(task);
+		}
 	}
 	
 	// Send thread completion event back to caller.
@@ -84,11 +102,25 @@ as_thread_pool_shutdown_threads(as_thread_pool* pool, uint32_t count)
 	// "running" flag) to allow the workers to "wait forever" on processing the
 	// work dispatch queue, which has minimum impact when the queue is empty.
 	// This also means all queued requests get processed when shutting down.
-	for (uint32_t i = 0; i < count; i++) {
+	if (pool->task_size == 0) {
+		// Send shutdown signal for variable tasks.
 		as_thread_pool_task task;
 		task.task_fn = NULL;
-		task.udata = NULL;
-		cf_queue_push(pool->dispatch_queue, &task);
+		task.task_data = NULL;
+
+		for (uint32_t i = 0; i < count; i++) {
+			cf_queue_push(pool->dispatch_queue, &task);
+		}
+	}
+	else {
+		// Send shutdown signal for fixed tasks.
+		char* task = alloca(pool->task_size);
+		memset(task, 0, pool->task_size);
+		*(bool*)(task + pool->task_complete_offset) = true;
+		
+		for (uint32_t i = 0; i < count; i++) {
+			cf_queue_push(pool->dispatch_queue, task);
+		}
 	}
 	
 	// Wait till threads finish.
@@ -112,6 +144,38 @@ as_thread_pool_init(as_thread_pool* pool, uint32_t thread_size)
 	// Initialize queues.
 	pool->dispatch_queue = cf_queue_create(sizeof(as_thread_pool_task), true);
 	pool->complete_queue = cf_queue_create(sizeof(uint32_t), true);
+	pool->task_fn = 0;
+	pool->task_size = 0;
+	pool->task_complete_offset = 0;
+	pool->thread_size = thread_size;
+	pool->initialized = 1;
+	
+	// Start detached threads.
+	pool->thread_size = as_thread_pool_create_threads(pool, thread_size);
+	int rc = (pool->thread_size == thread_size)? 0 : -3;
+	
+	pthread_mutex_unlock(&pool->lock);
+	return rc;
+}
+
+int
+as_thread_pool_init_fixed(as_thread_pool* pool, uint32_t thread_size, as_task_fn task_fn,
+						  uint32_t task_size, uint32_t task_complete_offset)
+{
+	if (pthread_mutex_init(&pool->lock, NULL)) {
+		return -1;
+	}
+	
+    if (pthread_mutex_lock(&pool->lock)) {
+        return -2;
+    }
+	
+	// Initialize queues.
+	pool->dispatch_queue = cf_queue_create(task_size, true);
+	pool->complete_queue = cf_queue_create(sizeof(uint32_t), true);
+	pool->task_fn = task_fn;
+	pool->task_size = task_size;
+	pool->task_complete_offset = task_complete_offset;
 	pool->thread_size = thread_size;
 	pool->initialized = 1;
 	
@@ -155,18 +219,41 @@ as_thread_pool_resize(as_thread_pool* pool, uint32_t thread_size)
 }
 
 int
-as_thread_pool_queue_task(as_thread_pool* pool, as_task_fn task_fn, void* udata)
+as_thread_pool_queue_task(as_thread_pool* pool, as_task_fn task_fn, void* task)
 {
 	if (pool->thread_size == 0) {
 		// No threads are running to process task.
 		return -1;
 	}
 	
-	as_thread_pool_task task;
-	task.task_fn = task_fn;
-	task.udata = udata;
+	if (pool->task_size == 0) {
+		// Queue variable task.
+		as_thread_pool_task vtask;
+		vtask.task_fn = task_fn;
+		vtask.task_data = task;
+		
+		if (cf_queue_push(pool->dispatch_queue, &vtask) != CF_QUEUE_OK) {
+			return -2;
+		}
+	}
+	else {
+		// Query fixed task.
+		if (cf_queue_push(pool->dispatch_queue, task) != CF_QUEUE_OK) {
+			return -2;
+		}
+	}
+	return 0;
+}
+
+int
+as_thread_pool_queue_task_fixed(as_thread_pool* pool, void* task)
+{
+	if (pool->thread_size == 0) {
+		// No threads are running to process task.
+		return -1;
+	}
 	
-	if (cf_queue_push(pool->dispatch_queue, &task) != CF_QUEUE_OK) {
+	if (cf_queue_push(pool->dispatch_queue, task) != CF_QUEUE_OK) {
 		return -2;
 	}
 	return 0;
