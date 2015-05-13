@@ -845,17 +845,14 @@ static inline bool as_bytes_append_int64(as_bytes * bytes, int64_t value)
 bool as_bytes_truncate(as_bytes * bytes, uint32_t n);
 
 /**
- *	Ensure the bytes buffer can handle `n` additional bytes.
- *
- *	Using the current size, we see if `size + n` is within the capacity of
- *	the bytes' buffer. If so, then return true.
- *	
- *	If `resize` is true and `size + n` exceeds the capacity of the bytes's 
- *	buffer, then resize the capacity of the buffer by `n` bytes. If the buffer
- *	was heap allocated, then `cf_realloc()` will be used to resize. If the buffer
- *	was stack allocated, it will be converted to a heap allocated buffer using
- *	cf_malloc() and then its contents will be copied into the new heap allocated
- *	buffer.
+ *	Ensure the bytes buffer can handle `capacity` bytes.
+ *		
+ *	If `resize` is true and `capacity` exceeds the capacity of the bytes's 
+ *	buffer, then resize the capacity of the buffer to `capacity` bytes. If the 
+ *	buffer was heap allocated, then `cf_realloc()` will be used to resize. If the 
+ *	buffer was stack allocated, it will be converted to a heap allocated buffer 
+ *	using cf_malloc() and then its contents will be copied into the new heap 
+ *	allocated  buffer.
  *
  *	If `resize` is false, and if the capacity is not sufficient, then return
  *	false.
@@ -865,14 +862,14 @@ bool as_bytes_truncate(as_bytes * bytes, uint32_t n);
  *	~~~~~~~~~~
  *	
  *	@param bytes	The bytes to ensure the capacity of.
- *	@param n		The number of additional bytes to ensure bytes can handle.
+ *	@param capacity	The total number of bytes to ensure bytes can handle.
  *	@param resize	If true and capacity is not sufficient, then resize the buffer.
  *
  *	@return On success, true. Otherwise an error occurred.
  *
  *	@relatesalso as_bytes
  */
-bool as_bytes_ensure(as_bytes * bytes, uint32_t n, bool resize);
+bool as_bytes_ensure(as_bytes * bytes, uint32_t capacity, bool resize);
 
 
 /**
