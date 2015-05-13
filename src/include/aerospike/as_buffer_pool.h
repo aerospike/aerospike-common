@@ -71,7 +71,7 @@ as_buffer_pool_init(as_buffer_pool* pool, uint32_t buffer_size, uint32_t request
  *	Otherwise allocate memory on heap.  If the pool is empty, also create buffer on heap.
  *
  *	@param pool			Buffer pool.
- *	@param bb			Buffer to be populated.
+ *	@param buffer		Buffer to be populated.
  *	@param size			Requested size of buffer.
  *
  *	Returns:
@@ -81,7 +81,7 @@ as_buffer_pool_init(as_buffer_pool* pool, uint32_t buffer_size, uint32_t request
  *	-3 : Queue failure.
  */
 int
-as_buffer_pool_pop(as_buffer_pool* pool, as_buffer_builder* bb, uint32_t size);
+as_buffer_pool_pop(as_buffer_pool* pool, as_buffer_builder* buffer, uint32_t size);
 
 /**
  *	@private
@@ -89,28 +89,27 @@ as_buffer_pool_pop(as_buffer_pool* pool, as_buffer_builder* bb, uint32_t size);
  *	Otherwise, free memory and do not put back into pool.
  *
  *	@param pool			Buffer pool.
- *	@param bb			Buffer.
+ *	@param buffer		Buffer.
  *
  *	Returns:
  *	0  : Success
  *	-1 : Queue failure.
  */
 int
-as_buffer_pool_push(as_buffer_pool* pool, as_buffer_builder* bb);
+as_buffer_pool_push(as_buffer_pool* pool, as_buffer_builder* buffer);
 	
 /**
  *	@private
- *	Reduce free buffer queue count to a more acceptable level.  Pop buffers off queue until queue 
- *	count has been reached.  This is useful when a large number of buffers are created due to a
- *	burst of concurrent buffer usage and pruning is desired.
+ *	Delete buffer_count buffers from the buffer pool. This is useful when a large number of
+ *	buffers are created due to a burst of concurrent buffer usage and pruning is desired.
  *
  *	@param pool			Buffer pool.
- *	@param queue_count	Desired number of buffers sitting in queue that are not currently used.
+ *	@param buffer_count	Number of buffers to delete.
  *
  *	Returns number of buffers deleted.
  */
 int
-as_buffer_pool_trim(as_buffer_pool* pool, int queue_count);
+as_buffer_pool_drop_buffers(as_buffer_pool* pool, int buffer_count);
 
 /**
  *	@private
