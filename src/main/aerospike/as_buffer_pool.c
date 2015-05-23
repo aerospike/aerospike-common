@@ -23,42 +23,44 @@
  *****************************************************************************/
 
 int
-as_buffer_pool_init(as_buffer_pool* pool, uint32_t buffer_size, uint32_t request_max)
+as_buffer_pool_init(as_buffer_pool* pool, uint32_t header_size, uint32_t buffer_size, uint32_t request_max)
 {
 	// Initialize empty queue.
-	pool->queue = cf_queue_create(sizeof(as_buffer_builder), true);
+	pool->queue = cf_queue_create(sizeof(void*), true);
+	pool->header_size = header_size;
 	pool->buffer_size = buffer_size;
 	pool->request_max = (request_max > 0)? request_max : UINT_MAX;
 	return (pool->queue)? 0 : -1;
 }
 
 int
-as_buffer_pool_pop(as_buffer_pool* pool, as_buffer_builder* buffer, uint32_t size)
+as_buffer_pool_pop(as_buffer_pool* pool, uint32_t size, as_buffer_result* buffer)
 {
+	size += pool->header_size;
+	
 	if (size > pool->buffer_size) {
 		// Requested size is greater buffer sizes in pool.
 		if (size > pool->request_max) {
 			// Requested size is out of bounds.
 			return -1;
 		}
-
+		
 		// Allocate new buffer, but don't put back into pool.
 		buffer->data = cf_malloc(size);
 		
 		if (! buffer->data) {
 			return -2;
 		}
-
-		buffer->capacity = size;
-		buffer->size = 0;
+		
+		buffer->capacity = size - pool->header_size;
 		return 0;
 	}
-
+	
 	// Pop existing buffer from queue.
-	int rc = cf_queue_pop(pool->queue, buffer, CF_QUEUE_NOWAIT);
-
+	int rc = cf_queue_pop(pool->queue, &buffer->data, CF_QUEUE_NOWAIT);
+	
 	if (rc == CF_QUEUE_OK) {
-		buffer->size = 0;
+		buffer->capacity = pool->buffer_size - pool->header_size;
 		return 0;
 	}
 	
@@ -70,8 +72,7 @@ as_buffer_pool_pop(as_buffer_pool* pool, as_buffer_builder* buffer, uint32_t siz
 			return -2;
 		}
 		
-		buffer->capacity = pool->buffer_size;
-		buffer->size = 0;
+		buffer->capacity = pool->buffer_size - pool->header_size;
 		return 0;
 	}
 	// Queue failure.
@@ -79,16 +80,15 @@ as_buffer_pool_pop(as_buffer_pool* pool, as_buffer_builder* buffer, uint32_t siz
 }
 
 int
-as_buffer_pool_push(as_buffer_pool* pool, as_buffer_builder* buffer)
+as_buffer_pool_push(as_buffer_pool* pool, void* buffer, uint32_t capacity)
 {
-	if (buffer->capacity <= pool->buffer_size) {
+	if (capacity + pool->header_size <= pool->buffer_size) {
 		// Put buffer back into pool.
-		return cf_queue_push(pool->queue, buffer);
+		return cf_queue_push(pool->queue, &buffer);
 	}
 	else {
 		// Do not put large buffers back into pool.
-		cf_free(buffer->data);
-		buffer->data = 0;
+		cf_free(buffer);
 		return 0;
 	}
 }
@@ -98,12 +98,12 @@ as_buffer_pool_drop_buffers(as_buffer_pool* pool, int buffer_count)
 {
 	// Number of buffers in pool may grow too large if burst of concurrent buffer usage happens.
 	// Delete buffer_count buffers from pool.
-	as_buffer_builder buffer;
+	void* buffer;
 	int count = 0;
-
+	
 	while (count < buffer_count) {
 		if (cf_queue_pop(pool->queue, &buffer, CF_QUEUE_NOWAIT) == CF_QUEUE_OK) {
-			cf_free(buffer.data);
+			cf_free(buffer);
 			count++;
 		}
 		else {
@@ -117,9 +117,9 @@ void
 as_buffer_pool_destroy(as_buffer_pool* pool)
 {
 	// Empty and destroy queue.
-	as_buffer_builder buffer;
+	void* buffer;
 	while (cf_queue_pop(pool->queue, &buffer, CF_QUEUE_NOWAIT) == CF_QUEUE_OK) {
-		cf_free(buffer.data);
+		cf_free(buffer);
 	}
 	cf_queue_destroy(pool->queue);
 }
