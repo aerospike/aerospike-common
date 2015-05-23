@@ -43,7 +43,6 @@ extern "C" {
 		cf_queue* queue;
 		uint32_t header_size;
 		uint32_t buffer_size;
-		uint32_t request_max;
 	} as_buffer_pool;
 	
 	/******************************************************************************
@@ -57,14 +56,13 @@ extern "C" {
 	 *	@param pool			Buffer pool.
 	 *	@param header_size 	Size of buffer header.
 	 *	@param buffer_size 	Fixed buffer size.
-	 *	@param request_max	Maximum request size.  Set to zero if there is no maximum.
 	 *
 	 *	Returns:
 	 *	0  : Success
 	 *	-1 : Failed to create queue.
 	 */
 	int
-	as_buffer_pool_init(as_buffer_pool* pool, uint32_t header_size, uint32_t buffer_size, uint32_t request_max);
+	as_buffer_pool_init(as_buffer_pool* pool, uint32_t header_size, uint32_t buffer_size);
 	
 	/**
 	 *	@private
@@ -77,9 +75,8 @@ extern "C" {
 	 *
 	 *	Returns:
 	 *	0  : Success
-	 *	-1 : Requested size is out of bounds.
-	 *	-2 : Memory allocation error.
-	 *	-3 : Queue failure.
+	 *	-1 : Memory allocation error.
+	 *	-2 : Queue failure.
 	 */
 	int
 	as_buffer_pool_pop(as_buffer_pool* pool, uint32_t size, as_buffer_result* buffer);

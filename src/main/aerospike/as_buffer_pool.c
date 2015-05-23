@@ -23,13 +23,12 @@
  *****************************************************************************/
 
 int
-as_buffer_pool_init(as_buffer_pool* pool, uint32_t header_size, uint32_t buffer_size, uint32_t request_max)
+as_buffer_pool_init(as_buffer_pool* pool, uint32_t header_size, uint32_t buffer_size)
 {
 	// Initialize empty queue.
 	pool->queue = cf_queue_create(sizeof(void*), true);
 	pool->header_size = header_size;
 	pool->buffer_size = buffer_size;
-	pool->request_max = (request_max > 0)? request_max : UINT_MAX;
 	return (pool->queue)? 0 : -1;
 }
 
@@ -39,17 +38,12 @@ as_buffer_pool_pop(as_buffer_pool* pool, uint32_t size, as_buffer_result* buffer
 	size += pool->header_size;
 	
 	if (size > pool->buffer_size) {
-		// Requested size is greater buffer sizes in pool.
-		if (size > pool->request_max) {
-			// Requested size is out of bounds.
-			return -1;
-		}
-		
+		// Requested size is greater than fixed buffer size.
 		// Allocate new buffer, but don't put back into pool.
 		buffer->data = cf_malloc(size);
 		
 		if (! buffer->data) {
-			return -2;
+			return -1;
 		}
 		
 		buffer->capacity = size - pool->header_size;
@@ -69,14 +63,14 @@ as_buffer_pool_pop(as_buffer_pool* pool, uint32_t size, as_buffer_result* buffer
 		buffer->data = cf_malloc(pool->buffer_size);
 		
 		if (! buffer->data) {
-			return -2;
+			return -1;
 		}
 		
 		buffer->capacity = pool->buffer_size - pool->header_size;
 		return 0;
 	}
 	// Queue failure.
-	return -3;
+	return -2;
 }
 
 int
