@@ -84,7 +84,7 @@ as_thread_pool_create_threads(as_thread_pool* pool, uint32_t count)
 	pthread_attr_init(&attrs);
 	pthread_attr_setdetachstate(&attrs, PTHREAD_CREATE_DETACHED);
 	
-	int threads_created = 0;
+	uint32_t threads_created = 0;
 	pthread_t thread;
 	
 	for (uint32_t i = 0; i < count; i++) {
