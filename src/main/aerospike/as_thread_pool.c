@@ -205,8 +205,18 @@ as_thread_pool_resize(as_thread_pool* pool, uint32_t thread_size)
 	if (thread_size != pool->thread_size) {
 		if (thread_size < pool->thread_size) {
 			// Shutdown excess threads.
-			as_thread_pool_shutdown_threads(pool, pool->thread_size - thread_size);
+			uint32_t threads_to_shutdown = pool->thread_size - thread_size;
+			
+			// Set pool thread_size before shutting down threads because we want to disallow
+			// new tasks onto thread pool when thread_size is set to zero. Therefore, set
+			// thread_size as early as possible.
+			// Note: There still is a slight possibility that new tasks can still be queued
+			// after disabliing thread pool because the thread_size check is not done under lock.
+			// These tasks will either timeout or be suspended until thread pool is resized to > 0
+			// threads.
 			pool->thread_size = thread_size;
+			
+			as_thread_pool_shutdown_threads(pool, threads_to_shutdown);
 		}
 		else {
 			// Start new threads.
