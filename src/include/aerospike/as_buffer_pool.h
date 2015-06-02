@@ -43,6 +43,7 @@ extern "C" {
 		cf_queue* queue;
 		uint32_t header_size;
 		uint32_t buffer_size;
+		uint32_t max_buffers;
 	} as_buffer_pool;
 	
 	/******************************************************************************
@@ -56,13 +57,14 @@ extern "C" {
 	 *	@param pool			Buffer pool.
 	 *	@param header_size 	Size of buffer header.
 	 *	@param buffer_size 	Fixed buffer size.
+	 *	@param max_buffers 	Maximum number of buffers allowed in pool.
 	 *
 	 *	Returns:
 	 *	0  : Success
 	 *	-1 : Failed to create queue.
 	 */
 	int
-	as_buffer_pool_init(as_buffer_pool* pool, uint32_t header_size, uint32_t buffer_size);
+	as_buffer_pool_init(as_buffer_pool* pool, uint32_t header_size, uint32_t buffer_size, uint32_t max_buffers);
 	
 	/**
 	 *	@private
