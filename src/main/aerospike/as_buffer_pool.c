@@ -23,13 +23,12 @@
  *****************************************************************************/
 
 int
-as_buffer_pool_init(as_buffer_pool* pool, uint32_t header_size, uint32_t buffer_size, uint32_t max_buffers)
+as_buffer_pool_init(as_buffer_pool* pool, uint32_t header_size, uint32_t buffer_size)
 {
 	// Initialize empty queue.
 	pool->queue = cf_queue_create(sizeof(void*), true);
 	pool->header_size = header_size;
 	pool->buffer_size = buffer_size;
-	pool->max_buffers = max_buffers;
 	return (pool->queue)? 0 : -1;
 }
 
@@ -78,8 +77,29 @@ int
 as_buffer_pool_push(as_buffer_pool* pool, void* buffer, uint32_t capacity)
 {
 	if (capacity + pool->header_size <= pool->buffer_size) {
+		// Put buffer back into pool.
+		if (cf_queue_push(pool->queue, &buffer) == CF_QUEUE_OK) {
+			return 0;
+		}
+		else {
+			cf_free(buffer);
+			return -1;
+		}
+	}
+	else {
+		// Do not put large buffers back into pool.
+		// Free buffer.
+		cf_free(buffer);
+		return 0;
+	}
+}
+
+int
+as_buffer_pool_push_limit(as_buffer_pool* pool, void* buffer, uint32_t capacity, uint32_t max_buffers)
+{
+	if (capacity + pool->header_size <= pool->buffer_size) {
 		// Put buffer back into pool up to a limit.
-		if (cf_queue_push_limit(pool->queue, &buffer, pool->max_buffers)) {
+		if (cf_queue_push_limit(pool->queue, &buffer, max_buffers)) {
 			// Success.
 			return 0;
 		}
