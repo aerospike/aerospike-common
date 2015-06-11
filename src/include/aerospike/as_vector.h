@@ -159,6 +159,22 @@ bool
 as_vector_append_unique(as_vector* vector, void* value);
 
 /**
+ *  Reserve a new slot in the vector.  Increase capacity if necessary.
+ *	Return reference to item.  The item is initialized to zeroes.
+ */
+static inline void*
+as_vector_reserve(as_vector* vector)
+{
+	if (vector->size >= vector->capacity) {
+		as_vector_increase_capacity(vector);
+	}
+	void* item = (byte *)vector->list + (vector->size * vector->item_size);
+	memset(item, 0, vector->item_size);
+	vector->size++;
+	return item;
+}
+
+/**
  *  Move item row position in vector.
  */
 static inline void
