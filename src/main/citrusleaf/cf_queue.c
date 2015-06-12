@@ -439,7 +439,6 @@ int cf_queue_reduce(cf_queue *q,  cf_queue_reduce_fn cb, void *udata)
 	return CF_QUEUE_OK;
 }
 
-
 //
 // Iterate over all queue members starting from the tail, calling the callback.
 //
@@ -448,7 +447,7 @@ int cf_queue_reduce_reverse(cf_queue *q, cf_queue_reduce_fn cb, void *udata)
 	cf_queue_lock(q);
 
 	if (CF_Q_SZ(q)) {
-		for (uint32_t i = q->write_offset - 1; i >= q->read_offset; i--) {
+		for (int i = (int)q->write_offset - 1; i >= (int)q->read_offset; i--) {
 			int rv = cb(CF_Q_ELEM_PTR(q, i), udata);
 
 			// rv == 0 is normal case, just increment to next element.
