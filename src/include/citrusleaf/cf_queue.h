@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -52,87 +52,78 @@ typedef int (*cf_queue_reduce_fn) (void *buf, void *udata);
 
 /**
  * cf_queue
- * A queue 
  */
-struct cf_queue_s {
-    bool            threadsafe;     // sometimes it's good to live dangerously
-    unsigned int    allocsz;        // number of queue elements currently allocated
-    unsigned int    write_offset;   // 0 offset is first queue element.
-                                    // write is always greater than or equal to read
-    unsigned int    read_offset;    // 
-    size_t          elementsz;      // number of bytes in an element
-    pthread_mutex_t LOCK;           // the mutex lock
-    pthread_cond_t  CV;             // the condvar
-    byte *          queue;          // the actual bytes that make up the queue
-};
-
-typedef struct cf_queue_s cf_queue;
+typedef struct cf_queue_s {
+	/**
+	 * Private data - please use API.
+	 */
+	bool            threadsafe;     // if false, no mutex lock
+	unsigned int    allocsz;        // number of elements currently allocated
+	unsigned int    read_offset;    // offset (in elements) of head
+	unsigned int    write_offset;   // offset (in elements) past tail
+	size_t          elementsz;      // number of bytes in an element
+	pthread_mutex_t LOCK;           // the mutex lock
+	pthread_cond_t  CV;             // the condvar
+	byte *          queue;          // the actual bytes that make up the queue
+} cf_queue;
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-cf_queue * cf_queue_create(size_t elementsz, bool threadsafe);
+cf_queue *cf_queue_create(size_t elementsz, bool threadsafe);
 
 void cf_queue_destroy(cf_queue *q);
 
 /**
- * Get the number of elements currently in the queue
+ * Get the number of elements currently in the queue.
  */
 int cf_queue_sz(cf_queue *q);
-	
+
 /**
- * Always pushes to the end of the queue
+ * Push to the tail of the queue.
  */
 int cf_queue_push(cf_queue *q, void *ptr);
 
 /**
  * Push element on the queue only if size < limit.
  */
-bool cf_queue_push_limit(cf_queue *q, void *ptr, uint limit);
+bool cf_queue_push_limit(cf_queue *q, void *ptr, uint32_t limit);
 
 /**
  * Same as cf_queue_push() except it's a no-op if element is already queued.
  */
 int cf_queue_push_unique(cf_queue *q, void *ptr);
-	
+
 /**
- * Push head goes to the front, which currently means memcpying the entire queue contents.
+ * Push to the front of the queue.
  */
 int cf_queue_push_head(cf_queue *q, void *ptr);
 
 /**
- * POP pops from the end of the queue, which is the most efficient
- * But understand this makes it LIFO, the least fair of queues
- * Elements added at the very beginning might not make it out
+ * Pops from the head of the queue.
  */
 int cf_queue_pop(cf_queue *q, void *buf, int mswait);
 
 /**
  * Run the entire queue, calling the callback, with the lock held.
- * You can return values in the callback to cause deletes.
- * Great for purging dying stuff out of a queue synchronously.
- * 
- * return -2 from the callback to trigger a delete
- * return -1 stop iterating the queue
- * return 0 for success
+ *
+ * return -2 from the callback to delete an element and stop iterating
+ * return -1 from the callback to stop iterating
+ * return  0 from the callback to keep iterating
  */
 int cf_queue_reduce(cf_queue *q, cf_queue_reduce_fn cb, void *udata);
 
 /**
- * Run the entire queue in reverse order, calling the callback, with the lock held.
- * You can return values in the callback to cause deletes.
- * Great for purging dying stuff out of a queue synchronously.
- *
- * return -2 from the callback to trigger a delete
- * return -1 stop iterating the queue
- * return 0 for success
+ * Same as cf_queue_reduce() but run the queue from the tail.
  */
 int cf_queue_reduce_reverse(cf_queue *q, cf_queue_reduce_fn cb, void *udata);
 
 /**
- * The most common reason to want to 'reduce' is delete - so provide
- * a simple delete function
+ * The most common reason to want to 'reduce' is delete. If 'buf' is NULL, this
+ * will delete all. If 'only_one' is true, only the first occurrence matching
+ * 'buf' will be deleted. (Do this if you know there can only be one occurrence
+ * on the queue.)
  */
 int cf_queue_delete(cf_queue *q, void *buf, bool only_one);
 
@@ -141,7 +132,7 @@ int cf_queue_delete(cf_queue *q, void *buf, bool only_one);
  */
 int cf_queue_delete_all(cf_queue *q);
 
-void cf_queue_delete_offset(cf_queue *q, uint index);
+void cf_queue_delete_offset(cf_queue *q, uint32_t index);
 
 /******************************************************************************
  * MACROS
@@ -151,11 +142,7 @@ void cf_queue_delete_offset(cf_queue *q, uint index);
 
 #define CF_Q_EMPTY(__q) (__q->write_offset == __q->read_offset)
 
-/**
- * todo: maybe it's faster to keep the read and write offsets in bytes,
- * to avoid the extra multiply?
- */
-#define CF_Q_ELEM_PTR(__q, __i) (&__q->queue[ (__i % __q->allocsz) * __q->elementsz ] )
+#define CF_Q_ELEM_PTR(__q, __i) (&__q->queue[(__i % __q->allocsz) * __q->elementsz])
 
 /******************************************************************************/
 
