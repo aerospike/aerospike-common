@@ -30,9 +30,9 @@ extern "C" {
  * CONSTANTS
  ******************************************************************************/
 
-#define CF_QUEUE_PRIORITY_HIGH 1
+#define CF_QUEUE_PRIORITY_LOW 1
 #define CF_QUEUE_PRIORITY_MEDIUM 2
-#define CF_QUEUE_PRIORITY_LOW 3
+#define CF_QUEUE_PRIORITY_HIGH 3
 
 /******************************************************************************
  * TYPES
@@ -53,10 +53,11 @@ typedef struct cf_queue_priority_s {
 
 cf_queue_priority *cf_queue_priority_create(size_t element_sz, bool threadsafe);
 void cf_queue_priority_destroy(cf_queue_priority *q);
-int cf_queue_priority_push(cf_queue_priority *q, void *ptr, int pri);
-int cf_queue_priority_pop(cf_queue_priority *q, void *buf, int mswait);
 int cf_queue_priority_sz(cf_queue_priority *q);
-int cf_queue_priority_reduce_pop(cf_queue_priority *priority_q,  void *buf, cf_queue_reduce_fn cb, void *udata);
+int cf_queue_priority_push(cf_queue_priority *q, const void *ptr, int pri);
+int cf_queue_priority_pop(cf_queue_priority *q, void *buf, int mswait);
+int cf_queue_priority_reduce_pop(cf_queue_priority *priority_q, void *buf, cf_queue_reduce_fn cb, void *udata);
+int cf_queue_priority_change(cf_queue_priority *priority_q, const void *ptr, int new_pri);
 
 /******************************************************************************
  * MACROS

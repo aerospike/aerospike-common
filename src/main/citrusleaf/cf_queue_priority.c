@@ -100,7 +100,7 @@ static inline void cf_queue_priority_unlock(cf_queue_priority *q)
 	}
 }
 
-int cf_queue_priority_push(cf_queue_priority *q, void *ptr, int pri)
+int cf_queue_priority_push(cf_queue_priority *q, const void *ptr, int pri)
 {
 	cf_queue_priority_lock(q);
 
@@ -208,28 +208,32 @@ int cf_queue_priority_reduce_pop(cf_queue_priority *priority_q, void *buf, cf_qu
 	for (int q_itr = 0; q_itr < 3; q_itr++) {
 		q = queues[q_itr];
 
-		if (CF_Q_SZ(q)) {
-			for (uint32_t i = q->read_offset; i < q->write_offset; i++) {
-				int rv = cb(CF_Q_ELEM_PTR(q, i), udata);
+		if (CF_Q_SZ(q) == 0) {
+			continue;
+		}
 
-				// rv == 0 is normal case, just increment to next element.
+		for (uint32_t i = q->read_offset; i < q->write_offset; i++) {
+			int rv = cb(CF_Q_ELEM_PTR(q, i), udata);
 
-				if (rv == -1) {
-					// Found what it was looking for, so break.
-					found_index = i;
-					break;
-				}
-
-				if (rv == -2) {
-					// Found new candidate, but keep looking for a better one.
-					found_index = i;
-				}
+			if (rv == 0) {
+				continue;
 			}
 
-			// Only traverse the highest priority q with elements.
-			// TODO - is this the right thing to do ???
-			break;
+			if (rv == -1) {
+				// Found what it was looking for, so break.
+				found_index = i;
+				break;
+			}
+
+			if (rv == -2) {
+				// Found new candidate, but keep looking for a better one.
+				found_index = i;
+			}
 		}
+
+		// Only traverse the highest priority q with elements.
+		// TODO - is this the right thing to do ???
+		break;
 	}
 
 	if (found_index >= 0) {
@@ -240,4 +244,44 @@ int cf_queue_priority_reduce_pop(cf_queue_priority *priority_q, void *buf, cf_qu
 
 	cf_queue_priority_unlock(priority_q);
 	return found_index == -1 ? CF_QUEUE_NOMATCH : CF_QUEUE_OK;
+}
+
+//
+// This assumes the element we're looking for is unique! Returns
+// CF_QUEUE_NOMATCH if the element is not found or not moved.
+//
+int cf_queue_priority_change(cf_queue_priority *priority_q, const void *ptr, int new_pri)
+{
+	cf_queue_priority_lock(priority_q);
+
+	cf_queue *queues[3];
+
+	queues[0] = priority_q->high_q;
+	queues[1] = priority_q->medium_q;
+	queues[2] = priority_q->low_q;
+
+	int dest_q_itr = CF_QUEUE_PRIORITY_HIGH - new_pri;
+	cf_queue *q;
+
+	for (int q_itr = 0; q_itr < 3; q_itr++) {
+		q = queues[q_itr];
+
+		if (q_itr == dest_q_itr || CF_Q_SZ(q) == 0) {
+			continue;
+		}
+
+		for (uint32_t i = q->read_offset; i < q->write_offset; i++) {
+			if (memcmp(CF_Q_ELEM_PTR(q, i), ptr, q->element_sz) == 0) {
+				// Move it to the queue with desired priority.
+				cf_queue_delete_offset(q, i);
+				cf_queue_push(queues[dest_q_itr], ptr);
+
+				cf_queue_priority_unlock(priority_q);
+				return CF_QUEUE_OK;
+			}
+		}
+	}
+
+	cf_queue_priority_unlock(priority_q);
+	return CF_QUEUE_NOMATCH;
 }

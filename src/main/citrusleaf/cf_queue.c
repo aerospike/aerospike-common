@@ -151,15 +151,17 @@ static int cf_queue_resize(cf_queue *q, uint32_t new_sz)
 // expect this will never get called, however it can be a symptom of a queue
 // getting really, really deep.
 //
-static void cf_queue_unwrap(cf_queue *q)
+static inline void cf_queue_unwrap(cf_queue *q)
 {
-	int sz = CF_Q_SZ(q);
+	if ((q->write_offset & 0xC0000000) != 0) {
+		int sz = CF_Q_SZ(q);
 
-	q->read_offset %= q->alloc_sz;
-	q->write_offset = q->read_offset + sz;
+		q->read_offset %= q->alloc_sz;
+		q->write_offset = q->read_offset + sz;
+	}
 }
 
-int cf_queue_push(cf_queue *q, void *ptr)
+int cf_queue_push(cf_queue *q, const void *ptr)
 {
 	cf_queue_lock(q);
 
@@ -174,11 +176,7 @@ int cf_queue_push(cf_queue *q, void *ptr)
 	// TODO - if queues are power of 2, this can be a shift.
 	memcpy(CF_Q_ELEM_PTR(q, q->write_offset), ptr, q->element_sz);
 	q->write_offset++;
-
-	// We're at risk of overflow if the write offset is that high.
-	if (q->write_offset & 0xC0000000) {
-		cf_queue_unwrap(q);
-	}
+	cf_queue_unwrap(q);
 
 	if (q->threadsafe) {
 		pthread_cond_signal(&q->CV);
@@ -191,7 +189,7 @@ int cf_queue_push(cf_queue *q, void *ptr)
 //
 // Push element on the queue only if size < limit.
 //
-bool cf_queue_push_limit(cf_queue *q, void *ptr, uint32_t limit)
+bool cf_queue_push_limit(cf_queue *q, const void *ptr, uint32_t limit)
 {
 	cf_queue_lock(q);
 
@@ -212,11 +210,7 @@ bool cf_queue_push_limit(cf_queue *q, void *ptr, uint32_t limit)
 	// TODO - if queues are power of 2, this can be a shift.
 	memcpy(CF_Q_ELEM_PTR(q, q->write_offset), ptr, q->element_sz);
 	q->write_offset++;
-
-	// We're at risk of overflow if the write offset is that high.
-	if (q->write_offset & 0xC0000000) {
-		cf_queue_unwrap(q);
-	}
+	cf_queue_unwrap(q);
 
 	if (q->threadsafe) {
 		pthread_cond_signal(&q->CV);
@@ -229,12 +223,12 @@ bool cf_queue_push_limit(cf_queue *q, void *ptr, uint32_t limit)
 //
 // Same as cf_queue_push() except it's a no-op if element is already queued.
 //
-int cf_queue_push_unique(cf_queue *q, void *ptr)
+int cf_queue_push_unique(cf_queue *q, const void *ptr)
 {
 	cf_queue_lock(q);
 
 	// Check if element is already queued.
-	if (CF_Q_SZ(q)) {
+	if (CF_Q_SZ(q) != 0) {
 		for (uint32_t i = q->read_offset; i < q->write_offset; i++) {
 			if (0 == memcmp(CF_Q_ELEM_PTR(q, i), ptr, q->element_sz)) {
 				// Element is already queued.
@@ -255,11 +249,7 @@ int cf_queue_push_unique(cf_queue *q, void *ptr)
 	// TODO - if queues are power of 2, this can be a shift.
 	memcpy(CF_Q_ELEM_PTR(q, q->write_offset), ptr, q->element_sz);
 	q->write_offset++;
-
-	// We're at risk of overflow if the write offset is that high.
-	if (q->write_offset & 0xC0000000) {
-		cf_queue_unwrap(q);
-	}
+	cf_queue_unwrap(q);
 
 	if (q->threadsafe) {
 		pthread_cond_signal(&q->CV);
@@ -272,7 +262,7 @@ int cf_queue_push_unique(cf_queue *q, void *ptr)
 //
 // Push to the front of the queue.
 //
-int cf_queue_push_head(cf_queue *q, void *ptr)
+int cf_queue_push_head(cf_queue *q, const void *ptr)
 {
 	cf_queue_lock(q);
 
@@ -301,10 +291,7 @@ int cf_queue_push_head(cf_queue *q, void *ptr)
 		q->write_offset++;
 	}
 
-	// We're at risk of overflow if the write offset is that high.
-	if (q->write_offset & 0xC0000000) {
-		cf_queue_unwrap(q);
-	}
+	cf_queue_unwrap(q);
 
 	if (q->threadsafe) {
 		pthread_cond_signal(&q->CV);
@@ -416,11 +403,13 @@ int cf_queue_reduce(cf_queue *q,  cf_queue_reduce_fn cb, void *udata)
 {
 	cf_queue_lock(q);
 
-	if (CF_Q_SZ(q)) {
+	if (CF_Q_SZ(q) != 0) {
 		for (uint32_t i = q->read_offset; i < q->write_offset; i++) {
 			int rv = cb(CF_Q_ELEM_PTR(q, i), udata);
 
-			// rv == 0 is normal case, just increment to next element.
+			if (rv == 0) {
+				continue;
+			}
 
 			if (rv == -1) {
 				// Found what it was looking for, stop reducing.
@@ -446,11 +435,13 @@ int cf_queue_reduce_reverse(cf_queue *q, cf_queue_reduce_fn cb, void *udata)
 {
 	cf_queue_lock(q);
 
-	if (CF_Q_SZ(q)) {
+	if (CF_Q_SZ(q) != 0) {
 		for (int i = (int)q->write_offset - 1; i >= (int)q->read_offset; i--) {
 			int rv = cb(CF_Q_ELEM_PTR(q, i), udata);
 
-			// rv == 0 is normal case, just increment to next element.
+			if (rv == 0) {
+				continue;
+			}
 
 			if (rv == -1) {
 				// Found what it was looking for, stop reducing.
@@ -470,22 +461,22 @@ int cf_queue_reduce_reverse(cf_queue *q, cf_queue_reduce_fn cb, void *udata)
 }
 
 //
-// Special case: delete elements from the queue. Pass 'true' as the 'only_one'
-// parameter if there can be only one element with this value on the queue.
+// Delete element(s) from the queue. Pass 'only_one' as true if there can be
+// only one element with this value on the queue.
 //
-int cf_queue_delete(cf_queue *q, void *buf, bool only_one)
+int cf_queue_delete(cf_queue *q, const void *ptr, bool only_one)
 {
 	cf_queue_lock(q);
 
 	bool found = false;
 
-	if (CF_Q_SZ(q)) {
+	if (CF_Q_SZ(q) != 0) {
 		for (uint32_t i = q->read_offset; i < q->write_offset; i++) {
 			int rv = 0;
 
 			// If buf is null, rv is always 0 and we delete all elements.
-			if (buf) {
-				rv = memcmp(CF_Q_ELEM_PTR(q, i), buf, q->element_sz);
+			if (ptr) {
+				rv = memcmp(CF_Q_ELEM_PTR(q, i), ptr, q->element_sz);
 			}
 
 			if (rv == 0) {

@@ -83,22 +83,22 @@ int cf_queue_sz(cf_queue *q);
 /**
  * Push to the tail of the queue.
  */
-int cf_queue_push(cf_queue *q, void *ptr);
+int cf_queue_push(cf_queue *q, const void *ptr);
 
 /**
  * Push element on the queue only if size < limit.
  */
-bool cf_queue_push_limit(cf_queue *q, void *ptr, uint32_t limit);
+bool cf_queue_push_limit(cf_queue *q, const void *ptr, uint32_t limit);
 
 /**
  * Same as cf_queue_push() except it's a no-op if element is already queued.
  */
-int cf_queue_push_unique(cf_queue *q, void *ptr);
+int cf_queue_push_unique(cf_queue *q, const void *ptr);
 
 /**
  * Push to the front of the queue.
  */
-int cf_queue_push_head(cf_queue *q, void *ptr);
+int cf_queue_push_head(cf_queue *q, const void *ptr);
 
 /**
  * Pops from the head of the queue.
@@ -125,7 +125,7 @@ int cf_queue_reduce_reverse(cf_queue *q, cf_queue_reduce_fn cb, void *udata);
  * 'buf' will be deleted. (Do this if you know there can only be one occurrence
  * on the queue.)
  */
-int cf_queue_delete(cf_queue *q, void *buf, bool only_one);
+int cf_queue_delete(cf_queue *q, const void *ptr, bool only_one);
 
 /**
  * Delete all items in queue.
