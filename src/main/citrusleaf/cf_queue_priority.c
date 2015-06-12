@@ -285,3 +285,54 @@ int cf_queue_priority_change(cf_queue_priority *priority_q, const void *ptr, int
 	cf_queue_priority_unlock(priority_q);
 	return CF_QUEUE_NOMATCH;
 }
+
+//
+// Reduce the inner queues whose priorities are different to 'new_pri'. If the
+// callback returns -1, move that element to the inner queue whose priority is
+// 'new_pri' and return CF_QUEUE_OK. Returns CF_QUEUE_NOMATCH if callback never
+// triggers a move.
+//
+int cf_queue_priority_reduce_change(cf_queue_priority *priority_q, int new_pri, cf_queue_reduce_fn cb, void *udata)
+{
+	cf_queue_priority_lock(priority_q);
+
+	cf_queue *queues[3];
+
+	queues[0] = priority_q->high_q;
+	queues[1] = priority_q->medium_q;
+	queues[2] = priority_q->low_q;
+
+	int dest_q_itr = CF_QUEUE_PRIORITY_HIGH - new_pri;
+	cf_queue *q;
+
+	for (int q_itr = 0; q_itr < 3; q_itr++) {
+		q = queues[q_itr];
+
+		if (q_itr == dest_q_itr || CF_Q_SZ(q) == 0) {
+			continue;
+		}
+
+		for (uint32_t i = q->read_offset; i < q->write_offset; i++) {
+			int rv = cb(CF_Q_ELEM_PTR(q, i), udata);
+
+			if (rv == 0) {
+				continue;
+			}
+
+			if (rv == -1) {
+				// Found it - move to desired queue and return.
+				byte buf[q->element_sz];
+
+				memcpy(buf, CF_Q_ELEM_PTR(q, i), q->element_sz);
+				cf_queue_delete_offset(q, i);
+				cf_queue_push(queues[dest_q_itr], buf);
+
+				cf_queue_priority_unlock(priority_q);
+				return CF_QUEUE_OK;
+			}
+		}
+	}
+
+	cf_queue_priority_unlock(priority_q);
+	return CF_QUEUE_NOMATCH;
+}
