@@ -58,20 +58,20 @@ typedef struct cf_queue_s {
 	 * Private data - please use API.
 	 */
 	bool            threadsafe;     // if false, no mutex lock
-	unsigned int    allocsz;        // number of elements currently allocated
+	unsigned int    alloc_sz;       // number of elements currently allocated
 	unsigned int    read_offset;    // offset (in elements) of head
 	unsigned int    write_offset;   // offset (in elements) past tail
-	size_t          elementsz;      // number of bytes in an element
+	size_t          element_sz;     // number of bytes in an element
 	pthread_mutex_t LOCK;           // the mutex lock
 	pthread_cond_t  CV;             // the condvar
-	byte *          queue;          // the actual bytes that make up the queue
+	byte *          elements;       // the block of queue elements
 } cf_queue;
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-cf_queue *cf_queue_create(size_t elementsz, bool threadsafe);
+cf_queue *cf_queue_create(size_t element_sz, bool threadsafe);
 
 void cf_queue_destroy(cf_queue *q);
 
@@ -142,7 +142,7 @@ void cf_queue_delete_offset(cf_queue *q, uint32_t index);
 
 #define CF_Q_EMPTY(__q) (__q->write_offset == __q->read_offset)
 
-#define CF_Q_ELEM_PTR(__q, __i) (&__q->queue[(__i % __q->allocsz) * __q->elementsz])
+#define CF_Q_ELEM_PTR(__q, __i) (&__q->elements[(__i % __q->alloc_sz) * __q->element_sz])
 
 /******************************************************************************/
 

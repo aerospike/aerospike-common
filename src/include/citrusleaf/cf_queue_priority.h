@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -38,22 +38,20 @@ extern "C" {
  * TYPES
  ******************************************************************************/
 
-typedef struct cf_queue_priority_s cf_queue_priority;
-
-struct cf_queue_priority_s {
-    bool            threadsafe;
-    cf_queue *      low_q;
-    cf_queue *      medium_q;
-    cf_queue *      high_q;
-    pthread_mutex_t LOCK;
-    pthread_cond_t  CV;
-};
+typedef struct cf_queue_priority_s {
+	bool            threadsafe;
+	cf_queue *      low_q;
+	cf_queue *      medium_q;
+	cf_queue *      high_q;
+	pthread_mutex_t LOCK;
+	pthread_cond_t  CV;
+} cf_queue_priority;
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-cf_queue_priority *cf_queue_priority_create(size_t elementsz, bool threadsafe);
+cf_queue_priority *cf_queue_priority_create(size_t element_sz, bool threadsafe);
 void cf_queue_priority_destroy(cf_queue_priority *q);
 int cf_queue_priority_push(cf_queue_priority *q, void *ptr, int pri);
 int cf_queue_priority_pop(cf_queue_priority *q, void *buf, int mswait);
@@ -65,7 +63,7 @@ int cf_queue_priority_reduce_pop(cf_queue_priority *priority_q,  void *buf, cf_q
  ******************************************************************************/
 
 #define CF_Q_PRI_EMPTY(__q) (CF_Q_EMPTY(__q->low_q) && CF_Q_EMPTY(__q->medium_q) && CF_Q_EMPTY(__q->high_q))
- 
+
 /******************************************************************************/
 
 #ifdef __cplusplus
