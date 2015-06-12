@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2008-2014 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -59,7 +59,7 @@ cf_queue * cf_queue_create(size_t elementsz, bool threadsafe)
 	return(q);
 }
 
-void cf_queue_destroy(cf_queue *q) 
+void cf_queue_destroy(cf_queue *q)
 {
 	if (q->threadsafe) {
 		pthread_cond_destroy(&q->CV);
@@ -71,7 +71,7 @@ void cf_queue_destroy(cf_queue *q)
 	cf_free(q);
 }
 
-int cf_queue_sz(cf_queue *q) 
+int cf_queue_sz(cf_queue *q)
 {
 	int rv;
 
@@ -79,10 +79,10 @@ int cf_queue_sz(cf_queue *q)
 		pthread_mutex_lock(&q->LOCK);
 
 	rv = CF_Q_SZ(q);
-	
+
 	if (q->threadsafe)
 		pthread_mutex_unlock(&q->LOCK);
-	
+
 	return(rv);
 }
 
@@ -96,7 +96,7 @@ static int cf_queue_resize(cf_queue *q, uint new_sz)
 	if (CF_Q_SZ(q) != q->allocsz) {
 		return(-1);
 	}
-	
+
 	// the rare case where the queue is not fragmented, and realloc makes sense
 	// and none of the offsets need to move
 	if (0 == q->read_offset % q->allocsz) {
@@ -108,7 +108,7 @@ static int cf_queue_resize(cf_queue *q, uint new_sz)
 		q->write_offset = q->allocsz;
 	}
 	else {
-		
+
 		byte *newq = (uint8_t*)cf_malloc(new_sz * q->elementsz);
 		if (!newq) {
 			return(-1);
@@ -116,8 +116,8 @@ static int cf_queue_resize(cf_queue *q, uint new_sz)
 		// endsz is used bytes in the old queue from the insert point to the end
 		size_t endsz = (q->allocsz - (q->read_offset % q->allocsz)) * q->elementsz;
 		memcpy(&newq[0], CF_Q_ELEM_PTR(q, q->read_offset), endsz);
-		memcpy(&newq[endsz], &q->queue[0], (q->allocsz * q->elementsz) - endsz); 
-		
+		memcpy(&newq[endsz], &q->queue[0], (q->allocsz * q->elementsz) - endsz);
+
 		cf_free(q->queue);
 		q->queue = newq;
 
@@ -126,7 +126,7 @@ static int cf_queue_resize(cf_queue *q, uint new_sz)
 	}
 
 	q->allocsz = new_sz;
-	return(0);	
+	return(0);
 }
 
 //
@@ -164,7 +164,7 @@ int cf_queue_push(cf_queue *q, void *ptr)
 	q->write_offset++;
 	// we're at risk of overflow if the write offset is that high
 	if (q->write_offset & 0xC0000000) cf_queue_unwrap(q);
-	
+
 	if (q->threadsafe)
 		pthread_cond_signal(&q->CV);
 
@@ -263,7 +263,7 @@ int cf_queue_push_unique(cf_queue *q, void *ptr)
 // cf_queue_push_head
 // Push head goes to the front, which currently means memcpying the entire queue contents.
 //
-int cf_queue_push_head(cf_queue *q, void *ptr) 
+int cf_queue_push_head(cf_queue *q, void *ptr)
 {
 	if (q->threadsafe && (0 != pthread_mutex_lock(&q->LOCK)))
 		return(-1);
@@ -275,12 +275,12 @@ int cf_queue_push_head(cf_queue *q, void *ptr)
 			return(-1);
 		}
 	}
-	
+
 	// easy case, tail insert is head insert
 	if (q->read_offset == q->write_offset) {
 		memcpy(CF_Q_ELEM_PTR(q,q->write_offset), ptr, q->elementsz);
 		q->write_offset++;
-	}		
+	}
 	// another easy case, there's space up front
 	else if (q->read_offset > 0) {
 		q->read_offset--;
@@ -289,13 +289,13 @@ int cf_queue_push_head(cf_queue *q, void *ptr)
 	// hard case, we're going to have to shift everything back
 	else {
 		memmove(CF_Q_ELEM_PTR(q, 1),CF_Q_ELEM_PTR(q, 0),q->elementsz * CF_Q_SZ(q) );
-		memcpy(CF_Q_ELEM_PTR(q,0), ptr, q->elementsz);		
+		memcpy(CF_Q_ELEM_PTR(q,0), ptr, q->elementsz);
 		q->write_offset++;
-	}	
-		
+	}
+
 	// we're at risk of overflow if the write offset is that high
 	if (q->write_offset & 0xC0000000) cf_queue_unwrap(q);
-	
+
 	if (q->threadsafe)
 		pthread_cond_signal(&q->CV);
 
@@ -321,7 +321,7 @@ int cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 
 	struct timespec tp;
 	if (ms_wait > 0) {
-        cf_set_wait_timespec(ms_wait, &tp);
+		cf_set_wait_timespec(ms_wait, &tp);
 	}
 
 	// Note that we apparently have to use a while() loop.  Careful reading
@@ -349,7 +349,7 @@ int cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 
 	memcpy(buf, CF_Q_ELEM_PTR(q,q->read_offset), q->elementsz);
 	q->read_offset++;
-	
+
 	// interesting idea - this probably keeps the cache fresher
 	// because the queue is fully empty just make it all zero
 	if (q->read_offset == q->write_offset) {
@@ -368,9 +368,9 @@ void cf_queue_delete_offset(cf_queue *q, uint index)
 	index %= q->allocsz;
 	uint r_index = q->read_offset % q->allocsz;
 	uint w_index = q->write_offset % q->allocsz;
-	
+
 	// assumes index is validated!
-	
+
 	// if we're deleting the one at the head, just increase the readoffset
 	if (index == r_index) {
 		q->read_offset++;
@@ -384,16 +384,16 @@ void cf_queue_delete_offset(cf_queue *q, uint index)
 	// and the memory copy is overlapping, so must use memmove
 	if (index > r_index) {
 		memmove( &q->queue[ (r_index + 1) * q->elementsz ],
-			     &q->queue[ r_index * q->elementsz ],
+				 &q->queue[ r_index * q->elementsz ],
 				 (index - r_index) * q->elementsz );
 		q->read_offset++;
 		return;
 	}
-	
+
 	if (index < w_index) {
 		memmove( &q->queue[ index * q->elementsz ],
-			     &q->queue[ (index + 1) * q->elementsz ],
-			     (w_index - index - 1) * q->elementsz);
+				 &q->queue[ (index + 1) * q->elementsz ],
+				 (w_index - index - 1) * q->elementsz);
 		q->write_offset--;
 		return;
 	}
@@ -411,19 +411,19 @@ int cf_queue_reduce(cf_queue *q,  cf_queue_reduce_fn cb, void *udata)
 		return(-1);
 
 	if (CF_Q_SZ(q)) {
-		
+
 		// it would be faster to have a local variable to hold the index,
 		// and do it in bytes or something, but a delete
 		// will change the read and write offset, so this is simpler for now
 		// can optimize if necessary later....
-		
-		for (uint i = q->read_offset ; 
+
+		for (uint i = q->read_offset ;
 			 i < q->write_offset ;
 			 i++)
 		{
-			
+
 			int rv = cb(CF_Q_ELEM_PTR(q, i), udata);
-			
+
 			// rv == 0 i snormal case, just increment to next point
 			if (rv == -1) {
 				break; // found what it was looking for
@@ -434,13 +434,13 @@ int cf_queue_reduce(cf_queue *q,  cf_queue_reduce_fn cb, void *udata)
 			}
 		};
 	}
-	
-Found:	
+
+Found:
 	if (q->threadsafe && (0 != pthread_mutex_unlock(&q->LOCK))) {
 		return(-1);
 	}
 
-	return(0);	
+	return(0);
 }
 
 
@@ -503,19 +503,19 @@ int cf_queue_delete(cf_queue *q, void *buf, bool only_one)
 		return(CF_QUEUE_ERR);
 
 	bool found = false;
-	
+
 	if (CF_Q_SZ(q)) {
 
-		for (uint i = q->read_offset ; 
+		for (uint i = q->read_offset ;
 			 i < q->write_offset ;
 			 i++)
 		{
 
 			int rv = 0;
-			
+
 			if (buf) // if buf is null, delete all
 				rv = memcmp(CF_Q_ELEM_PTR(q,i), buf, q->elementsz);
-			
+
 			if (rv == 0) { // delete!
 				cf_queue_delete_offset(q, i);
 				found = true;
