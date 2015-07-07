@@ -407,11 +407,13 @@ TEST( types_arraylist_msgpack, "as_arraylist msgpack" ) {
     as_arraylist_append_int64(&l1, 123);
     as_arraylist_append_int64(&l1, 456);
     as_arraylist_append_int64(&l1, 789);
+    as_arraylist_append_double(&l1, 92.1);
+    as_arraylist_append_double(&l1, -23.596);
     as_arraylist_append_str(&l1, "abc");
     as_arraylist_append_str(&l1, "def");
     as_arraylist_append_str(&l1, "ghi");
     
-    assert_int_eq( as_arraylist_size(&l1), 6 );
+    assert_int_eq( as_arraylist_size(&l1), 8 );
 
     as_serializer ser;
     as_msgpack_init(&ser);
@@ -434,9 +436,11 @@ TEST( types_arraylist_msgpack, "as_arraylist msgpack" ) {
     assert_int_eq( as_arraylist_get_int64(&l1, 0), 123 );
     assert_int_eq( as_arraylist_get_int64(&l1, 1), 456 );
     assert_int_eq( as_arraylist_get_int64(&l1, 2), 789 );
-    assert_string_eq( as_arraylist_get_str(&l1, 3), "abc" );
-    assert_string_eq( as_arraylist_get_str(&l1, 4), "def" );
-    assert_string_eq( as_arraylist_get_str(&l1, 5), "ghi" );
+    assert_double_eq( as_arraylist_get_double(&l1, 3), 92.1 );
+    assert_double_eq( as_arraylist_get_double(&l1, 4), -23.596 );
+    assert_string_eq( as_arraylist_get_str(&l1, 5), "abc" );
+    assert_string_eq( as_arraylist_get_str(&l1, 6), "def" );
+    assert_string_eq( as_arraylist_get_str(&l1, 7), "ghi" );
 
     as_arraylist_destroy(&l1);
     

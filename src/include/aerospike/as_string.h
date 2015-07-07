@@ -51,7 +51,7 @@ extern "C" {
  *	The 3rd argument indicates whether the string value should be `free()`d 
  *	when as_string is destroyed.
  *
- *	To create and initialize a heap allocated as_integer, use as_integer_new():
+ *	To create and initialize a heap allocated as_string, use as_string_new():
  *	
  *	~~~~~~~~~~{.c}
  *	as_string * s = as_string_new("abc", false);
@@ -72,7 +72,7 @@ extern "C" {
  *	as_string:
  *
  *	as_string_get() returns the contained value. If an error occurred, then
- *	NULL is returned. Possible errors is the as_integer instance is NULL.
+ *	NULL is returned. Possible errors is the as_string instance is NULL.
  *
  *	~~~~~~~~~~{.c}
  *	char * sval = as_string_get(i);
@@ -100,8 +100,6 @@ extern "C" {
  *	as_string * i = as_string_fromval(val);
  *	~~~~~~~~~~
  *
- *
- *	
  *	@extends as_val
  *	@ingroup aerospike_t
  */

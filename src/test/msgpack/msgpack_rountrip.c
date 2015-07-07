@@ -44,14 +44,24 @@ TEST( msgpack_roundtrip_integer1, "roundtrip: 123" )
 	as_integer i1;
 	as_integer_init(&i1, 123);
 
-	as_integer i2;
-	as_integer_init(&i2, 456);
-
 	as_val * v2 = roundtrip((as_val *) &i1);
 
 	assert_val_eq(v2, &i1);
 
 	as_integer_destroy(&i1);
+	as_val_destroy(v2);
+}
+
+TEST( msgpack_roundtrip_double1, "roundtrip: 123.456" )
+{
+	as_double d1;
+	as_double_init(&d1, 123.456);
+	
+	as_val * v2 = roundtrip((as_val *) &d1);
+	
+	assert_val_eq(v2, &d1);
+	
+	as_double_destroy(&d1);
 	as_val_destroy(v2);
 }
 
@@ -173,6 +183,7 @@ TEST( msgpack_roundtrip_map2, "roundtrip: {'abc': [1,2,3], 'def': [4,5,6], 'ghi'
 
 SUITE( msgpack_roundtrip, "as_msgpack roundtrip serialize/deserialize" ) {
 	suite_add( msgpack_roundtrip_integer1 );
+	suite_add( msgpack_roundtrip_double1 );
 	suite_add( msgpack_roundtrip_string1 );
 	suite_add( msgpack_roundtrip_list1 );
 	suite_add( msgpack_roundtrip_list2 );

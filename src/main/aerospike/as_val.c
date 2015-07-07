@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -21,6 +21,7 @@
 
 #include <aerospike/as_boolean.h>
 #include <aerospike/as_bytes.h>
+#include <aerospike/as_double.h>
 #include <aerospike/as_integer.h>
 #include <aerospike/as_list.h>
 #include <aerospike/as_map.h>
@@ -38,13 +39,6 @@ typedef void		(* as_val_destroy_callback)(as_val * v);
 typedef uint32_t	(* as_val_hashcode_callback)(const as_val * v);
 typedef as_val *	(* as_val_reserve_callback)(as_val * v);
 typedef char *	(* as_val_tostring_callback)(const as_val * v);
-
-/******************************************************************************
- *	INLINE FUNCTIONS
- *****************************************************************************/
-
-extern inline void as_val_init(as_val *v, as_val_t type, bool free);
-extern inline as_val * as_val_cons(as_val * val, as_val_t type, bool free);
 
 /******************************************************************************
  *	STATIC FUNCTIONS
@@ -67,6 +61,7 @@ static const as_val_destroy_callback as_val_destroy_callbacks[] = {
 	[AS_INTEGER]	= as_integer_val_destroy,
 	[AS_STRING]		= as_string_val_destroy,
 	[AS_BYTES]		= as_bytes_val_destroy,
+	[AS_DOUBLE]		= as_double_val_destroy,
 	[AS_LIST]		= as_list_val_destroy,
 	[AS_MAP]		= as_map_val_destroy,
 	[AS_REC]		= as_rec_val_destroy,
@@ -80,6 +75,7 @@ static const as_val_tostring_callback as_val_tostring_callbacks[] = {
 	[AS_INTEGER]	= as_integer_val_tostring,
 	[AS_STRING]		= as_string_val_tostring,
 	[AS_BYTES]		= as_bytes_val_tostring,
+	[AS_DOUBLE]		= as_double_val_tostring,
 	[AS_LIST]		= as_list_val_tostring,
 	[AS_MAP]		= as_map_val_tostring,
 	[AS_REC]		= as_rec_val_tostring,
@@ -93,6 +89,7 @@ static const as_val_hashcode_callback as_val_hashcode_callbacks[] = {
 	[AS_INTEGER]	= as_integer_val_hashcode,
 	[AS_STRING]		= as_string_val_hashcode,
 	[AS_BYTES]		= as_bytes_val_hashcode,
+	[AS_DOUBLE]		= as_double_val_hashcode,
 	[AS_LIST]		= as_list_val_hashcode,
 	[AS_MAP]		= as_map_val_hashcode,
 	[AS_REC]		= as_rec_val_hashcode,
@@ -106,6 +103,7 @@ static const as_val_reserve_callback as_val_reserve_callbacks[] = {
 	[AS_INTEGER]	= as_val_reserve_count,
 	[AS_STRING]		= as_val_reserve_count,
 	[AS_BYTES]		= as_val_reserve_count,
+	[AS_DOUBLE]		= as_val_reserve_count,
 	[AS_LIST]		= as_val_reserve_count,
 	[AS_MAP]		= as_val_reserve_count,
 	[AS_REC]		= as_val_reserve_count,

@@ -62,6 +62,14 @@ static inline int as_stringmap_set_int64(as_map * m, const char * k, int64_t v)
 }
 
 /**
+ *	Set the specified key's value to a double.
+ */
+static inline int as_stringmap_set_double(as_map * m, const char * k, double v)
+{
+	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) as_double_new(v));
+}
+
+/**
  *	Set the specified key's value to a NULL terminated string.
  */
 static inline int as_stringmap_set_str(as_map * m, const char * k, const char * v) 
@@ -77,6 +85,14 @@ static inline int as_stringmap_set_integer(as_map * m, const char * k, as_intege
 	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) v);
 }
 
+/**
+ *	Set the specified key's value to an as_integer.
+ */
+static inline int as_stringmap_set_as_double(as_map * m, const char * k, as_double * v)
+{
+	return as_util_hook(set, 1, m, (as_val *) as_string_new_strdup(k), (as_val *) v);
+}
+	
 /**
  *	Set the specified key's value to an as_string.
  */
@@ -135,6 +151,17 @@ static inline int64_t as_stringmap_get_int64(as_map * m, const char * k)
 }
 
 /**
+ *	Get the specified key's value as a double.
+ */
+static inline double as_stringmap_get_double(as_map * m, const char * k)
+{
+	as_string key;
+	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
+	as_double * ptr = as_double_fromval(v);
+	return ptr ? ptr->value : 0.0;
+}
+
+/**
  *	Get the specified key's value as a NULL terminated string.
  */
 static inline char * as_stringmap_get_str(as_map * m, const char * k) 
@@ -153,6 +180,16 @@ static inline as_integer * as_stringmap_get_integer(as_map * m, const char * k)
 	as_string key;
 	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
 	return as_integer_fromval(v);
+}
+
+/**
+ *	Get the specified key's value as an as_double.
+ */
+static inline as_double * as_stringmap_get_as_double(as_map * m, const char * k)
+{
+	as_string key;
+	as_val * v = as_util_hook(get, NULL, m, (as_val *) as_string_init(&key, (char *) k, false));
+	return as_double_fromval(v);
 }
 
 /**

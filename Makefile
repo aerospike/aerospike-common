@@ -78,6 +78,7 @@ AEROSPIKE-OBJECTS += as_msgpack_serializer.o
 # types
 AEROSPIKE-OBJECTS += as_boolean.o
 AEROSPIKE-OBJECTS += as_bytes.o
+AEROSPIKE-OBJECTS += as_double.o
 AEROSPIKE-OBJECTS += as_integer.o
 AEROSPIKE-OBJECTS += as_list.o
 AEROSPIKE-OBJECTS += as_map.o

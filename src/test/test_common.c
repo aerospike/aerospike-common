@@ -15,6 +15,9 @@ bool atf_val_equals(atf_test_result * __result__, as_val * actual, as_val * expe
 		case AS_INTEGER:
 			bassert(atf_integer_equals(__result__, as_integer_fromval(actual), as_integer_fromval(expected)));
 			break;
+		case AS_DOUBLE:
+			bassert(atf_double_equals(__result__, as_double_fromval(actual), as_double_fromval(expected)));
+			break;
 		case AS_STRING:
 			bassert(atf_string_equals(__result__, as_string_fromval(actual), as_string_fromval(expected)));
 			break;
@@ -33,6 +36,12 @@ bool atf_val_equals(atf_test_result * __result__, as_val * actual, as_val * expe
 bool atf_integer_equals(atf_test_result * __result__, as_integer * actual, as_integer * expected)
 {
 	bassert_int_eq( as_integer_get(actual), as_integer_get(expected) );
+	return true;
+}
+
+bool atf_double_equals(atf_test_result * __result__, as_double * actual, as_double * expected)
+{
+	bassert_double_eq( as_double_get(actual), as_double_get(expected) );
 	return true;
 }
 

@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -211,6 +211,11 @@ int64_t as_arraylist_get_int64(const as_arraylist * list, uint32_t index)
 	return as_integer_get(as_integer_fromval(as_arraylist_get(list, index)));
 }
 
+double as_arraylist_get_double(const as_arraylist * list, uint32_t index)
+{
+	return as_double_get(as_double_fromval(as_arraylist_get(list, index)));
+}
+
 char * as_arraylist_get_str(const as_arraylist * list, uint32_t index)
 {
 	return as_string_get(as_string_fromval(as_arraylist_get(list, index)));
@@ -253,6 +258,11 @@ int as_arraylist_set(as_arraylist * list, uint32_t index, as_val * value)
 int as_arraylist_set_int64(as_arraylist * list, uint32_t index, int64_t value)
 {
 	return as_arraylist_set(list, index, (as_val *) as_integer_new(value));
+}
+
+int as_arraylist_set_double(as_arraylist * list, uint32_t index, double value)
+{
+	return as_arraylist_set(list, index, (as_val *) as_double_new(value));
 }
 
 int as_arraylist_set_str(as_arraylist * list, uint32_t index, const char * value)
@@ -304,6 +314,11 @@ int as_arraylist_insert_int64(as_arraylist * list, uint32_t index, int64_t value
 	return as_arraylist_insert(list, index, (as_val *) as_integer_new(value));
 }
 
+int as_arraylist_insert_double(as_arraylist * list, uint32_t index, double value)
+{
+	return as_arraylist_insert(list, index, (as_val *) as_double_new(value));
+}
+
 int as_arraylist_insert_str(as_arraylist * list, uint32_t index, const char * value)
 {
 	return as_arraylist_insert(list, index, (as_val *) as_string_new_strdup(value));
@@ -326,6 +341,11 @@ int as_arraylist_append_int64(as_arraylist * list, int64_t value)
 	return as_arraylist_append(list, (as_val *) as_integer_new(value));
 }
 
+int as_arraylist_append_double(as_arraylist * list, double value)
+{
+	return as_arraylist_append(list, (as_val *) as_double_new(value));
+}
+
 int as_arraylist_append_str(as_arraylist * list, const char * value) 
 {
 	return as_arraylist_append(list, (as_val *) as_string_new_strdup(value));
@@ -346,6 +366,11 @@ int as_arraylist_prepend(as_arraylist * list, as_val * value)
 int as_arraylist_prepend_int64(as_arraylist * list, int64_t value) 
 {
 	return as_arraylist_prepend(list, (as_val *) as_integer_new(value));
+}
+
+int as_arraylist_prepend_double(as_arraylist * list, double value)
+{
+	return as_arraylist_prepend(list, (as_val *) as_double_new(value));
 }
 
 int as_arraylist_prepend_str(as_arraylist * list, const char * value) 

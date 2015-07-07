@@ -331,6 +331,9 @@ TEST( types_hashmap_types, "as_hashmap types" ) {
 	// Setting an integer
 	as_map_set(m, (as_val *) as_string_new_strdup("integer_data"), (as_val *) as_integer_new(10000));
 
+	// Setting a double
+	as_map_set(m, (as_val *) as_string_new_strdup("double_data"), (as_val *) as_double_new(1013.4454));
+
 	// Setting a blob
 	as_bytes *byte_data = as_bytes_new(20);
 	int i = 0; 
@@ -339,7 +342,7 @@ TEST( types_hashmap_types, "as_hashmap types" ) {
 	}
 	as_map_set(m, (as_val *) as_string_new_strdup("byte_data"), (as_val *) byte_data);
 
-	assert_int_eq( as_map_size(m), 5 );
+	assert_int_eq( as_map_size(m), 6 );
 
 	// check individual values
 	as_string key;
@@ -374,6 +377,12 @@ TEST( types_hashmap_types, "as_hashmap types" ) {
 	assert_not_null(val);
 	assert_int_eq (as_integer_get((as_integer *)val), 10000);
 	
+	// check double data
+	as_string_init(&key,"double_data",false);
+	val = as_map_get(m, (as_val *)&key);
+	assert_not_null(val);
+	assert_double_eq (as_double_get((as_double *)val), 1013.4454);
+
 	// check bytes data
 	as_string_init(&key,"byte_data",false);
 	val = as_map_get(m, (as_val *)&key);

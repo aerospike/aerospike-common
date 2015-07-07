@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -19,6 +19,7 @@
 
 #include <aerospike/as_boolean.h>
 #include <aerospike/as_bytes.h>
+#include <aerospike/as_double.h>
 #include <aerospike/as_hashmap.h>
 #include <aerospike/as_hashmap_iterator.h>
 #include <aerospike/as_integer.h>
@@ -89,6 +90,7 @@ static bool is_valid_key_type(const as_val * k)
 	case AS_NIL:
 	case AS_BOOLEAN:
 	case AS_INTEGER:
+	case AS_DOUBLE:
 	case AS_STRING:
 	case AS_BYTES:
 		return true;
@@ -114,6 +116,9 @@ static bool eq_val(const as_val * v1, const as_val * v2)
 	case AS_INTEGER:
 		return as_integer_get((const as_integer *)v1) ==
 				as_integer_get((const as_integer *)v2);
+	case AS_DOUBLE:
+		return as_double_get((const as_double *)v1) ==
+		as_double_get((const as_double *)v2);
 	case AS_STRING:
 		return 0 == strcmp(as_string_get((const as_string *)v1),
 				as_string_get((const as_string *)v2));

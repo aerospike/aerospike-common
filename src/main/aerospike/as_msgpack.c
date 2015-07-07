@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -196,6 +196,12 @@ static int as_pack_integer(as_packer * pk, as_integer * i)
 	}
 }
 
+static inline int as_pack_double(as_packer * pk, as_double* d)
+{
+	double val = as_double_get(d);
+	return as_pack_int64(pk, 0xcb, *(uint64_t*)&val);
+}
+
 static int as_pack_byte_array_header(as_packer * pk, uint32_t length, uint8_t type)
 {
 	length++;  // Account for extra aerospike type.
@@ -331,7 +337,10 @@ int as_pack_val(as_packer * pk, as_val * val)
 			case AS_INTEGER : 
 				rc = as_pack_integer(pk, (as_integer *) val);
 				break;
-			case AS_STRING : 
+			case AS_DOUBLE :
+				rc = as_pack_double(pk, (as_double *) val);
+				break;
+			case AS_STRING :
 				rc = as_pack_string(pk, (as_string *) val);
 				break;
 			case AS_BYTES : 
@@ -420,6 +429,12 @@ static inline int as_unpack_integer(int64_t i, as_val ** v)
 	return 0;
 }
 
+static inline int as_unpack_double(double d, as_val ** v)
+{
+	*v = (as_val*) as_double_new(d);
+	return 0;
+}
+
 static int as_unpack_blob(as_unpacker * pk, int size, as_val ** val)
 {
 	unsigned char type = pk->buffer[pk->offset++];
@@ -495,14 +510,12 @@ int as_unpack_val(as_unpacker * pk, as_val ** val)
 			
 		case 0xca: { // float
 			float v = as_extract_float(pk);
-			// Convert to integer because float is not currently supported.
-			return as_unpack_integer((int64_t)v, val);
+			return as_unpack_double(v, val);
 		}
 			
 		case 0xcb: { // double
 			double v = as_extract_double(pk);
-			// Convert to integer because double is not currently supported.
-			return as_unpack_integer((int64_t)v, val);
+			return as_unpack_double(v, val);
 		}
 		
 		case 0xd0: { // signed 8 bit integer

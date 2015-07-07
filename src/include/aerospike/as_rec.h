@@ -418,6 +418,23 @@ static inline int64_t as_rec_get_int64(const as_rec * rec, const char * name)
 }
 
 /**
+ *	Get a bin's value as a double.
+ *
+ *	@param rec		The as_rec to read the bin value from.
+ *	@param name 	The name of the bin.
+ *
+ *	@return On success, the value of the bin. Otherwise 0.
+ *
+ *	@relatesalso as_rec
+ */
+static inline double as_rec_get_double(const as_rec * rec, const char * name)
+{
+	as_val * v = as_util_hook(get, NULL, rec, name);
+	as_double * ptr = as_double_fromval(v);
+	return ptr ? ptr->value : 0.0;
+}
+
+/**
  *	Get a bin's value as a NULL terminated string.
  *
  *	@param rec		The as_rec to read the bin value from.
@@ -450,6 +467,22 @@ static inline as_integer * as_rec_get_integer(const as_rec * rec, const char * n
 	return as_integer_fromval(v);
 }
 
+/**
+ *	Get a bin's value as an as_double.
+ *
+ *	@param rec		The as_rec to read the bin value from.
+ *	@param name 	The name of the bin.
+ *
+ *	@return On success, the value of the bin. Otherwise NULL.
+ *
+ *	@relatesalso as_rec
+ */
+static inline as_double * as_rec_get_as_double(const as_rec * rec, const char * name)
+{
+	as_val * v = as_util_hook(get, NULL, rec, name);
+	return as_double_fromval(v);
+}
+	
 /**
  *	Get a bin's value as an as_string.
  *
@@ -551,6 +584,22 @@ static inline int as_rec_set_int64(const as_rec * rec, const char * name, int64_
 }
 
 /**
+ *	Set the bin's value to a double.
+ *
+ *	@param rec		The as_rec storing the bin.
+ *	@param name 	The name of the bin.
+ *	@param value	The value of the bin.
+ *
+ *	@return On success, 0. Otherwise an error occurred.
+ *
+ *	@relatesalso as_rec
+ */
+static inline int as_rec_set_double(const as_rec * rec, const char * name, double value)
+{
+	return as_util_hook(set, 1, rec, name, (as_val *) as_double_new(value));
+}
+
+/**
  *	Set the bin's value to a NULL terminated string.
  *
  *	@param rec		The as_rec storing the bin.
@@ -578,6 +627,22 @@ static inline int as_rec_set_str(const as_rec * rec, const char * name, const ch
  *	@relatesalso as_rec
  */
 static inline int as_rec_set_integer(const as_rec * rec, const char * name, const as_integer * value)
+{
+	return as_util_hook(set, 1, rec, name, (as_val *) value);
+}
+
+/**
+ *	Set the bin's value to an as_double.
+ *
+ *	@param rec		The as_rec storing the bin.
+ *	@param name 	The name of the bin.
+ *	@param value	The value of the bin.
+ *
+ *	@return On success, 0. Otherwise an error occurred.
+ *
+ *	@relatesalso as_rec
+ */
+static inline int as_rec_set_as_double(const as_rec * rec, const char * name, const as_double * value)
 {
 	return as_util_hook(set, 1, rec, name, (as_val *) value);
 }

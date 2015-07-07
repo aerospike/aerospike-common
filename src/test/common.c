@@ -7,6 +7,7 @@ PLAN( common ) {
      */
     plan_add( types_boolean );
     plan_add( types_integer );
+    plan_add( types_double );
     plan_add( types_string );
     plan_add( types_bytes );
     plan_add( types_arraylist );
