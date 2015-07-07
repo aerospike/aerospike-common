@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -14,39 +14,20 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <aerospike/as_stream.h>
+#include <aerospike/as_iterator.h>
+#include <aerospike/as_util.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
 
-#include <aerospike/as_util.h>
-#include <aerospike/as_stream.h>
-#include <aerospike/as_iterator.h>
-
 /******************************************************************************
- * INLINE FUNCTIONS
+ * FUNCTIONS
  *****************************************************************************/
-
-extern inline as_stream * as_stream_init(as_stream *, void *, const as_stream_hooks *);
-
-extern inline void as_stream_destroy(as_stream *);
-
-extern inline as_stream * as_stream_new(void *, const as_stream_hooks *);
-
-extern inline void * as_stream_source(const as_stream *);
-
-extern inline as_val * as_stream_read(const as_stream *);
-
-extern inline bool as_stream_readable(const as_stream *);
-
-extern inline as_stream_status as_stream_write(const as_stream *, as_val * v);
-
-extern inline bool as_stream_writable(const as_stream *);
 
 /**
  *  Wrapper functions to ensure each CF allocation-related function call has a unique line.
  */
-
 void *as_stream_malloc(size_t size)
 {
 	return cf_malloc(size);

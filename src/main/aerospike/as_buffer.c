@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -14,16 +14,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <stdlib.h>
-#include <stdio.h>
-
 #include <aerospike/as_buffer.h>
-
 #include <citrusleaf/alloc.h>
 
 /******************************************************************************
- * INLINE FUNCTIONS
+ * FUNCTIONS
  ******************************************************************************/
 
 int as_buffer_init(as_buffer * b) {

@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -14,35 +14,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <stdlib.h>
-
+#include <aerospike/as_aerospike.h>
 #include <citrusleaf/alloc.h>
 #include <citrusleaf/cf_clock.h>
-#include <aerospike/as_aerospike.h>
-
-#include "internal.h"
-
-
-/******************************************************************************
- * INLINE FUNCTIONS
- ******************************************************************************/
-
-extern inline int as_aerospike_rec_create(const as_aerospike * a, const as_rec * r);
-extern inline int as_aerospike_rec_update(const as_aerospike * a, const as_rec * r);
-extern inline int as_aerospike_rec_exists(const as_aerospike * a, const as_rec * r);
-extern inline int as_aerospike_rec_remove(const as_aerospike * a, const as_rec * r);
-
-extern inline int as_aerospike_log(const as_aerospike * a, const char * name, const int line, const int lvl, const char * msg);
-extern inline cf_clock as_aerospike_get_current_time(const as_aerospike * a );
-extern inline int as_aerospike_set_context(const as_aerospike *a, const as_rec *r, const uint32_t context);
-extern inline int as_aerospike_get_config(const as_aerospike *a, const as_rec *r, const char *);
-
-extern inline as_rec * as_aerospike_crec_create(const as_aerospike * a, const as_rec * r);
-extern inline as_rec * as_aerospike_crec_open(const as_aerospike * a, const as_rec *r, const char *);
-extern inline int as_aerospike_crec_remove(const as_aerospike * a, const as_rec * cr);
-extern inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec *cr);
-extern inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec *cr);
+#include <stdlib.h>
 
 /******************************************************************************
  * FUNCTIONS
@@ -70,4 +45,3 @@ void as_aerospike_destroy(as_aerospike * a)
 	if (a->is_rcalloc)
 	   cf_rc_releaseandfree(a);
 }
-

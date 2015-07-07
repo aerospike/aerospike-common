@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -14,20 +14,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <citrusleaf/alloc.h>
-
 #include <aerospike/as_serializer.h>
-
-/******************************************************************************
- * INLINE FUNCTIONS
- *****************************************************************************/
-
-extern inline int as_serializer_serialize(as_serializer * serializer, as_val * val, as_buffer * buffer);
-
-extern inline uint32_t as_serializer_serialize_getsize(as_serializer * serializer, as_val * val);
-
-extern inline int as_serializer_deserialize(as_serializer * serializer, as_buffer * buffer, as_val ** val);
+#include <citrusleaf/alloc.h>
 
 /******************************************************************************
  * FUNCTIONS

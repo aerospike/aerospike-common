@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -14,26 +14,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <aerospike/as_string.h>
+#include <citrusleaf/alloc.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <citrusleaf/alloc.h>
-
-#include <aerospike/as_string.h>
-
-/******************************************************************************
- *	INLINE FUNCTIONS
- *****************************************************************************/
-
-extern inline void			as_string_destroy(as_string * string);
-
-extern inline char *		as_string_getorelse(const as_string * string, char * fallback);
-extern inline char *		as_string_get(const as_string * string);
-extern inline char *		as_string_tostring(const as_string * string);
-
-extern inline as_val *		as_string_toval(const as_string * string);
-extern inline as_string *	as_string_fromval(const as_val * v);
 
 /******************************************************************************
  *	INSTANCE FUNCTIONS

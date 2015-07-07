@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -14,39 +14,15 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <citrusleaf/alloc.h>
-
-#include <aerospike/as_iterator.h>
 #include <aerospike/as_map.h>
+#include <aerospike/as_iterator.h>
 #include <aerospike/as_map_iterator.h>
 #include <aerospike/as_pair.h>
-
+#include <citrusleaf/alloc.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "internal.h"
-
-/******************************************************************************
- * INLINES
- ******************************************************************************/
-
-extern inline void				as_map_destroy(as_map * m);
-
-extern inline uint32_t			as_map_size(const as_map * m);
-extern inline as_val *			as_map_get(const as_map * m, const as_val * k);
-extern inline int				as_map_set(as_map * m, const as_val * k, const as_val * v);
-extern inline int				as_map_clear(as_map * m);
-extern inline int				as_map_remove(as_map * m, const as_val * k);
-
-extern inline bool				as_map_foreach(const as_map * m, as_map_foreach_callback callback, void * udata);
-extern inline as_map_iterator *	as_map_iterator_new(const as_map * m);
-extern inline as_map_iterator *	as_map_iterator_init(as_map_iterator * it, const as_map * m);
-
-extern inline as_val *			as_map_toval(const as_map * m) ;
-extern inline as_map *			as_map_fromval(const as_val * v);
 
 /******************************************************************************
  *	FUNCTIONS

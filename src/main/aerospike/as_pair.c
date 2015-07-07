@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -14,26 +14,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <aerospike/as_pair.h>
+#include <aerospike/as_util.h>
+#include <citrusleaf/alloc.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <citrusleaf/alloc.h>
-
-#include <aerospike/as_util.h>
-#include <aerospike/as_pair.h>
-
-/******************************************************************************
- *	INLINE FUNCTIONS
- *****************************************************************************/
-
-extern inline void      as_pair_destroy(as_pair * pair);
-
-extern inline as_val *  as_pair_1(as_pair * pair);
-extern inline as_val *  as_pair_2(as_pair * pair);
-
-extern inline as_val *  as_pair_toval(const as_pair * pair);
-extern inline as_pair * as_pair_fromval(const as_val * v) ;
 
 /******************************************************************************
  *	FUNCTIONS

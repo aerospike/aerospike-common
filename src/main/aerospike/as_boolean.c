@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -14,14 +14,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <aerospike/as_boolean.h>
+#include <citrusleaf/alloc.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-#include <citrusleaf/alloc.h>
-
-#include <aerospike/as_boolean.h>
 
 /******************************************************************************
  *	CONSTANTS
@@ -42,19 +39,6 @@ const as_boolean as_false = {
 	._.count = 0,
 	.value = false
 };
-
-/******************************************************************************
- *	INLINE FUNCTIONS
- ******************************************************************************/
- 
-extern inline void          as_boolean_destroy(as_boolean * boolean);
-
-extern inline bool          as_boolean_getorelse(const as_boolean * boolean, bool fallback);
-extern inline bool          as_boolean_get(const as_boolean * boolean);
-extern inline bool          as_boolean_tobool(const as_boolean * boolean);
-
-extern inline as_val *      as_boolean_toval(const as_boolean * boolean);
-extern inline as_boolean *  as_boolean_fromval(const as_val * v);
 
 /******************************************************************************
  *	INSTANCE FUNCTIONS

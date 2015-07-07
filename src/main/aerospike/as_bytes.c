@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -14,49 +14,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <citrusleaf/alloc.h>
-
 #include <aerospike/as_bytes.h>
-
+#include <citrusleaf/alloc.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
-
-/******************************************************************************
- * INLINE FUNCTIONS
- ******************************************************************************/
-
-extern inline void as_bytes_destroy(as_bytes * s);
-
-extern inline uint32_t as_bytes_size(const as_bytes * bytes);
-extern inline uint32_t as_bytes_capacity(const as_bytes * bytes);
-
-extern inline as_bytes_type as_bytes_get_type(const as_bytes * bytes);
-extern inline void as_bytes_set_type(as_bytes * bytes, as_bytes_type type);
-
-extern inline uint8_t * as_bytes_getorelse(const as_bytes * bytes, uint8_t * fallback);
-extern inline uint8_t * as_bytes_get(const as_bytes * bytes);
-
-extern inline uint32_t as_bytes_get_byte(const as_bytes * bytes, uint32_t index, uint8_t * value);
-extern inline uint32_t as_bytes_get_int16(const as_bytes * bytes, uint32_t index, int16_t * value);
-extern inline uint32_t as_bytes_get_int32(const as_bytes * bytes, uint32_t index, int32_t * value);
-extern inline uint32_t as_bytes_get_int64(const as_bytes * bytes, uint32_t index, int64_t * value);
-
-extern inline bool as_bytes_set_byte(as_bytes * bytes, uint32_t index, uint8_t value);
-extern inline bool as_bytes_set_int16(as_bytes * bytes, uint32_t index, int16_t value);
-extern inline bool as_bytes_set_int32(as_bytes * bytes, uint32_t index, int32_t value);
-extern inline bool as_bytes_set_int64(as_bytes * bytes, uint32_t index, int64_t value);
-
-extern inline bool as_bytes_append_byte(as_bytes * bytes, uint8_t value);
-extern inline bool as_bytes_append_int16(as_bytes * bytes, int16_t value);
-extern inline bool as_bytes_append_int32(as_bytes * bytes, int32_t value);
-extern inline bool as_bytes_append_int64(as_bytes * bytes, int64_t value);
-
-extern inline uint8_t * as_bytes_tobytes(const as_bytes * s, uint32_t * size);
-
-extern inline as_val * as_bytes_toval(const as_bytes * s);
-extern inline as_bytes * as_bytes_fromval(const as_val * v);
 
 /******************************************************************************
  * VARIABLES

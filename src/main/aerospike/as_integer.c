@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -14,27 +14,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
+#include <aerospike/as_integer.h>
+#include <citrusleaf/alloc.h>
+#include <citrusleaf/cf_types.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-
-#include <citrusleaf/alloc.h>
-#include <citrusleaf/cf_types.h>
-#include <aerospike/as_integer.h>
-
-/******************************************************************************
- *	INLINE FUNCTIONS
- ******************************************************************************/
-
-extern inline void			as_integer_destroy(as_integer * integer);
-
-extern inline int64_t		as_integer_getorelse(const as_integer * integer, int64_t fallback);
-extern inline int64_t		as_integer_get(const as_integer * integer);
-extern inline int64_t		as_integer_toint(const as_integer * integer);
-
-extern inline as_val *		as_integer_toval(const as_integer * integer);
-extern inline as_integer *	as_integer_fromval(const as_val * v);
 
 /******************************************************************************
  *	INSTANCE FUNCTIONS

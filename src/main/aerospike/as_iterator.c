@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2014 Aerospike, Inc.
+ * Copyright 2008-2015 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -14,25 +14,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <citrusleaf/alloc.h>
-
 #include <aerospike/as_iterator.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
-
+#include <citrusleaf/alloc.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
-
-#include "internal.h"
-
-/******************************************************************************
- * INLINE FUNCTIONS
- ******************************************************************************/
-
-extern inline bool as_iterator_has_next(const as_iterator * iterator);
-extern inline const as_val * as_iterator_next(as_iterator * iterator);
 
 /******************************************************************************
  * FUNCTIONS
@@ -57,4 +45,3 @@ void as_iterator_destroy(as_iterator * iterator)
     	cf_free(iterator);
     }
 }
-
