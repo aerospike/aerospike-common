@@ -47,10 +47,10 @@ typedef enum as_bytes_type_e {
 	 */
 	AS_BYTES_INTEGER	= 1,
 
-	/** 
-	 *	Float
+	/**
+	 *	Double
 	 */
-	AS_BYTES_FLOAT		= 1,
+	AS_BYTES_DOUBLE		= 2,
 
 	/** 
 	 *	String
@@ -609,6 +609,27 @@ static inline uint32_t as_bytes_get_int64(const as_bytes * bytes, uint32_t index
 }
 
 /**
+ *	Read a double from the given bytes.
+ *
+ *	~~~~~~~~~~{.c}
+ *	double value = 0;
+ *	uint32_t sz = as_bytes_get_double(&bytes, 0, &value);
+ *	if ( sz == 0 ) {
+ *		// sz == 0, means that an error occurred
+ *	}
+ *	~~~~~~~~~~
+ *
+ *	@return The number of bytes read and stored into value. 0 (zero) indicates
+ * 			an error has occurred.
+ *
+ *	@relatesalso as_bytes
+ */
+static inline uint32_t as_bytes_get_double(const as_bytes * bytes, uint32_t index, double * value)
+{
+	return as_bytes_copy(bytes, index, (uint8_t *) value, 8);
+}
+
+/**
  *	Decode an integer in variable 7-bit format.
  *	The high bit indicates if more bytes are used.
  *
@@ -653,7 +674,7 @@ bool as_bytes_set(as_bytes * bytes, uint32_t index, const uint8_t * value, uint3
  *	Set a byte at given index.
  *
  *	~~~~~~~~~~{.c}
- *	as_bytes_append_byte(&bytes, 'a');
+ *	as_bytes_set_byte(&bytes, 0, 'a');
  *	~~~~~~~~~~
  *
  *	@return On success, true. Otherwise an error occurred.
@@ -666,10 +687,10 @@ static inline bool as_bytes_set_byte(as_bytes * bytes, uint32_t index, uint8_t v
 }
 
 /**
- *	Set a byte at given index.
+ *	Set 16 bit integer at given index.
  *
  *	~~~~~~~~~~{.c}
- *	as_bytes_append_byte(&bytes, 'a');
+ *	as_bytes_set_int16(&bytes, 0, 1);
  *	~~~~~~~~~~
  *
  *	@return On success, true. Otherwise an error occurred.
@@ -682,10 +703,10 @@ static inline bool as_bytes_set_int16(as_bytes * bytes, uint32_t index, int16_t 
 }
 
 /**
- *	Set a byte at given index.
+ *	Set 32 bit integer at given index.
  *
  *	~~~~~~~~~~{.c}
- *	as_bytes_append_byte(&bytes, 'a');
+ *	as_bytes_set_int32(&bytes, 0, 2);
  *	~~~~~~~~~~
  *
  *	@return On success, true. Otherwise an error occurred.
@@ -698,10 +719,10 @@ static inline bool as_bytes_set_int32(as_bytes * bytes, uint32_t index, int32_t 
 }
 
 /**
- *	Set a byte at given index.
+ *	Set 64 bit integer at given index.
  *
  *	~~~~~~~~~~{.c}
- *	as_bytes_append_byte(&bytes, 'a');
+ *	as_bytes_set_int64(&bytes, 0, 3);
  *	~~~~~~~~~~
  *
  *	@return On success, true. Otherwise an error occurred.
@@ -709,6 +730,22 @@ static inline bool as_bytes_set_int32(as_bytes * bytes, uint32_t index, int32_t 
  *	@relatesalso as_bytes
  */
 static inline bool as_bytes_set_int64(as_bytes * bytes, uint32_t index, int64_t value)
+{
+	return as_bytes_set(bytes, index, (uint8_t *) &value, 8);
+}
+
+/**
+ *	Set double at given index.
+ *
+ *	~~~~~~~~~~{.c}
+ *	as_bytes_set_double(&bytes, 0, 4.4);
+ *	~~~~~~~~~~
+ *
+ *	@return On success, true. Otherwise an error occurred.
+ *
+ *	@relatesalso as_bytes
+ */
+static inline bool as_bytes_set_double(as_bytes * bytes, uint32_t index, double value)
 {
 	return as_bytes_set(bytes, index, (uint8_t *) &value, 8);
 }
@@ -806,7 +843,7 @@ static inline bool as_bytes_append_int32(as_bytes * bytes, int32_t value)
  *	Append an int64_t value.
  *
  *	~~~~~~~~~~{.c}
- *	as_bytes_append_int64(&bytes, 123;
+ *	as_bytes_append_int64(&bytes, 123);
  *	~~~~~~~~~~
  *
  *	@return On success, true. Otherwise an error occurred.
@@ -814,6 +851,22 @@ static inline bool as_bytes_append_int32(as_bytes * bytes, int32_t value)
  *	@relatesalso as_bytes
  */
 static inline bool as_bytes_append_int64(as_bytes * bytes, int64_t value)
+{
+	return as_bytes_append(bytes, (uint8_t *) &value, 8);
+}
+
+/**
+ *	Append a double value.
+ *
+ *	~~~~~~~~~~{.c}
+ *	as_bytes_append_double(&bytes, 123.456);
+ *	~~~~~~~~~~
+ *
+ *	@return On success, true. Otherwise an error occurred.
+ *
+ *	@relatesalso as_bytes
+ */
+static inline bool as_bytes_append_double(as_bytes * bytes, double value)
 {
 	return as_bytes_append(bytes, (uint8_t *) &value, 8);
 }
