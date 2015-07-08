@@ -34,9 +34,14 @@ TEST( types_bytes_random, "as_bytes containing a value" ) {
 
 TEST( types_bytes_get_set, "as_bytes getting and setting" ) {
 
-	uint8_t test_str[] = "dskghseoighweg";
-    uint32_t test_len = sizeof(test_str);
+	uint8_t test_literal[] = "dskghseoighweg";
+    uint32_t test_len = sizeof(test_literal);
     
+    // Do not wrap literal because that is considered read-only.
+    // Instead, wrap stack variable.
+    uint8_t* test_str = alloca(test_len + 1);
+    strcpy(test_str, test_literal);
+					  
     uint8_t v;
 
     as_bytes b;
@@ -71,7 +76,7 @@ TEST( types_bytes_get_set, "as_bytes getting and setting" ) {
     assert( v == 0xff );
 
     // reset - which is a range set
-    assert_true( as_bytes_set(&b, 0, test_str, test_len) );
+    assert_true( as_bytes_set(&b, 0, test_literal, test_len) );
 
     // test a longer range for get
     uint8_t v3[3];
