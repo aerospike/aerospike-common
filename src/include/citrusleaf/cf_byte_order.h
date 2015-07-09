@@ -79,3 +79,31 @@
 #define cf_swap_from_be64(_n) _byteswap_uint64(_n)
 #define cf_swap_from_le64(_n) (_n)
 #endif // CF_WINDOWS
+
+static inline double
+cf_swap_to_big_float64(double d)
+{
+	uint64_t i = cf_swap_to_be64(*(uint64_t*)&d);
+	return *(double*)&i;
+}
+
+static inline double
+cf_swap_to_little_float64(double d)
+{
+	uint64_t i = cf_swap_to_le64(*(uint64_t*)&d);
+	return *(double*)&i;
+}
+
+static inline double
+cf_swap_from_big_float64(double d)
+{
+	uint64_t i = cf_swap_from_be32(*(uint64_t*)&d);
+	return *(double*)&i;
+}
+
+static inline double
+cf_swap_from_little_float64(double d)
+{
+	uint64_t i = cf_swap_from_le64(*(uint64_t*)&d);
+	return *(double*)&i;
+}

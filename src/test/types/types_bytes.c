@@ -40,8 +40,8 @@ TEST( types_bytes_get_set, "as_bytes getting and setting" ) {
     // Do not wrap literal because that is considered read-only.
     // Instead, wrap stack variable.
     uint8_t* test_str = alloca(test_len + 1);
-    strcpy(test_str, test_literal);
-					  
+	memcpy(test_str, test_literal, test_len + 1);
+				
     uint8_t v;
 
     as_bytes b;
