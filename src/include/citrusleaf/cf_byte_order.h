@@ -97,7 +97,7 @@ cf_swap_to_little_float64(double d)
 static inline double
 cf_swap_from_big_float64(double d)
 {
-	uint64_t i = cf_swap_from_be32(*(uint64_t*)&d);
+	uint64_t i = cf_swap_from_be64(*(uint64_t*)&d);
 	return *(double*)&i;
 }
 
