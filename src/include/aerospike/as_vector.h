@@ -159,6 +159,12 @@ bool
 as_vector_append_unique(as_vector* vector, void* value);
 
 /**
+ *	Return shallow heap copy of vector.
+ */
+void*
+as_vector_to_array(as_vector* vector, uint32_t* size);
+
+/**
  *  Reserve a new slot in the vector.  Increase capacity if necessary.
  *	Return reference to item.  The item is initialized to zeroes.
  */

@@ -80,3 +80,13 @@ as_vector_append_unique(as_vector* vector, void* value)
 	as_vector_append(vector, value);
 	return true;
 }
+
+void*
+as_vector_to_array(as_vector* vector, uint32_t* size)
+{
+	size_t len = vector->size * vector->item_size;
+	void* array = cf_malloc(len);
+	memcpy(array, vector->list, len);
+	*size = vector->size;
+	return array;
+}
