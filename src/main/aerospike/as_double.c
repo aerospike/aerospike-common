@@ -80,6 +80,6 @@ as_double_val_tostring(const as_val * val)
 {
 	as_double* value_ptr = (as_double*)val;
 	char* str = (char*)cf_malloc(sizeof(char) * 64);
-	sprintf(str, "%lf", value_ptr->value);
+	sprintf(str, "%.16g", value_ptr->value);
 	return str;
 }
