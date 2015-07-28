@@ -868,9 +868,8 @@ void shash_deleteall_lockfree(shash *h) {
 void shash_deleteall(shash *h) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 	
-	pthread_mutex_t *big_lock = 0;
 	if (h->flags & SHASH_CR_MT_BIGLOCK) {
-		big_lock = &h->biglock;
+		pthread_mutex_lock(&h->biglock)
 	}
 	
 	shash_elem *e_table = h->table;
@@ -905,8 +904,8 @@ void shash_deleteall(shash *h) {
 		e_table = (shash_elem *) (((uint8_t *)e_table) + SHASH_ELEM_SZ(h));
 	}
 	h->elements = 0;
-	if (big_lock) {
-		pthread_mutex_unlock(big_lock);
+	if (h->flags & SHASH_CR_MT_BIGLOCK) {
+		pthread_mutex_unlock(&h->biglock);
 	}
 }
 
