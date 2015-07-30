@@ -869,7 +869,7 @@ void shash_deleteall(shash *h) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 	
 	if (h->flags & SHASH_CR_MT_BIGLOCK) {
-		pthread_mutex_lock(&h->biglock)
+		pthread_mutex_lock(&h->biglock);
 	}
 	
 	shash_elem *e_table = h->table;
