@@ -129,7 +129,7 @@ typedef struct as_double_s {
  *	as_double_destroy(&i);
  *	~~~~~~~~~~
  *
- *	@param double		The `as_double` to initialize.
+ *	@param value_ptr	The `as_double` to initialize.
  *	@param value		The double value.
  *
  *	@return On success, the initialized value. Otherwise NULL.
