@@ -128,6 +128,14 @@ OBJECTS += $(CITRUSLEAF-OBJECTS:%=$(TARGET_OBJ)/common/citrusleaf/%)
 
 HOOKED-OBJECTS = $(CITRUSLEAF-OBJECTS:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%)
 
+AEROSPIKE-HEADERS = $(patsubst $(SOURCE_INCL)/aerospike/%.h,%.h,$(wildcard $(SOURCE_INCL)/aerospike/*.h))
+CITRUSLEAF-HEADERS = $(patsubst $(SOURCE_INCL)/citrusleaf/%.h,%.h,$(wildcard $(SOURCE_INCL)/citrusleaf/*.h))
+
+HEADERS =
+HEADERS += $(AEROSPIKE-HEADERS:%=$(TARGET_INCL)/aerospike/%)
+HEADERS += $(CITRUSLEAF-HEADERS:%=$(TARGET_INCL)/citrusleaf/%)
+
+
 ###############################################################################
 ##  MAIN TARGETS                                                             ##
 ###############################################################################
@@ -136,7 +144,7 @@ HOOKED-OBJECTS = $(CITRUSLEAF-OBJECTS:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%
 all: build prepare
 
 .PHONY: prepare
-prepare: $(TARGET_INCL)/citrusleaf/*.h $(TARGET_INCL)/aerospike/*.h
+prepare: $(HEADERS)
 
 .PHONY: build 
 build: libaerospike-common libaerospike-common-hooked
