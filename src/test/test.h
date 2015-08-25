@@ -35,8 +35,7 @@ struct atf_test_result_s {
 atf_test_result * atf_test_run(atf_test * test);
 
 atf_test_result * atf_test_result_new(atf_test * test);
-void atf_test_result_free(atf_test_result * test_result);
-
+void atf_test_result_destroy(atf_test_result * result);
 
 #define TEST(__test_name, __test_desc) \
     static void test_spec__##__test_name(atf_test *, atf_test_result *); \
@@ -80,7 +79,8 @@ atf_suite * atf_suite_after(atf_suite * suite, bool (* after)(atf_suite * suite)
 atf_suite * atf_suite_before(atf_suite * suite, bool (* before)(atf_suite * suite));
 
 atf_suite_result * atf_suite_result_new(atf_suite * suite);
-void atf_suite_result_free(atf_suite_result * suite_result);
+void atf_suite_result_destroy(atf_suite_result * result);
+
 atf_suite_result * atf_suite_result_add(atf_suite_result * suite_result, atf_test_result * test_result);
 void atf_suite_result_print(atf_suite_result * suite_result);
 
@@ -131,6 +131,7 @@ struct atf_plan_result_s {
 
 atf_plan * atf_plan_add(atf_plan * self, atf_suite * suite);
 int atf_plan_run(atf_plan * self, atf_plan_result * result);
+void atf_plan_result_destroy(atf_plan_result * result);
 
 atf_plan * atf_plan_after(atf_plan * plan, bool (* after)(atf_plan * plan));
 atf_plan * atf_plan_before(atf_plan * plan, bool (* before)(atf_plan * plan));

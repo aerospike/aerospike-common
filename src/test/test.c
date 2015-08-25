@@ -28,8 +28,10 @@ atf_test_result * atf_test_result_new(atf_test * test) {
     return res;
 }
 
-void atf_test_result_free(atf_test_result * test_result) {
-    cf_free(test_result);
+void atf_test_result_destroy(atf_test_result * result) {
+    if ( ! result ) return;
+    result->test = NULL;
+    cf_free(result);
 }
 
 /******************************************************************************
@@ -115,8 +117,18 @@ atf_suite_result * atf_suite_result_new(atf_suite * suite) {
     return res;
 }
 
-void atf_suite_result_free(atf_suite_result * suite_result) {
-    cf_free(suite_result);
+void atf_suite_result_destroy(atf_suite_result * result) {
+    if ( ! result ) return;
+    result->suite = NULL;
+    if ( result->tests ) {
+        for ( int i = 0; i < result->size; i ++ ) {
+            atf_test_result_destroy(result->tests[i]);
+            result->tests[i] = NULL;
+        }
+        result->size = 0;
+    }
+	
+    cf_free(result);
 }
 
 atf_suite_result * atf_suite_result_add(atf_suite_result * suite_result, atf_test_result * test_result) {
@@ -193,7 +205,21 @@ int atf_plan_run(atf_plan * plan, atf_plan_result * result) {
 
     printf("%d tests: %d passed, %d failed\n", total, passed, total-passed);
 
+    atf_plan_result_destroy(result);
+
     return total-passed;
+}
+
+void atf_plan_result_destroy(atf_plan_result * result) {
+    if ( ! result ) return;
+    result->plan = NULL;
+    if ( result->suites ) {
+        for ( int i = 0; i < result->size; i ++ ) {
+            atf_suite_result_destroy(result->suites[i]);
+            result->suites[i] = NULL;
+        }
+        result->size = 0;
+    }
 }
 
 /******************************************************************************
