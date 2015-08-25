@@ -128,6 +128,9 @@ OBJECTS += $(CITRUSLEAF-OBJECTS:%=$(TARGET_OBJ)/common/citrusleaf/%)
 
 HOOKED-OBJECTS = $(CITRUSLEAF-OBJECTS:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%)
 
+HEADER-SRC = $(shell find $(SOURCE_INCL) -type f -name "*.h")
+HEADER-TRG = $(patsubst $(SOURCE_INCL)/%.h, $(TARGET_INCL)/%.h, $(HEADER-SRC))
+
 ###############################################################################
 ##  MAIN TARGETS                                                             ##
 ###############################################################################
@@ -136,7 +139,7 @@ HOOKED-OBJECTS = $(CITRUSLEAF-OBJECTS:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%
 all: build prepare
 
 .PHONY: prepare
-prepare: $(TARGET_INCL)/citrusleaf/*.h $(TARGET_INCL)/aerospike/*.h
+prepare: $(HEADER-TRG)
 
 .PHONY: build 
 build: libaerospike-common libaerospike-common-hooked
@@ -190,17 +193,9 @@ $(TARGET_LIB)/libaerospike-common-hooked.a: $(HOOKED-OBJECTS) | modules
 
 # COMMON HEADERS
 
-$(TARGET_INCL)/citrusleaf: | $(TARGET_INCL)
-	mkdir $@
-
-$(TARGET_INCL)/citrusleaf/%.h: $(SOURCE_INCL)/citrusleaf/%.h | $(TARGET_INCL)/citrusleaf
-	cp -p $^ $(TARGET_INCL)/citrusleaf
-
-$(TARGET_INCL)/aerospike: | $(TARGET_INCL)
-	mkdir $@
-
-$(TARGET_INCL)/aerospike/%.h:: $(SOURCE_INCL)/aerospike/%.h | $(TARGET_INCL)/aerospike
-	cp -p $^ $(TARGET_INCL)/aerospike
+$(TARGET_INCL)/%.h: $(SOURCE_INCL)/%.h
+	@mkdir -p $(@D)
+	cp $< $@
 
 ###############################################################################
 include project/modules.mk project/test.mk project/rules.mk
