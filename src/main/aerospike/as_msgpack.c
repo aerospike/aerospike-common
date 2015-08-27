@@ -208,6 +208,8 @@ static int as_pack_byte_array_header(as_packer * pk, uint32_t length, uint8_t ty
 	
 	int rc;
 
+	// Continue to pack byte arrays as strings until all servers/clients
+	// have been upgraded to handle new message pack binary type.
 	if (length < 32) {
 		rc = as_pack_byte(pk, (uint8_t)(0xa0 | length));
 	} else if (length < 65536) {
@@ -216,6 +218,20 @@ static int as_pack_byte_array_header(as_packer * pk, uint32_t length, uint8_t ty
 		rc = as_pack_int32(pk, 0xdb, length);
 	}
 	
+	// TODO: Replace with this code after all servers/clients
+	// have been upgraded to handle new message pack binary type.
+	/*
+	 if (length < 32) {
+		rc = as_pack_byte(pk, (uint8_t)(0xa0 | length));
+	 } else if (length < 256) {
+		rc = as_pack_int8(pk, 0xc4, (uint8_t)length);
+	 } else if (length < 65536) {
+		rc = as_pack_int16(pk, 0xc5, (uint16_t)length);
+	 } else {
+		rc = as_pack_int32(pk, 0xc6, length);
+	 }
+	 */
+
 	if (rc == 0) {
 		rc = as_pack_byte(pk, type);
 	}
@@ -225,8 +241,25 @@ static int as_pack_byte_array_header(as_packer * pk, uint32_t length, uint8_t ty
 static int as_pack_string(as_packer * pk, as_string * s)
 {
 	uint32_t length = (uint32_t)as_string_len(s);
-	int rc = as_pack_byte_array_header(pk, length, AS_BYTES_STRING);
-	
+	uint32_t size = length + 1;
+	int rc;
+		
+	if (size < 32) {
+		rc = as_pack_byte(pk, (uint8_t)(0xa0 | size));
+	// TODO: Enable this code after all servers/clients
+	// have been upgraded to handle new message pack binary type.
+	//} else if (size < 255) {
+	//	rc = as_pack_int8(pk, 0xd9, (uint8_t)size);
+	} else if (size < 65536) {
+		rc = as_pack_int16(pk, 0xda, (uint16_t)size);
+	} else {
+		rc = as_pack_int32(pk, 0xdb, size);
+	}
+		
+	if (rc == 0) {
+		rc = as_pack_byte(pk, AS_BYTES_STRING);
+	}
+
 	if (rc == 0) {
 		rc = as_pack_append(pk, (unsigned char*)s->value, length);
 	}
@@ -553,13 +586,21 @@ int as_unpack_val(as_unpacker * pk, as_val ** val)
 			uint64_t v = as_extract_uint64(pk);
 			return as_unpack_integer(v, val);
 		}
-			
-		case 0xda: { // raw bytes with 16 bit header
+		
+		case 0xc4:
+		case 0xd9: { // string/raw bytes with 8 bit header
+			uint8_t length = pk->buffer[pk->offset++];
+			return as_unpack_blob(pk, length, val);
+		}
+
+		case 0xc5:
+		case 0xda: { // string/raw bytes with 16 bit header
 			uint16_t length = as_extract_uint16(pk);
 			return as_unpack_blob(pk, length, val);
 		}
 			
-		case 0xdb: { // raw bytes with 32 bit header
+		case 0xc6:
+		case 0xdb: { // string/raw bytes with 32 bit header
 			uint32_t length = as_extract_uint32(pk);
 			return as_unpack_blob(pk, length, val);
 		}
