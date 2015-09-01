@@ -120,7 +120,7 @@ HEADER-TRG = $(patsubst $(SOURCE_INCL)/%.h, $(TARGET_INCL)/%.h, $(HEADER-SRC))
 all: build prepare
 
 .PHONY: build 
-build: $(TARGET_LIB)/libaerospike-common.a $(TARGET_LIB)/libaerospike-common.$(DYNAMIC_SUFFIX)
+build: libaerospike-common
 
 .PHONY: prepare
 prepare: $(HEADER-TRG)
@@ -128,6 +128,11 @@ prepare: $(HEADER-TRG)
 .PHONY: clean
 clean:
 	@rm -rf $(TARGET)
+
+.PHONY: libaerospike-common libaerospike-common.a libaerospike-common.$(DYNAMIC_SUFFIX)
+libaerospike-common: libaerospike-common.a libaerospike-common.$(DYNAMIC_SUFFIX)
+libaerospike-common.a: $(TARGET_LIB)/libaerospike-common.a
+libaerospike-common.$(DYNAMIC_SUFFIX): $(TARGET_LIB)/libaerospike-common.$(DYNAMIC_SUFFIX)
 
 ###############################################################################
 ##  BUILD TARGETS                                                            ##
