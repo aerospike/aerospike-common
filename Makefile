@@ -1,7 +1,7 @@
-include project/settings.mk
 ###############################################################################
 ##  SETTINGS                                                                 ##
 ###############################################################################
+include project/settings.mk
 
 # Modules
 MODULES :=
@@ -46,64 +46,47 @@ CC_FLAGS += -pg -fprofile-arcs -ftest-coverage -g2
 LD_FLAGS += -pg -fprofile-arcs -lgcov
 endif
 
-# Include Paths
-# INC_PATH +=
-
-# Library Paths
-# LIB_PATH +=
-
 ###############################################################################
 ##  OBJECTS                                                                  ##
 ###############################################################################
 
 AEROSPIKE-OBJECTS =
-AEROSPIKE-OBJECTS += as_module.o
-AEROSPIKE-OBJECTS += as_nil.o
-AEROSPIKE-OBJECTS += as_result.o
 AEROSPIKE-OBJECTS += as_aerospike.o
-AEROSPIKE-OBJECTS += as_memtracker.o
-AEROSPIKE-OBJECTS += as_buffer.o
-AEROSPIKE-OBJECTS += as_pair.o
-AEROSPIKE-OBJECTS += as_stream.o
-AEROSPIKE-OBJECTS += as_iterator.o
-AEROSPIKE-OBJECTS += as_timer.o
-
-AEROSPIKE-OBJECTS += internal.o
-
-# serializers
-AEROSPIKE-OBJECTS += as_serializer.o
-AEROSPIKE-OBJECTS += as_msgpack.o
-AEROSPIKE-OBJECTS += as_msgpack_serializer.o
-
-# types
-AEROSPIKE-OBJECTS += as_boolean.o
-AEROSPIKE-OBJECTS += as_bytes.o
-AEROSPIKE-OBJECTS += as_double.o
-AEROSPIKE-OBJECTS += as_integer.o
-AEROSPIKE-OBJECTS += as_list.o
-AEROSPIKE-OBJECTS += as_map.o
-AEROSPIKE-OBJECTS += as_rec.o
-AEROSPIKE-OBJECTS += as_string.o
-AEROSPIKE-OBJECTS += as_string_builder.o
-AEROSPIKE-OBJECTS += as_val.o
-
-# arraylist
 AEROSPIKE-OBJECTS += as_arraylist.o
 AEROSPIKE-OBJECTS += as_arraylist_hooks.o
 AEROSPIKE-OBJECTS += as_arraylist_iterator.o
 AEROSPIKE-OBJECTS += as_arraylist_iterator_hooks.o
-
-# hashmap
+AEROSPIKE-OBJECTS += as_boolean.o
+AEROSPIKE-OBJECTS += as_buffer.o
+AEROSPIKE-OBJECTS += as_buffer_pool.o
+AEROSPIKE-OBJECTS += as_bytes.o
+AEROSPIKE-OBJECTS += as_double.o
 AEROSPIKE-OBJECTS += as_hashmap.o
 AEROSPIKE-OBJECTS += as_hashmap_hooks.o
 AEROSPIKE-OBJECTS += as_hashmap_iterator.o
 AEROSPIKE-OBJECTS += as_hashmap_iterator_hooks.o
-
+AEROSPIKE-OBJECTS += as_integer.o
+AEROSPIKE-OBJECTS += as_iterator.o
+AEROSPIKE-OBJECTS += as_list.o
 AEROSPIKE-OBJECTS += as_log.o
-AEROSPIKE-OBJECTS += as_vector.o
+AEROSPIKE-OBJECTS += as_map.o
+AEROSPIKE-OBJECTS += as_memtracker.o
+AEROSPIKE-OBJECTS += as_module.o
+AEROSPIKE-OBJECTS += as_msgpack.o
+AEROSPIKE-OBJECTS += as_msgpack_serializer.o
+AEROSPIKE-OBJECTS += as_nil.o
+AEROSPIKE-OBJECTS += as_pair.o
 AEROSPIKE-OBJECTS += as_password.o
-AEROSPIKE-OBJECTS += as_buffer_pool.o
+AEROSPIKE-OBJECTS += as_rec.o
+AEROSPIKE-OBJECTS += as_result.o
+AEROSPIKE-OBJECTS += as_serializer.o
+AEROSPIKE-OBJECTS += as_stream.o
+AEROSPIKE-OBJECTS += as_string.o
+AEROSPIKE-OBJECTS += as_string_builder.o
 AEROSPIKE-OBJECTS += as_thread_pool.o
+AEROSPIKE-OBJECTS += as_timer.o
+AEROSPIKE-OBJECTS += as_val.o
+AEROSPIKE-OBJECTS += as_vector.o
 AEROSPIKE-OBJECTS += crypt_blowfish.o
 
 CITRUSLEAF-OBJECTS =
@@ -126,8 +109,6 @@ OBJECTS =
 OBJECTS += $(AEROSPIKE-OBJECTS:%=$(TARGET_OBJ)/common/aerospike/%) 
 OBJECTS += $(CITRUSLEAF-OBJECTS:%=$(TARGET_OBJ)/common/citrusleaf/%)
 
-HOOKED-OBJECTS = $(CITRUSLEAF-OBJECTS:%=$(TARGET_OBJ)/common-hooked/citrusleaf/%)
-
 HEADER-SRC = $(shell find $(SOURCE_INCL) -type f -name "*.h")
 HEADER-TRG = $(patsubst $(SOURCE_INCL)/%.h, $(TARGET_INCL)/%.h, $(HEADER-SRC))
 
@@ -138,64 +119,35 @@ HEADER-TRG = $(patsubst $(SOURCE_INCL)/%.h, $(TARGET_INCL)/%.h, $(HEADER-SRC))
 .PHONY: all
 all: build prepare
 
+.PHONY: build 
+build: $(TARGET_LIB)/libaerospike-common.a $(TARGET_LIB)/libaerospike-common.$(DYNAMIC_SUFFIX)
+
 .PHONY: prepare
 prepare: $(HEADER-TRG)
 
-.PHONY: build 
-build: libaerospike-common libaerospike-common-hooked
-
-.PHONY: build-clean
-build-clean:
-	@rm -rf $(TARGET_BIN)
-	@rm -rf $(TARGET_LIB)
-	@rm -rf $(TARGET_OBJ)
-
-.PHONY: libaerospike-common libaerospike-common.a libaerospike-common.$(DYNAMIC_SUFFIX)
-libaerospike-common: libaerospike-common.a libaerospike-common.$(DYNAMIC_SUFFIX)
-libaerospike-common.a: $(TARGET_LIB)/libaerospike-common.a
-libaerospike-common.$(DYNAMIC_SUFFIX): $(TARGET_LIB)/libaerospike-common.$(DYNAMIC_SUFFIX)
-
-
-.PHONY: libaerospike-common-hooked libaerospike-common-hooked.a libaerospike-common-hooked.$(DYNAMIC_SUFFIX)
-libaerospike-common-hooked: libaerospike-common-hooked.a libaerospike-common-hooked.$(DYNAMIC_SUFFIX)
-libaerospike-common-hooked.a: $(TARGET_LIB)/libaerospike-common-hooked.a
-libaerospike-common-hooked.$(DYNAMIC_SUFFIX): $(TARGET_LIB)/libaerospike-common-hooked.$(DYNAMIC_SUFFIX)
+.PHONY: clean
+clean:
+	@rm -rf $(TARGET)
 
 ###############################################################################
 ##  BUILD TARGETS                                                            ##
 ###############################################################################
 
-# COMMON
-
-$(TARGET_OBJ)/common/aerospike/%.o: $(SOURCE_MAIN)/aerospike/%.c $(SOURCE_INCL)/aerospike/*.h | modules 
+$(TARGET_OBJ)/common/aerospike/%.o: $(SOURCE_MAIN)/aerospike/%.c $(SOURCE_INCL)/aerospike/*.h
 	$(object)
 
-$(TARGET_OBJ)/common/citrusleaf/%.o: $(SOURCE_MAIN)/citrusleaf/%.c $(SOURCE_INCL)/citrusleaf/*.h | modules 
+$(TARGET_OBJ)/common/citrusleaf/%.o: $(SOURCE_MAIN)/citrusleaf/%.c $(SOURCE_INCL)/citrusleaf/*.h
 	$(object)
 
-$(TARGET_LIB)/libaerospike-common.$(DYNAMIC_SUFFIX): $(OBJECTS) | modules 
+$(TARGET_LIB)/libaerospike-common.$(DYNAMIC_SUFFIX): $(OBJECTS)
 	$(library)
 
-$(TARGET_LIB)/libaerospike-common.a: $(OBJECTS) | modules 
+$(TARGET_LIB)/libaerospike-common.a: $(OBJECTS)
 	$(archive)
-
-# HOOKED COMMON
-
-$(TARGET_OBJ)/common-hooked/citrusleaf/%.o: CC_FLAGS += -DEXTERNAL_LOCKS
-$(TARGET_OBJ)/common-hooked/citrusleaf/%.o: $(SOURCE_MAIN)/citrusleaf/%.c $(SOURCE_INCL)/citrusleaf/*.h | modules
-	$(object)
-
-$(TARGET_LIB)/libaerospike-common-hooked.$(DYNAMIC_SUFFIX): $(HOOKED-OBJECTS) | modules 
-	$(library)
-
-$(TARGET_LIB)/libaerospike-common-hooked.a: $(HOOKED-OBJECTS) | modules 
-	$(archive)
-
-# COMMON HEADERS
 
 $(TARGET_INCL)/%.h: $(SOURCE_INCL)/%.h
 	@mkdir -p $(@D)
 	cp $< $@
 
 ###############################################################################
-include project/modules.mk project/test.mk project/rules.mk
+include project/test.mk project/rules.mk

@@ -60,5 +60,5 @@ $(TARGET_TEST)/%.o: $(SOURCE_TEST)/%.c
 
 $(TARGET_TEST)/common: CFLAGS = $(TEST_CFLAGS)
 $(TARGET_TEST)/common: LDFLAGS = $(TEST_DEPS) $(TEST_LDFLAGS)
-$(TARGET_TEST)/common: $(TEST_OBJECT) $(wildcard $(TARGET_OBJ)/*) | modules build prepare
+$(TARGET_TEST)/common: $(TEST_OBJECT) $(wildcard $(TARGET_OBJ)/*) | build prepare
 	$(executable)
