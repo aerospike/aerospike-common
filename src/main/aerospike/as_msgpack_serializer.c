@@ -25,6 +25,7 @@
 
 static void     as_msgpack_serializer_destroy(as_serializer *);
 static int      as_msgpack_serializer_serialize(as_serializer *, as_val *, as_buffer *);
+static int32_t	as_msgpack_serializer_serialize_presized(as_serializer *, const as_val *, uint8_t *);
 static int      as_msgpack_serializer_deserialize(as_serializer *, as_buffer *, as_val **);
 static uint32_t as_msgpack_serializer_serialize_getsize(as_serializer *, as_val *);
 
@@ -35,6 +36,7 @@ static uint32_t as_msgpack_serializer_serialize_getsize(as_serializer *, as_val 
 static const as_serializer_hooks as_msgpack_serializer_hooks = {
     .destroy           = as_msgpack_serializer_destroy,
     .serialize         = as_msgpack_serializer_serialize,
+	.serialize_presized= as_msgpack_serializer_serialize_presized,
     .deserialize       = as_msgpack_serializer_deserialize,
     .serialize_getsize = as_msgpack_serializer_serialize_getsize,
 };
@@ -71,6 +73,25 @@ static uint32_t as_msgpack_serializer_serialize_getsize(as_serializer * s, as_va
 	int rc = as_pack_val(&packer, v);
 	if (rc)
 		return 0;
+	return packer.offset;
+}
+
+static int32_t as_msgpack_serializer_serialize_presized(as_serializer *s, const as_val *v, uint8_t *buf)
+{
+	as_packer packer = {
+		.buffer = buf,
+		// Prevent extra allocation.
+		// buf should contain (pre-sized) space for the unpacking.
+		.capacity = INT_MAX,
+		.offset = 0,
+		.head = 0,
+		.tail = 0,
+	};
+
+	if (as_pack_val(&packer, v) != 0) {
+		return -1;
+	}
+
 	return packer.offset;
 }
 
