@@ -350,7 +350,7 @@ static int as_pack_pair(as_packer * pk, as_pair * p)
 	return rc;
 }
 
-int as_pack_val(as_packer * pk, as_val * val)
+int as_pack_val(as_packer * pk, const as_val * val)
 {
 	int rc = 0;
 

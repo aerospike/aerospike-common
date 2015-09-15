@@ -51,7 +51,7 @@ typedef struct as_unpacker {
 as_serializer * as_msgpack_new();
 as_serializer * as_msgpack_init(as_serializer *);
 
-int as_pack_val(as_packer * pk, as_val * val);
+int as_pack_val(as_packer * pk, const as_val * val);
 int as_unpack_val(as_unpacker * pk, as_val ** val);
 
 #ifdef __cplusplus
