@@ -264,6 +264,17 @@ static int as_pack_string(as_packer * pk, as_string * s)
 	return rc;
 }
 
+static int as_pack_geojson(as_packer * pk, as_geojson * s)
+{
+	uint32_t length = (uint32_t)as_geojson_len(s);
+	int rc = as_pack_byte_array_header(pk, length, AS_BYTES_GEOJSON);
+	
+	if (rc == 0) {
+		rc = as_pack_append(pk, (unsigned char*)s->value, length);
+	}
+	return rc;
+}
+
 static int as_pack_bytes(as_packer * pk, as_bytes * b)
 {
 	int rc = as_pack_byte_array_header(pk, b->size, b->type);
@@ -389,6 +400,9 @@ int as_pack_val(as_packer * pk, const as_val * val)
 			case AS_PAIR : 
 				rc = as_pack_pair(pk, (as_pair *) val);
 				break;
+			case AS_GEOJSON : 
+				rc = as_pack_geojson(pk, (as_geojson *) val);
+				break;
 			default : 
 				rc = 2;
 				break;
@@ -474,6 +488,10 @@ static int as_unpack_blob(as_unpacker * pk, int size, as_val ** val)
 	if (type == AS_BYTES_STRING) {
 		char* v = cf_strndup((char*)pk->buffer + pk->offset, size);
 		*val = (as_val*) as_string_new(v, true);
+	}
+	else if (type == AS_BYTES_GEOJSON) {
+		char* v = cf_strndup((char*)pk->buffer + pk->offset, size);
+		*val = (as_val*) as_geojson_new(v, true);
 	}
 	else {
 		unsigned char* buf = cf_malloc(size);

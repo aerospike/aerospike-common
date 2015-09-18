@@ -46,6 +46,7 @@ typedef enum as_val_t {
     AS_PAIR         = 8,
     AS_BYTES        = 9,
 	AS_DOUBLE       = 10,
+    AS_GEOJSON      = 11,
     AS_VAL_T_MAX
 } __attribute__((packed)) as_val_t;
 

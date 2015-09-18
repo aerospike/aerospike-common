@@ -108,9 +108,14 @@ typedef enum as_bytes_type_e {
 	AS_BYTES_LDT		= 21,
 
 	/**
+	 *	GeoJSON Data
+	 */
+	AS_BYTES_GEOJSON	= 23,
+
+	/**
 	 *	Upper bounds for the enum
 	 */
-	AS_BYTES_TYPE_MAX	= 22
+	AS_BYTES_TYPE_MAX	= 24
 
 } as_bytes_type;
 

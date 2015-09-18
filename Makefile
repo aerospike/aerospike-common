@@ -61,6 +61,7 @@ AEROSPIKE-OBJECTS += as_buffer.o
 AEROSPIKE-OBJECTS += as_buffer_pool.o
 AEROSPIKE-OBJECTS += as_bytes.o
 AEROSPIKE-OBJECTS += as_double.o
+AEROSPIKE-OBJECTS += as_geojson.o
 AEROSPIKE-OBJECTS += as_hashmap.o
 AEROSPIKE-OBJECTS += as_hashmap_hooks.o
 AEROSPIKE-OBJECTS += as_hashmap_iterator.o
