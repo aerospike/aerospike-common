@@ -22,6 +22,7 @@
 #include <aerospike/as_boolean.h>
 #include <aerospike/as_bytes.h>
 #include <aerospike/as_double.h>
+#include <aerospike/as_geojson.h>
 #include <aerospike/as_integer.h>
 #include <aerospike/as_list.h>
 #include <aerospike/as_map.h>
@@ -65,7 +66,8 @@ static const as_val_destroy_callback as_val_destroy_callbacks[] = {
 	[AS_LIST]		= as_list_val_destroy,
 	[AS_MAP]		= as_map_val_destroy,
 	[AS_REC]		= as_rec_val_destroy,
-	[AS_PAIR]		= as_pair_val_destroy
+	[AS_PAIR]		= as_pair_val_destroy,
+	[AS_GEOJSON]	= as_geojson_val_destroy
 };		
 
 static const as_val_tostring_callback as_val_tostring_callbacks[] = {
@@ -79,7 +81,8 @@ static const as_val_tostring_callback as_val_tostring_callbacks[] = {
 	[AS_LIST]		= as_list_val_tostring,
 	[AS_MAP]		= as_map_val_tostring,
 	[AS_REC]		= as_rec_val_tostring,
-	[AS_PAIR]		= as_pair_val_tostring
+	[AS_PAIR]		= as_pair_val_tostring,
+	[AS_GEOJSON]	= as_geojson_val_tostring
 };
 
 static const as_val_hashcode_callback as_val_hashcode_callbacks[] = {
@@ -93,7 +96,8 @@ static const as_val_hashcode_callback as_val_hashcode_callbacks[] = {
 	[AS_LIST]		= as_list_val_hashcode,
 	[AS_MAP]		= as_map_val_hashcode,
 	[AS_REC]		= as_rec_val_hashcode,
-	[AS_PAIR]		= as_pair_val_hashcode
+	[AS_PAIR]		= as_pair_val_hashcode,
+	[AS_GEOJSON]	= as_geojson_val_hashcode
 };
 
 static const as_val_reserve_callback as_val_reserve_callbacks[] = {
@@ -107,7 +111,8 @@ static const as_val_reserve_callback as_val_reserve_callbacks[] = {
 	[AS_LIST]		= as_val_reserve_count,
 	[AS_MAP]		= as_val_reserve_count,
 	[AS_REC]		= as_val_reserve_count,
-	[AS_PAIR]		= as_val_reserve_count
+	[AS_PAIR]		= as_val_reserve_count,
+	[AS_GEOJSON]	= as_val_reserve_count
 };
 
 /******************************************************************************
@@ -175,4 +180,3 @@ char * as_val_val_tostring(const as_val * v)
 	if (v == 0) return 0;
 	return as_val_tostring_callbacks[ v->type ](v);
 }
-

@@ -19,6 +19,7 @@
 
 #include <aerospike/as_integer.h>
 #include <aerospike/as_bytes.h>
+#include <aerospike/as_geojson.h>
 #include <aerospike/as_list.h>
 #include <aerospike/as_map.h>
 #include <aerospike/as_string.h>
@@ -452,6 +453,23 @@ static inline char * as_rec_get_str(const as_rec * rec, const char * name)
 }
 
 /**
+ *	Get a bin's value as a NULL terminated GeoJSON string.
+ *
+ *	@param rec		The as_rec to read the bin value from.
+ *	@param name		The name of the bin.
+ *
+ *	@return On success, the value of the bin. Otherwise NULL.
+ *
+ *	@relatesalso as_rec
+ */
+static inline char * as_rec_get_geojson_str(const as_rec * rec, const char * name)
+{
+	as_val * v = as_util_hook(get, NULL, rec, name);
+	as_geojson * s = as_geojson_fromval(v);
+	return as_geojson_get(s);
+}
+
+/**
  *	Get a bin's value as an as_integer.
  *
  *	@param rec		The as_rec to read the bin value from.
@@ -497,6 +515,22 @@ static inline as_string * as_rec_get_string(const as_rec * rec, const char * nam
 {
 	as_val * v = as_util_hook(get, NULL, rec, name);
 	return as_string_fromval(v);
+}
+
+/**
+ *	Get a bin's value as an as_geojson.
+ *
+ *	@param rec		The as_rec to read the bin value from.
+ *	@param name		The name of the bin.
+ *
+ *	@return On success, the value of the bin. Otherwise NULL.
+ *
+ *	@relatesalso as_rec
+ */
+static inline as_geojson * as_rec_get_geojson(const as_rec * rec, const char * name)
+{
+	as_val * v = as_util_hook(get, NULL, rec, name);
+	return as_geojson_fromval(v);
 }
 
 /**
@@ -659,6 +693,22 @@ static inline int as_rec_set_as_double(const as_rec * rec, const char * name, co
  *	@relatesalso as_rec
  */
 static inline int as_rec_set_string(const as_rec * rec, const char * name, const as_string * value)
+{
+	return as_util_hook(set, 1, rec, name, (as_val *) value);
+}
+
+/**
+ *	Set the bin's value to an as_geojson.
+ *
+ *	@param rec		The as_rec storing the bin.
+ *	@param name		The name of the bin.
+ *	@param value	The value of the bin.
+ *
+ *	@return On success, 0. Otherwise an error occurred.
+ *
+ *	@relatesalso as_rec
+ */
+static inline int as_rec_set_geojson(const as_rec * rec, const char * name, const as_geojson * value)
 {
 	return as_util_hook(set, 1, rec, name, (as_val *) value);
 }

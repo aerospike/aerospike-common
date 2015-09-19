@@ -19,6 +19,7 @@
 
 #include <aerospike/as_boolean.h>
 #include <aerospike/as_integer.h>
+#include <aerospike/as_geojson.h>
 #include <aerospike/as_string.h>
 #include <aerospike/as_bytes.h>
 #include <aerospike/as_pair.h>
