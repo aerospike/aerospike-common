@@ -58,6 +58,7 @@ typedef struct cf_queue_s {
 	 * Private data - please use API.
 	 */
 	bool            threadsafe;     // if false, no mutex lock
+	bool            free_struct;    // free struct cf_queue in addition to elements
 	unsigned int    alloc_sz;       // number of elements currently allocated
 	unsigned int    read_offset;    // offset (in elements) of head
 	unsigned int    write_offset;   // offset (in elements) past tail
@@ -70,6 +71,8 @@ typedef struct cf_queue_s {
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
+
+bool cf_queue_init(cf_queue* q, size_t element_sz, uint32_t capacity, bool threadsafe);
 
 cf_queue *cf_queue_create(size_t element_sz, bool threadsafe);
 

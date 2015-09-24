@@ -22,6 +22,38 @@
  * FUNCTIONS
  ******************************************************************************/
 
+bool
+cf_queue_init(cf_queue* q, size_t element_sz, uint32_t capacity, bool threadsafe)
+{
+	q->alloc_sz = capacity;
+	q->write_offset = q->read_offset = 0;
+	q->element_sz = element_sz;
+	q->threadsafe = threadsafe;
+	q->free_struct = false;
+	
+	q->elements = (uint8_t*)cf_malloc(capacity * element_sz);
+	
+	if (! q->elements) {
+		return false;
+	}
+	
+	if (! q->threadsafe) {
+		return q;
+	}
+	
+	if (0 != pthread_mutex_init(&q->LOCK, NULL)) {
+		cf_free(q->elements);
+		return false;
+	}
+	
+	if (0 != pthread_cond_init(&q->CV, NULL)) {
+		pthread_mutex_destroy(&q->LOCK);
+		cf_free(q->elements);
+		return false;
+	}
+	return true;
+}
+
 cf_queue *cf_queue_create(size_t element_sz, bool threadsafe)
 {
 	cf_queue *q = (cf_queue*)cf_malloc(sizeof(cf_queue));
@@ -30,35 +62,11 @@ cf_queue *cf_queue_create(size_t element_sz, bool threadsafe)
 		return NULL;
 	}
 
-	q->alloc_sz = CF_QUEUE_ALLOCSZ;
-	q->write_offset = q->read_offset = 0;
-	q->element_sz = element_sz;
-	q->threadsafe = threadsafe;
-
-	q->elements = (uint8_t*)cf_malloc(CF_QUEUE_ALLOCSZ * element_sz);
-
-	if (! q->elements) {
+	if (! cf_queue_init(q, element_sz, CF_QUEUE_ALLOCSZ, threadsafe)) {
 		cf_free(q);
 		return NULL;
 	}
-
-	if (! q->threadsafe) {
-		return q;
-	}
-
-	if (0 != pthread_mutex_init(&q->LOCK, NULL)) {
-		cf_free(q->elements);
-		cf_free(q);
-		return NULL;
-	}
-
-	if (0 != pthread_cond_init(&q->CV, NULL)) {
-		pthread_mutex_destroy(&q->LOCK);
-		cf_free(q->elements);
-		cf_free(q);
-		return NULL;
-	}
-
+	q->free_struct = true;
 	return q;
 }
 
@@ -71,8 +79,11 @@ void cf_queue_destroy(cf_queue *q)
 
 	memset(q->elements, 0, sizeof(q->alloc_sz * q->element_sz));
 	cf_free(q->elements);
-	memset(q, 0, sizeof(cf_queue));
-	cf_free(q);
+	
+	if (q->free_struct) {
+		memset(q, 0, sizeof(cf_queue));
+		cf_free(q);
+	}
 }
 
 static inline void cf_queue_lock(cf_queue *q)

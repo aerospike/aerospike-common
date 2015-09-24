@@ -131,7 +131,12 @@ as_queue_create(uint32_t item_size, uint32_t capacity)
 {
 	as_queue* queue = (as_queue*)cf_malloc(sizeof(as_queue));
 	
+	if (! queue) {
+		return 0;
+	}
+
 	if (! as_queue_init(queue, item_size, capacity)) {
+		cf_free(queue);
 		return 0;
 	}
 	queue->flags = ITEMS_ON_HEAP | ALL_ON_HEAP;
