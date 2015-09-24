@@ -14,6 +14,7 @@ PLAN( common ) {
     plan_add( types_hashmap );
     plan_add( types_nil );
     plan_add( types_vector );
+    plan_add( types_queue );
 
     plan_add( password );
     plan_add( string_builder );

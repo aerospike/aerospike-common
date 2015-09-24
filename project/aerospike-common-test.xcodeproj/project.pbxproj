@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BF222D0B1BB389F9006827A6 /* types_queue.c in Sources */ = {isa = PBXBuildFile; fileRef = BF222D0A1BB389F9006827A6 /* types_queue.c */; };
 		BF255BF81B4C790C00816CCC /* types_double.c in Sources */ = {isa = PBXBuildFile; fileRef = BF255BF71B4C790C00816CCC /* types_double.c */; };
 		BF48302818D7DDEE00032348 /* libaerospike-common.a in Frameworks */ = {isa = PBXBuildFile; fileRef = BF48302318D7DB7700032348 /* libaerospike-common.a */; };
 		BF6B7B2B1926E8320081A75F /* types_nil.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B7B2A1926E8320081A75F /* types_nil.c */; };
@@ -55,6 +56,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		BF222D0A1BB389F9006827A6 /* types_queue.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_queue.c; path = ../src/test/types/types_queue.c; sourceTree = "<group>"; };
 		BF255BF71B4C790C00816CCC /* types_double.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_double.c; path = ../src/test/types/types_double.c; sourceTree = "<group>"; };
 		BF6B7B2A1926E8320081A75F /* types_nil.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_nil.c; path = ../src/test/types/types_nil.c; sourceTree = "<group>"; };
 		BF6B7B2C1926E9450081A75F /* types_vector.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_vector.c; path = ../src/test/types/types_vector.c; sourceTree = "<group>"; };
@@ -101,6 +103,7 @@
 			children = (
 				BF6B7B2A1926E8320081A75F /* types_nil.c */,
 				BF6B7B2C1926E9450081A75F /* types_vector.c */,
+				BF222D0A1BB389F9006827A6 /* types_queue.c */,
 				BFBA04BD1947DF8600F9924E /* password.c */,
 				BFCF26B51AC1D4AD0062B75C /* string_builder.c */,
 				BFBB6C9018C80A5700756BB0 /* msgpack_rountrip.c */,
@@ -204,6 +207,7 @@
 				BFCF26B61AC1D4AD0062B75C /* string_builder.c in Sources */,
 				BFBB6C8018C8028500756BB0 /* common.c in Sources */,
 				BFBB6C8E18C80A3E00756BB0 /* types_integer.c in Sources */,
+				BF222D0B1BB389F9006827A6 /* types_queue.c in Sources */,
 				BFBB6C8A18C80A3E00756BB0 /* types_arraylist.c in Sources */,
 				BF6B7B2D1926E9450081A75F /* types_vector.c in Sources */,
 				BFBB6C8B18C80A3E00756BB0 /* types_boolean.c in Sources */,

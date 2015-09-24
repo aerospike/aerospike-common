@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BF222D081BB3511C006827A6 /* as_geojson.c in Sources */ = {isa = PBXBuildFile; fileRef = BF222D061BB3511C006827A6 /* as_geojson.c */; };
+		BF222D091BB3511C006827A6 /* as_queue.c in Sources */ = {isa = PBXBuildFile; fileRef = BF222D071BB3511C006827A6 /* as_queue.c */; };
 		BF27197F19E4AF6B0059CE60 /* as_log.c in Sources */ = {isa = PBXBuildFile; fileRef = BF27197E19E4AF6B0059CE60 /* as_log.c */; };
 		BF6B745F1AFAB36E0014B530 /* as_thread_pool.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B745E1AFAB36E0014B530 /* as_thread_pool.c */; };
 		BF6B74611AFAB3B70014B530 /* as_buffer_pool.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B74601AFAB3B70014B530 /* as_buffer_pool.c */; };
@@ -61,6 +63,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		BF222D061BB3511C006827A6 /* as_geojson.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_geojson.c; path = ../src/main/aerospike/as_geojson.c; sourceTree = "<group>"; };
+		BF222D071BB3511C006827A6 /* as_queue.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_queue.c; path = ../src/main/aerospike/as_queue.c; sourceTree = "<group>"; };
 		BF27197E19E4AF6B0059CE60 /* as_log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_log.c; path = ../src/main/aerospike/as_log.c; sourceTree = "<group>"; };
 		BF6B745E1AFAB36E0014B530 /* as_thread_pool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_thread_pool.c; path = ../src/main/aerospike/as_thread_pool.c; sourceTree = "<group>"; };
 		BF6B74601AFAB3B70014B530 /* as_buffer_pool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_buffer_pool.c; path = ../src/main/aerospike/as_buffer_pool.c; sourceTree = "<group>"; };
@@ -129,6 +133,8 @@
 		BFBB7EE618BFFD2D0080851E = {
 			isa = PBXGroup;
 			children = (
+				BF222D061BB3511C006827A6 /* as_geojson.c */,
+				BF222D071BB3511C006827A6 /* as_queue.c */,
 				BF6B745E1AFAB36E0014B530 /* as_thread_pool.c */,
 				BF6B74601AFAB3B70014B530 /* as_buffer_pool.c */,
 				BFE7C2431AC0EACD00C512F1 /* as_string_builder.c */,
@@ -274,6 +280,7 @@
 				BFBB7F4318C0018F0080851E /* cf_hooks.c in Sources */,
 				BFBB7F1618C001560080851E /* as_arraylist_hooks.c in Sources */,
 				BFBB7F4518C0018F0080851E /* cf_rchash.c in Sources */,
+				BF222D081BB3511C006827A6 /* as_geojson.c in Sources */,
 				BFBB7F3E18C0018F0080851E /* cf_b64.c in Sources */,
 				BFBB7F1518C001560080851E /* as_aerospike.c in Sources */,
 				BFE31C1018C96462002318FE /* cf_queue.c in Sources */,
@@ -285,6 +292,7 @@
 				BF27197F19E4AF6B0059CE60 /* as_log.c in Sources */,
 				BFBB7F1C18C001560080851E /* as_bytes.c in Sources */,
 				BFBB7F3F18C0018F0080851E /* cf_bits.c in Sources */,
+				BF222D091BB3511C006827A6 /* as_queue.c in Sources */,
 				BFBB7F1D18C001560080851E /* as_hashmap_hooks.c in Sources */,
 				BFBB7F2A18C001560080851E /* as_nil.c in Sources */,
 				BFBB7F4018C0018F0080851E /* cf_clock.c in Sources */,
