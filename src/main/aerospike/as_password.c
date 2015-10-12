@@ -84,11 +84,17 @@ as_password_prompt(char* password, int size)
 	fflush(stdout);
 	
 	// Read password until newline.
-	fgets(password, size, stdin);
-	int len = (int)strlen(password);
+	char* s = fgets(password, size, stdin);
 	
-	if (password[len-1] == '\n') {
-		password[--len] = 0;
+	if (s) {
+		int len = (int)strlen(password);
+		
+		if (password[len-1] == '\n') {
+			password[--len] = 0;
+		}
+	}
+	else {
+		password[0] = 0;
 	}
 	
 	// Restore echo.
