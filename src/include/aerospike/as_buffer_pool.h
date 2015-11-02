@@ -74,7 +74,9 @@ extern "C" {
 	 *	@param buffer		Buffer to be populated.
 	 *
 	 *	Returns:
-	 *	0  : Success
+	 *	0  : Found in pool.
+	 *	1  : Pool empty. Allocated new buffer.
+	 *	2  : Size greater than capacity. Allocated new large buffer.
 	 *	-1 : Memory allocation error.
 	 *	-2 : Queue failure.
 	 */
@@ -93,6 +95,7 @@ extern "C" {
 	 *	Returns:
 	 *	0  : Success
 	 *	-1 : Queue failure.
+	 *	-2 : Detected large buffer of different size. Buffer was destroyed.
 	 */
 	int
 	as_buffer_pool_push(as_buffer_pool* pool, void* buffer, uint32_t capacity);
@@ -110,7 +113,8 @@ extern "C" {
 	 *
 	 *	Returns:
 	 *	0  : Success
-	 *	-1 : Queue failure.
+	 *	-1 : Too many buffers exist in pool. Buffer was destroyed.
+	 *	-2 : Detected large buffer of different size. Buffer was destroyed.
 	 */
 	int
 	as_buffer_pool_push_limit(as_buffer_pool* pool, void* buffer, uint32_t capacity, uint32_t max_buffers);
