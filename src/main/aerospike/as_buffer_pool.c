@@ -47,7 +47,7 @@ as_buffer_pool_pop(as_buffer_pool* pool, uint32_t size, as_buffer_result* buffer
 		}
 		
 		buffer->capacity = size - pool->header_size;
-		return 0;
+		return 2;
 	}
 	
 	// Pop existing buffer from queue.
@@ -67,7 +67,7 @@ as_buffer_pool_pop(as_buffer_pool* pool, uint32_t size, as_buffer_result* buffer
 		}
 		
 		buffer->capacity = pool->buffer_size - pool->header_size;
-		return 0;
+		return 1;
 	}
 	// Queue failure.
 	return -2;
