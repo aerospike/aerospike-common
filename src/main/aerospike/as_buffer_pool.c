@@ -47,7 +47,7 @@ as_buffer_pool_pop(as_buffer_pool* pool, uint32_t size, as_buffer_result* buffer
 		}
 		
 		buffer->capacity = size - pool->header_size;
-		return 0;
+		return 2;
 	}
 	
 	// Pop existing buffer from queue.
@@ -67,7 +67,7 @@ as_buffer_pool_pop(as_buffer_pool* pool, uint32_t size, as_buffer_result* buffer
 		}
 		
 		buffer->capacity = pool->buffer_size - pool->header_size;
-		return 0;
+		return 1;
 	}
 	// Queue failure.
 	return -2;
@@ -88,9 +88,8 @@ as_buffer_pool_push(as_buffer_pool* pool, void* buffer, uint32_t capacity)
 	}
 	else {
 		// Do not put large buffers back into pool.
-		// Free buffer.
 		cf_free(buffer);
-		return 0;
+		return -2;
 	}
 }
 
@@ -103,12 +102,16 @@ as_buffer_pool_push_limit(as_buffer_pool* pool, void* buffer, uint32_t capacity,
 			// Success.
 			return 0;
 		}
+		else {
+			cf_free(buffer);
+			return -1;
+		}
 	}
-	
-	// Do not put too many buffers or large buffers back into pool.
-	// Free buffer.
-	cf_free(buffer);
-	return 0;
+	else {
+		// Do not put large buffers back into pool.
+		cf_free(buffer);
+		return -2;
+	}
 }
 
 int
