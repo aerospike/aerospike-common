@@ -54,6 +54,44 @@ as_serializer * as_msgpack_init(as_serializer *);
 int as_pack_val(as_packer * pk, const as_val * val);
 int as_unpack_val(as_unpacker * pk, as_val ** val);
 
+////////////////////////////////////////////////////////////////////////////////
+// Pack direct functions
+
+/**
+ * Pack a list header with ele_count.
+ * @return 0 on success
+ */
+int as_pack_list_header(as_packer * pk, uint32_t ele_count);
+/**
+ * Get packed header size for list with ele_count.
+ * @return header size in bytes
+ */
+uint32_t as_pack_list_header_get_size(uint32_t ele_count);
+
+////////////////////////////////////////////////////////////////////////////////
+// Unpack direct functions
+
+/**
+ * Get size of packed value.
+ * @return -1 on error, size on success
+ */
+int as_unpack_size(as_unpacker * pk);
+/**
+ * Unpack integer.
+ * @return 0 if success
+ */
+int as_unpack_int64(as_unpacker * pk, int64_t * i);
+int as_unpack_uint64(as_unpacker * pk, uint64_t * i);
+/**
+ * Unpack list element count from buffer.
+ */
+int as_unpack_buf_list_element_count(const uint8_t * buf, uint32_t size);
+/**
+ * Get element count of packed list.
+ * @return negative int on failure, element count on success
+ */
+int as_unpack_list_header_element_count(as_unpacker * pk);
+
 #ifdef __cplusplus
 } // end extern "C"
 #endif
