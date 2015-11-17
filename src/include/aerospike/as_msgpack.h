@@ -54,8 +54,9 @@ as_serializer * as_msgpack_init(as_serializer *);
 int as_pack_val(as_packer * pk, const as_val * val);
 int as_unpack_val(as_unpacker * pk, as_val ** val);
 
-////////////////////////////////////////////////////////////////////////////////
-// Pack direct functions
+/******************************************************************************
+ * Pack direct functions
+ ******************************************************************************/
 
 /**
  * Pack a list header with ele_count.
@@ -68,9 +69,14 @@ int as_pack_list_header(as_packer * pk, uint32_t ele_count);
  */
 uint32_t as_pack_list_header_get_size(uint32_t ele_count);
 
-////////////////////////////////////////////////////////////////////////////////
-// Unpack direct functions
+/******************************************************************************
+ * Unpack direct functions
+ ******************************************************************************/
 
+/**
+ * @return -1 on error, type on success
+ */
+as_val_t as_unpack_peek_type(const as_unpacker * pk);
 /**
  * Get size of packed value.
  * @return -1 on error, size on success
