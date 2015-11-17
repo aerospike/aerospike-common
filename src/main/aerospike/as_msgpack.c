@@ -678,7 +678,8 @@ int as_pack_list_header(as_packer *pk, uint32_t ele_count)
 	}
 	else if (ele_count < 65536) {
 		rc = as_pack_int16(pk, 0xdc, (uint16_t)ele_count);
-	} else {
+	}
+	else {
 		rc = as_pack_int32(pk, 0xdd, ele_count);
 	}
 	return rc;
