@@ -850,6 +850,17 @@ as_val_t as_unpack_peek_type(const as_unpacker *pk)
 	return AS_UNDEF;
 }
 
+as_val_t as_unpack_buf_peek_type(const uint8_t *buf, uint32_t size)
+{
+	const as_unpacker pk = {
+			.buffer = (unsigned char *)buf,
+			.offset = 0,
+			.length = size,
+	};
+
+	return as_unpack_peek_type(&pk);
+}
+
 int as_unpack_size(as_unpacker *pk)
 {
 	uint8_t type = pk->buffer[pk->offset++];
