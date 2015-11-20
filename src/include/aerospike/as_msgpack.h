@@ -79,7 +79,12 @@ as_val_t as_unpack_buf_peek_type(const uint8_t *buf, uint32_t size);
  * Get size of packed value.
  * @return -1 on error, size on success
  */
-int as_unpack_size(as_unpacker *pk);
+int64_t as_unpack_size(as_unpacker *pk);
+/**
+ * Get size of packed blob.
+ * @return -1 on error, size on success
+ */
+int64_t as_unpack_blob_size(as_unpacker *pk);
 /**
  * Unpack integer.
  * @return 0 if success
@@ -89,12 +94,12 @@ int as_unpack_uint64(as_unpacker *pk, uint64_t *i);
 /**
  * Unpack list element count from buffer.
  */
-int as_unpack_buf_list_element_count(const uint8_t *buf, uint32_t size);
+int64_t as_unpack_buf_list_element_count(const uint8_t *buf, uint32_t size);
 /**
  * Get element count of packed list.
  * @return negative int on failure, element count on success
  */
-int as_unpack_list_header_element_count(as_unpacker *pk);
+int64_t as_unpack_list_header_element_count(as_unpacker *pk);
 
 #ifdef __cplusplus
 } // end extern "C"

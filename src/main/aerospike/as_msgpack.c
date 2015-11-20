@@ -707,11 +707,11 @@ uint32_t as_pack_list_header_get_size(uint32_t ele_count)
  * Assume header already extracted.
  * @return -1 on failure
  */
-static int as_unpack_list_elements_size(as_unpacker *pk, int ele_count)
+static int64_t as_unpack_list_elements_size(as_unpacker *pk, uint32_t ele_count)
 {
-	int total = 0;
-	for (int i = 0; i < ele_count; i++) {
-		int ret = as_unpack_size(pk);
+	int64_t total = 0;
+	for (uint32_t i = 0; i < ele_count; i++) {
+		int64_t ret = as_unpack_size(pk);
 		if (ret < 0) {
 			return -1;
 		}
@@ -725,11 +725,11 @@ static int as_unpack_list_elements_size(as_unpacker *pk, int ele_count)
  * Assume header already extracted.
  * @return -1 on failure
  */
-static int as_unpack_map_elements_size(as_unpacker *pk, int ele_count)
+static int64_t as_unpack_map_elements_size(as_unpacker *pk, uint32_t ele_count)
 {
-	int total = 0;
-	for (int i = 0; i < ele_count; i++) {
-		int ret = as_unpack_size(pk);
+	int64_t total = 0;
+	for (uint32_t i = 0; i < ele_count; i++) {
+		int64_t ret = as_unpack_size(pk);
 		if (ret < 0) {
 			return -1;
 		}
@@ -862,8 +862,12 @@ as_val_t as_unpack_buf_peek_type(const uint8_t *buf, uint32_t size)
 	return as_unpack_peek_type(&pk);
 }
 
-int as_unpack_size(as_unpacker *pk)
+int64_t as_unpack_size(as_unpacker *pk)
 {
+	if (pk->offset >= pk->length) {
+		return -1;
+	}
+
 	uint8_t type = pk->buffer[pk->offset++];
 
 	switch (type) {
@@ -917,7 +921,7 @@ int as_unpack_size(as_unpacker *pk)
 
 		case 0xdc: { // list with 16 bit header
 			uint16_t length = as_extract_uint16(pk);
-			int ret = as_unpack_list_elements_size(pk, length);
+			int64_t ret = as_unpack_list_elements_size(pk, length);
 			if (ret < 0) {
 				return -1;
 			}
@@ -926,7 +930,7 @@ int as_unpack_size(as_unpacker *pk)
 
 		case 0xdd: { // list with 32 bit header
 			uint32_t length = as_extract_uint32(pk);
-			int ret = as_unpack_list_elements_size(pk, length);
+			int64_t ret = as_unpack_list_elements_size(pk, length);
 			if (ret < 0) {
 				return -1;
 			}
@@ -935,7 +939,7 @@ int as_unpack_size(as_unpacker *pk)
 
 		case 0xde: { // map with 16 bit header
 			uint16_t length = as_extract_uint16(pk);
-			int ret = as_unpack_map_elements_size(pk, length);
+			int64_t ret = as_unpack_map_elements_size(pk, length);
 			if (ret < 0) {
 				return -1;
 			}
@@ -944,7 +948,7 @@ int as_unpack_size(as_unpacker *pk)
 
 		case 0xdf: { // map with 32 bit header
 			uint32_t length = as_extract_uint32(pk);
-			int ret = as_unpack_map_elements_size(pk, length);
+			int64_t ret = as_unpack_map_elements_size(pk, length);
 			if (ret < 0) {
 				return -1;
 			}
@@ -961,7 +965,7 @@ int as_unpack_size(as_unpacker *pk)
 	}
 
 	if ((type & 0xf0) == 0x80) { // map with 8 bit combined header
-		int ret = as_unpack_map_elements_size(pk, type & 0x0f);
+		int64_t ret = as_unpack_map_elements_size(pk, type & 0x0f);
 		if (ret < 0) {
 			return -1;
 		}
@@ -969,7 +973,7 @@ int as_unpack_size(as_unpacker *pk)
 	}
 
 	if ((type & 0xf0) == 0x90) { // list with 8 bit combined header
-		int ret = as_unpack_list_elements_size(pk, type & 0x0f);
+		int64_t ret = as_unpack_list_elements_size(pk, type & 0x0f);
 		if (ret < 0) {
 			return -1;
 		}
@@ -987,6 +991,57 @@ int as_unpack_size(as_unpacker *pk)
 	return -1;
 }
 
+int64_t as_unpack_blob_size(as_unpacker *pk)
+{
+	if (pk->offset >= pk->length) {
+		return -1;
+	}
+
+	uint8_t type = pk->buffer[pk->offset++];
+	uint32_t size = pk->length - pk->offset;
+
+	switch (type) {
+		case 0xc4:
+		case 0xd9: { // string/raw bytes with 8 bit header
+			if (size < 1) {
+				return -2;
+			}
+
+			uint8_t length = pk->buffer[pk->offset++];
+			return length;
+		}
+
+		case 0xc5:
+		case 0xda: { // string/raw bytes with 16 bit header
+			if (size < 2) {
+				return -3;
+			}
+
+			uint16_t length = as_extract_uint16(pk);
+			return length;
+		}
+
+		case 0xc6:
+		case 0xdb: { // string/raw bytes with 32 bit header
+			if (size < 4) {
+				return -4;
+			}
+
+			uint32_t length = as_extract_uint32(pk);
+			return length;
+		}
+
+		default: {
+			if ((type & 0xe0) == 0xa0) { // raw bytes with 8 bit combined header
+				return type & 0x1f;
+			}
+			break;
+		}
+	}
+
+	return -5;
+}
+
 int as_unpack_uint64(as_unpacker *pk, uint64_t *i)
 {
 	if (pk->offset >= pk->length) {
@@ -994,10 +1049,11 @@ int as_unpack_uint64(as_unpacker *pk, uint64_t *i)
 	}
 
 	uint8_t type = pk->buffer[pk->offset++];
+	uint32_t size = pk->length - pk->offset;
 
 	switch (type) {
 		case 0xd0: { // signed 8 bit integer
-			if (pk->offset >= pk->length) {
+			if (size < 1) {
 				return -1;
 			}
 			int8_t v = pk->buffer[pk->offset++];
@@ -1005,8 +1061,8 @@ int as_unpack_uint64(as_unpacker *pk, uint64_t *i)
 			break;
 		}
 		case 0xcc: { // unsigned 8 bit integer
-			if (pk->offset >= pk->length) {
-				return -1;
+			if (size < 1) {
+				return -2;
 			}
 			uint8_t v = pk->buffer[pk->offset++];
 			*i = v;
@@ -1014,16 +1070,16 @@ int as_unpack_uint64(as_unpacker *pk, uint64_t *i)
 		}
 
 		case 0xd1: { // signed 16 bit integer
-			if (pk->length - pk->offset < 2) {
-				return -1;
+			if (size < 2) {
+				return -3;
 			}
 			int16_t v = as_extract_uint16(pk);
 			*i = v;
 			break;
 		}
 		case 0xcd: { // unsigned 16 bit integer
-			if (pk->length - pk->offset < 2) {
-				return -1;
+			if (size < 2) {
+				return -4;
 			}
 			uint16_t v = as_extract_uint16(pk);
 			*i = v;
@@ -1031,16 +1087,16 @@ int as_unpack_uint64(as_unpacker *pk, uint64_t *i)
 		}
 
 		case 0xd2: { // signed 32 bit integer
-			if (pk->length - pk->offset < 4) {
-				return -1;
+			if (size < 4) {
+				return -5;
 			}
 			int32_t v = as_extract_uint32(pk);
 			*i = v;
 			break;
 		}
 		case 0xce: { // unsigned 32 bit integer
-			if (pk->length - pk->offset < 4) {
-				return -1;
+			if (size < 4) {
+				return -6;
 			}
 			uint32_t v = as_extract_uint32(pk);
 			*i = v;
@@ -1048,16 +1104,16 @@ int as_unpack_uint64(as_unpacker *pk, uint64_t *i)
 		}
 
 		case 0xd3: { // signed 64 bit integer
-			if (pk->length - pk->offset < 8) {
-				return -1;
+			if (size < 8) {
+				return -7;
 			}
 			int64_t v = as_extract_uint64(pk);
 			*i = v;
 			break;
 		}
 		case 0xcf: { // unsigned 64 bit integer
-			if (pk->length - pk->offset < 8) {
-				return -1;
+			if (size < 8) {
+				return -8;
 			}
 			uint64_t v = as_extract_uint64(pk);
 			*i = v;
@@ -1075,7 +1131,7 @@ int as_unpack_uint64(as_unpacker *pk, uint64_t *i)
 				break;
 			}
 
-			return -1;
+			return -9;
 		}
 	}
 
@@ -1094,7 +1150,7 @@ int as_unpack_int64(as_unpacker *pk, int64_t *i)
 }
 
 
-int as_unpack_buf_list_element_count(const uint8_t *buf, uint32_t size)
+int64_t as_unpack_buf_list_element_count(const uint8_t *buf, uint32_t size)
 {
 	as_unpacker pk = {
 			.buffer = (unsigned char *)buf,
@@ -1105,7 +1161,7 @@ int as_unpack_buf_list_element_count(const uint8_t *buf, uint32_t size)
 	return as_unpack_list_header_element_count(&pk);
 }
 
-int as_unpack_list_header_element_count(as_unpacker *pk)
+int64_t as_unpack_list_header_element_count(as_unpacker *pk)
 {
 	if (pk->offset >= pk->length) {
 		return -1;
