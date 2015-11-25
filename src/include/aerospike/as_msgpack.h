@@ -39,7 +39,7 @@ typedef struct as_packer {
 } as_packer;
 
 typedef struct as_unpacker {
-	unsigned char * buffer;
+	const unsigned char * buffer;
 	int offset;
 	int length;
 } as_unpacker;
