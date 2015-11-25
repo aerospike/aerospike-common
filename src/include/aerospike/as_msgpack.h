@@ -39,7 +39,7 @@ typedef struct as_packer {
 } as_packer;
 
 typedef struct as_unpacker {
-	unsigned char * buffer;
+	const unsigned char * buffer;
 	int offset;
 	int length;
 } as_unpacker;
@@ -77,12 +77,12 @@ as_val_t as_unpack_peek_type(const as_unpacker *pk);
 as_val_t as_unpack_buf_peek_type(const uint8_t *buf, uint32_t size);
 /**
  * Get size of packed value.
- * @return -1 on error, size on success
+ * @return negative int on error, size on success
  */
 int64_t as_unpack_size(as_unpacker *pk);
 /**
  * Get size of packed blob.
- * @return -1 on error, size on success
+ * @return negative int on error, size on success
  */
 int64_t as_unpack_blob_size(as_unpacker *pk);
 /**
@@ -91,6 +91,11 @@ int64_t as_unpack_blob_size(as_unpacker *pk);
  */
 int as_unpack_int64(as_unpacker *pk, int64_t *i);
 int as_unpack_uint64(as_unpacker *pk, uint64_t *i);
+/**
+ * Unpack double.
+ * @return 0 if success
+ */
+int as_unpack_double(as_unpacker *pk, double *x);
 /**
  * Unpack list element count from buffer.
  */
