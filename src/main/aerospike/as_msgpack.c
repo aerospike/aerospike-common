@@ -468,13 +468,13 @@ static inline int as_unpack_boolean(bool b, as_val ** v)
 	return 0;
 }
 
-static inline int as_unpack_integer(int64_t i, as_val ** v)
+static inline int as_unpack_integer_val(int64_t i, as_val ** v)
 {
 	*v = (as_val*) as_integer_new(i);
 	return 0;
 }
 
-static inline int as_unpack_double(double d, as_val ** v)
+static inline int as_unpack_double_val(double d, as_val ** v)
 {
 	*v = (as_val*) as_double_new(d);
 	return 0;
@@ -559,48 +559,48 @@ int as_unpack_val(as_unpacker * pk, as_val ** val)
 			
 		case 0xca: { // float
 			float v = as_extract_float(pk);
-			return as_unpack_double(v, val);
+			return as_unpack_double_val(v, val);
 		}
 			
 		case 0xcb: { // double
 			double v = as_extract_double(pk);
-			return as_unpack_double(v, val);
+			return as_unpack_double_val(v, val);
 		}
 		
 		case 0xd0: { // signed 8 bit integer
 			int8_t v = pk->buffer[pk->offset++];
-			return as_unpack_integer(v, val);
+			return as_unpack_integer_val(v, val);
 		}
 		case 0xcc: { // unsigned 8 bit integer
 			uint8_t v = pk->buffer[pk->offset++];
-			return as_unpack_integer(v, val);
+			return as_unpack_integer_val(v, val);
 		}
 		
 		case 0xd1: { // signed 16 bit integer
 			int16_t v = as_extract_uint16(pk);
-			return as_unpack_integer(v, val);
+			return as_unpack_integer_val(v, val);
 		}
 		case 0xcd: { // unsigned 16 bit integer
 			uint16_t v = as_extract_uint16(pk);
-			return as_unpack_integer(v, val);
+			return as_unpack_integer_val(v, val);
 		}
 		
 		case 0xd2: { // signed 32 bit integer
 			int32_t v = as_extract_uint32(pk);
-			return as_unpack_integer(v, val);
+			return as_unpack_integer_val(v, val);
 		}
 		case 0xce: { // unsigned 32 bit integer
 			uint32_t v = as_extract_uint32(pk);
-			return as_unpack_integer(v, val);
+			return as_unpack_integer_val(v, val);
 		}
 		
 		case 0xd3: { // signed 64 bit integer
 			int64_t v = as_extract_uint64(pk);
-			return as_unpack_integer(v, val);
+			return as_unpack_integer_val(v, val);
 		}
 		case 0xcf: { // unsigned 64 bit integer
 			uint64_t v = as_extract_uint64(pk);
-			return as_unpack_integer(v, val);
+			return as_unpack_integer_val(v, val);
 		}
 		
 		case 0xc4:
@@ -655,11 +655,11 @@ int as_unpack_val(as_unpacker * pk, as_val ** val)
 			}
 			
 			if (type < 0x80) { // 8 bit combined unsigned integer
-				return as_unpack_integer(type, val);
+				return as_unpack_integer_val(type, val);
 			}
 			
 			if (type >= 0xe0) { // 8 bit combined signed integer
-				return as_unpack_integer(type - 0xe0 - 32, val);
+				return as_unpack_integer_val(type - 0xe0 - 32, val);
 			}
 			return 2;
 		}
@@ -1140,15 +1140,39 @@ int as_unpack_uint64(as_unpacker *pk, uint64_t *i)
 
 int as_unpack_int64(as_unpacker *pk, int64_t *i)
 {
-	uint64_t v;
-	int ret = as_unpack_uint64(pk, &v);
-	if (ret < 0) {
-		return -1;
-	}
-	*i = v;
-	return 0;
+	return as_unpack_uint64(pk, (uint64_t *)i);
 }
 
+int as_unpack_double(as_unpacker *pk, double *x)
+{
+	if (pk->offset >= pk->length) {
+		return -1;
+	}
+
+	uint8_t type = pk->buffer[pk->offset++];
+	uint32_t size = pk->length - pk->offset;
+
+	switch (type) {
+	case 0xca: { // float
+		if (size < 4) {
+			return -2;
+		}
+		*x = (double)as_extract_float(pk);
+		break;
+	}
+	case 0xcb: { // double
+		if (size < 8) {
+			return -3;
+		}
+		*x = as_extract_double(pk);
+		break;
+	}
+	default:
+		return -4;
+	}
+
+	return 0;
+}
 
 int64_t as_unpack_buf_list_element_count(const uint8_t *buf, uint32_t size)
 {
