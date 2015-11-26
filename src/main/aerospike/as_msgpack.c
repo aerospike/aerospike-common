@@ -486,11 +486,11 @@ static int as_unpack_blob(as_unpacker * pk, int size, as_val ** val)
 	size--;
 	
 	if (type == AS_BYTES_STRING) {
-		char* v = cf_strndup((char*)pk->buffer + pk->offset, size);
+		char* v = cf_strndup((const char *)pk->buffer + pk->offset, size);
 		*val = (as_val*) as_string_new(v, true);
 	}
 	else if (type == AS_BYTES_GEOJSON) {
-		char* v = cf_strndup((char*)pk->buffer + pk->offset, size);
+		char* v = cf_strndup((const char *)pk->buffer + pk->offset, size);
 		*val = (as_val*) as_geojson_new(v, true);
 	}
 	else {
@@ -744,9 +744,18 @@ static int64_t as_unpack_map_elements_size(as_unpacker *pk, uint32_t ele_count)
 	return total;
 }
 
-/**
- * @return -1 on error, type on success
- */
+static inline as_val_t bytes_internal_type_to_as_val_t(uint8_t type)
+{
+	if (type == AS_BYTES_STRING) {
+		return AS_STRING;
+	}
+	else if (type == AS_BYTES_GEOJSON) {
+		return AS_GEOJSON;
+	}
+	// All other types are considered AS_BYTES.
+	return AS_BYTES;
+}
+
 as_val_t as_unpack_peek_type(const as_unpacker *pk)
 {
 	uint8_t type = pk->buffer[pk->offset];
@@ -776,37 +785,19 @@ as_val_t as_unpack_peek_type(const as_unpacker *pk)
 	case 0xc4:
 	case 0xd9: { // string/raw bytes with 8 bit header
 		uint8_t type1 = pk->buffer[pk->offset + 2];
-		if (type1 == AS_BYTES) {
-			return AS_BYTES;
-		}
-		else if (type1 == AS_STRING){
-			return AS_STRING;
-		}
-		break;
+		return bytes_internal_type_to_as_val_t(type1);
 	}
 
 	case 0xc5:
 	case 0xda: { // string/raw bytes with 16 bit header
 		uint8_t type1 = pk->buffer[pk->offset + 3];
-		if (type1 == AS_BYTES) {
-			return AS_BYTES;
-		}
-		else if (type1 == AS_STRING){
-			return AS_STRING;
-		}
-		break;
+		return bytes_internal_type_to_as_val_t(type1);
 	}
 
 	case 0xc6:
 	case 0xdb: { // string/raw bytes with 32 bit header
 		uint8_t type1 = pk->buffer[pk->offset + 5];
-		if (type1 == AS_BYTES) {
-			return AS_BYTES;
-		}
-		else if (type1 == AS_STRING){
-			return AS_STRING;
-		}
-		break;
+		return bytes_internal_type_to_as_val_t(type1);
 	}
 
 	case 0xdc:	// list with 16 bit header
@@ -820,13 +811,7 @@ as_val_t as_unpack_peek_type(const as_unpacker *pk)
 	default:
 		if ((type & 0xe0) == 0xa0) { // raw bytes with 8 bit combined header
 			uint8_t type1 = pk->buffer[pk->offset + 1];
-			if (type1 == AS_BYTES) {
-				return AS_BYTES;
-			}
-			else if (type1 == AS_STRING){
-				return AS_STRING;
-			}
-			break;
+			return bytes_internal_type_to_as_val_t(type1);
 		}
 
 		if ((type & 0xf0) == 0x80) { // map with 8 bit combined header
@@ -854,7 +839,7 @@ as_val_t as_unpack_peek_type(const as_unpacker *pk)
 as_val_t as_unpack_buf_peek_type(const uint8_t *buf, uint32_t size)
 {
 	const as_unpacker pk = {
-			.buffer = (unsigned char *)buf,
+			.buffer = buf,
 			.offset = 0,
 			.length = size,
 	};
@@ -1177,7 +1162,7 @@ int as_unpack_double(as_unpacker *pk, double *x)
 int64_t as_unpack_buf_list_element_count(const uint8_t *buf, uint32_t size)
 {
 	as_unpacker pk = {
-			.buffer = (unsigned char *)buf,
+			.buffer = buf,
 			.offset = 0,
 			.length = size,
 	};
