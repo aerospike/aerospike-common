@@ -946,6 +946,7 @@ int64_t as_unpack_size(as_unpacker *pk)
 
 	if ((type & 0xe0) == 0xa0) { // raw bytes with 8 bit combined header
 		int length = type & 0x1f;
+		pk->offset += length;
 		return 1 + length;
 	}
 
