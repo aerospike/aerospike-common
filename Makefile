@@ -105,7 +105,6 @@ CITRUSLEAF-OBJECTS += cf_queue_priority.o
 CITRUSLEAF-OBJECTS += cf_random.o
 CITRUSLEAF-OBJECTS += cf_rchash.o
 CITRUSLEAF-OBJECTS += cf_shash.o
-CITRUSLEAF-OBJECTS += cf_thread.o
 CITRUSLEAF-OBJECTS += cf_vector.o
 
 OBJECTS =
