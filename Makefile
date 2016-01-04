@@ -24,6 +24,9 @@ endif
 
 ifeq ($(OS),Darwin)
 CC_FLAGS += -D_DARWIN_UNLIMITED_SELECT
+ifneq ($(wildcard /usr/local/opt/openssl/include),)
+  CC_FLAGS += -I/usr/local/opt/openssl/include
+endif
 else
 CC_FLAGS += -finline-functions -rdynamic
 endif
