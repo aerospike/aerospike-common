@@ -187,7 +187,7 @@ static int as_pack_integer(as_packer * pk, as_integer * i)
 			return as_pack_int16(pk, 0xd1, (uint16_t)val);
 		}
 		
-		if (val >= 0x80000000) {
+		if (val >= -0x80000000L) {
 			return as_pack_int32(pk, 0xd2, (uint32_t)val);
 		}
 		return as_pack_int64(pk, 0xd3, (uint64_t)val);
