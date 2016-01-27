@@ -122,6 +122,7 @@ as_queue_init(as_queue* queue, uint32_t item_size, uint32_t capacity)
 	queue->capacity = capacity;
 	queue->head = queue->tail = 0;
 	queue->item_size = item_size;
+	queue->total = 0;
 	queue->flags = ITEMS_ON_HEAP;
 	return true;
 }

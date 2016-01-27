@@ -59,6 +59,11 @@ typedef struct as_queue_s {
 	uint32_t item_size;
 	
 	/**
+	 *	Total items used which includes items in queue and items popped from queue.
+	 */
+	uint32_t total;
+
+	/**
 	 *	Internal queue flags.
 	 */
 	uint32_t flags;
@@ -78,6 +83,7 @@ typedef struct as_queue_s {
 (__q)->capacity = __capacity;\
 (__q)->head = (__q)->tail = 0;\
 (__q)->item_size = __item_size;\
+(__q)->total = 0;\
 (__q)->flags = 0;
 
 /******************************************************************************
@@ -143,6 +149,28 @@ as_queue_push_head(as_queue* queue, const void* ptr);
  */
 bool
 as_queue_pop(as_queue* queue, void* ptr);
+	
+/**
+ *	Increment total counter if within capacity.
+ */
+static inline bool
+as_queue_incr_total(as_queue* queue)
+{
+	if (queue->total < queue->capacity) {
+		queue->total++;
+		return true;
+	}
+	return false;
+}
+
+/**
+ *	Decrement total counter.
+ */
+static inline void
+as_queue_decr_total(as_queue* queue)
+{
+	queue->total--;
+}
 
 #ifdef __cplusplus
 } // end extern "C"
