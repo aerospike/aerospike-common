@@ -35,13 +35,12 @@ TEST( types_bytes_random, "as_bytes containing a value" ) {
 TEST( types_bytes_get_set, "as_bytes getting and setting" ) {
 
 	uint8_t test_literal[] = "dskghseoighweg";
-    uint32_t test_len = sizeof(test_literal);
+    uint32_t test_len = sizeof(test_literal);  // includes null terminated byte.
     
     // Do not wrap literal because that is considered read-only.
     // Instead, wrap stack variable.
-    uint8_t* test_str = alloca(test_len + 1);
+    uint8_t* test_str = alloca(test_len);
 	memcpy(test_str, test_literal, test_len);
-	test_str[test_len] = 0;
 				
     uint8_t v;
 
