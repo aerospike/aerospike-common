@@ -16,86 +16,38 @@
  */
 #include <aerospike/as_random.h>
 #include <citrusleaf/cf_random.h>
-#include <stdbool.h>
 #include <stddef.h>
-
-/******************************************************************************
- * Types
- *****************************************************************************/
-
-typedef struct as_random_s {
-	uint64_t seed0;
-	uint64_t seed1;
-	bool initialized;
-} as_random;
 
 /******************************************************************************
  * Thread Local Variables
  *****************************************************************************/
 
-static __thread as_random as_rand;
+__thread as_random as_rand;
 
 /******************************************************************************
  * Functions
  *****************************************************************************/
 
-static inline void
+void
 as_random_init(as_random* random)
 {
+	// Keep this method in C file, so cf_random.h can stay a private header.
 	// Initial seeds must be unique across all processes and threads.
 	// Do not use a counter as a seed.
 	random->seed0 = cf_get_rand64();
 	random->seed1 = cf_get_rand64();
-}
-
-static inline as_random*
-as_random_instance()
-{
-	as_random* r = &as_rand;
-
-	if (! r->initialized) {
-		as_random_init(r);
-		r->initialized = true;
-	}
-	return r;
-}
-
-static inline uint64_t
-as_random_next(as_random* random)
-{
-	// Use xorshift128+ algorithm.
-	uint64_t s1 = random->seed0;
-	const uint64_t s0 = random->seed1;
-	random->seed0 = s0;
-	s1 ^= s1 << 23;
-	random->seed1 = (s1 ^ s0 ^ (s1 >> 18) ^ (s0 >> 5));
-	return random->seed1 + s0;
-}
-
-uint64_t
-as_random_get_uint64()
-{
-	as_random* r = as_random_instance();
-	return as_random_next(r);
-}
-
-uint32_t
-as_random_get_uint32()
-{
-	as_random* r = as_random_instance();
-	return (uint32_t)as_random_next(r);
+	random->initialized = true;
 }
 
 void
-as_random_get_bytes(uint8_t* bytes, uint32_t len)
+as_random_next_bytes(as_random* random, uint8_t* bytes, uint32_t len)
 {
-	as_random* r = as_random_instance();
 	uint8_t* p = bytes;
 	uint8_t* end = bytes + len;
 	
 	while (p + sizeof(uint64_t) <= end) {
 		// Append full 8 bytes
-		*(uint64_t*)p = as_random_next(r);
+		*(uint64_t*)p = as_random_next_uint64(random);
 		p += sizeof(uint64_t);
 	}
 
@@ -103,10 +55,17 @@ as_random_get_bytes(uint8_t* bytes, uint32_t len)
 		// Append partial bytes.
 		uint8_t tmp[sizeof(uint64_t)];
 		uint8_t* t = tmp;
-		*(uint64_t*)t = as_random_next(r);
+		*(uint64_t*)t = as_random_next_uint64(random);
 		
 		while (p < end) {
 			*p++ = *t++;
 		}
 	}
+}
+
+uint64_t
+as_random_get_uint64()
+{
+	as_random* random = as_random_instance();
+	return as_random_next_uint64(random);
 }
