@@ -23,6 +23,7 @@
 		BFBB6C8E18C80A3E00756BB0 /* types_integer.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB6C8818C80A3E00756BB0 /* types_integer.c */; };
 		BFBB6C8F18C80A3E00756BB0 /* types_string.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB6C8918C80A3E00756BB0 /* types_string.c */; };
 		BFBB6C9118C80A5700756BB0 /* msgpack_rountrip.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB6C9018C80A5700756BB0 /* msgpack_rountrip.c */; };
+		BFC65B0A1C90E50B0079DF5A /* random.c in Sources */ = {isa = PBXBuildFile; fileRef = BFC65B091C90E50B0079DF5A /* random.c */; };
 		BFCF26B61AC1D4AD0062B75C /* string_builder.c in Sources */ = {isa = PBXBuildFile; fileRef = BFCF26B51AC1D4AD0062B75C /* string_builder.c */; };
 /* End PBXBuildFile section */
 
@@ -75,6 +76,7 @@
 		BFBB6C8818C80A3E00756BB0 /* types_integer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_integer.c; path = ../src/test/types/types_integer.c; sourceTree = "<group>"; };
 		BFBB6C8918C80A3E00756BB0 /* types_string.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = types_string.c; path = ../src/test/types/types_string.c; sourceTree = "<group>"; };
 		BFBB6C9018C80A5700756BB0 /* msgpack_rountrip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = msgpack_rountrip.c; path = ../src/test/msgpack/msgpack_rountrip.c; sourceTree = "<group>"; };
+		BFC65B091C90E50B0079DF5A /* random.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = random.c; path = ../src/test/types/random.c; sourceTree = "<group>"; };
 		BFCF26B51AC1D4AD0062B75C /* string_builder.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = string_builder.c; path = ../src/test/types/string_builder.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -105,6 +107,7 @@
 				BF6B7B2C1926E9450081A75F /* types_vector.c */,
 				BF222D0A1BB389F9006827A6 /* types_queue.c */,
 				BFBA04BD1947DF8600F9924E /* password.c */,
+				BFC65B091C90E50B0079DF5A /* random.c */,
 				BFCF26B51AC1D4AD0062B75C /* string_builder.c */,
 				BFBB6C9018C80A5700756BB0 /* msgpack_rountrip.c */,
 				BFBB6C8418C80A3E00756BB0 /* types_arraylist.c */,
@@ -212,6 +215,7 @@
 				BF6B7B2D1926E9450081A75F /* types_vector.c in Sources */,
 				BFBB6C8B18C80A3E00756BB0 /* types_boolean.c in Sources */,
 				BFBB6C8118C8028500756BB0 /* test_common.c in Sources */,
+				BFC65B0A1C90E50B0079DF5A /* random.c in Sources */,
 				BFBB6C8F18C80A3E00756BB0 /* types_string.c in Sources */,
 				BFBB6C8218C8028500756BB0 /* test.c in Sources */,
 				BF255BF81B4C790C00816CCC /* types_double.c in Sources */,

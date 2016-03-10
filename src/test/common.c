@@ -18,6 +18,7 @@ PLAN( common ) {
 
     plan_add( password );
     plan_add( string_builder );
+	plan_add( random_numbers );
 	
     /**
      * msgpack - tests msgpack

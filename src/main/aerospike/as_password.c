@@ -15,8 +15,8 @@
  * the License.
  */
 #include <aerospike/as_password.h>
+#include <aerospike/as_random.h>
 #include <aerospike/as_string.h>
-#include <citrusleaf/cf_random.h>
 #include <stdio.h>
 #include <termios.h>
 #include <string.h>
@@ -32,7 +32,7 @@ as_password_gen_salt(char* salt)
 	// Create BCrypt random salt.
 	char rnd[BCRYPT_RAND_LEN];
 	
-	cf_get_rand_buf((uint8_t*)rnd, BCRYPT_RAND_LEN);
+	as_random_get_bytes((uint8_t*)rnd, BCRYPT_RAND_LEN);
 	return (bool) _crypt_gensalt_blowfish_rn("$2a$", BCRYPT_WORK_FACTOR, rnd, BCRYPT_RAND_LEN, salt, AS_PASSWORD_HASH_SIZE);
 }
 

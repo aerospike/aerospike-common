@@ -82,6 +82,7 @@ AEROSPIKE-OBJECTS += as_nil.o
 AEROSPIKE-OBJECTS += as_pair.o
 AEROSPIKE-OBJECTS += as_password.o
 AEROSPIKE-OBJECTS += as_queue.o
+AEROSPIKE-OBJECTS += as_random.o
 AEROSPIKE-OBJECTS += as_rec.o
 AEROSPIKE-OBJECTS += as_result.o
 AEROSPIKE-OBJECTS += as_serializer.o
