@@ -58,6 +58,7 @@
 		BFBB7F4618C0018F0080851E /* cf_shash.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3C18C0018F0080851E /* cf_shash.c */; };
 		BFBB7F4718C0018F0080851E /* cf_vector.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3D18C0018F0080851E /* cf_vector.c */; };
 		BFC65B081C90C9400079DF5A /* as_random.c in Sources */ = {isa = PBXBuildFile; fileRef = BFC65B071C90C9400079DF5A /* as_random.c */; };
+		BFC65E931C93718F0079DF5A /* crypt_blowfish.h in Headers */ = {isa = PBXBuildFile; fileRef = BFC65E921C93718F0079DF5A /* crypt_blowfish.h */; };
 		BFE31C1018C96462002318FE /* cf_queue.c in Sources */ = {isa = PBXBuildFile; fileRef = BFE31C0F18C96462002318FE /* cf_queue.c */; };
 		BFE7C2441AC0EACD00C512F1 /* as_string_builder.c in Sources */ = {isa = PBXBuildFile; fileRef = BFE7C2431AC0EACD00C512F1 /* as_string_builder.c */; };
 /* End PBXBuildFile section */
@@ -115,6 +116,8 @@
 		BFBB7F3C18C0018F0080851E /* cf_shash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_shash.c; path = ../src/main/citrusleaf/cf_shash.c; sourceTree = "<group>"; };
 		BFBB7F3D18C0018F0080851E /* cf_vector.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_vector.c; path = ../src/main/citrusleaf/cf_vector.c; sourceTree = "<group>"; };
 		BFC65B071C90C9400079DF5A /* as_random.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_random.c; path = ../src/main/aerospike/as_random.c; sourceTree = "<group>"; };
+		BFC65E8E1C93702E0079DF5A /* include */ = {isa = PBXFileReference; lastKnownFileType = folder; name = include; path = ../src/include; sourceTree = "<group>"; };
+		BFC65E921C93718F0079DF5A /* crypt_blowfish.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = crypt_blowfish.h; path = ../src/main/aerospike/crypt_blowfish.h; sourceTree = "<group>"; };
 		BFE31C0F18C96462002318FE /* cf_queue.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_queue.c; path = ../src/main/citrusleaf/cf_queue.c; sourceTree = "<group>"; };
 		BFE7C2431AC0EACD00C512F1 /* as_string_builder.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_string_builder.c; path = ../src/main/aerospike/as_string_builder.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -133,59 +136,7 @@
 		BFBB7EE618BFFD2D0080851E = {
 			isa = PBXGroup;
 			children = (
-				BFC65B071C90C9400079DF5A /* as_random.c */,
-				BF222D061BB3511C006827A6 /* as_geojson.c */,
-				BF222D071BB3511C006827A6 /* as_queue.c */,
-				BF6B745E1AFAB36E0014B530 /* as_thread_pool.c */,
-				BF6B74601AFAB3B70014B530 /* as_buffer_pool.c */,
-				BFE7C2431AC0EACD00C512F1 /* as_string_builder.c */,
-				BF27197E19E4AF6B0059CE60 /* as_log.c */,
-				BFBA04BF1947E1BB00F9924E /* cf_random.c */,
-				BFBA04B91947DE0800F9924E /* as_password.c */,
-				BFBA04BA1947DE0800F9924E /* crypt_blowfish.c */,
-				BF6B7B261926E7F10081A75F /* as_timer.c */,
-				BF6B7B271926E7F10081A75F /* as_vector.c */,
-				BFB7BC5D18CA4AB500F0D4A0 /* cf_queue_priority.c */,
-				BFE31C0F18C96462002318FE /* cf_queue.c */,
-				BFBB6C9218C80E3E00756BB0 /* cf_alloc.c */,
-				BFBB7F3418C0018F0080851E /* cf_b64.c */,
-				BFBB7F3618C0018F0080851E /* cf_clock.c */,
-				BFBB7F3718C0018F0080851E /* cf_crypto.c */,
-				BFBB7F3818C0018F0080851E /* cf_digest.c */,
-				BFBB7F3918C0018F0080851E /* cf_hooks.c */,
-				BFBB7F3A18C0018F0080851E /* cf_ll.c */,
-				BFBB7F3B18C0018F0080851E /* cf_rchash.c */,
-				BFBB7F3C18C0018F0080851E /* cf_shash.c */,
-				BFBB7F3D18C0018F0080851E /* cf_vector.c */,
-				BFBB7EF618C001560080851E /* as_aerospike.c */,
-				BFBB7EF718C001560080851E /* as_arraylist_hooks.c */,
-				BFBB7EF818C001560080851E /* as_arraylist_iterator_hooks.c */,
-				BFBB7EF918C001560080851E /* as_arraylist_iterator.c */,
-				BFBB7EFA18C001560080851E /* as_arraylist.c */,
-				BFBB7EFB18C001560080851E /* as_boolean.c */,
-				BFBB7EFC18C001560080851E /* as_buffer.c */,
-				BFBB7EFD18C001560080851E /* as_bytes.c */,
-				BFBB7EFE18C001560080851E /* as_hashmap_hooks.c */,
-				BFBB7EFF18C001560080851E /* as_hashmap_iterator_hooks.c */,
-				BFBB7F0018C001560080851E /* as_hashmap_iterator.c */,
-				BFBB7F0118C001560080851E /* as_hashmap.c */,
-				BFBB7F0218C001560080851E /* as_integer.c */,
-				BFA4BAD01B4B4C5C002612A7 /* as_double.c */,
-				BFBB7F0318C001560080851E /* as_iterator.c */,
-				BFBB7F0418C001560080851E /* as_list.c */,
-				BFBB7F0618C001560080851E /* as_map.c */,
-				BFBB7F0718C001560080851E /* as_memtracker.c */,
-				BFBB7F0818C001560080851E /* as_module.c */,
-				BFBB7F0918C001560080851E /* as_msgpack_serializer.c */,
-				BFBB7F0A18C001560080851E /* as_msgpack.c */,
-				BFBB7F0B18C001560080851E /* as_nil.c */,
-				BFBB7F0C18C001560080851E /* as_pair.c */,
-				BFBB7F0D18C001560080851E /* as_rec.c */,
-				BFBB7F0E18C001560080851E /* as_result.c */,
-				BFBB7F0F18C001560080851E /* as_serializer.c */,
-				BFBB7F1018C001560080851E /* as_stream.c */,
-				BFBB7F1118C001560080851E /* as_string.c */,
-				BFBB7F1318C001560080851E /* as_val.c */,
+				BFC65E8D1C9370050079DF5A /* src */,
 				BFBB7EF018BFFD2D0080851E /* Products */,
 			);
 			sourceTree = "<group>";
@@ -198,6 +149,92 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		BFC65E8D1C9370050079DF5A /* src */ = {
+			isa = PBXGroup;
+			children = (
+				BFC65E8E1C93702E0079DF5A /* include */,
+				BFC65E8F1C93703A0079DF5A /* main */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
+		BFC65E8F1C93703A0079DF5A /* main */ = {
+			isa = PBXGroup;
+			children = (
+				BFC65E911C9370740079DF5A /* aerospike */,
+				BFC65E901C93705E0079DF5A /* citrusleaf */,
+			);
+			name = main;
+			sourceTree = "<group>";
+		};
+		BFC65E901C93705E0079DF5A /* citrusleaf */ = {
+			isa = PBXGroup;
+			children = (
+				BFBB6C9218C80E3E00756BB0 /* cf_alloc.c */,
+				BFBB7F3418C0018F0080851E /* cf_b64.c */,
+				BFBB7F3618C0018F0080851E /* cf_clock.c */,
+				BFBB7F3718C0018F0080851E /* cf_crypto.c */,
+				BFBB7F3818C0018F0080851E /* cf_digest.c */,
+				BFBB7F3918C0018F0080851E /* cf_hooks.c */,
+				BFBB7F3A18C0018F0080851E /* cf_ll.c */,
+				BFB7BC5D18CA4AB500F0D4A0 /* cf_queue_priority.c */,
+				BFE31C0F18C96462002318FE /* cf_queue.c */,
+				BFBA04BF1947E1BB00F9924E /* cf_random.c */,
+				BFBB7F3B18C0018F0080851E /* cf_rchash.c */,
+				BFBB7F3C18C0018F0080851E /* cf_shash.c */,
+				BFBB7F3D18C0018F0080851E /* cf_vector.c */,
+			);
+			name = citrusleaf;
+			sourceTree = "<group>";
+		};
+		BFC65E911C9370740079DF5A /* aerospike */ = {
+			isa = PBXGroup;
+			children = (
+				BFBB7EF618C001560080851E /* as_aerospike.c */,
+				BFBB7EF718C001560080851E /* as_arraylist_hooks.c */,
+				BFBB7EF818C001560080851E /* as_arraylist_iterator_hooks.c */,
+				BFBB7EF918C001560080851E /* as_arraylist_iterator.c */,
+				BFBB7EFA18C001560080851E /* as_arraylist.c */,
+				BFBB7EFB18C001560080851E /* as_boolean.c */,
+				BF6B74601AFAB3B70014B530 /* as_buffer_pool.c */,
+				BFBB7EFC18C001560080851E /* as_buffer.c */,
+				BFBB7EFD18C001560080851E /* as_bytes.c */,
+				BFA4BAD01B4B4C5C002612A7 /* as_double.c */,
+				BF222D061BB3511C006827A6 /* as_geojson.c */,
+				BFBB7EFE18C001560080851E /* as_hashmap_hooks.c */,
+				BFBB7EFF18C001560080851E /* as_hashmap_iterator_hooks.c */,
+				BFBB7F0018C001560080851E /* as_hashmap_iterator.c */,
+				BFBB7F0118C001560080851E /* as_hashmap.c */,
+				BFBB7F0218C001560080851E /* as_integer.c */,
+				BFBB7F0318C001560080851E /* as_iterator.c */,
+				BFBB7F0418C001560080851E /* as_list.c */,
+				BF27197E19E4AF6B0059CE60 /* as_log.c */,
+				BFBB7F0618C001560080851E /* as_map.c */,
+				BFBB7F0718C001560080851E /* as_memtracker.c */,
+				BFBB7F0818C001560080851E /* as_module.c */,
+				BFBB7F0918C001560080851E /* as_msgpack_serializer.c */,
+				BFBB7F0A18C001560080851E /* as_msgpack.c */,
+				BFBB7F0B18C001560080851E /* as_nil.c */,
+				BFBB7F0C18C001560080851E /* as_pair.c */,
+				BFBA04B91947DE0800F9924E /* as_password.c */,
+				BF222D071BB3511C006827A6 /* as_queue.c */,
+				BFC65B071C90C9400079DF5A /* as_random.c */,
+				BFBB7F0D18C001560080851E /* as_rec.c */,
+				BFBB7F0E18C001560080851E /* as_result.c */,
+				BFBB7F0F18C001560080851E /* as_serializer.c */,
+				BFBB7F1018C001560080851E /* as_stream.c */,
+				BFE7C2431AC0EACD00C512F1 /* as_string_builder.c */,
+				BFBB7F1118C001560080851E /* as_string.c */,
+				BF6B745E1AFAB36E0014B530 /* as_thread_pool.c */,
+				BF6B7B261926E7F10081A75F /* as_timer.c */,
+				BFBB7F1318C001560080851E /* as_val.c */,
+				BF6B7B271926E7F10081A75F /* as_vector.c */,
+				BFBA04BA1947DE0800F9924E /* crypt_blowfish.c */,
+				BFC65E921C93718F0079DF5A /* crypt_blowfish.h */,
+			);
+			name = aerospike;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -205,6 +242,7 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BFC65E931C93718F0079DF5A /* crypt_blowfish.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

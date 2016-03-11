@@ -103,26 +103,8 @@
 		BFBB6C5B18C7FE9D00756BB0 = {
 			isa = PBXGroup;
 			children = (
-				BF6B7B2A1926E8320081A75F /* types_nil.c */,
-				BF6B7B2C1926E9450081A75F /* types_vector.c */,
-				BF222D0A1BB389F9006827A6 /* types_queue.c */,
-				BFBA04BD1947DF8600F9924E /* password.c */,
-				BFC65B091C90E50B0079DF5A /* random.c */,
-				BFCF26B51AC1D4AD0062B75C /* string_builder.c */,
-				BFBB6C9018C80A5700756BB0 /* msgpack_rountrip.c */,
-				BFBB6C8418C80A3E00756BB0 /* types_arraylist.c */,
-				BFBB6C8518C80A3E00756BB0 /* types_boolean.c */,
-				BFBB6C8618C80A3E00756BB0 /* types_bytes.c */,
-				BFBB6C8718C80A3E00756BB0 /* types_hashmap.c */,
-				BFBB6C8818C80A3E00756BB0 /* types_integer.c */,
-				BF255BF71B4C790C00816CCC /* types_double.c */,
-				BFBB6C8918C80A3E00756BB0 /* types_string.c */,
-				BFBB6C7918C8028500756BB0 /* common.c */,
-				BFBB6C7B18C8028500756BB0 /* test_common.c */,
-				BFBB6C7C18C8028500756BB0 /* test_common.h */,
-				BFBB6C7D18C8028500756BB0 /* test.c */,
-				BFBB6C7E18C8028500756BB0 /* test.h */,
-				BFBB6C7018C7FF2F00756BB0 /* aerospike-common.xcodeproj */,
+				BFC65E951C9371F70079DF5A /* src */,
+				BFC65E941C9371E90079DF5A /* libs */,
 				BFBB6C6518C7FE9D00756BB0 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -133,6 +115,56 @@
 				BFBB6C6418C7FE9D00756BB0 /* aerospike-common-test */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		BFC65E941C9371E90079DF5A /* libs */ = {
+			isa = PBXGroup;
+			children = (
+				BFBB6C7018C7FF2F00756BB0 /* aerospike-common.xcodeproj */,
+			);
+			name = libs;
+			sourceTree = "<group>";
+		};
+		BFC65E951C9371F70079DF5A /* src */ = {
+			isa = PBXGroup;
+			children = (
+				BFC65E961C93722C0079DF5A /* msgpack */,
+				BFC65E971C93723F0079DF5A /* types */,
+				BFBB6C7918C8028500756BB0 /* common.c */,
+				BFBB6C7B18C8028500756BB0 /* test_common.c */,
+				BFBB6C7C18C8028500756BB0 /* test_common.h */,
+				BFBB6C7D18C8028500756BB0 /* test.c */,
+				BFBB6C7E18C8028500756BB0 /* test.h */,
+			);
+			name = src;
+			sourceTree = "<group>";
+		};
+		BFC65E961C93722C0079DF5A /* msgpack */ = {
+			isa = PBXGroup;
+			children = (
+				BFBB6C9018C80A5700756BB0 /* msgpack_rountrip.c */,
+			);
+			name = msgpack;
+			sourceTree = "<group>";
+		};
+		BFC65E971C93723F0079DF5A /* types */ = {
+			isa = PBXGroup;
+			children = (
+				BFBA04BD1947DF8600F9924E /* password.c */,
+				BFC65B091C90E50B0079DF5A /* random.c */,
+				BFCF26B51AC1D4AD0062B75C /* string_builder.c */,
+				BFBB6C8418C80A3E00756BB0 /* types_arraylist.c */,
+				BFBB6C8518C80A3E00756BB0 /* types_boolean.c */,
+				BFBB6C8618C80A3E00756BB0 /* types_bytes.c */,
+				BF255BF71B4C790C00816CCC /* types_double.c */,
+				BFBB6C8718C80A3E00756BB0 /* types_hashmap.c */,
+				BFBB6C8818C80A3E00756BB0 /* types_integer.c */,
+				BF6B7B2A1926E8320081A75F /* types_nil.c */,
+				BF222D0A1BB389F9006827A6 /* types_queue.c */,
+				BFBB6C8918C80A3E00756BB0 /* types_string.c */,
+				BF6B7B2C1926E9450081A75F /* types_vector.c */,
+			);
+			name = types;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
