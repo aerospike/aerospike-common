@@ -76,11 +76,7 @@ struct cf_vector_s {
 	uint8_t *		vector;
 	bool			stack_struct;
 	bool			stack_vector;
-#ifdef EXTERNAL_LOCKS
-    void *          LOCK;           // the lock object
-#else
     pthread_mutex_t LOCK;           // the mutex lock
-#endif // EXTERNAL_LOCKS
 };
 
 /******************************************************************************

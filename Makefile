@@ -101,7 +101,6 @@ CITRUSLEAF-OBJECTS += cf_b64.o
 CITRUSLEAF-OBJECTS += cf_clock.o
 CITRUSLEAF-OBJECTS += cf_crypto.o
 CITRUSLEAF-OBJECTS += cf_digest.o
-CITRUSLEAF-OBJECTS += cf_hooks.o
 CITRUSLEAF-OBJECTS += cf_ll.o
 CITRUSLEAF-OBJECTS += cf_queue.o
 CITRUSLEAF-OBJECTS += cf_queue_priority.o

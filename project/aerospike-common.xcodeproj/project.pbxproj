@@ -52,7 +52,6 @@
 		BFBB7F4018C0018F0080851E /* cf_clock.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3618C0018F0080851E /* cf_clock.c */; };
 		BFBB7F4118C0018F0080851E /* cf_crypto.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3718C0018F0080851E /* cf_crypto.c */; };
 		BFBB7F4218C0018F0080851E /* cf_digest.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3818C0018F0080851E /* cf_digest.c */; };
-		BFBB7F4318C0018F0080851E /* cf_hooks.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3918C0018F0080851E /* cf_hooks.c */; };
 		BFBB7F4418C0018F0080851E /* cf_ll.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3A18C0018F0080851E /* cf_ll.c */; };
 		BFBB7F4518C0018F0080851E /* cf_rchash.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3B18C0018F0080851E /* cf_rchash.c */; };
 		BFBB7F4618C0018F0080851E /* cf_shash.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3C18C0018F0080851E /* cf_shash.c */; };
@@ -110,7 +109,6 @@
 		BFBB7F3618C0018F0080851E /* cf_clock.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_clock.c; path = ../src/main/citrusleaf/cf_clock.c; sourceTree = "<group>"; };
 		BFBB7F3718C0018F0080851E /* cf_crypto.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_crypto.c; path = ../src/main/citrusleaf/cf_crypto.c; sourceTree = "<group>"; };
 		BFBB7F3818C0018F0080851E /* cf_digest.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_digest.c; path = ../src/main/citrusleaf/cf_digest.c; sourceTree = "<group>"; };
-		BFBB7F3918C0018F0080851E /* cf_hooks.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_hooks.c; path = ../src/main/citrusleaf/cf_hooks.c; sourceTree = "<group>"; };
 		BFBB7F3A18C0018F0080851E /* cf_ll.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_ll.c; path = ../src/main/citrusleaf/cf_ll.c; sourceTree = "<group>"; };
 		BFBB7F3B18C0018F0080851E /* cf_rchash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = cf_rchash.c; path = ../src/main/citrusleaf/cf_rchash.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		BFBB7F3C18C0018F0080851E /* cf_shash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_shash.c; path = ../src/main/citrusleaf/cf_shash.c; sourceTree = "<group>"; };
@@ -175,7 +173,6 @@
 				BFBB7F3618C0018F0080851E /* cf_clock.c */,
 				BFBB7F3718C0018F0080851E /* cf_crypto.c */,
 				BFBB7F3818C0018F0080851E /* cf_digest.c */,
-				BFBB7F3918C0018F0080851E /* cf_hooks.c */,
 				BFBB7F3A18C0018F0080851E /* cf_ll.c */,
 				BFB7BC5D18CA4AB500F0D4A0 /* cf_queue_priority.c */,
 				BFE31C0F18C96462002318FE /* cf_queue.c */,
@@ -315,7 +312,6 @@
 				BFBB7F2318C001560080851E /* as_list.c in Sources */,
 				BFBB7F2918C001560080851E /* as_msgpack.c in Sources */,
 				BFBA04BC1947DE0800F9924E /* crypt_blowfish.c in Sources */,
-				BFBB7F4318C0018F0080851E /* cf_hooks.c in Sources */,
 				BFBB7F1618C001560080851E /* as_arraylist_hooks.c in Sources */,
 				BFBB7F4518C0018F0080851E /* cf_rchash.c in Sources */,
 				BF222D081BB3511C006827A6 /* as_geojson.c in Sources */,

@@ -26,14 +26,8 @@
  * MACROS
  ******************************************************************************/
 
-#ifdef EXTERNAL_LOCKS
-#include <citrusleaf/cf_hooks.h>
-#define VECTOR_LOCK(_v) 	cf_hooked_mutex_lock(v->LOCK)
-#define VECTOR_UNLOCK(_v) 	cf_hooked_mutex_unlock(v->LOCK)
-#else
 #define VECTOR_LOCK(_v) 	pthread_mutex_lock(&_v->LOCK)
 #define VECTOR_UNLOCK(_v) 	pthread_mutex_unlock(&_v->LOCK)
-#endif
 
 /******************************************************************************
  * FUNCTIONS
@@ -63,11 +57,7 @@ cf_vector * cf_vector_create( uint32_t value_len, uint32_t init_sz, uint flags) 
 	if ((flags & VECTOR_FLAG_INITZERO) && v->vector)
 		memset(v->vector, 0, init_sz * value_len);
 	if (flags & VECTOR_FLAG_BIGLOCK){
-#ifdef EXTERNAL_LOCKS
-		v->LOCK = cf_hooked_mutex_alloc();
-#else
 		pthread_mutex_init(&v->LOCK, 0);
-#endif // EXTERNAL_LOCKS
 	}
 	return(v);
 }
@@ -88,11 +78,7 @@ int cf_vector_init(cf_vector *v, uint32_t value_len, uint32_t init_sz, uint flag
 	if ((flags & VECTOR_FLAG_INITZERO) && v->vector)
 		memset(v->vector, 0, init_sz * value_len);
 	if (flags & VECTOR_FLAG_BIGLOCK){
-#ifdef EXTERNAL_LOCKS
-		v->LOCK = cf_hooked_mutex_alloc();
-#else
 		pthread_mutex_init(&v->LOCK, 0);
-#endif // EXTERNAL_LOCKS
 	}
 	return(0);
 }
@@ -108,11 +94,7 @@ void cf_vector_init_smalloc(cf_vector *v, uint32_t value_len, uint8_t *sbuf, int
 	if ((flags & VECTOR_FLAG_INITZERO) && v->vector)
 		memset(v->vector, 0, sbuf_sz);
 	if (flags & VECTOR_FLAG_BIGLOCK){
-#ifdef EXTERNAL_LOCKS
-	v->LOCK = cf_hooked_mutex_alloc();
-#else
 		pthread_mutex_init(&v->LOCK, 0);
-#endif
 	}
 }
 
@@ -130,11 +112,7 @@ void cf_vector_clone_stack(cf_vector *v, cf_vector *target, uint8_t *target_buf)
 	memcpy(target->vector, v->vector, v->value_len * v->len);
 
 	if (target->flags & VECTOR_FLAG_BIGLOCK){
-#ifdef EXTERNAL_LOCKS
-		target->LOCK = cf_hooked_mutex_alloc();
-#else
 		pthread_mutex_init(&target->LOCK, 0);
-#endif
 	}
 
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
@@ -143,11 +121,7 @@ void cf_vector_clone_stack(cf_vector *v, cf_vector *target, uint8_t *target_buf)
 
 void cf_vector_destroy(cf_vector *v) {
 	if (v->flags & VECTOR_FLAG_BIGLOCK){
-#ifdef EXTERNAL_LOCKS
-		cf_hooked_mutex_free(v->LOCK);
-#else
 		pthread_mutex_destroy(&v->LOCK);
-#endif // EXTERNAL_LOCKS
 	}
 	if (v->vector && (v->stack_vector == false))	cf_free(v->vector);
 	if (v->stack_struct == false) cf_free(v);
@@ -258,8 +232,6 @@ void * cf_vector_getp(cf_vector *v, uint32_t index) {
 	return( r );
 }
 
-#ifndef EXTERNAL_LOCKS
-// XXX - this function needs to be modified for hooked case
 void * cf_vector_getp_vlock(cf_vector *v, uint32_t index, pthread_mutex_t **vlock) {
 	if (!v->flags & VECTOR_FLAG_BIGLOCK)
 		return(0);
@@ -269,7 +241,6 @@ void * cf_vector_getp_vlock(cf_vector *v, uint32_t index, pthread_mutex_t **vloc
 	*vlock = &v->LOCK;
 	return(v->vector + (index * v->value_len));
 }
-#endif // EXTERNAL_LOCKS
 
 int cf_vector_delete(cf_vector *v, uint32_t index) {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)

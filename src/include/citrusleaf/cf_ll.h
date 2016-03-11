@@ -82,11 +82,7 @@ struct cf_ll_s {
  	cf_ll_destructor 	destroy_fn;
 	uint32_t			sz;
 	bool				uselock;
-#ifdef EXTERNAL_LOCKS
-	void *				LOCK;
-#else
 	pthread_mutex_t		LOCK;
-#endif //EXTERNAL_LOCKS
 };
 
 /******************************************************************************

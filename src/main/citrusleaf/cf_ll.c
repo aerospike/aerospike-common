@@ -43,15 +43,8 @@
  * MACROS
  ******************************************************************************/
 
-#ifdef EXTERNAL_LOCKS
-#include <citrusleaf/cf_hooks.h>
-#define LL_UNLOCK(_ll) 	if ( _ll->uselock ) { cf_hooked_mutex_unlock(_ll->LOCK); }
-#define LL_LOCK(_ll) 	if ( _ll->uselock ) { cf_hooked_mutex_lock(_ll->LOCK); }
-#else
 #define LL_UNLOCK(_ll) 	if ( _ll->uselock ) { pthread_mutex_unlock(&(_ll->LOCK)); }
 #define LL_LOCK(_ll)	if ( _ll->uselock ) { pthread_mutex_lock(&(_ll->LOCK)); }
-#endif
-
 
 /******************************************************************************
  * FUNCTIONS
@@ -373,11 +366,7 @@ int  cf_ll_init(cf_ll *ll, cf_ll_destructor destroy_fn, bool uselock) {
 	ll->sz = 0;
 	ll->uselock = uselock;
 	if (uselock) {
-#ifdef EXTERNAL_LOCKS
-		ll->LOCK = cf_hooked_mutex_alloc();
-#else
 		pthread_mutex_init(&ll->LOCK, 0);
-#endif 
 	}
 	return(0);	
 }
