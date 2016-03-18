@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2016 Aerospike, Inc.
+ * Copyright 2008-2014 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -24,12 +24,16 @@ extern "C" {
  * CONSTANTS
  ******************************************************************************/
 
-#if ! (defined(MARCH_i686) || defined(MARCH_x86_64))
-#if defined(__LP64__) || defined(_LP64)
-#define MARCH_x86_64 1
-#else
-#define MARCH_i686 1
+#if defined(__powerpc64__)
+  #define MARCH_PPC64 1
 #endif
+
+#if ! (defined(MARCH_i686) || defined(MARCH_x86_64) || defined(MARCH_PPC64))
+  #if defined(__LP64__) || defined(_LP64)
+    #define MARCH_x86_64 1
+  #else
+    #define MARCH_i686 1
+  #endif
 #endif
 
 /******************************************************************************/
