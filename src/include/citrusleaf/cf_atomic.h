@@ -26,7 +26,6 @@
  **/
 
 #include <stdint.h>
-#include <citrusleaf/cf_arch.h>
 
 #ifdef CF_WINDOWS
 #include <intrin.h>
@@ -44,22 +43,12 @@ extern "C" {
  * TYPES
  *****************************************************************************/
 
-#ifdef MARCH_i686
-#define SIZEOF_ATOMIC_INT 4
-typedef volatile uint32_t cf_atomic32;
-typedef volatile uint32_t cf_atomic_p;
-typedef volatile uint32_t cf_atomic_int;
-typedef uint32_t cf_atomic_int_t; // the point here is a type of the same size as cf_atomic_int but isn't atomic
-#endif
-
-#ifdef MARCH_x86_64
 #define SIZEOF_ATOMIC_INT 8
 typedef volatile uint64_t cf_atomic64;
 typedef volatile uint32_t cf_atomic32;
 typedef volatile uint64_t cf_atomic_p;
 typedef volatile uint64_t cf_atomic_int;
 typedef uint64_t cf_atomic_int_t; // the point here is a type of the same size as cf_atomic_int but isn't atomic
-#endif
 
 /******************************************************************************
  * MACROS
@@ -70,8 +59,6 @@ typedef uint64_t cf_atomic_int_t; // the point here is a type of the same size a
 #define cf_atomic32_sub(a,b) (cf_atomic32_add((a), (0 - (b))))
 #define cf_atomic32_incr(a) (cf_atomic32_add((a), 1))
 #define cf_atomic32_decr(a) (cf_atomic32_add((a), -1))
-
-#ifdef MARCH_x86_64
 
 #define cf_atomic64_get(a) (a)
 #define cf_atomic64_set(a, b) (*(a) = (b))
@@ -92,63 +79,13 @@ typedef uint64_t cf_atomic_int_t; // the point here is a type of the same size a
 #define cf_atomic_int_incr(_a) cf_atomic64_add((_a), 1)
 #define cf_atomic_int_decr(_a) cf_atomic64_add((_a), -1)
 
-#else // ifndef MARCH_x86_64
-
-#define cf_atomic_p_get(_a) cf_atomic32_get(_a)
-#define cf_atomic_p_set(_a, _b) cf_atomic32_set(_a, _b)
-#define cf_atomic_p_add(_a, _b) cf_atomic32_add(_a, _b)
-#define cf_atomic_p_incr(_a) cf_atomic32_add((_a), 1)
-#define cf_atomic_p_decr(_a) cf_atomic32_add((_a), -1)
-
-#define cf_atomic_int_get(_a) cf_atomic32_get(_a)
-#define cf_atomic_int_set(_a, _b) cf_atomic32_set(_a, _b)
-#define cf_atomic_int_add(_a, _b) cf_atomic32_add(_a, _b)
-#define cf_atomic_int_sub(_a, _b) cf_atomic32_sub(_a, _b)
-#define cf_atomic_int_incr(_a) cf_atomic32_add((_a), 1)
-#define cf_atomic_int_decr(_a) cf_atomic32_add((_a), -1)
-
-#endif // ifdef MARCH_x86_64
-
-
-#ifndef CF_WINDOWS
-#ifdef MARCH_x86_64
-
-#define cf_atomic_int_setmax(_a, _x) cf_atomic64_setmax(_a, _x)
-
-#else // ifndef CF_WINDOWS && ifndef MARCH_x86_64
-
-#define cf_atomic_p_setmax(_a, _x) cf_atomic32_setmax(_a, _x)
-
-#define cf_atomic_int_setmax(_a, _x) cf_atomic32_setmax(_a, _x)
-
-#endif // ifdef MARCH_x86_64
-#endif // ifndef CF_WINDOWS
-
+/******************************************************************************
+ * WINDOWS FUNCTIONS
+ *****************************************************************************/
 
 #ifdef CF_WINDOWS
 
 #define smb_mb() _ReadWriteBarrier()
-
-#else // ifndef CF_WINDOWS
-
-#define smb_mb() ck_pr_fence_memory()
-//#define smb_mb() asm volatile("mfence":::"memory")
-
-#endif // CF_WINDOWS
-
-/******************************************************************************
- * FUNCTIONS
- *****************************************************************************/
-
-static inline int64_t cf_atomic64_add(cf_atomic64 *, int64_t);
-static inline int32_t cf_atomic32_add(cf_atomic32 *, int32_t);
-
-/******************************************************************************
- * 64-BIT WINDOWS FUNCTIONS
- *****************************************************************************/
-
-#ifdef CF_WINDOWS
-#ifdef MARCH_x86_64
 
 static inline int64_t cf_atomic64_add(cf_atomic64 *a, int64_t b) {
 	int64_t i = b;
@@ -156,15 +93,23 @@ static inline int64_t cf_atomic64_add(cf_atomic64 *a, int64_t b) {
 	return(b + i);
 }
 
-#endif // ifdef MARCH_x86_64
+static inline int32_t cf_atomic32_add(cf_atomic32 *a, int32_t b){
+	int32_t i = b;
+	b = _InterlockedExchangeAdd((volatile long *)a, b);
+	return(b + i);
+}
+
 #endif // ifdef CF_WINDOWS
 
 /******************************************************************************
- * 64-BIT LINUX FUNCTIONS
+ * LINUX FUNCTIONS
  *****************************************************************************/
 
 #ifndef CF_WINDOWS
-#ifdef MARCH_x86_64
+
+#define cf_atomic_int_setmax(_a, _x) cf_atomic64_setmax(_a, _x)
+
+#define smb_mb() ck_pr_fence_memory()
 
 static inline int64_t cf_atomic64_add(cf_atomic64 *a, int64_t b) {
 	return ck_pr_faa_64((uint64_t*)a, b) + b;
@@ -196,29 +141,6 @@ static inline int64_t cf_atomic64_setmax(cf_atomic64 *a, int64_t x) {
 	return(cur != x);
 }
 
-#endif // ifdef  MARCH_x86_64
-#endif // ifndef CF_WINDOWS
-
-/******************************************************************************
- * 32-BIT WINDOWS FUNCTIONS
- *****************************************************************************/
-
-#ifdef CF_WINDOWS
-
-static inline int32_t cf_atomic32_add(cf_atomic32 *a, int32_t b){
-	int32_t i = b;
-	b = _InterlockedExchangeAdd((volatile long *)a, b);
-	return(b + i);
-}
-
-#endif // ifdef CF_WINDOWS
-
-/******************************************************************************
- * 32-BIT LINUX FUNCTIONS
- *****************************************************************************/
-
-#ifndef CF_WINDOWS
-
 static inline int32_t cf_atomic32_add(cf_atomic32 *a, int32_t b){
 	return ck_pr_faa_32((uint32_t*)a, b) + b;
 	//int32_t i = b;
@@ -229,29 +151,26 @@ static inline int32_t cf_atomic32_add(cf_atomic32 *a, int32_t b){
 static inline int32_t cf_atomic32_setmax(cf_atomic32 *a, int32_t x) {
 	uint32_t prior;
 	int32_t cur;
-
+	
 	// Get the current value of the atomic integer
 	cur = cf_atomic32_get(*a);
-
+	
 	for ( ;; ) {
 		// Check if the current value is equal to the criterion
 		if (cur >= x)
 			break;
-
+		
 		// Attempt compare-and-swap
 		if (ck_pr_cas_32_value((uint32_t*)a, cur, x, &prior))
 			break;
-
+		
 		// Operation failed, set cur to prior and go around again
 		cur = prior;
 	}
-
+	
 	return(cur != x);
 }
-
 #endif // ifndef CF_WINDOWS
-
-/*****************************************************************************/
 
 #ifdef __cplusplus
 } // end extern "C"
