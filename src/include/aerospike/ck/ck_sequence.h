@@ -29,7 +29,7 @@
 
 #include <aerospike/ck/ck_cc.h>
 #include <aerospike/ck/ck_pr.h>
-#include <stdbool.h>
+#include <aerospike/ck/ck_stdbool.h>
 
 struct ck_sequence {
 	unsigned int sequence;

@@ -24,8 +24,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _CK_MD_H
-#define _CK_MD_H
+#ifndef CK_MD_H
+#define CK_MD_H
 
 #ifndef CK_MD_CACHELINE
 #define CK_MD_CACHELINE (64)
@@ -51,4 +51,7 @@
 #define CK_MD_TSO
 #endif /* CK_MD_TSO */
 
-#endif /* _CK_MD_H */
+#define CK_VERSION "0.5.1"
+#define CK_GIT_SHA "3183bbe"
+
+#endif /* CK_MD_H */

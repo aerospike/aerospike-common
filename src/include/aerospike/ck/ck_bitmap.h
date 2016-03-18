@@ -33,9 +33,11 @@
 #include <aerospike/ck/ck_limits.h>
 #include <aerospike/ck/ck_pr.h>
 #include <aerospike/ck/ck_stdint.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <string.h>
+#include <aerospike/ck/ck_stdbool.h>
+#include <aerospike/ck/ck_stddef.h>
+#include <aerospike/ck/ck_stdbool.h>
+#include <aerospike/ck/ck_stddef.h>
+#include <aerospike/ck/ck_string.h>
 
 #if !defined(CK_F_PR_LOAD_UINT) || !defined(CK_F_PR_STORE_UINT) || \
     !defined(CK_F_PR_AND_UINT) || !defined(CK_F_PR_OR_UINT) || \
@@ -45,7 +47,7 @@
 
 #define CK_BITMAP_BLOCK 	(sizeof(unsigned int) * CHAR_BIT)
 #define CK_BITMAP_OFFSET(i)	((i) % CK_BITMAP_BLOCK)
-#define CK_BITMAP_BIT(i)	(1U << ((i) % CK_BITMAP_BLOCK))
+#define CK_BITMAP_BIT(i)	(1U << CK_BITMAP_OFFSET(i))
 #define CK_BITMAP_PTR(x, i)	((x) + ((i) / CK_BITMAP_BLOCK))
 #define CK_BITMAP_BLOCKS(n)	(((n) + CK_BITMAP_BLOCK - 1) / CK_BITMAP_BLOCK)
 

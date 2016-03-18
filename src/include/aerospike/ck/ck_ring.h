@@ -30,8 +30,8 @@
 #include <aerospike/ck/ck_cc.h>
 #include <aerospike/ck/ck_md.h>
 #include <aerospike/ck/ck_pr.h>
-#include <stdbool.h>
-#include <string.h>
+#include <aerospike/ck/ck_stdbool.h>
+#include <aerospike/ck/ck_string.h>
 
 /*
  * Concurrent ring buffer.
@@ -41,7 +41,8 @@ struct ck_ring {
 	unsigned int c_head;
 	char pad[CK_MD_CACHELINE - sizeof(unsigned int)];
 	unsigned int p_tail;
-	char _pad[CK_MD_CACHELINE - sizeof(unsigned int)];
+	unsigned int p_head;
+	char _pad[CK_MD_CACHELINE - sizeof(unsigned int) * 2];
 	unsigned int size;
 	unsigned int mask;
 };
@@ -68,37 +69,42 @@ ck_ring_capacity(const struct ck_ring *ring)
 	return ring->size;
 }
 
+CK_CC_INLINE static void
+ck_ring_init(struct ck_ring *ring, unsigned int size)
+{
+
+	ring->size = size;
+	ring->mask = size - 1;
+	ring->p_tail = 0;
+	ring->p_head = 0;
+	ring->c_head = 0;
+	return;
+}
+
 /*
- * Atomically enqueues the specified entry. Returns true on success, returns
- * false if the ck_ring is full. This operation only support one active
- * invocation at a time and works in the presence of a concurrent invocation
- * of ck_ring_dequeue_spsc.
- *
- * This variant of ck_ring_enqueue_spsc returns the snapshot of queue length
- * with respect to the linearization point. This can be used to extract ring
- * size without incurring additional cacheline invalidation overhead from the
- * writer.
+ * The _ck_ring_* namespace is internal only and must not used externally.
  */
-CK_CC_INLINE static bool
-_ck_ring_enqueue_spsc_size(struct ck_ring *ring,
-    void *restrict buffer,
-    const void *restrict entry,
-    unsigned int type_size,
+CK_CC_FORCE_INLINE static bool
+_ck_ring_enqueue_sp(struct ck_ring *ring,
+    void *CK_CC_RESTRICT buffer,
+    const void *CK_CC_RESTRICT entry,
+    unsigned int ts,
     unsigned int *size)
 {
+	const unsigned int mask = ring->mask;
 	unsigned int consumer, producer, delta;
-	unsigned int mask = ring->mask;
 
 	consumer = ck_pr_load_uint(&ring->c_head);
 	producer = ring->p_tail;
 	delta = producer + 1;
-	*size = (producer - consumer) & mask;
+	if (size != NULL)
+		*size = (producer - consumer) & mask;
 
-	if ((delta & mask) == (consumer & mask))
+	if (CK_CC_UNLIKELY((delta & mask) == (consumer & mask)))
 		return false;
 
-	buffer = (char *)buffer + type_size * (producer & mask);
-	memcpy(buffer, entry, type_size);
+	buffer = (char *)buffer + ts * (producer & mask);
+	memcpy(buffer, entry, ts);
 
 	/*
 	 * Make sure to update slot value before indicating
@@ -109,77 +115,34 @@ _ck_ring_enqueue_spsc_size(struct ck_ring *ring,
 	return true;
 }
 
-CK_CC_INLINE static bool
-ck_ring_enqueue_spsc_size(struct ck_ring *ring,
-    struct ck_ring_buffer *buffer,
-    void *entry,
+CK_CC_FORCE_INLINE static bool
+_ck_ring_enqueue_sp_size(struct ck_ring *ring,
+    void *CK_CC_RESTRICT buffer,
+    const void *CK_CC_RESTRICT entry,
+    unsigned int ts,
     unsigned int *size)
 {
+	unsigned int sz;
+	bool r;
 
-	return _ck_ring_enqueue_spsc_size(ring, buffer, &entry,
-	    sizeof(void *), size);
+	r = _ck_ring_enqueue_sp(ring, buffer, entry, ts, &sz);
+	*size = sz;
+	return r;
 }
 
-/*
- * Atomically enqueues the specified entry. Returns true on success, returns
- * false if the ck_ring is full. This operation only support one active
- * invocation at a time and works in the presence of a concurrent invocation
- * of ck_ring_dequeue_spsc.
- */
-CK_CC_INLINE static bool
-_ck_ring_enqueue_spsc(struct ck_ring *ring,
-    void *restrict destination,
-    const void *restrict source,
+CK_CC_FORCE_INLINE static bool
+_ck_ring_dequeue_sc(struct ck_ring *ring,
+    const void *CK_CC_RESTRICT buffer,
+    void *CK_CC_RESTRICT target,
     unsigned int size)
 {
-	unsigned int consumer, producer, delta;
-	unsigned int mask = ring->mask;
-
-	consumer = ck_pr_load_uint(&ring->c_head);
-	producer = ring->p_tail;
-	delta = producer + 1;
-
-	if ((delta & mask) == (consumer & mask))
-		return false;
-
-	destination = (char *)destination + size * (producer & mask);
-	memcpy(destination, source, size);
-
-	/*
-	 * Make sure to update slot value before indicating
-	 * that the slot is available for consumption.
-	 */
-	ck_pr_fence_store();
-	ck_pr_store_uint(&ring->p_tail, delta);
-	return true;
-}
-
-CK_CC_INLINE static bool
-ck_ring_enqueue_spsc(struct ck_ring *ring,
-    struct ck_ring_buffer *buffer,
-    const void *entry)
-{
-
-	return _ck_ring_enqueue_spsc(ring, buffer,
-	    &entry, sizeof(entry));
-}
-
-/*
- * Single consumer and single producer ring buffer dequeue (consumer).
- */
-CK_CC_INLINE static bool
-_ck_ring_dequeue_spsc(struct ck_ring *ring,
-    void *restrict buffer,
-    void *restrict target,
-    unsigned int size)
-{
+	const unsigned int mask = ring->mask;
 	unsigned int consumer, producer;
-	unsigned int mask = ring->mask;
 
 	consumer = ring->c_head;
 	producer = ck_pr_load_uint(&ring->p_tail);
 
-	if (consumer == producer)
+	if (CK_CC_UNLIKELY(consumer == producer))
 		return false;
 
 	/*
@@ -188,7 +151,7 @@ _ck_ring_dequeue_spsc(struct ck_ring *ring,
 	 */
 	ck_pr_fence_load();
 
-	buffer = (char *)buffer + size * (consumer & mask);
+	buffer = (const char *)buffer + size * (consumer & mask);
 	memcpy(target, buffer, size);
 
 	/*
@@ -200,101 +163,115 @@ _ck_ring_dequeue_spsc(struct ck_ring *ring,
 	return true;
 }
 
-CK_CC_INLINE static bool
-ck_ring_dequeue_spsc(struct ck_ring *ring,
-    struct ck_ring_buffer *buffer,
-    void *data)
-{
-
-	return _ck_ring_dequeue_spsc(ring, buffer,
-	    data, sizeof(void *));
-}
-
-/*
- * Atomically enqueues the specified entry. Returns true on success, returns
- * false if the ck_ring is full. This operation only support one active
- * invocation at a time and works in the presence of up to UINT_MAX concurrent
- * invocations of ck_ring_dequeue_spmc.
- *
- * This variant of ck_ring_enqueue_spmc returns the snapshot of queue length
- * with respect to the linearization point. This can be used to extract ring
- * size without incurring additional cacheline invalidation overhead from the
- * writer.
- */
-CK_CC_INLINE static bool
-ck_ring_enqueue_spmc_size(struct ck_ring *ring,
-    struct ck_ring_buffer *buffer,
-    void *entry,
+CK_CC_FORCE_INLINE static bool
+_ck_ring_enqueue_mp(struct ck_ring *ring,
+    void *buffer,
+    const void *entry,
+    unsigned int ts,
     unsigned int *size)
 {
+	const unsigned int mask = ring->mask;
+	unsigned int producer, consumer, delta;
+	bool r = true;
 
-	return ck_ring_enqueue_spsc_size(ring, buffer,
-	    entry, size);
+	producer = ck_pr_load_uint(&ring->p_head);
+
+	do {
+		/*
+		 * The snapshot of producer must be up to date with
+		 * respect to consumer.
+		 */
+		ck_pr_fence_load();
+		consumer = ck_pr_load_uint(&ring->c_head);
+
+		delta = producer + 1;
+		if (CK_CC_UNLIKELY((delta & mask) == (consumer & mask))) {
+			r = false;
+			goto leave;
+		}
+	} while (ck_pr_cas_uint_value(&ring->p_head,
+				      producer,
+				      delta,
+				      &producer) == false);
+
+	buffer = (char *)buffer + ts * (producer & mask);
+	memcpy(buffer, entry, ts);
+
+	/*
+	 * Wait until all concurrent producers have completed writing
+	 * their data into the ring buffer.
+	 */
+	while (ck_pr_load_uint(&ring->p_tail) != producer)
+		ck_pr_stall();
+
+	/*
+	 * Ensure that copy is completed before updating shared producer
+	 * counter.
+	 */
+	ck_pr_fence_store();
+	ck_pr_store_uint(&ring->p_tail, delta);
+
+leave:
+	if (size != NULL)
+		*size = (producer - consumer) & mask;
+
+	return r;
 }
 
-/*
- * Atomically enqueues the specified entry. Returns true on success, returns
- * false if the ck_ring is full. This operation only support one active
- * invocation at a time and works in the presence of up to UINT_MAX concurrent
- * invocations of ck_ring_dequeue_spmc.
- */
-CK_CC_INLINE static bool
-ck_ring_enqueue_spmc(struct ck_ring *ring,
-    struct ck_ring_buffer *buffer,
-    void *entry)
+CK_CC_FORCE_INLINE static bool
+_ck_ring_enqueue_mp_size(struct ck_ring *ring,
+    void *buffer,
+    const void *entry,
+    unsigned int ts,
+    unsigned int *size)
 {
+	unsigned int sz;
+	bool r;
 
-	return ck_ring_enqueue_spsc(ring, buffer, entry);
+	r = _ck_ring_enqueue_mp(ring, buffer, entry, ts, &sz);
+	*size = sz;
+	return r;
 }
 
-CK_CC_INLINE static bool
-_ck_ring_trydequeue_spmc(struct ck_ring *ring,
-    void *restrict buffer,
+CK_CC_FORCE_INLINE static bool
+_ck_ring_trydequeue_mc(struct ck_ring *ring,
+    const void *buffer,
     void *data,
     unsigned int size)
 {
+	const unsigned int mask = ring->mask;
 	unsigned int consumer, producer;
-	unsigned int mask = ring->mask;
 
 	consumer = ck_pr_load_uint(&ring->c_head);
 	ck_pr_fence_load();
 	producer = ck_pr_load_uint(&ring->p_tail);
 
-	if (consumer == producer)
+	if (CK_CC_UNLIKELY(consumer == producer))
 		return false;
 
 	ck_pr_fence_load();
 
-	buffer = (char *)buffer + size * (consumer & mask);
+	buffer = (const char *)buffer + size * (consumer & mask);
 	memcpy(data, buffer, size);
 
 	ck_pr_fence_store_atomic();
 	return ck_pr_cas_uint(&ring->c_head, consumer, consumer + 1);
 }
 
-CK_CC_INLINE static bool
-ck_ring_trydequeue_spmc(struct ck_ring *ring,
-    struct ck_ring_buffer *buffer,
-    void *data)
-{
-
-	return _ck_ring_trydequeue_spmc(ring,
-	    buffer, data, sizeof(void *));
-}
-
-CK_CC_INLINE static bool
-_ck_ring_dequeue_spmc(struct ck_ring *ring,
-    void *buffer,
+CK_CC_FORCE_INLINE static bool
+_ck_ring_dequeue_mc(struct ck_ring *ring,
+    const void *buffer,
     void *data,
-    unsigned int size)
+    unsigned int ts)
 {
+	const unsigned int mask = ring->mask;
 	unsigned int consumer, producer;
-	unsigned int mask = ring->mask;
-	char *target;
 
 	consumer = ck_pr_load_uint(&ring->c_head);
 
 	do {
+		const char *target;
+
 		/*
 		 * Producer counter must represent state relative to
 		 * our latest consumer snapshot.
@@ -302,13 +279,13 @@ _ck_ring_dequeue_spmc(struct ck_ring *ring,
 		ck_pr_fence_load();
 		producer = ck_pr_load_uint(&ring->p_tail);
 
-		if (consumer == producer)
+		if (CK_CC_UNLIKELY(consumer == producer))
 			return false;
 
 		ck_pr_fence_load();
 
-		target = (char *)buffer + size * (consumer & mask);
-		memcpy(data, target, size);
+		target = (const char *)buffer + ts * (consumer & mask);
+		memcpy(data, target, ts);
 
 		/* Serialize load with respect to head update. */
 		ck_pr_fence_store_atomic();
@@ -320,27 +297,172 @@ _ck_ring_dequeue_spmc(struct ck_ring *ring,
 	return true;
 }
 
+/*
+ * The ck_ring_*_spsc namespace is the public interface for interacting with a
+ * ring buffer containing pointers. Correctness is only provided if there is up
+ * to one concurrent consumer and up to one concurrent producer.
+ */
 CK_CC_INLINE static bool
-ck_ring_dequeue_spmc(struct ck_ring *ring,
+ck_ring_enqueue_spsc_size(struct ck_ring *ring,
     struct ck_ring_buffer *buffer,
+    const void *entry,
+    unsigned int *size)
+{
+
+	return _ck_ring_enqueue_sp_size(ring, buffer, &entry,
+	    sizeof(entry), size);
+}
+
+CK_CC_INLINE static bool
+ck_ring_enqueue_spsc(struct ck_ring *ring,
+    struct ck_ring_buffer *buffer,
+    const void *entry)
+{
+
+	return _ck_ring_enqueue_sp(ring, buffer,
+	    &entry, sizeof(entry), NULL);
+}
+
+CK_CC_INLINE static bool
+ck_ring_dequeue_spsc(struct ck_ring *ring,
+    const struct ck_ring_buffer *buffer,
     void *data)
 {
 
-	return _ck_ring_dequeue_spmc(ring, buffer, data,
+	return _ck_ring_dequeue_sc(ring, buffer,
+	    (void **)data, sizeof(void *));
+}
+
+/*
+ * The ck_ring_*_mpmc namespace is the public interface for interacting with a
+ * ring buffer containing pointers. Correctness is provided for any number of
+ * producers and consumers.
+ */
+CK_CC_INLINE static bool
+ck_ring_enqueue_mpmc(struct ck_ring *ring,
+    struct ck_ring_buffer *buffer,
+    const void *entry)
+{
+
+	return _ck_ring_enqueue_mp(ring, buffer, &entry,
+	    sizeof(entry), NULL);
+}
+
+CK_CC_INLINE static bool
+ck_ring_enqueue_mpmc_size(struct ck_ring *ring,
+    struct ck_ring_buffer *buffer,
+    const void *entry,
+    unsigned int *size)
+{
+
+	return _ck_ring_enqueue_mp_size(ring, buffer, &entry,
+	    sizeof(entry), size);
+}
+
+CK_CC_INLINE static bool
+ck_ring_trydequeue_mpmc(struct ck_ring *ring,
+    const struct ck_ring_buffer *buffer,
+    void *data)
+{
+
+	return _ck_ring_trydequeue_mc(ring,
+	    buffer, (void **)data, sizeof(void *));
+}
+
+CK_CC_INLINE static bool
+ck_ring_dequeue_mpmc(struct ck_ring *ring,
+    const struct ck_ring_buffer *buffer,
+    void *data)
+{
+
+	return _ck_ring_dequeue_mc(ring, buffer, (void **)data,
 	    sizeof(void *));
 }
 
-CK_CC_INLINE static void
-ck_ring_init(struct ck_ring *ring, unsigned int size)
+/*
+ * The ck_ring_*_spmc namespace is the public interface for interacting with a
+ * ring buffer containing pointers. Correctness is provided for any number of
+ * consumers with up to one concurrent producer.
+ */
+CK_CC_INLINE static bool
+ck_ring_enqueue_spmc_size(struct ck_ring *ring,
+    struct ck_ring_buffer *buffer,
+    const void *entry,
+    unsigned int *size)
 {
 
-	ring->size = size;
-	ring->mask = size - 1;
-	ring->p_tail = 0;
-	ring->c_head = 0;
-	return;
+	return _ck_ring_enqueue_sp_size(ring, buffer, &entry,
+	    sizeof(entry), size);
 }
 
+CK_CC_INLINE static bool
+ck_ring_enqueue_spmc(struct ck_ring *ring,
+    struct ck_ring_buffer *buffer,
+    const void *entry)
+{
+
+	return _ck_ring_enqueue_sp(ring, buffer, &entry,
+	    sizeof(entry), NULL);
+}
+
+CK_CC_INLINE static bool
+ck_ring_trydequeue_spmc(struct ck_ring *ring,
+    const struct ck_ring_buffer *buffer,
+    void *data)
+{
+
+	return _ck_ring_trydequeue_mc(ring, buffer, (void **)data, sizeof(void *));
+}
+
+CK_CC_INLINE static bool
+ck_ring_dequeue_spmc(struct ck_ring *ring,
+    const struct ck_ring_buffer *buffer,
+    void *data)
+{
+
+	return _ck_ring_dequeue_mc(ring, buffer, (void **)data, sizeof(void *));
+}
+
+/*
+ * The ck_ring_*_mpsc namespace is the public interface for interacting with a
+ * ring buffer containing pointers. Correctness is provided for any number of
+ * producers with up to one concurrent consumers.
+ */
+CK_CC_INLINE static bool
+ck_ring_enqueue_mpsc(struct ck_ring *ring,
+    struct ck_ring_buffer *buffer,
+    const void *entry)
+{
+
+	return _ck_ring_enqueue_mp(ring, buffer, entry,
+	    sizeof(entry), NULL);
+}
+
+CK_CC_INLINE static bool
+ck_ring_enqueue_mpsc_size(struct ck_ring *ring,
+    struct ck_ring_buffer *buffer,
+    const void *entry,
+    unsigned int *size)
+{
+
+	return _ck_ring_enqueue_mp_size(ring, buffer, &entry,
+	    sizeof(entry), size);
+}
+
+CK_CC_INLINE static bool
+ck_ring_dequeue_mpsc(struct ck_ring *ring,
+    const struct ck_ring_buffer *buffer,
+    void *data)
+{
+
+	return _ck_ring_dequeue_sc(ring, buffer, (void **)data,
+	    sizeof(void *));
+}
+
+/*
+ * CK_RING_PROTOTYPE is used to define a type-safe interface for inlining
+ * values of a particular type in the ring the buffer.
+ */
 #define CK_RING_PROTOTYPE(name, type)			\
 CK_CC_INLINE static bool				\
 ck_ring_enqueue_spsc_size_##name(struct ck_ring *a,	\
@@ -349,7 +471,7 @@ ck_ring_enqueue_spsc_size_##name(struct ck_ring *a,	\
     unsigned int *d)					\
 {							\
 							\
-	return _ck_ring_enqueue_spsc_size(a, b, c,	\
+	return _ck_ring_enqueue_sp_size(a, b, c,	\
 	    sizeof(struct type), d);			\
 }							\
 							\
@@ -359,8 +481,8 @@ ck_ring_enqueue_spsc_##name(struct ck_ring *a,		\
     struct type *c)					\
 {							\
 							\
-	return _ck_ring_enqueue_spsc(a, b, c,		\
-	    sizeof(struct type));			\
+	return _ck_ring_enqueue_sp(a, b, c,		\
+	    sizeof(struct type), NULL);			\
 }							\
 							\
 CK_CC_INLINE static bool				\
@@ -369,7 +491,7 @@ ck_ring_dequeue_spsc_##name(struct ck_ring *a,		\
     struct type *c)					\
 {							\
 							\
-	return _ck_ring_dequeue_spsc(a, b, c,		\
+	return _ck_ring_dequeue_sc(a, b, c,		\
 	    sizeof(struct type));			\
 }							\
 							\
@@ -380,10 +502,9 @@ ck_ring_enqueue_spmc_size_##name(struct ck_ring *a,	\
     unsigned int *d)					\
 {							\
 							\
-	return _ck_ring_enqueue_spsc_size(a, b, c,	\
+	return _ck_ring_enqueue_sp_size(a, b, c,	\
 	    sizeof(struct type), d);			\
 }							\
-							\
 							\
 CK_CC_INLINE static bool				\
 ck_ring_enqueue_spmc_##name(struct ck_ring *a,		\
@@ -391,8 +512,8 @@ ck_ring_enqueue_spmc_##name(struct ck_ring *a,		\
     struct type *c)					\
 {							\
 							\
-	return _ck_ring_enqueue_spsc(a, b, c,		\
-	    sizeof(struct type));			\
+	return _ck_ring_enqueue_sp(a, b, c,		\
+	    sizeof(struct type), NULL);			\
 }							\
 							\
 CK_CC_INLINE static bool				\
@@ -401,7 +522,7 @@ ck_ring_trydequeue_spmc_##name(struct ck_ring *a,	\
     struct type *c)					\
 {							\
 							\
-	return _ck_ring_trydequeue_spmc(a,		\
+	return _ck_ring_trydequeue_mc(a,		\
 	    b, c, sizeof(struct type));			\
 }							\
 							\
@@ -411,16 +532,95 @@ ck_ring_dequeue_spmc_##name(struct ck_ring *a,		\
     struct type *c)					\
 {							\
 							\
-	return _ck_ring_dequeue_spmc(a, b, c,		\
+	return _ck_ring_dequeue_mc(a, b, c,		\
+	    sizeof(struct type));			\
+}							\
+							\
+CK_CC_INLINE static bool				\
+ck_ring_enqueue_mpsc_##name(struct ck_ring *a,		\
+    struct type *b,					\
+    struct type *c)					\
+{							\
+							\
+	return _ck_ring_enqueue_mp(a, b, c,		\
+	    sizeof(struct type), NULL);			\
+}							\
+							\
+CK_CC_INLINE static bool				\
+ck_ring_enqueue_mpsc_size_##name(struct ck_ring *a,	\
+    struct type *b,					\
+    struct type *c,					\
+    unsigned int *d)					\
+{							\
+							\
+	return _ck_ring_enqueue_mp_size(a, b, c,	\
+	    sizeof(struct type), d);			\
+}							\
+							\
+CK_CC_INLINE static bool				\
+ck_ring_dequeue_mpsc_##name(struct ck_ring *a,		\
+    struct type *b,					\
+    struct type *c)					\
+{							\
+							\
+	return _ck_ring_dequeue_sc(a, b, c,		\
+	    sizeof(struct type));			\
+}							\
+							\
+CK_CC_INLINE static bool				\
+ck_ring_enqueue_mpmc_size_##name(struct ck_ring *a,	\
+    struct type *b,					\
+    struct type *c,					\
+    unsigned int *d)					\
+{							\
+							\
+	return _ck_ring_enqueue_mp_size(a, b, c,	\
+	    sizeof(struct type), d);			\
+}							\
+							\
+CK_CC_INLINE static bool				\
+ck_ring_enqueue_mpmc_##name(struct ck_ring *a,		\
+    struct type *b,					\
+    struct type *c)					\
+{							\
+							\
+	return _ck_ring_enqueue_mp(a, b, c,		\
+	    sizeof(struct type), NULL);			\
+}							\
+							\
+CK_CC_INLINE static bool				\
+ck_ring_trydequeue_mpmc_##name(struct ck_ring *a,	\
+    struct type *b,					\
+    struct type *c)					\
+{							\
+							\
+	return _ck_ring_trydequeue_mc(a,		\
+	    b, c, sizeof(struct type));			\
+}							\
+							\
+CK_CC_INLINE static bool				\
+ck_ring_dequeue_mpmc_##name(struct ck_ring *a,		\
+    struct type *b,					\
+    struct type *c)					\
+{							\
+							\
+	return _ck_ring_dequeue_mc(a, b, c,		\
 	    sizeof(struct type));			\
 }
 
+/*
+ * A single producer with one concurrent consumer.
+ */
 #define CK_RING_ENQUEUE_SPSC(name, a, b, c)		\
 	ck_ring_enqueue_spsc_##name(a, b, c)
 #define CK_RING_ENQUEUE_SPSC_SIZE(name, a, b, c, d)	\
 	ck_ring_enqueue_spsc_size_##name(a, b, c, d)
 #define CK_RING_DEQUEUE_SPSC(name, a, b, c)		\
 	ck_ring_dequeue_spsc_##name(a, b, c)
+
+/*
+ * A single producer with any number of concurrent consumers.
+ */
 #define CK_RING_ENQUEUE_SPMC(name, a, b, c)		\
 	ck_ring_enqueue_spmc_##name(a, b, c)
 #define CK_RING_ENQUEUE_SPMC_SIZE(name, a, b, c, d)	\
@@ -429,5 +629,28 @@ ck_ring_dequeue_spmc_##name(struct ck_ring *a,		\
 	ck_ring_trydequeue_spmc_##name(a, b, c)
 #define CK_RING_DEQUEUE_SPMC(name, a, b, c)		\
 	ck_ring_dequeue_spmc_##name(a, b, c)
+
+/*
+ * Any number of concurrent producers with up to one
+ * concurrent consumer.
+ */
+#define CK_RING_ENQUEUE_MPSC(name, a, b, c)		\
+	ck_ring_enqueue_mpsc_##name(a, b, c)
+#define CK_RING_ENQUEUE_MPSC_SIZE(name, a, b, c, d)	\
+	ck_ring_enqueue_mpsc_size_##name(a, b, c, d)
+#define CK_RING_DEQUEUE_MPSC(name, a, b, c)		\
+	ck_ring_dequeue_mpsc_##name(a, b, c)
+
+/*
+ * Any number of concurrent producers and consumers.
+ */
+#define CK_RING_ENQUEUE_MPMC(name, a, b, c)		\
+	ck_ring_enqueue_mpmc_##name(a, b, c)
+#define CK_RING_ENQUEUE_MPMC_SIZE(name, a, b, c, d)	\
+	ck_ring_enqueue_mpmc_size_##name(a, b, c, d)
+#define CK_RING_TRYDEQUEUE_MPMC(name, a, b, c)		\
+	ck_ring_trydequeue_mpmc_##name(a, b, c)
+#define CK_RING_DEQUEUE_MPMC(name, a, b, c)		\
+	ck_ring_dequeue_mpmc_##name(a, b, c)
 
 #endif /* CK_RING_H */

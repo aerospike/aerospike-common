@@ -30,8 +30,8 @@
 
 #include <aerospike/ck/ck_cc.h>
 #include <aerospike/ck/ck_pr.h>
-#include <stdbool.h>
-#include <stddef.h>
+#include <aerospike/ck/ck_stdbool.h>
+#include <aerospike/ck/ck_stddef.h>
 
 #ifndef CK_F_SPINLOCK_HCLH
 #define CK_F_SPINLOCK_HCLH

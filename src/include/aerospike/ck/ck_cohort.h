@@ -36,7 +36,7 @@
 
 #include <aerospike/ck/ck_cc.h>
 #include <aerospike/ck/ck_pr.h>
-#include <stddef.h>
+#include <aerospike/ck/ck_stddef.h>
 
 enum ck_cohort_state {
 	CK_COHORT_STATE_GLOBAL = 0,

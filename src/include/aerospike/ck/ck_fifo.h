@@ -32,7 +32,7 @@
 #include <aerospike/ck/ck_md.h>
 #include <aerospike/ck/ck_pr.h>
 #include <aerospike/ck/ck_spinlock.h>
-#include <stddef.h>
+#include <aerospike/ck/ck_stddef.h>
 
 #ifndef CK_F_FIFO_SPSC
 #define CK_F_FIFO_SPSC

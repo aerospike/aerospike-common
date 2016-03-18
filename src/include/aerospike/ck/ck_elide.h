@@ -35,7 +35,7 @@
 
 #include <aerospike/ck/ck_cc.h>
 #include <aerospike/ck/ck_pr.h>
-#include <string.h>
+#include <aerospike/ck/ck_string.h>
 
 /*
  * skip_-prefixed counters represent the number of consecutive
@@ -73,7 +73,7 @@ typedef struct ck_elide_stat ck_elide_stat_t;
 
 #define CK_ELIDE_STAT_INITIALIZER { 0, 0, 0 }
 
-static inline void
+CK_CC_INLINE static void
 ck_elide_stat_init(ck_elide_stat_t *st)
 {
 

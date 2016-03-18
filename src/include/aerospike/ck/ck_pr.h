@@ -32,7 +32,7 @@
 #include <aerospike/ck/ck_limits.h>
 #include <aerospike/ck/ck_md.h>
 #include <aerospike/ck/ck_stdint.h>
-#include <stdbool.h>
+#include <aerospike/ck/ck_stdbool.h>
 
 #ifndef CK_USE_CC_BUILTINS
 #if defined(__x86_64__)
@@ -99,6 +99,7 @@ CK_PR_FENCE_EMIT(store)
 CK_PR_FENCE_EMIT(memory)
 CK_PR_FENCE_EMIT(acquire)
 CK_PR_FENCE_EMIT(release)
+CK_PR_FENCE_EMIT(acqrel)
 CK_PR_FENCE_EMIT(lock)
 CK_PR_FENCE_EMIT(unlock)
 #elif defined(CK_MD_PSO)
@@ -118,6 +119,7 @@ CK_PR_FENCE_EMIT(store)
 CK_PR_FENCE_EMIT(memory)
 CK_PR_FENCE_EMIT(acquire)
 CK_PR_FENCE_EMIT(release)
+CK_PR_FENCE_EMIT(acqrel)
 CK_PR_FENCE_EMIT(lock)
 CK_PR_FENCE_EMIT(unlock)
 #elif defined(CK_MD_TSO)
@@ -134,9 +136,10 @@ CK_PR_FENCE_NOOP(load_store)
 CK_PR_FENCE_EMIT(store_load)
 CK_PR_FENCE_NOOP(load)
 CK_PR_FENCE_NOOP(store)
-CK_PR_FENCE_NOOP(memory)
+CK_PR_FENCE_EMIT(memory)
 CK_PR_FENCE_NOOP(acquire)
 CK_PR_FENCE_NOOP(release)
+CK_PR_FENCE_NOOP(acqrel)
 CK_PR_FENCE_NOOP(lock)
 CK_PR_FENCE_NOOP(unlock)
 #else

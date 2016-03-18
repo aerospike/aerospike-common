@@ -36,7 +36,7 @@
 
 #include <aerospike/ck/ck_cc.h>
 #include <aerospike/ck/ck_pr.h>
-#include <stddef.h>
+#include <aerospike/ck/ck_stddef.h>
 #include <aerospike/ck/ck_cohort.h>
 
 #define CK_RWCOHORT_WP_NAME(N) ck_rwcohort_wp_##N

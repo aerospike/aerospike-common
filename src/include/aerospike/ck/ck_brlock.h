@@ -41,8 +41,8 @@
  */
 
 #include <aerospike/ck/ck_pr.h>
-#include <stdbool.h>
-#include <stddef.h>
+#include <aerospike/ck/ck_stdbool.h>
+#include <aerospike/ck/ck_stddef.h>
 
 struct ck_brlock_reader {
 	unsigned int n_readers;
