@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2008-2016 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -21,11 +21,11 @@
  * Uses locks, so only moderately fast
  * If you need to deal with sparse data, really sparse data,
  * use a hash table. This assumes that packed data is a good idea.
- * Does the fairly trivial realloc thing for extension, so 
+ * Does the fairly trivial realloc thing for extension, so
  * and you can keep adding cool things to it
  */
 
- 
+
 #include <pthread.h>
 #include <stdint.h>
 
@@ -39,7 +39,7 @@ extern "C" {
  * CONSTANTS
  ******************************************************************************/
 
-#define VECTOR_ELEM_SZ(_v) ( _h->value_len )
+#define VECTOR_ELEM_SZ(_v) ( _v->value_len )
 
 /**
  * support multithreaded access with a single big lock
@@ -152,7 +152,7 @@ extern void cf_vector_destroy(cf_vector *v);
  * Get the number of elements currently in the vector
  */
 static inline uint32_t cf_vector_size(cf_vector *v) {
-	return(v->len);	
+	return(v->len);
 }
 
 
