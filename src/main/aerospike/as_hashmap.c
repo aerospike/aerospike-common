@@ -20,6 +20,7 @@
 #include <aerospike/as_boolean.h>
 #include <aerospike/as_bytes.h>
 #include <aerospike/as_double.h>
+#include <aerospike/as_geojson.h>
 #include <aerospike/as_hashmap.h>
 #include <aerospike/as_hashmap_iterator.h>
 #include <aerospike/as_integer.h>
@@ -91,6 +92,7 @@ static bool is_valid_key_type(const as_val * k)
 	case AS_DOUBLE:
 	case AS_STRING:
 	case AS_BYTES:
+	case AS_GEOJSON:
 		return true;
 	default:
 		return false;
@@ -126,6 +128,9 @@ static bool eq_val(const as_val * v1, const as_val * v2)
 				0 == memcmp(as_bytes_get((const as_bytes *)v1),
 						as_bytes_get((const as_bytes *)v2),
 						as_bytes_size((const as_bytes *)v1));
+	case AS_GEOJSON:
+		return 0 == strcmp(as_geojson_get((const as_geojson *)v1),
+						   as_geojson_get((const as_geojson *)v2));
 	default:
 		// Should never get here.
 		return false;
