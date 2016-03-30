@@ -25,34 +25,55 @@ extern "C" {
 #define AS_PACKER_BUFFER_SIZE 8192
 
 typedef struct as_packer_buffer {
-	struct as_packer_buffer * next;
-	unsigned char * buffer;
+	struct as_packer_buffer *next;
+	unsigned char *buffer;
 	int length;
 } as_packer_buffer;
 
 typedef struct as_packer {
-	struct as_packer_buffer * head;
-	struct as_packer_buffer * tail;
-	unsigned char * buffer;
+	struct as_packer_buffer *head;
+	struct as_packer_buffer *tail;
+	unsigned char *buffer;
 	int offset;
 	int capacity;
 } as_packer;
 
 typedef struct as_unpacker {
-	const unsigned char * buffer;
+	const unsigned char *buffer;
 	int offset;
 	int length;
 } as_unpacker;
+
+typedef struct as_msgpack_ext_s {
+	const uint8_t *data;	// pointer to ext contents
+	uint32_t size;			// size of ext contents
+	uint32_t type_offset;	// offset where the type field is located
+	uint8_t type;			// type of ext contents
+} as_msgpack_ext;
+
+typedef enum msgpack_compare_e {
+	MSGPACK_COMPARE_ERROR	= -2,
+	MSGPACK_COMPARE_END		= -1,
+	MSGPACK_COMPARE_LESS	= 0,
+	MSGPACK_COMPARE_EQUAL	= 1,
+	MSGPACK_COMPARE_GREATER = 2,
+} msgpack_compare_t;
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-as_serializer * as_msgpack_new();
-as_serializer * as_msgpack_init(as_serializer *);
+as_serializer *as_msgpack_new();
+as_serializer *as_msgpack_init(as_serializer *);
 
-int as_pack_val(as_packer * pk, const as_val * val);
-int as_unpack_val(as_unpacker * pk, as_val ** val);
+/**
+ * @return 0 on success
+ */
+int as_pack_val(as_packer *pk, const as_val *val);
+/**
+ * @return 0 on success
+ */
+int as_unpack_val(as_unpacker *pk, as_val **val);
 
 /******************************************************************************
  * Pack direct functions
@@ -68,13 +89,47 @@ int as_pack_list_header(as_packer *pk, uint32_t ele_count);
  * @return header size in bytes
  */
 uint32_t as_pack_list_header_get_size(uint32_t ele_count);
+/**
+ * Pack a map header with ele_count.
+ * @return 0 on success
+ */
+int as_pack_map_header(as_packer *pk, uint32_t ele_count);
+/**
+ * Get packed header size for map with ele_count.
+ * @return header size in bytes
+ */
+static inline uint32_t as_pack_map_header_get_size(uint32_t ele_count)
+{
+	return as_pack_list_header_get_size(ele_count);
+}
+/**
+ * Get size of an ext header.
+ * @param content_size size in bytes of ext contents
+ * @return size of header in bytes
+ */
+uint32_t as_pack_ext_header_get_size(uint32_t content_size);
+/**
+ * Pack an ext type.
+ * @return 0 on success
+ */
+int as_pack_ext_header(as_packer *pk, uint32_t content_size, uint8_t type);
+int as_pack_buf_ext_header(uint8_t *buf, uint32_t size, uint32_t content_size, uint8_t type);
 
 /******************************************************************************
  * Unpack direct functions
  ******************************************************************************/
 
+/**
+ * Check next element without consuming any bytes.
+ * @return type of next element
+ */
 as_val_t as_unpack_peek_type(const as_unpacker *pk);
 as_val_t as_unpack_buf_peek_type(const uint8_t *buf, uint32_t size);
+/**
+ * Check next element without consuming any bytes.
+ * @return true if ext type
+ */
+bool as_unpack_peek_is_ext(const as_unpacker *pk);
 /**
  * Get size of packed value.
  * @return negative int on error, size on success
@@ -87,15 +142,20 @@ int64_t as_unpack_size(as_unpacker *pk);
 int64_t as_unpack_blob_size(as_unpacker *pk);
 /**
  * Unpack integer.
- * @return 0 if success
+ * @return 0 on success
  */
 int as_unpack_int64(as_unpacker *pk, int64_t *i);
 int as_unpack_uint64(as_unpacker *pk, uint64_t *i);
 /**
  * Unpack double.
- * @return 0 if success
+ * @return 0 on success
  */
 int as_unpack_double(as_unpacker *pk, double *x);
+/**
+ * Unpack extension type.
+ * @return true on success
+ */
+int as_unpack_ext(as_unpacker *pk, as_msgpack_ext *ext);
 /**
  * Unpack list element count from buffer.
  */
@@ -105,6 +165,29 @@ int64_t as_unpack_buf_list_element_count(const uint8_t *buf, uint32_t size);
  * @return negative int on failure, element count on success
  */
 int64_t as_unpack_list_header_element_count(as_unpacker *pk);
+/**
+ * Unpack map element count from buffer.
+ */
+int64_t as_unpack_buf_map_element_count(const uint8_t *buf, uint32_t size);
+/**
+ * Get element count of packed map.
+ * @return negative int on failure, element count on success
+ */
+int64_t as_unpack_map_header_element_count(as_unpacker *pk);
+
+/**
+ * Compare two msgpack buffers.
+ */
+msgpack_compare_t as_unpack_buf_compare(const uint8_t *buf1, uint32_t size1, const uint8_t *buf2, uint32_t size2);
+msgpack_compare_t as_unpack_compare(as_unpacker *pk1, as_unpacker *pk2);
+/**
+ * Compare two msgpack buffers.
+ * @return true if buf1 < buf2
+ */
+static inline bool as_unpack_buf_is_less(const uint8_t *buf1, uint32_t size1, const uint8_t *buf2, uint32_t size2)
+{
+	return as_unpack_buf_compare(buf1, size1, buf2, size2) == MSGPACK_COMPARE_LESS;
+}
 
 #ifdef __cplusplus
 } // end extern "C"

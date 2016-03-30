@@ -24,4 +24,5 @@ PLAN( common ) {
      * msgpack - tests msgpack
      */
 	plan_add( msgpack_roundtrip );
+	plan_add( msgpack_direct );
 }
