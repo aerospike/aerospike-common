@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2008-2016 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -139,7 +139,7 @@ static int cf_vector_resize(cf_vector *v, uint32_t new_sz) {
 		_t = cf_malloc(new_sz * v->value_len);
 		if (!_t)	return(-1);
 		if (v->stack_vector) {
-			memcpy(_t, v->vector, v->alloc_len * v->value_len); 
+			memcpy(_t, v->vector, v->alloc_len * v->value_len);
 			v->stack_vector = false;
 		}
 	}
@@ -174,7 +174,7 @@ int cf_vector_append_lockfree(cf_vector *v, void *value) {
 	memcpy(v->vector + (v->len * v->value_len), value, v->value_len);
 	v->len ++;
 	return(0);
-	
+
 }
 
 
@@ -202,7 +202,7 @@ int cf_vector_append_unique(cf_vector *v, void *value) {
 		_b += _l;
 	}
 	rv = cf_vector_append_lockfree(v, value);
-Found:	
+Found:
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_UNLOCK(v);
 	return(rv);
@@ -250,12 +250,12 @@ int cf_vector_delete(cf_vector *v, uint32_t index) {
 		return (-1);
 	// check for last - no copy
 	if (index != v->len - 1) {
-		memmove(v->vector + (index * v->value_len), 
+		memmove(v->vector + (index * v->value_len),
 				v->vector + ((index+1) * v->value_len),
 				(v->len - (index+1)) * v->value_len );
 	}
 	v->len --;
-	
+
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_UNLOCK(v);
 	return(0);
@@ -265,22 +265,22 @@ int cf_vector_delete_range(cf_vector *v, uint32_t idx_start, uint32_t idx_end) {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_LOCK(v);
 	// check bounds
-	if (idx_start >= idx_end)
+	if (idx_start > idx_end)
 		return (-1);
 	if (idx_start >= v->len)
 		return(-1);
 	if (idx_end >= v->len)
 		return(-1);
-	
+
 	// Copy down if not at end
 	if (idx_end != v->len - 1) {
 		memmove( v->vector + (idx_start * v->value_len),
 				v->vector + ((idx_end+1) * v->value_len),
 			    (v->len - (idx_end+1)) * v->value_len );
-	
+
 	}
 	v->len -= (idx_end - idx_start) + 1;
-	
+
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_UNLOCK(v);
 	return(0);
