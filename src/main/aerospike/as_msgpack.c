@@ -159,11 +159,11 @@ static bool msgpack_parse_state_list_cmp_init(msgpack_parse_state *state, as_unp
 		return false;
 	}
 
-	state->len1 = len1;
-	state->len2 = len2;
+	state->len1 = (uint32_t)len1;
+	state->len2 = (uint32_t)len2;
 	state->index = 0;
 	state->map_pair = 0;
-	state->len = minlen;
+	state->len = (uint32_t)minlen;
 	state->type = AS_LIST;
 	state->default_compare_type = msgpack_compare_int64_t(len1, len2);
 
@@ -196,11 +196,11 @@ static bool msgpack_parse_state_map_cmp_init(msgpack_parse_state *state, as_unpa
 		return false;
 	}
 
-	state->len1 = len1;
-	state->len2 = len2;
+	state->len1 = (uint32_t)len1;
+	state->len2 = (uint32_t)len2;
 	state->index = 0;
 	state->map_pair = 0;
-	state->len = minlen;
+	state->len = (uint32_t)minlen;
 	state->type = AS_MAP;
 	state->default_compare_type = msgpack_compare_int64_t(len1, len2);
 
@@ -217,7 +217,7 @@ static bool msgpack_parse_state_map_size_init(msgpack_parse_state *state, as_unp
 
 	state->index = 0;
 	state->map_pair = 0;
-	state->len = len;
+	state->len = (uint32_t)len;
 	state->type = AS_MAP;
 
 	return true;
