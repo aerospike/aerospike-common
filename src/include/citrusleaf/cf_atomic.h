@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2008-2016 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -25,6 +25,7 @@
  * Atomic addition: add a value b into an atomic integer a, and return the result
  **/
 
+#include <stdbool.h>
 #include <stdint.h>
 
 #ifdef CF_WINDOWS
@@ -118,27 +119,25 @@ static inline int64_t cf_atomic64_add(cf_atomic64 *a, int64_t b) {
 	//return(b + i);
 }
 
-static inline int64_t cf_atomic64_setmax(cf_atomic64 *a, int64_t x) {
+static inline bool cf_atomic64_setmax(cf_atomic64 *a, int64_t x) {
 	uint64_t prior;
-	int64_t cur;
 
-	// Get the current value of the atomic integer
-	cur = cf_atomic64_get(*a);
+	// Get the current value of the atomic integer.
+	int64_t cur = cf_atomic64_get(*a);
 
-	for ( ;; ) {
-		// Check if the current value is equal to the criterion
-		if (cur >= x)
-			break;
+	while (x > cur) {
+		// Proposed value is larger than current - attempt compare-and-swap.
+		if (ck_pr_cas_64_value((uint64_t*)a, cur, x, &prior)) {
+			// Current value was unchanged, proposed value swapped in.
+			return true;
+		}
 
-		// Attempt compare-and-swap
-		if (ck_pr_cas_64_value((uint64_t*)a, cur, x, &prior))
-			break;
-
-		// Operation failed, set cur to prior and go around again
+		// Current value had changed, set cur to prior and go around again.
 		cur = prior;
 	}
 
-	return(cur != x);
+	// Proposed value not swapped in as new maximum.
+	return false;
 }
 
 static inline int32_t cf_atomic32_add(cf_atomic32 *a, int32_t b){
@@ -148,27 +147,24 @@ static inline int32_t cf_atomic32_add(cf_atomic32 *a, int32_t b){
 	//return(b + i);
 }
 
-static inline int32_t cf_atomic32_setmax(cf_atomic32 *a, int32_t x) {
+static inline bool cf_atomic32_setmax(cf_atomic32 *a, int32_t x) {
 	uint32_t prior;
-	int32_t cur;
-	
-	// Get the current value of the atomic integer
-	cur = cf_atomic32_get(*a);
-	
-	for ( ;; ) {
-		// Check if the current value is equal to the criterion
-		if (cur >= x)
-			break;
-		
-		// Attempt compare-and-swap
-		if (ck_pr_cas_32_value((uint32_t*)a, cur, x, &prior))
-			break;
-		
-		// Operation failed, set cur to prior and go around again
+
+	// Get the current value of the atomic integer.
+	int32_t cur = cf_atomic32_get(*a);
+
+	while (x > cur) {
+		// Proposed value is larger than current - attempt compare-and-swap.
+		if (ck_pr_cas_32_value((uint32_t*)a, cur, x, &prior)) {
+			return true;
+		}
+
+		// Current value had changed, set cur to prior and go around again.
 		cur = prior;
 	}
-	
-	return(cur != x);
+
+	// Proposed value not swapped in as new maximum.
+	return false;
 }
 #endif // ifndef CF_WINDOWS
 
