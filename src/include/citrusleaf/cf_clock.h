@@ -116,6 +116,18 @@ static inline uint32_t cf_clepoch_seconds() {
 #endif
 }
 
+static inline uint64_t cf_clepoch_milliseconds() {
+#ifdef __APPLE__
+	struct timeval tv;
+	gettimeofday(&tv, NULL);
+	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000) - (CITRUSLEAF_EPOCH * 1000L);
+#else
+	struct timespec ts;
+	clock_gettime(CLOCK_REALTIME, &ts);
+	return CF_TIMESPEC_TO_MS(ts) - (CITRUSLEAF_EPOCH * 1000L);
+#endif
+}
+
 // Special client-only conversion utility.
 static inline uint32_t cf_server_void_time_to_ttl(uint32_t server_void_time) {
 	// This is the server's flag indicating the record never expires...
