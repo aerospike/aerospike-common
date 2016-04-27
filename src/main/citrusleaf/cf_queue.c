@@ -30,27 +30,28 @@ cf_queue_init(cf_queue* q, size_t element_sz, uint32_t capacity, bool threadsafe
 	q->element_sz = element_sz;
 	q->threadsafe = threadsafe;
 	q->free_struct = false;
-	
+
 	q->elements = (uint8_t*)cf_malloc(capacity * element_sz);
-	
+
 	if (! q->elements) {
 		return false;
 	}
-	
+
 	if (! q->threadsafe) {
 		return q;
 	}
-	
+
 	if (0 != pthread_mutex_init(&q->LOCK, NULL)) {
 		cf_free(q->elements);
 		return false;
 	}
-	
+
 	if (0 != pthread_cond_init(&q->CV, NULL)) {
 		pthread_mutex_destroy(&q->LOCK);
 		cf_free(q->elements);
 		return false;
 	}
+
 	return true;
 }
 
@@ -66,7 +67,9 @@ cf_queue *cf_queue_create(size_t element_sz, bool threadsafe)
 		cf_free(q);
 		return NULL;
 	}
+
 	q->free_struct = true;
+
 	return q;
 }
 
@@ -79,7 +82,7 @@ void cf_queue_destroy(cf_queue *q)
 
 	memset(q->elements, 0, sizeof(q->alloc_sz * q->element_sz));
 	cf_free(q->elements);
-	
+
 	if (q->free_struct) {
 		memset(q, 0, sizeof(cf_queue));
 		cf_free(q);
@@ -410,7 +413,7 @@ void cf_queue_delete_offset(cf_queue *q, uint32_t index)
 //
 // Iterate over all queue members, calling the callback.
 //
-int cf_queue_reduce(cf_queue *q,  cf_queue_reduce_fn cb, void *udata)
+int cf_queue_reduce(cf_queue *q, cf_queue_reduce_fn cb, void *udata)
 {
 	cf_queue_lock(q);
 
@@ -437,6 +440,50 @@ int cf_queue_reduce(cf_queue *q,  cf_queue_reduce_fn cb, void *udata)
 
 	cf_queue_unlock(q);
 	return CF_QUEUE_OK;
+}
+
+//
+// Iterate over all queue members, calling the callback. Pop element (or not)
+// based on callback return value.
+//
+int cf_queue_reduce_pop(cf_queue *q, void *buf, cf_queue_reduce_fn cb, void *udata)
+{
+	cf_queue_lock(q);
+
+	if (CF_Q_SZ(q) == 0) {
+		cf_queue_unlock(q);
+		return CF_QUEUE_NOMATCH;
+	}
+
+	int found_index = -1;
+
+	for (uint32_t i = q->read_offset; i < q->write_offset; i++) {
+		int rv = cb(CF_Q_ELEM_PTR(q, i), udata);
+
+		if (rv == 0) {
+			continue;
+		}
+
+		if (rv == -1) {
+			// Found what it was looking for, so break.
+			found_index = i;
+			break;
+		}
+
+		if (rv == -2) {
+			// Found new candidate, but keep looking for a better one.
+			found_index = i;
+		}
+	}
+
+	if (found_index >= 0) {
+		// Found an element, so copy to 'buf', delete from q.
+		memcpy(buf, CF_Q_ELEM_PTR(q, found_index), q->element_sz);
+		cf_queue_delete_offset(q, found_index);
+	}
+
+	cf_queue_unlock(q);
+	return found_index >= 0 ? CF_QUEUE_OK : CF_QUEUE_NOMATCH;
 }
 
 //
