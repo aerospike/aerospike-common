@@ -185,12 +185,9 @@ int cf_queue_priority_sz(cf_queue_priority *q)
 
 /**
  * Use this function to find an element to pop from the queue using a reduce
- * callback function. Have the callback function return -1 when you know you
- * want to pop the element immediately, return -2 when the element is the best
- * candidate for popping found so far but you want to keep looking, and return 0
- * when you are not interested in popping the element. You then pop the best
- * candidate you've found - either the "-1 case" or the last "-2 case". If you
- * have not found a suitable candidate, CF_QUEUE_NOMATCH is returned.
+ * callback function. Have the callback function return -1 when you want to pop
+ * the element and stop reducing. If you have not popped an element,
+ * CF_QUEUE_NOMATCH is returned.
  */
 int cf_queue_priority_reduce_pop(cf_queue_priority *priority_q, void *buf, cf_queue_reduce_fn cb, void *udata)
 {
@@ -203,7 +200,6 @@ int cf_queue_priority_reduce_pop(cf_queue_priority *priority_q, void *buf, cf_qu
 	queues[2] = priority_q->low_q;
 
 	cf_queue *q;
-	int found_index = -1;
 
 	for (int q_itr = 0; q_itr < 3; q_itr++) {
 		q = queues[q_itr];
@@ -220,30 +216,18 @@ int cf_queue_priority_reduce_pop(cf_queue_priority *priority_q, void *buf, cf_qu
 			}
 
 			if (rv == -1) {
-				// Found what it was looking for, so break.
-				found_index = i;
-				break;
-			}
+				// Found an element, so copy to 'buf', delete from q, and return.
+				memcpy(buf, CF_Q_ELEM_PTR(q, i), q->element_sz);
+				cf_queue_delete_offset(q, i);
 
-			if (rv == -2) {
-				// Found new candidate, but keep looking for a better one.
-				found_index = i;
+				cf_queue_priority_unlock(priority_q);
+				return CF_QUEUE_OK;
 			}
 		}
-
-		// Only traverse the highest priority q with elements.
-		// TODO - is this the right thing to do ???
-		break;
-	}
-
-	if (found_index >= 0) {
-		// Found an element, so copy to 'buf', delete from q, and return.
-		memcpy(buf, CF_Q_ELEM_PTR(q, found_index), q->element_sz);
-		cf_queue_delete_offset(q, found_index);
 	}
 
 	cf_queue_priority_unlock(priority_q);
-	return found_index == -1 ? CF_QUEUE_NOMATCH : CF_QUEUE_OK;
+	return CF_QUEUE_NOMATCH;
 }
 
 //
