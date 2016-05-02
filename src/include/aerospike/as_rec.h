@@ -133,6 +133,11 @@ typedef struct as_rec_hooks_s {
 	uint32_t (* ttl)(const as_rec  * rec);
 
 	/**
+	 *	Get the last update time of the record.
+	 */
+	uint64_t (* last_update_time)(const as_rec  * rec);
+
+	/**
 	 *	Get the generation value of the record.
 	 */
 	uint16_t (* gen)(const as_rec * rec);
@@ -280,6 +285,16 @@ static inline int as_rec_remove(const as_rec * rec, const char * name)
 static inline uint32_t as_rec_ttl(const as_rec * rec)
 {
 	return as_util_hook(ttl, 0, rec);
+}
+
+/**
+ *	Get the last update time for the record.
+ *
+ *	@relatesalso as_rec
+ */
+static inline uint64_t as_rec_last_update_time(const as_rec * rec)
+{
+	return as_util_hook(last_update_time, 0, rec);
 }
 
 /**
