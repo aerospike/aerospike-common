@@ -28,25 +28,25 @@
  *	FUNCTIONS
  *****************************************************************************/
 
-as_map * as_map_cons(as_map * map, bool free, void * data, const as_map_hooks * hooks) 
+as_map * as_map_cons(as_map * map, bool free, uint32_t flags, const as_map_hooks * hooks)
 {
 	if ( !map ) return map;
 
 	as_val_cons((as_val *) map, AS_MAP, free);
-	map->data = data;
+	map->flags = flags;
 	map->hooks = hooks;
 	return map;
 }
 
-as_map * as_map_init(as_map * map, void * data, const as_map_hooks * hooks) 
+as_map * as_map_init(as_map * map, const as_map_hooks * hooks)
 {
-	return as_map_cons(map, false, data, hooks);
+	return as_map_cons(map, false, 0, hooks);
 }
 
-as_map * as_map_new(void * data, const as_map_hooks * hooks) 
+as_map * as_map_new(const as_map_hooks * hooks)
 {
 	as_map * map = (as_map *) cf_malloc(sizeof(as_map));
-	return as_map_cons(map, true, data, hooks);
+	return as_map_cons(map, true, 0, hooks);
 }
 
 /******************************************************************************

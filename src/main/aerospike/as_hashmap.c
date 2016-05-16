@@ -147,7 +147,7 @@ as_hashmap * as_hashmap_init(as_hashmap * map, uint32_t capacity)
 		return NULL;
 	}
 
-	as_map_cons((as_map *)map, false, NULL, &as_hashmap_map_hooks);
+	as_map_cons((as_map *)map, false, 0, &as_hashmap_map_hooks);
 
 	return as_hashmap_cons(map, capacity);
 }
@@ -160,7 +160,7 @@ as_hashmap * as_hashmap_new(uint32_t capacity)
 		return NULL;
 	}
 
-	as_map_cons((as_map *)map, true, NULL, &as_hashmap_map_hooks);
+	as_map_cons((as_map *)map, true, 0, &as_hashmap_map_hooks);
 
 	return as_hashmap_cons(map, capacity);
 }

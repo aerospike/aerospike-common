@@ -68,12 +68,12 @@ typedef struct as_map_s {
 	as_val _;
 
 	/**
-	 *	Pointer to the data for this list.
+	 *	Information for this instance of as_map.
 	 */
-	void * data;
+	uint32_t flags;
 
 	/**
-	 * Hooks for sybtypes of as_list to implement.
+	 *	Hooks for subtypes of as_map to implement.
 	 */
 	const struct as_map_hooks_s * hooks;
 
@@ -214,7 +214,7 @@ typedef struct as_map_hooks_s {
  *	@return The initialized as_map on success. Otherwise NULL.
  *	@relatesalso as_map
  */
-as_map * as_map_cons(as_map * map, bool free, void * data, const as_map_hooks * hooks);
+as_map * as_map_cons(as_map * map, bool free, uint32_t flags, const as_map_hooks * hooks);
 
 /**
  *	Initialize a stack allocated map.
@@ -226,7 +226,7 @@ as_map * as_map_cons(as_map * map, bool free, void * data, const as_map_hooks * 
  *	@return On success, the initialized map. Otherwise NULL.
  *	@relatesalso as_map
  */
-as_map * as_map_init(as_map * map, void * data, const as_map_hooks * hooks);
+as_map * as_map_init(as_map * map, const as_map_hooks * hooks);
 
 /**
  *	Create and initialize a new heap allocated map.
@@ -237,7 +237,7 @@ as_map * as_map_init(as_map * map, void * data, const as_map_hooks * hooks);
  *	@return On success, a new list. Otherwise NULL.
  *	@relatesalso as_map
  */
-as_map * as_map_new(void * data, const as_map_hooks * hooks);
+as_map * as_map_new(const as_map_hooks * hooks);
 
 /**
  *	Destroy the as_map and associated resources.
