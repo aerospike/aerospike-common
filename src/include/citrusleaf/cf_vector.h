@@ -126,10 +126,11 @@ extern int cf_vector_append_unique(cf_vector *v, void *value);
 extern int cf_vector_delete(cf_vector *v, uint32_t index);
 
 /**
- * Delete a range in the vector. Inclusive. Thus:
- *   a vector with len 5, you could delete start=0, end=3, leaving one element at the beginning (slot 0)
- *   don't set start and end the same, that's a single element delete, use vector_delete instead
- *   (or change the code to support that!)
+ * Delete a range in the vector. Inclusive-Exclusive. Thus:
+ *   a vector with len 5, you could delete 3 elements at indices (0,1, and 2)
+ *   using start=0, end=3, leaving two elements at the beginning (slot 0)
+ *   originally at indices 3 and 4.
+ *   Prefer vector_delete for single element deletes.
  *   returns -1 on bad ranges
  */
 extern int cf_vector_delete_range(cf_vector *v, uint32_t start_index, uint32_t end_index);

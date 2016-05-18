@@ -265,21 +265,21 @@ int cf_vector_delete_range(cf_vector *v, uint32_t idx_start, uint32_t idx_end) {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_LOCK(v);
 	// check bounds
-	if (idx_start > idx_end)
+	if (idx_start >= idx_end)
 		return (-1);
 	if (idx_start >= v->len)
 		return(-1);
-	if (idx_end >= v->len)
+	if (idx_end > v->len)
 		return(-1);
 
 	// Copy down if not at end
-	if (idx_end != v->len - 1) {
+	if (idx_end != v->len) {
 		memmove( v->vector + (idx_start * v->value_len),
-				v->vector + ((idx_end+1) * v->value_len),
-			    (v->len - (idx_end+1)) * v->value_len );
+				v->vector + ((idx_end) * v->value_len),
+			    (v->len - idx_end) * v->value_len );
 
 	}
-	v->len -= (idx_end - idx_start) + 1;
+	v->len -= idx_end - idx_start;
 
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_UNLOCK(v);
