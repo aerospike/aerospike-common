@@ -24,6 +24,12 @@ extern "C" {
 
 #define AS_PACKER_BUFFER_SIZE 8192
 
+#define AS_PACKED_MAP_FLAG_NONE				0x00
+#define AS_PACKED_MAP_FLAG_K_ORDERED		0x01
+#define AS_PACKED_MAP_FLAG_V_ORDERED		0x02 // not allowed on its own
+#define AS_PACKED_MAP_FLAG_PRESERVE_ORDER	0x08
+#define AS_PACKED_MAP_FLAG_KV_ORDERED	(AS_PACKED_MAP_FLAG_K_ORDERED | AS_PACKED_MAP_FLAG_V_ORDERED)
+
 typedef struct as_packer_buffer {
 	struct as_packer_buffer *next;
 	unsigned char *buffer;

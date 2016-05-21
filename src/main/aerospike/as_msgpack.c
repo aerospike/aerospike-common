@@ -731,83 +731,85 @@ static int as_unpack_list(as_unpacker *pk, int size, as_val **val)
 	return 0;
 }
 
-static as_hashmap* as_unpack_create_map(as_unpacker *pk, int size)
+static int as_unpack_map_create_list(as_unpacker *pk, int size, as_val **val)
 {
-	// Peek at buffer to determine map type, but do not advance.
-	uint8_t type = pk->buffer[pk->offset];
-	
-	// Check for extension that the server uses.
-	if (type == 0xc7) {
-		int extension_type = pk->buffer[pk->offset + 1];
-		
-		if (extension_type == 0) {
-			int map_bits = pk->buffer[pk->offset + 2];
-			
-			// Extension is a map type.  Determine which one.
-			if ((map_bits & (0x01 | 0x04 | 0x08)) != 0) {
-				// Sorted map or index/rank range result where order needs to be preserved.
-				// Create list of key/value pairs.
-				return NULL;
-			}
+	// Create list of key value pairs.
+	as_arraylist *list = as_arraylist_new(size, size);
+
+	for (int i = 0; i < size; i++) {
+		as_val *k = 0;
+		as_val *v = 0;
+		if (as_unpack_val(pk, &k) != 0) {
+			as_arraylist_destroy(list);
+			return -1;
+		}
+		if (as_unpack_val(pk, &v) != 0) {
+			as_val_destroy(k);
+			as_arraylist_destroy(list);
+			return -2;
+		}
+
+		if (k && v) {
+			as_pair *pair = as_pair_new(k, v);
+			as_arraylist_append(list, pair);
+		}
+		else {
+			as_val_destroy(k);
+			as_val_destroy(v);
 		}
 	}
-	return as_hashmap_new(size > 32 ? size : 32);
+	*val = (as_val *)list;
+	return 0;
 }
 
 static int as_unpack_map(as_unpacker *pk, int size, as_val **val)
 {
-	as_hashmap *map = as_unpack_create_map(pk, size);
+	uint8_t flags = 0;
 
-	if (map) {
-		// Create hashmap.
-		for (int i = 0; i < size; i++) {
-			as_val *k = 0;
-			as_val *v = 0;
-			if (as_unpack_val(pk, &k) != 0) {
-				return -3;
-			}
-			if (as_unpack_val(pk, &v) != 0) {
-				as_val_destroy(k);
-				return -4;
-			}
+	// Skip ext element key which is only at the start for metadata.
+	if (as_unpack_peek_is_ext(pk)) {
+		as_msgpack_ext ext;
 
-			if (k && v) {
-				as_hashmap_set(map, k, v);
-			}
-			else {
-				as_val_destroy(k);
-				as_val_destroy(v);
-			}
+		as_unpack_ext(pk, &ext);
+
+		if (as_unpack_size(pk) < 0) {
+			return -1;
 		}
-		*val = (as_val *)map;
-	}
-	else {
-		// Create list of keys and values.  One row per key and one row per value (N * 2).
-		uint32_t max = size * 2;
-		as_arraylist* list = as_arraylist_new(max, max);
-		
-		for (int i = 0; i < size; i++) {
-			as_val *k = 0;
-			as_val *v = 0;
-			if (as_unpack_val(pk, &k) != 0) {
-				return -3;
-			}
-			if (as_unpack_val(pk, &v) != 0) {
-				as_val_destroy(k);
-				return -4;
-			}
 
-			if (k && v) {
-				as_arraylist_append(list, k);
-				as_arraylist_append(list, v);
-			}
-			else {
-				as_val_destroy(k);
-				as_val_destroy(v);
-			}
-		}
-		*val = (as_val *)list;
+		flags = ext.type;
+		size--;
 	}
+
+	// Check preserve order bit.
+	if (flags & AS_PACKED_MAP_FLAG_PRESERVE_ORDER) {
+		return as_unpack_map_create_list(pk, size, val);
+	}
+
+	as_hashmap *map = as_hashmap_new(size > 32 ? size : 32);
+
+	for (int i = 0; i < size; i++) {
+		as_val *k = 0;
+		as_val *v = 0;
+		if (as_unpack_val(pk, &k) != 0) {
+			as_hashmap_destroy(map);
+			return -3;
+		}
+		if (as_unpack_val(pk, &v) != 0) {
+			as_val_destroy(k);
+			as_hashmap_destroy(map);
+			return -4;
+		}
+
+		if (k && v) {
+			as_hashmap_set(map, k, v);
+ 		}
+		else {
+			as_val_destroy(k);
+			as_val_destroy(v);
+		}
+	}
+	*val = (as_val *)map;
+	map->_.flags = flags;
 	return 0;
 }
 
