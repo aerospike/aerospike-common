@@ -751,7 +751,7 @@ static int as_unpack_map_create_list(as_unpacker *pk, int size, as_val **val)
 
 		if (k && v) {
 			as_pair *pair = as_pair_new(k, v);
-			as_arraylist_append(list, pair);
+			as_arraylist_append(list, (as_val *)pair);
 		}
 		else {
 			as_val_destroy(k);
