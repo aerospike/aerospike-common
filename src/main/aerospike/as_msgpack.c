@@ -734,7 +734,7 @@ static int as_unpack_list(as_unpacker *pk, int size, as_val **val)
 static int as_unpack_map_create_list(as_unpacker *pk, int size, as_val **val)
 {
 	// Create list of key value pairs.
-	as_arraylist *list = as_arraylist_new(size, size);
+	as_arraylist *list = as_arraylist_new(2 * size, 2 * size);
 
 	for (int i = 0; i < size; i++) {
 		as_val *k = 0;
@@ -750,8 +750,8 @@ static int as_unpack_map_create_list(as_unpacker *pk, int size, as_val **val)
 		}
 
 		if (k && v) {
-			as_pair *pair = as_pair_new(k, v);
-			as_arraylist_append(list, (as_val *)pair);
+			as_arraylist_append(list, k);
+			as_arraylist_append(list, v);
 		}
 		else {
 			as_val_destroy(k);
