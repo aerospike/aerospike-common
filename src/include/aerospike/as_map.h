@@ -208,7 +208,7 @@ typedef struct as_map_hooks_s {
  *
  *	@param map		The map to initialize
  *	@param free 	If TRUE, then as_map_destory() will free the map.
- *	@param data		Data for the map.
+ *	@param flags	Map attributes.
  *	@param hooks	Implementaton for the map interface.
  *	
  *	@return The initialized as_map on success. Otherwise NULL.
@@ -220,7 +220,6 @@ as_map * as_map_cons(as_map * map, bool free, uint32_t flags, const as_map_hooks
  *	Initialize a stack allocated map.
  *
  *	@param map		Stack allocated map to initialize.
- *	@param data		Data for the map.
  *	@param hooks	Implementation for the map interface.
  *	
  *	@return On success, the initialized map. Otherwise NULL.
@@ -231,7 +230,6 @@ as_map * as_map_init(as_map * map, const as_map_hooks * hooks);
 /**
  *	Create and initialize a new heap allocated map.
  *	
- *	@param data		Data for the list.
  *	@param hooks	Implementation for the list interface.
  *	
  *	@return On success, a new list. Otherwise NULL.
