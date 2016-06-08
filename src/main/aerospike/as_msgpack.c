@@ -691,9 +691,13 @@ static inline int as_unpack_double_val(double d, as_val **v)
 
 static int as_unpack_blob(as_unpacker *pk, int size, as_val **val)
 {
-	unsigned char type = pk->buffer[pk->offset++];
-	size--;
-	
+	unsigned char type = 0;
+
+	if (size) {
+		type = pk->buffer[pk->offset++];
+		size--;
+	}
+
 	if (type == AS_BYTES_STRING) {
 		char* v = cf_strndup((const char *)pk->buffer + pk->offset, size);
 		*val = (as_val*) as_string_new(v, true);
@@ -703,9 +707,17 @@ static int as_unpack_blob(as_unpacker *pk, int size, as_val **val)
 		*val = (as_val *)as_geojson_new(v, true);
 	}
 	else {
-		unsigned char *buf = cf_malloc(size);
-		memcpy(buf, pk->buffer + pk->offset, size);
-		as_bytes *b = as_bytes_new_wrap(buf, size, true);
+		as_bytes *b;
+
+		if (size) {
+			unsigned char *buf = cf_malloc(size);
+			memcpy(buf, pk->buffer + pk->offset, size);
+			b = as_bytes_new_wrap(buf, size, true);
+		}
+		else {
+			b = as_bytes_new_wrap(NULL, 0, false);
+		}
+
 		if (b) {
 			b->type = (as_bytes_type) type;
 		}

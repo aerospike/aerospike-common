@@ -393,7 +393,7 @@ uint32_t as_bytes_val_hashcode(const as_val * v)
     uint32_t hash = 0;
     uint8_t * buf = bytes->value;
     int len = bytes->size;
-    while ( --len ) {
+    while ( len-- ) {
         int b = *buf++;
         hash = b + (hash << 6) + (hash << 16) - hash;
     }
