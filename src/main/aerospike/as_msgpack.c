@@ -813,7 +813,12 @@ static int as_unpack_map(as_unpacker *pk, int size, as_val **val)
 		}
 
 		if (k && v) {
-			as_hashmap_set(map, k, v);
+			if (as_hashmap_set(map, k, v) != 0) {
+				as_val_destroy(k);
+				as_val_destroy(v);
+				as_hashmap_destroy(map);
+				return -5;
+			}
  		}
 		else {
 			as_val_destroy(k);
