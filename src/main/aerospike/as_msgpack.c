@@ -779,7 +779,7 @@ static int as_unpack_map(as_unpacker *pk, int size, as_val **val)
 	uint8_t flags = 0;
 
 	// Skip ext element key which is only at the start for metadata.
-	if (as_unpack_peek_is_ext(pk)) {
+	if (size > 0 && as_unpack_peek_is_ext(pk)) {
 		as_msgpack_ext ext;
 
 		as_unpack_ext(pk, &ext);
@@ -813,7 +813,12 @@ static int as_unpack_map(as_unpacker *pk, int size, as_val **val)
 		}
 
 		if (k && v) {
-			as_hashmap_set(map, k, v);
+			if (as_hashmap_set(map, k, v) != 0) {
+				as_val_destroy(k);
+				as_val_destroy(v);
+				as_hashmap_destroy(map);
+				return -5;
+			}
  		}
 		else {
 			as_val_destroy(k);
@@ -1792,6 +1797,10 @@ int64_t as_unpack_buf_map_element_count(const uint8_t *buf, uint32_t size)
 
 bool as_unpack_peek_is_ext(const as_unpacker *pk)
 {
+	if (pk->offset >= pk->length) {
+		return false;
+	}
+
 	uint8_t type = pk->buffer[pk->offset];
 
 	switch (type) {
