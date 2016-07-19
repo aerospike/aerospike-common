@@ -72,6 +72,12 @@ as_thread_worker(void* data)
 	// Send thread completion event back to caller.
 	uint32_t complete = 1;
 	cf_queue_push(pool->complete_queue, &complete);
+
+	// Run the finalization function, if present.
+	if (pool->fini_fn) {
+		pool->fini_fn();
+	}
+	
 	return 0;
 }
 
@@ -145,6 +151,7 @@ as_thread_pool_init(as_thread_pool* pool, uint32_t thread_size)
 	pool->dispatch_queue = cf_queue_create(sizeof(as_thread_pool_task), true);
 	pool->complete_queue = cf_queue_create(sizeof(uint32_t), true);
 	pool->task_fn = 0;
+	pool->fini_fn = NULL;
 	pool->task_size = 0;
 	pool->task_complete_offset = 0;
 	pool->thread_size = thread_size;
@@ -174,6 +181,7 @@ as_thread_pool_init_fixed(as_thread_pool* pool, uint32_t thread_size, as_task_fn
 	pool->dispatch_queue = cf_queue_create(task_size, true);
 	pool->complete_queue = cf_queue_create(sizeof(uint32_t), true);
 	pool->task_fn = task_fn;
+	pool->fini_fn = NULL;
 	pool->task_size = task_size;
 	pool->task_complete_offset = task_complete_offset;
 	pool->thread_size = thread_size;

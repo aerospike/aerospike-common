@@ -35,6 +35,12 @@ typedef void (*as_task_fn)(void* user_data);
 	
 /**
  *	@private
+ *	Thread finalization function callback.
+ */
+typedef void (*as_fini_fn)();
+	
+/**
+ *	@private
  *	Thread pool.
  */
 typedef struct as_thread_pool_s {
@@ -42,6 +48,7 @@ typedef struct as_thread_pool_s {
 	cf_queue* dispatch_queue;
 	cf_queue* complete_queue;
 	as_task_fn task_fn;
+	as_fini_fn fini_fn;
 	uint32_t task_size;
 	uint32_t task_complete_offset;
 	uint32_t thread_size;
