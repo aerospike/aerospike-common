@@ -47,6 +47,7 @@ void cf_rchash_destroy_v(cf_rchash *h);
 void cf_rchash_reduce_delete_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata);
 int cf_rchash_reduce_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata);
 int cf_rchash_delete_v(cf_rchash *h, void *key, uint32_t key_len);
+int cf_rchash_delete_object_v(cf_rchash *h, void *key, uint32_t key_len, void *object);
 int cf_rchash_get_v(cf_rchash *h, void *key, uint32_t key_len, void **object);
 int cf_rchash_put_unique_v(cf_rchash *h, void *key, uint32_t key_len, void *object);
 int cf_rchash_put_v(cf_rchash *h, void *key, uint32_t key_len, void *object);
@@ -442,6 +443,92 @@ int cf_rchash_delete(cf_rchash *h, void *key, uint32_t key_len) {
 			else
 				h->elements--;
 			
+			rv = CF_RCHASH_OK;
+			goto Out;
+
+		}
+		e_prev = e;
+		e = e->next;
+	}
+	rv = CF_RCHASH_ERR_NOTFOUND;
+
+Out:
+	if (l)	pthread_mutex_unlock(l);
+	return(rv);
+}
+
+int cf_rchash_delete_object(cf_rchash *h, void *key, uint32_t key_len, void *object) {
+    if (h->key_len == 0)    return(cf_rchash_delete_object_v(h,key,key_len, object));
+	if (h->key_len != key_len) return(CF_RCHASH_ERR);
+
+	// Calculate hash
+	uint hash = h->h_fn(key, key_len);
+	hash %= h->table_len;
+	int rv = CF_RCHASH_ERR;
+
+    // take lock
+	pthread_mutex_t		*l = 0;
+	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
+		l = &h->biglock;
+	}
+	else if (h->flags & CF_RCHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
+
+	cf_rchash_elem_f *e = get_bucket(h, hash);
+
+	// If bucket empty, def can't delete
+	if ( e->object == 0 ) {
+		rv = CF_RCHASH_ERR_NOTFOUND;
+		goto Out;
+	}
+
+	cf_rchash_elem_f *e_prev = 0;
+
+	// Look for the element and destroy if found
+	while (e) {
+
+#ifdef VALIDATE
+		cf_atomic_int_t rc;
+		if ((rc = cf_rc_count(e->object)) < 1) {
+			as_log_info("cf_rchash %p: internal bad reference count (%d) on %p", h, rc, e->object);
+			if (l)	pthread_mutex_unlock(l);
+			return(CF_RCHASH_ERR);
+		}
+#endif
+
+		if ( memcmp(e->key, key, key_len) == 0 ) {
+			if ( e->object != object ) {
+				rv = CF_RCHASH_ERR_NOTFOUND;
+				goto Out;
+			}
+			// Found it, kill it
+			cf_rchash_free(h, e->object);
+			// patchup pointers & free element if not head
+			if (e_prev) {
+				e_prev->next = e->next;
+				cf_free(e);
+			}
+			// am at head - more complicated
+			else {
+				// at head with no next - easy peasy!
+				if (0 == e->next) {
+					memset(e, 0, sizeof(cf_rchash_elem_f));
+				}
+				// at head with a next - more complicated
+				else {
+					cf_rchash_elem_f *_t = e->next;
+					memcpy(e, e->next, sizeof(cf_rchash_elem_f)+key_len);
+					cf_free(_t);
+				}
+			}
+
+			if (h->flags & CF_RCHASH_CR_MT_MANYLOCK)
+				cf_atomic32_decr(&h->elements);
+			else
+				h->elements--;
+
 			rv = CF_RCHASH_OK;
 			goto Out;
 
@@ -856,6 +943,87 @@ int cf_rchash_delete_v(cf_rchash *h, void *key, uint32_t key_len) {
 
 		if ( ( key_len == e->key_len ) &&
 			 ( memcmp(e->key, key, key_len) == 0) ) {
+			// Found it, kill it
+			cf_free(e->key);
+			cf_rchash_free(h, e->object);
+			// patchup pointers & free element if not head
+			if (e_prev) {
+				e_prev->next = e->next;
+				cf_free(e);
+			}
+			// am at head - more complicated
+			else {
+				// at head with no next - easy peasy!
+				if (0 == e->next) {
+					memset(e, 0, sizeof(cf_rchash_elem_v));
+				}
+				// at head with a next - more complicated
+				else {
+					cf_rchash_elem_v *_t = e->next;
+					memcpy(e, e->next, sizeof(cf_rchash_elem_v));
+					cf_free(_t);
+				}
+			}
+			h->elements--;
+			rv = CF_RCHASH_OK;
+			goto Out;
+
+		}
+		e_prev = e;
+		e = e->next;
+	}
+	rv = CF_RCHASH_ERR_NOTFOUND;
+
+Out:
+	if (l)	pthread_mutex_unlock(l);
+	return(rv);
+}
+
+int cf_rchash_delete_object_v(cf_rchash *h, void *key, uint32_t key_len, void *object) {
+	if ((h->key_len) &&  (h->key_len != key_len) ) return(CF_RCHASH_ERR);
+
+	// Calculate hash
+	uint hash = h->h_fn(key, key_len);
+	hash %= h->table_len;
+	int rv = CF_RCHASH_ERR;
+
+	pthread_mutex_t		*l = 0;
+	if (h->flags & CF_RCHASH_CR_MT_BIGLOCK) {
+		l = &h->biglock;
+	}
+	else if (h->flags & CF_RCHASH_CR_MT_MANYLOCK) {
+		l = & (h->lock_table[hash]);
+	}
+	if (l)     pthread_mutex_lock( l );
+
+	cf_rchash_elem_v *e = get_bucket_v(h, hash);
+
+	// If bucket empty, def can't delete
+	if ( ( e->next == 0 ) && (e->key_len == 0) ) {
+		rv = CF_RCHASH_ERR_NOTFOUND;
+		goto Out;
+	}
+
+	cf_rchash_elem_v *e_prev = 0;
+
+	// Look for the element and destroy if found
+	while (e) {
+
+#ifdef VALIDATE
+		cf_atomic_int_t rc;
+		if ((rc = cf_rc_count(e->object)) < 1) {
+			as_log_info("cf_rchash %p: internal bad reference count (%d) on %p", h, rc, e->object);
+			if (l)	pthread_mutex_unlock(l);
+			return(CF_RCHASH_ERR);
+		}
+#endif
+
+		if ( ( key_len == e->key_len ) &&
+			 ( memcmp(e->key, key, key_len) == 0 ) ) {
+			if ( e->object != object ) {
+				rv = CF_RCHASH_ERR_NOTFOUND;
+				goto Out;
+			}
 			// Found it, kill it
 			cf_free(e->key);
 			cf_rchash_free(h, e->object);

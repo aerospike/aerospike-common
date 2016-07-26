@@ -184,6 +184,11 @@ int cf_rchash_get(cf_rchash *h, void *key, uint32_t key_len, void **object);
 int cf_rchash_delete(cf_rchash *h, void *key, uint32_t key_len);
 
 /*
+** Remove a key with a specified object
+*/
+int cf_rchash_delete_object(cf_rchash *h, void *key, uint32_t key_len, void *object);
+
+/*
 ** Get the number of elements currently in the hash
 */
 uint32_t cf_rchash_get_size(cf_rchash *h);
