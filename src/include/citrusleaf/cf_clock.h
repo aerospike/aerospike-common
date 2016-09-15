@@ -21,7 +21,6 @@
 
 #ifdef __linux__
 #include <time.h>
-#include <bits/time.h>
 #endif
     
 #ifdef __APPLE__
