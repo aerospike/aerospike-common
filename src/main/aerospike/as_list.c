@@ -29,19 +29,18 @@
 #include <stdlib.h>
 
 /******************************************************************************
- *	FUNCTIONS
+ *	INSTANCE FUNCTIONS
  *****************************************************************************/
 
 /**
  *	Initialize an instance of as_list.
  *	This should only be called from subtypes of as_list during initialization.
  */
-as_list * as_list_cons(as_list * list, bool free, void * data, const as_list_hooks * hooks) 
+as_list * as_list_cons(as_list * list, bool free, const as_list_hooks * hooks)
 {
 	if ( !list ) return list;
 
 	as_val_cons((as_val *) list, AS_LIST, free);
-	list->data = data;
 	list->hooks = hooks;
 	return list;
 }
@@ -49,19 +48,19 @@ as_list * as_list_cons(as_list * list, bool free, void * data, const as_list_hoo
  *	Initialize an instance of as_list.
  *	This should only be called from subtypes of as_list during initialization.
  */
-as_list * as_list_init(as_list * list, void * data, const as_list_hooks * hooks) 
+as_list * as_list_init(as_list * list, const as_list_hooks * hooks) 
 {
-	return as_list_cons(list, false, data, hooks);
+	return as_list_cons(list, false, hooks);
 }
 
 /**
  *	Initialize an instance of as_list.
  *	This should only be called from subtypes of as_list during initialization.
  */
-as_list * as_list_new(void * data, const as_list_hooks * hooks) 
+as_list * as_list_new(const as_list_hooks * hooks) 
 {
 	as_list * list = (as_list *) cf_malloc(sizeof(as_list));
-	return as_list_cons(list, true, data, hooks);
+	return as_list_cons(list, true, hooks);
 }
 
 /******************************************************************************

@@ -42,7 +42,7 @@ as_arraylist * as_arraylist_init(as_arraylist * list, uint32_t capacity, uint32_
 {
 	if ( !list ) return list;
 
-	as_list_cons((as_list *) list, false, NULL, &as_arraylist_list_hooks);
+	as_list_cons((as_list *) list, false, &as_arraylist_list_hooks);
 	list->block_size = block_size;
 	list->capacity = capacity;
 	list->size = 0;
@@ -67,7 +67,7 @@ as_arraylist * as_arraylist_new(uint32_t capacity, uint32_t block_size)
 	as_arraylist * list = (as_arraylist *) cf_malloc(sizeof(as_arraylist));
 	if ( !list ) return list;
 
-	as_list_cons((as_list *) list, true, NULL, &as_arraylist_list_hooks);
+	as_list_cons((as_list *) list, true, &as_arraylist_list_hooks);
 	list->block_size = block_size;
 	list->capacity = capacity;
 	list->size = 0;
