@@ -70,11 +70,6 @@ typedef struct as_list_s {
 	as_val _;
 
 	/**
-	 *	Pointer to the data for this list.
-	 */
-	void * data;
-
-	/**
 	 * Hooks for subtypes of as_list to implement.
 	 */
 	const struct as_list_hooks_s * hooks;
@@ -475,36 +470,33 @@ typedef struct as_list_hooks_s {
  *
  *	@param list		The list to initialize.
  *	@param free		If true, then as_list_destroy() will free the list.
- *	@param data		Data for the list.
  *	@param hooks	Implementaton for the list interface.
  *
  *	@return On success, the initialized list. Otherwise NULL.
  *	@relatesalso as_list
  */
-as_list * as_list_cons(as_list * list, bool free, void * data, const as_list_hooks * hooks);
+as_list * as_list_cons(as_list * list, bool free, const as_list_hooks * hooks);
 
 /**
  *	Initialize a stack allocated list.
  *	
  *	@param list		Stack allocated list to initialize.
- *	@param data		Data for the list.
  *	@param hooks	Implementaton for the list interface.
  *	
  *	@return On succes, the initialized list. Otherwise NULL.
  *	@relatesalso as_list
  */
-as_list * as_list_init(as_list * list, void * data, const as_list_hooks * hooks);
+as_list * as_list_init(as_list * list, const as_list_hooks * hooks);
 
 /**
  *	Create and initialize a new heap allocated list.
  *	
- *	@param data		Data for the list.
  *	@param hooks	Implementaton for the list interface.
  *	
  *	@return On succes, a new list. Otherwise NULL.
  *	@relatesalso as_list
  */
-as_list * as_list_new(void * data, const as_list_hooks * hooks);
+as_list * as_list_new(const as_list_hooks * hooks);
 
 /**
  *	Destroy the list and associated resources.
