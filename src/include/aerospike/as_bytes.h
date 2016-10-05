@@ -297,9 +297,9 @@ typedef struct as_bytes_s {
 	as_bytes_init(__bytes, 0);\
 	(__bytes)->type = AS_BYTES_BLOB;\
 	(__bytes)->free = false;\
-	(__bytes)->capacity = __capacity;\
+	(__bytes)->capacity = (__capacity);\
 	(__bytes)->size = 0;\
-	(__bytes)->value = (uint8_t *) alloca(__capacity * sizeof(uint8_t));
+	(__bytes)->value = (uint8_t*) alloca(sizeof(uint8_t) * (__capacity));
 
 
 /******************************************************************************
