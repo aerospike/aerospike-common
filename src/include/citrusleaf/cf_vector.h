@@ -120,6 +120,8 @@ extern int cf_vector_append(cf_vector *v, void *value);
  */
 extern int cf_vector_append_unique(cf_vector *v, void *value);
 
+extern int cf_vector_pop(cf_vector *v, void *value);
+
 /**
  * Deletes an element by moving all the remaining elements down by one
  */

@@ -208,6 +208,29 @@ Found:
 	return(rv);
 }
 
+int cf_vector_pop(cf_vector *v, void *value)
+{
+	if (v->flags & VECTOR_FLAG_BIGLOCK) {
+		VECTOR_LOCK(v);
+	}
+
+	int rv = 0;
+
+	if (v->len != 0) {
+		v->len--;
+		memcpy(value, v->vector + v->len * v->value_len, v->value_len);
+	}
+	else {
+		rv = -1;
+	}
+
+	if (v->flags & VECTOR_FLAG_BIGLOCK) {
+		VECTOR_UNLOCK(v);
+	}
+
+	return rv;
+}
+
 // Copy the vector element into the pointer I give
 
 int cf_vector_get(cf_vector *v, uint32_t index, void *value_p) {
