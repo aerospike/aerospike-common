@@ -106,7 +106,7 @@ int cf_queue_push_head(cf_queue *q, const void *ptr);
 /**
  * Pops from the head of the queue.
  */
-int cf_queue_pop(cf_queue *q, void *buf, int mswait);
+int cf_queue_pop(cf_queue *q, void *buf, int ms_wait);
 
 /**
  * Run the entire queue, calling the callback, with the lock held.
@@ -118,14 +118,14 @@ int cf_queue_pop(cf_queue *q, void *buf, int mswait);
 int cf_queue_reduce(cf_queue *q, cf_queue_reduce_fn cb, void *udata);
 
 /**
- * Find an element to pop from the queue via a reduce callback function.
+ * Find best element to pop from the queue via a reduce callback function.
  *
  * return  0 from the callback to keep iterating
  * return -1 from the callback to pop and stop iterating
  * return -2 from the callback if the element is the best to pop so far, but you
  * want to keep looking
  */
-int cf_queue_reduce_pop(cf_queue *q, void *buf, cf_queue_reduce_fn cb, void *udata);
+int cf_queue_reduce_pop(cf_queue *q, void *buf, int ms_wait, cf_queue_reduce_fn cb, void *udata);
 
 /**
  * Same as cf_queue_reduce() but run the queue from the tail.

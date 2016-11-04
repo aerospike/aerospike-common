@@ -23,7 +23,8 @@
  ******************************************************************************/
 
 bool
-cf_queue_init(cf_queue* q, size_t element_sz, uint32_t capacity, bool threadsafe)
+cf_queue_init(cf_queue *q, size_t element_sz, uint32_t capacity,
+		bool threadsafe)
 {
 	q->alloc_sz = capacity;
 	q->write_offset = q->read_offset = 0;
@@ -55,7 +56,8 @@ cf_queue_init(cf_queue* q, size_t element_sz, uint32_t capacity, bool threadsafe
 	return true;
 }
 
-cf_queue *cf_queue_create(size_t element_sz, bool threadsafe)
+cf_queue *
+cf_queue_create(size_t element_sz, bool threadsafe)
 {
 	cf_queue *q = (cf_queue*)cf_malloc(sizeof(cf_queue));
 
@@ -73,7 +75,8 @@ cf_queue *cf_queue_create(size_t element_sz, bool threadsafe)
 	return q;
 }
 
-void cf_queue_destroy(cf_queue *q)
+void
+cf_queue_destroy(cf_queue *q)
 {
 	if (q->threadsafe) {
 		pthread_cond_destroy(&q->CV);
@@ -89,21 +92,24 @@ void cf_queue_destroy(cf_queue *q)
 	}
 }
 
-static inline void cf_queue_lock(cf_queue *q)
+static inline void
+cf_queue_lock(cf_queue *q)
 {
 	if (q->threadsafe) {
 		pthread_mutex_lock(&q->LOCK);
 	}
 }
 
-static inline void cf_queue_unlock(cf_queue *q)
+static inline void
+cf_queue_unlock(cf_queue *q)
 {
 	if (q->threadsafe) {
 		pthread_mutex_unlock(&q->LOCK);
 	}
 }
 
-int cf_queue_sz(cf_queue *q)
+int
+cf_queue_sz(cf_queue *q)
 {
 	cf_queue_lock(q);
 	int rv = CF_Q_SZ(q);
@@ -116,7 +122,8 @@ int cf_queue_sz(cf_queue *q)
 // Internal function. Call with new size with lock held. This function only
 // works on full queues.
 //
-static int cf_queue_resize(cf_queue *q, uint32_t new_sz)
+static int
+cf_queue_resize(cf_queue *q, uint32_t new_sz)
 {
 	// Check if queue is not full.
 	if (CF_Q_SZ(q) != q->alloc_sz) {
@@ -143,10 +150,12 @@ static int cf_queue_resize(cf_queue *q, uint32_t new_sz)
 		}
 
 		// end_sz is used bytes in old queue from insert point to end.
-		size_t end_sz = (q->alloc_sz - (q->read_offset % q->alloc_sz)) * q->element_sz;
+		size_t end_sz =
+				(q->alloc_sz - (q->read_offset % q->alloc_sz)) * q->element_sz;
 
 		memcpy(&newq[0], CF_Q_ELEM_PTR(q, q->read_offset), end_sz);
-		memcpy(&newq[end_sz], &q->elements[0], (q->alloc_sz * q->element_sz) - end_sz);
+		memcpy(&newq[end_sz], &q->elements[0],
+				(q->alloc_sz * q->element_sz) - end_sz);
 
 		cf_free(q->elements);
 		q->elements = newq;
@@ -165,7 +174,8 @@ static int cf_queue_resize(cf_queue *q, uint32_t new_sz)
 // expect this will never get called, however it can be a symptom of a queue
 // getting really, really deep.
 //
-static inline void cf_queue_unwrap(cf_queue *q)
+static inline void
+cf_queue_unwrap(cf_queue *q)
 {
 	if ((q->write_offset & 0xC0000000) != 0) {
 		int sz = CF_Q_SZ(q);
@@ -175,7 +185,8 @@ static inline void cf_queue_unwrap(cf_queue *q)
 	}
 }
 
-int cf_queue_push(cf_queue *q, const void *ptr)
+int
+cf_queue_push(cf_queue *q, const void *ptr)
 {
 	cf_queue_lock(q);
 
@@ -203,7 +214,8 @@ int cf_queue_push(cf_queue *q, const void *ptr)
 //
 // Push element on the queue only if size < limit.
 //
-bool cf_queue_push_limit(cf_queue *q, const void *ptr, uint32_t limit)
+bool
+cf_queue_push_limit(cf_queue *q, const void *ptr, uint32_t limit)
 {
 	cf_queue_lock(q);
 
@@ -237,7 +249,8 @@ bool cf_queue_push_limit(cf_queue *q, const void *ptr, uint32_t limit)
 //
 // Same as cf_queue_push() except it's a no-op if element is already queued.
 //
-int cf_queue_push_unique(cf_queue *q, const void *ptr)
+int
+cf_queue_push_unique(cf_queue *q, const void *ptr)
 {
 	cf_queue_lock(q);
 
@@ -276,7 +289,8 @@ int cf_queue_push_unique(cf_queue *q, const void *ptr)
 //
 // Push to the front of the queue.
 //
-int cf_queue_push_head(cf_queue *q, const void *ptr)
+int
+cf_queue_push_head(cf_queue *q, const void *ptr)
 {
 	cf_queue_lock(q);
 
@@ -300,7 +314,8 @@ int cf_queue_push_head(cf_queue *q, const void *ptr)
 	// Hard case, we're going to have to shift everything back.
 	// TODO - we can do better than this...
 	else {
-		memmove(CF_Q_ELEM_PTR(q, 1), CF_Q_ELEM_PTR(q, 0), q->element_sz * CF_Q_SZ(q));
+		memmove(CF_Q_ELEM_PTR(q, 1), CF_Q_ELEM_PTR(q, 0),
+				q->element_sz * CF_Q_SZ(q));
 		memcpy(CF_Q_ELEM_PTR(q, 0), ptr, q->element_sz);
 		q->write_offset++;
 	}
@@ -320,15 +335,16 @@ int cf_queue_push_head(cf_queue *q, const void *ptr)
 // If ms_wait = 0, don't wait at all.
 // If ms_wait > 0, wait that number of milliseconds.
 //
-int cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
+int
+cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 {
-	cf_queue_lock(q);
-
 	struct timespec tp;
 
 	if (ms_wait > 0) {
 		cf_set_wait_timespec(ms_wait, &tp);
 	}
+
+	cf_queue_lock(q);
 
 	if (q->threadsafe) {
 
@@ -371,7 +387,8 @@ int cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 	return CF_QUEUE_OK;
 }
 
-void cf_queue_delete_offset(cf_queue *q, uint32_t index)
+void
+cf_queue_delete_offset(cf_queue *q, uint32_t index)
 {
 	index %= q->alloc_sz;
 
@@ -413,7 +430,8 @@ void cf_queue_delete_offset(cf_queue *q, uint32_t index)
 //
 // Iterate over all queue members, calling the callback.
 //
-int cf_queue_reduce(cf_queue *q, cf_queue_reduce_fn cb, void *udata)
+int
+cf_queue_reduce(cf_queue *q, cf_queue_reduce_fn cb, void *udata)
 {
 	cf_queue_lock(q);
 
@@ -446,16 +464,48 @@ int cf_queue_reduce(cf_queue *q, cf_queue_reduce_fn cb, void *udata)
 // Iterate over all queue members, calling the callback. Pop element (or not)
 // based on callback return value.
 //
-int cf_queue_reduce_pop(cf_queue *q, void *buf, cf_queue_reduce_fn cb, void *udata)
+int
+cf_queue_reduce_pop(cf_queue *q, void *buf, int ms_wait, cf_queue_reduce_fn cb,
+		void *udata)
 {
-	cf_queue_lock(q);
+	struct timespec tp;
 
-	if (CF_Q_SZ(q) == 0) {
-		cf_queue_unlock(q);
-		return CF_QUEUE_NOMATCH;
+	if (ms_wait > 0) {
+		cf_set_wait_timespec(ms_wait, &tp);
 	}
 
-	int found_index = -1;
+	cf_queue_lock(q);
+
+	if (q->threadsafe) {
+
+		// Note that we have to use a while() loop. The pthread_cond_signal()
+		// documentation says that AT LEAST ONE waiting thread will be awakened.
+		// If more than one are awakened, the first will get the popped element,
+		// others will find the queue empty and go back to waiting.
+
+		while (CF_Q_EMPTY(q)) {
+			if (CF_QUEUE_FOREVER == ms_wait) {
+				pthread_cond_wait(&q->CV, &q->LOCK);
+			}
+			else if (CF_QUEUE_NOWAIT == ms_wait) {
+				pthread_mutex_unlock(&q->LOCK);
+				return CF_QUEUE_EMPTY;
+			}
+			else {
+				pthread_cond_timedwait(&q->CV, &q->LOCK, &tp);
+
+				if (CF_Q_EMPTY(q)) {
+					pthread_mutex_unlock(&q->LOCK);
+					return CF_QUEUE_EMPTY;
+				}
+			}
+		}
+	}
+	else if (CF_Q_EMPTY(q)) {
+		return CF_QUEUE_EMPTY;
+	}
+
+	uint32_t best_index = q->read_offset;
 
 	for (uint32_t i = q->read_offset; i < q->write_offset; i++) {
 		int rv = cb(CF_Q_ELEM_PTR(q, i), udata);
@@ -466,30 +516,29 @@ int cf_queue_reduce_pop(cf_queue *q, void *buf, cf_queue_reduce_fn cb, void *uda
 
 		if (rv == -1) {
 			// Found what it was looking for, so break.
-			found_index = i;
+			best_index = i;
 			break;
 		}
 
 		if (rv == -2) {
 			// Found new candidate, but keep looking for a better one.
-			found_index = i;
+			best_index = i;
 		}
 	}
 
-	if (found_index >= 0) {
-		// Found an element, so copy to 'buf', delete from q.
-		memcpy(buf, CF_Q_ELEM_PTR(q, found_index), q->element_sz);
-		cf_queue_delete_offset(q, found_index);
-	}
+	memcpy(buf, CF_Q_ELEM_PTR(q, best_index), q->element_sz);
+	cf_queue_delete_offset(q, best_index);
 
 	cf_queue_unlock(q);
-	return found_index >= 0 ? CF_QUEUE_OK : CF_QUEUE_NOMATCH;
+
+	return CF_QUEUE_OK;
 }
 
 //
 // Iterate over all queue members starting from the tail, calling the callback.
 //
-int cf_queue_reduce_reverse(cf_queue *q, cf_queue_reduce_fn cb, void *udata)
+int
+cf_queue_reduce_reverse(cf_queue *q, cf_queue_reduce_fn cb, void *udata)
 {
 	cf_queue_lock(q);
 
@@ -522,7 +571,8 @@ int cf_queue_reduce_reverse(cf_queue *q, cf_queue_reduce_fn cb, void *udata)
 // Delete element(s) from the queue. Pass 'only_one' as true if there can be
 // only one element with this value on the queue.
 //
-int cf_queue_delete(cf_queue *q, const void *ptr, bool only_one)
+int
+cf_queue_delete(cf_queue *q, const void *ptr, bool only_one)
 {
 	cf_queue_lock(q);
 
@@ -552,6 +602,8 @@ int cf_queue_delete(cf_queue *q, const void *ptr, bool only_one)
 	return found ? CF_QUEUE_OK : CF_QUEUE_EMPTY;
 }
 
-int cf_queue_delete_all(cf_queue *q) {
+int
+cf_queue_delete_all(cf_queue *q)
+{
 	return cf_queue_delete(q, NULL, false);
 }
