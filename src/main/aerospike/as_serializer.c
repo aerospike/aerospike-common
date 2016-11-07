@@ -21,32 +21,33 @@
  * FUNCTIONS
  *****************************************************************************/
 
-as_serializer * as_serializer_cons(as_serializer * serializer, bool free, void * data, const as_serializer_hooks * hooks) 
+as_serializer *as_serializer_cons(as_serializer *serializer, bool free, const as_serializer_hooks *hooks)
 {
-	if ( !serializer ) return serializer;
+	if (! serializer) {
+		return serializer;
+	}
 
-    serializer->free = false;
-    serializer->data = data;
-    serializer->hooks = hooks;
-    return serializer;
+	serializer->free = false;
+	serializer->hooks = hooks;
+	serializer->convert_nulls = false;
+
+	return serializer;
 }
 
-as_serializer * as_serializer_init(as_serializer * serializer, void * data, const as_serializer_hooks * hooks) 
+as_serializer *as_serializer_init(as_serializer *serializer, const as_serializer_hooks *hooks)
 {
-    return as_serializer_cons(serializer, false, data, hooks);
+	return as_serializer_cons(serializer, false, hooks);
 }
 
-as_serializer * as_serializer_new(void * data, const as_serializer_hooks * hooks)
+as_serializer *as_serializer_new(const as_serializer_hooks *hooks)
 {
-    as_serializer * serializer = (as_serializer *) cf_malloc(sizeof(as_serializer));
-    return as_serializer_cons(serializer, true, data, hooks);
+	as_serializer *serializer = (as_serializer *)cf_malloc(sizeof(as_serializer));
+	return as_serializer_cons(serializer, true, hooks);
 }
 
-void as_serializer_destroy(as_serializer * serializer)
+void as_serializer_destroy(as_serializer *serializer)
 {
-    if ( serializer->free ) {
-    	cf_free(serializer);
-    }
+	if (serializer->free) {
+		cf_free(serializer);
+	}
 }
-
-

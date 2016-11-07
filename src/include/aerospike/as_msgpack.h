@@ -42,6 +42,7 @@ typedef struct as_packer {
 	unsigned char *buffer;
 	int offset;
 	int capacity;
+	bool convert_nulls;
 } as_packer;
 
 typedef struct as_unpacker {

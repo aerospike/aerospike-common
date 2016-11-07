@@ -24,55 +24,67 @@
  *****************************************************************************/
 
 static void     as_msgpack_serializer_destroy(as_serializer *);
-static int      as_msgpack_serializer_serialize(as_serializer *, as_val *, as_buffer *);
+static int      as_msgpack_serializer_serialize(as_serializer *, const as_val *, as_buffer *);
 static int32_t	as_msgpack_serializer_serialize_presized(as_serializer *, const as_val *, uint8_t *);
 static int      as_msgpack_serializer_deserialize(as_serializer *, as_buffer *, as_val **);
-static uint32_t as_msgpack_serializer_serialize_getsize(as_serializer *, as_val *);
+static uint32_t as_msgpack_serializer_serialize_getsize(as_serializer *, const as_val *);
 
 /******************************************************************************
  * VARIABLES
  *****************************************************************************/
 
 static const as_serializer_hooks as_msgpack_serializer_hooks = {
-    .destroy           = as_msgpack_serializer_destroy,
-    .serialize         = as_msgpack_serializer_serialize,
-	.serialize_presized= as_msgpack_serializer_serialize_presized,
-    .deserialize       = as_msgpack_serializer_deserialize,
-    .serialize_getsize = as_msgpack_serializer_serialize_getsize,
+		.destroy           = as_msgpack_serializer_destroy,
+		.serialize         = as_msgpack_serializer_serialize,
+		.serialize_presized= as_msgpack_serializer_serialize_presized,
+		.deserialize       = as_msgpack_serializer_deserialize,
+		.serialize_getsize = as_msgpack_serializer_serialize_getsize,
 };
 
 /******************************************************************************
  * FUNCTIONS
  *****************************************************************************/
 
-as_serializer * as_msgpack_new() {
-    return as_serializer_new(NULL, &as_msgpack_serializer_hooks);
+as_serializer *as_msgpack_new()
+{
+	return as_serializer_new(&as_msgpack_serializer_hooks);
 }
 
-as_serializer * as_msgpack_init(as_serializer * s) {
-    as_serializer_init(s, NULL, &as_msgpack_serializer_hooks);
-    return s;
+as_serializer *as_msgpack_init(as_serializer *s)
+{
+	as_serializer_init(s, &as_msgpack_serializer_hooks);
+	return s;
+}
+
+void as_msgpack_set_convert_nulls(as_serializer *s, bool convert_nulls)
+{
+	s->convert_nulls = convert_nulls;
 }
 
 /******************************************************************************
  * STATIC FUNCTIONS
  *****************************************************************************/
 
-static void as_msgpack_serializer_destroy(as_serializer * s) {
-    return;
+static void as_msgpack_serializer_destroy(as_serializer *s)
+{
+	return;
 }
 
-static uint32_t as_msgpack_serializer_serialize_getsize(as_serializer * s, as_val * v) {
-	as_packer packer;
-	// No buffer means the request is for size
-	packer.buffer   = NULL;
-	packer.capacity = 0;
-	packer.offset   = 0;
-	packer.head     = 0;
-	packer.tail     = 0;
-	int rc = as_pack_val(&packer, v);
-	if (rc)
+static uint32_t as_msgpack_serializer_serialize_getsize(as_serializer *s, const as_val *v)
+{
+	as_packer packer = {
+			.buffer   = NULL,	// no buffer means the request is for size
+			.capacity = 0,
+			.offset   = 0,
+			.head     = 0,
+			.tail     = 0,
+			.convert_nulls = s->convert_nulls,
+	};
+
+	if (as_pack_val(&packer, v) != 0) {
 		return 0;
+	}
+
 	return packer.offset;
 }
 
@@ -86,6 +98,7 @@ static int32_t as_msgpack_serializer_serialize_presized(as_serializer *s, const 
 		.offset = 0,
 		.head = 0,
 		.tail = 0,
+		.convert_nulls = s->convert_nulls,
 	};
 
 	if (as_pack_val(&packer, v) != 0) {
@@ -95,25 +108,28 @@ static int32_t as_msgpack_serializer_serialize_presized(as_serializer *s, const 
 	return packer.offset;
 }
 
-static int as_msgpack_serializer_serialize(as_serializer * s, as_val * v, as_buffer * buff) {
-	as_packer packer;
-	packer.buffer = (unsigned char *) cf_malloc(AS_PACKER_BUFFER_SIZE);
-	packer.capacity = AS_PACKER_BUFFER_SIZE;
-	packer.offset = 0;
-	packer.head = 0;
-	packer.tail = 0;
-	
+static int as_msgpack_serializer_serialize(as_serializer *s, const as_val *v, as_buffer *buff)
+{
+	as_packer packer = {
+			.buffer = (unsigned char *)cf_malloc(AS_PACKER_BUFFER_SIZE),
+			.capacity = AS_PACKER_BUFFER_SIZE,
+			.offset = 0,
+			.head = 0,
+			.tail = 0,
+			.convert_nulls = s->convert_nulls,
+	};
+
 	if (! packer.buffer) {
 		return 1;
 	}
-	
+
     int rc = as_pack_val(&packer, v);
 	
-	if (rc) {
+	if (rc != 0) {
 		// Cleanup buffers on error.
-		as_packer_buffer * p = packer.head;
-		as_packer_buffer * tmp;
-		
+		as_packer_buffer *p = packer.head;
+		as_packer_buffer *tmp;
+
 		while (p) {
 			tmp = p;
 			p = p->next;
@@ -122,7 +138,7 @@ static int as_msgpack_serializer_serialize(as_serializer * s, as_val * v, as_buf
 			cf_free(tmp->buffer);
 			cf_free(tmp);
 		}
-		
+
 		// Free main buffer.
 		cf_free(packer.buffer);
 		return rc;
@@ -130,35 +146,35 @@ static int as_msgpack_serializer_serialize(as_serializer * s, as_val * v, as_buf
 
 	if (packer.head) {
 		// Combine buffers into a single contiguous buffer.
-		as_packer_buffer * p = packer.head;
+		as_packer_buffer *p = packer.head;
 		int size = packer.offset;
-		
+
 		while (p) {
 			size += p->length;
 			p = p->next;
 		}
-		
-		unsigned char * target = (unsigned char *) cf_malloc(size);
+
+		unsigned char *target = (unsigned char *)cf_malloc(size);
 		p = packer.head;
 		int offset = 0;
-		
+
 		while (p) {
 			memcpy(target + offset, p->buffer, p->length);
 			offset += p->length;
 			
-			as_packer_buffer * tmp = p;
+			as_packer_buffer *tmp = p;
 			p = p->next;
 			
 			// Free original buffer entry.
 			cf_free(tmp->buffer);
 			cf_free(tmp);
 		}
-		
+
 		memcpy(target + offset, packer.buffer, packer.offset);
-		
+
 		// Free original main buffer.
 		cf_free(packer.buffer);
-		
+
 		// Transfer new buffer.
 		buff->data = target;
 		buff->size = size;
@@ -173,12 +189,13 @@ static int as_msgpack_serializer_serialize(as_serializer * s, as_val * v, as_buf
 	return 0;
 }
 
-static int as_msgpack_serializer_deserialize(as_serializer * s, as_buffer * buff, as_val ** v) {
-	
-	as_unpacker unpacker;
-	unpacker.buffer = buff->data;
-	unpacker.length = buff->size;
-	unpacker.offset = 0;
-	
+static int as_msgpack_serializer_deserialize(as_serializer *s, as_buffer *buff, as_val **v)
+{
+	as_unpacker unpacker = {
+			.buffer = buff->data,
+			.length = buff->size,
+			.offset = 0,
+	};
+
 	return as_unpack_val(&unpacker, v);
 }
