@@ -97,6 +97,7 @@ AEROSPIKE-OBJECTS += as_timer.o
 AEROSPIKE-OBJECTS += as_val.o
 AEROSPIKE-OBJECTS += as_vector.o
 AEROSPIKE-OBJECTS += crypt_blowfish.o
+AEROSPIKE-OBJECTS += ssl_util.o
 
 CITRUSLEAF-OBJECTS =
 CITRUSLEAF-OBJECTS += cf_alloc.o
