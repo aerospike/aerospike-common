@@ -27,7 +27,7 @@ as_serializer *as_serializer_cons(as_serializer *serializer, bool free, const as
 		return serializer;
 	}
 
-	serializer->free = false;
+	serializer->free = free;
 	serializer->hooks = hooks;
 	serializer->convert_nulls = false;
 
