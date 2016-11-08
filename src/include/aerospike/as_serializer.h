@@ -14,7 +14,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 #pragma once
 
 #include <aerospike/as_util.h>
@@ -37,45 +36,41 @@ struct as_serializer_hooks_s;
  * Serializer Object
  */
 typedef struct as_serializer_s {
-
 	/**
 	 *	@private
 	 *	If true, then as_serializer_destroy() will free this.
 	 */
-    bool free;
+	bool free;
 
-    /**
-     *	Data for the serializer.
-     */
-    void * data;
+	// Convert nulls to nils on pack.
+	bool convert_nulls;
 
-    /**
-     *	Hooks for the serializer
-     */
-    const struct as_serializer_hooks_s * hooks;
-    
+	/**
+	 *	Hooks for the serializer
+	 */
+	const struct as_serializer_hooks_s *hooks;
 } as_serializer;
 
 /**
  * Serializer Function Hooks
  */
 typedef struct as_serializer_hooks_s {
-    void    (* destroy)(as_serializer *);
-    int     (* serialize)(as_serializer *, as_val *, as_buffer *);
-    int32_t (* serialize_presized)(as_serializer *, const as_val *, uint8_t *);
-    int     (* deserialize)(as_serializer *, as_buffer *, as_val **);
-    uint32_t (* serialize_getsize)(as_serializer *, as_val *);
+	void     (*destroy)(as_serializer *);
+	int      (*serialize)(as_serializer *, const as_val *, as_buffer *);
+	int32_t  (*serialize_presized)(as_serializer *, const as_val *, uint8_t *);
+	int      (*deserialize)(as_serializer *, as_buffer *, as_val **);
+	uint32_t (*serialize_getsize)(as_serializer *, const as_val *);
 } as_serializer_hooks;
 
 /******************************************************************************
  * FUNCTIONS
  *****************************************************************************/
 
-as_serializer * as_serializer_cons(as_serializer * serializer, bool free, void * data, const as_serializer_hooks * hooks);
+as_serializer *as_serializer_cons(as_serializer *serializer, bool free, const as_serializer_hooks *hooks);
 
-as_serializer * as_serializer_init(as_serializer * serializer, void * data, const as_serializer_hooks * hooks);
+as_serializer *as_serializer_init(as_serializer *serializer, const as_serializer_hooks *hooks);
 
-as_serializer * as_serializer_new(void * data, const as_serializer_hooks *);
+as_serializer *as_serializer_new(const as_serializer_hooks *);
 
 void as_serializer_destroy(as_serializer *);
 
@@ -83,9 +78,9 @@ void as_serializer_destroy(as_serializer *);
  * INLINE FUNCTIONS
  *****************************************************************************/
 
-static inline int as_serializer_serialize(as_serializer * serializer, as_val * val, as_buffer * buffer)
+static inline int as_serializer_serialize(as_serializer *serializer, as_val *val, as_buffer *buffer)
 {
-    return as_util_hook(serialize, 1, serializer, val, buffer);
+	return as_util_hook(serialize, 1, serializer, val, buffer);
 }
 
 /**
@@ -93,19 +88,19 @@ static inline int as_serializer_serialize(as_serializer * serializer, as_val * v
  * @return -1 if failed
  * @return length of unpacked buffer
  */
-static inline int32_t as_serializer_serialize_presized(as_serializer * serializer, const as_val * val, uint8_t * buf)
+static inline int32_t as_serializer_serialize_presized(as_serializer *serializer, const as_val *val, uint8_t *buf)
 {
-    return as_util_hook(serialize_presized, 1, serializer, val, buf);
+	return as_util_hook(serialize_presized, 1, serializer, val, buf);
 }
 
-static inline int as_serializer_deserialize(as_serializer * serializer, as_buffer * buffer, as_val ** val) 
+static inline int as_serializer_deserialize(as_serializer *serializer, as_buffer *buffer, as_val **val)
 {
-    return as_util_hook(deserialize, 1, serializer, buffer, val);
+	return as_util_hook(deserialize, 1, serializer, buffer, val);
 }
 
-static inline uint32_t as_serializer_serialize_getsize(as_serializer * serializer, as_val * val)
+static inline uint32_t as_serializer_serialize_getsize(as_serializer *serializer, as_val *val)
 {
-    return as_util_hook(serialize_getsize, 1, serializer, val);
+	return as_util_hook(serialize_getsize, 1, serializer, val);
 }
 
 #ifdef __cplusplus

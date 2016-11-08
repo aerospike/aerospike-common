@@ -348,7 +348,7 @@ static inline int as_pack_int64(as_packer *pk, unsigned char type, uint64_t val,
 			}
 		}
 		uint64_t swapped = cf_swap_to_be64(val);
-		unsigned char* p = pk->buffer + pk->offset;
+		unsigned char *p = pk->buffer + pk->offset;
 		*p++ = type;
 		memcpy(p, &swapped, 8);
 	}
@@ -356,12 +356,12 @@ static inline int as_pack_int64(as_packer *pk, unsigned char type, uint64_t val,
 	return 0;
 }
 
-static inline int as_pack_boolean(as_packer *pk, as_boolean *b)
+static inline int as_pack_boolean(as_packer *pk, const as_boolean *b)
 {
 	return as_pack_byte(pk, (as_boolean_get(b) == true)? 0xc3 : 0xc2, true);
 }
 
-static int as_pack_integer(as_packer *pk, as_integer *i)
+static int as_pack_integer(as_packer *pk, const as_integer *i)
 {
 	int64_t val = as_integer_get(i);
 	
@@ -403,7 +403,7 @@ static int as_pack_integer(as_packer *pk, as_integer *i)
 	}
 }
 
-static inline int as_pack_double(as_packer *pk, as_double *d)
+static inline int as_pack_double(as_packer *pk, const as_double *d)
 {
 	double val = as_double_get(d);
 	return as_pack_int64(pk, 0xcb, *(uint64_t *)&val, true);
@@ -484,7 +484,7 @@ static int as_pack_geojson(as_packer *pk, as_geojson *s)
 	return rc;
 }
 
-static int as_pack_bytes(as_packer *pk, as_bytes *b)
+static int as_pack_bytes(as_packer *pk, const as_bytes *b)
 {
 	int rc = as_pack_byte_array_header(pk, b->size, b->type);
 	
@@ -504,7 +504,7 @@ static int as_pack_list(as_packer *pk, as_list *l)
 {
 	uint32_t size = as_list_size(l);
 	int rc;
-	
+
 	if (size < 16) {
 		rc = as_pack_byte(pk, (uint8_t)(0x90 | size), true);
 	}
@@ -513,7 +513,7 @@ static int as_pack_list(as_packer *pk, as_list *l)
 	} else {
 		rc = as_pack_int32(pk, 0xdd, size, true);
 	}
-				
+
 	if (rc == 0) {
 		rc = as_list_foreach(l, as_pack_list_foreach, pk) == true ? 0 : 1;
 	}
@@ -531,7 +531,7 @@ static bool as_pack_map_foreach(const as_val *key, const as_val *val, void *udat
 	return rc == 0;
 }
 
-static int as_pack_map(as_packer *pk, as_map *m)
+static int as_pack_map(as_packer *pk, const as_map *m)
 {
 	uint32_t size = as_map_size(m);
 	int rc;
@@ -550,7 +550,7 @@ static int as_pack_map(as_packer *pk, as_map *m)
 	return rc;
 }
 
-static int as_pack_rec(as_packer *pk, as_rec *r)
+static int as_pack_rec(as_packer *pk, const as_rec *r)
 {
 	return 1;
 }
@@ -575,41 +575,45 @@ int as_pack_val(as_packer *pk, const as_val *val)
 	int rc = 0;
 
 	if (val == NULL) {
+		if (pk->convert_nulls) {
+			return as_pack_val(pk, &as_nil);
+		}
 		rc = 1;
 	}
 	else {	
+		// TODO - Make all of these const.
 		switch (as_val_type(val)) {
-			case AS_NIL : 
+			case AS_NIL:
 				rc = as_pack_byte(pk, 0xc0, true);
 				break;
-			case AS_BOOLEAN : 
-				rc = as_pack_boolean(pk, (as_boolean *)val);
+			case AS_BOOLEAN:
+				rc = as_pack_boolean(pk, (const as_boolean *)val);
 				break;
-			case AS_INTEGER : 
-				rc = as_pack_integer(pk, (as_integer *)val);
+			case AS_INTEGER:
+				rc = as_pack_integer(pk, (const as_integer *)val);
 				break;
-			case AS_DOUBLE :
-				rc = as_pack_double(pk, (as_double *)val);
+			case AS_DOUBLE:
+				rc = as_pack_double(pk, (const as_double *)val);
 				break;
-			case AS_STRING :
+			case AS_STRING:
 				rc = as_pack_string(pk, (as_string *)val);
 				break;
-			case AS_BYTES : 
-				rc = as_pack_bytes(pk, (as_bytes *)val);
+			case AS_BYTES:
+				rc = as_pack_bytes(pk, (const as_bytes *)val);
 				break;
-			case AS_LIST : 
+			case AS_LIST:
 				rc = as_pack_list(pk, (as_list *)val);
 				break;
-			case AS_MAP : 
-				rc = as_pack_map(pk, (as_map *)val);
+			case AS_MAP:
+				rc = as_pack_map(pk, (const as_map *)val);
 				break;
-			case AS_REC : 
-				rc = as_pack_rec(pk, (as_rec *)val);
+			case AS_REC:
+				rc = as_pack_rec(pk, (const as_rec *)val);
 				break;
-			case AS_PAIR : 
+			case AS_PAIR:
 				rc = as_pack_pair(pk, (as_pair *)val);
 				break;
-			case AS_GEOJSON : 
+			case AS_GEOJSON:
 				rc = as_pack_geojson(pk, (as_geojson *)val);
 				break;
 			default : 
@@ -699,11 +703,11 @@ static int as_unpack_blob(as_unpacker *pk, int size, as_val **val)
 	}
 
 	if (type == AS_BYTES_STRING) {
-		char* v = cf_strndup((const char *)pk->buffer + pk->offset, size);
+		char *v = cf_strndup((const char *)pk->buffer + pk->offset, size);
 		*val = (as_val*) as_string_new(v, true);
 	}
 	else if (type == AS_BYTES_GEOJSON) {
-		char* v = cf_strndup((const char *)pk->buffer + pk->offset, size);
+		char *v = cf_strndup((const char *)pk->buffer + pk->offset, size);
 		*val = (as_val *)as_geojson_new(v, true);
 	}
 	else {
@@ -2064,6 +2068,8 @@ static inline msgpack_compare_t msgpack_peek_compare_type(const as_unpacker *pk1
 	int n1 = pk1->length - pk1->offset;
 	int n2 = pk2->length - pk2->offset;
 
+	*type =	AS_UNDEF;
+
 	if (n1 == 0 || n2 == 0) {
 		MSGPACK_COMPARE_RET_LESS_OR_GREATER(n1, n2);
 
@@ -2113,6 +2119,10 @@ static msgpack_compare_t msgpack_compare_non_recursive(as_unpacker *pk1, as_unpa
 
 		as_val_t type;
 		msgpack_compare_t ret = msgpack_peek_compare_type(pk1, pk2, &type);
+
+		if (ret == MSGPACK_COMPARE_ERROR) {
+			return MSGPACK_COMPARE_ERROR;
+		}
 
 		if (ret == MSGPACK_COMPARE_END) {
 			return MSGPACK_COMPARE_EQUAL;
