@@ -56,11 +56,6 @@ as_serializer *as_msgpack_init(as_serializer *s)
 	return s;
 }
 
-void as_msgpack_set_convert_nulls(as_serializer *s, bool convert_nulls)
-{
-	s->convert_nulls = convert_nulls;
-}
-
 /******************************************************************************
  * STATIC FUNCTIONS
  *****************************************************************************/
@@ -78,7 +73,6 @@ static uint32_t as_msgpack_serializer_serialize_getsize(as_serializer *s, const 
 			.offset   = 0,
 			.head     = 0,
 			.tail     = 0,
-			.convert_nulls = s->convert_nulls,
 	};
 
 	if (as_pack_val(&packer, v) != 0) {
@@ -98,7 +92,6 @@ static int32_t as_msgpack_serializer_serialize_presized(as_serializer *s, const 
 		.offset = 0,
 		.head = 0,
 		.tail = 0,
-		.convert_nulls = s->convert_nulls,
 	};
 
 	if (as_pack_val(&packer, v) != 0) {
@@ -116,7 +109,6 @@ static int as_msgpack_serializer_serialize(as_serializer *s, const as_val *v, as
 			.offset = 0,
 			.head = 0,
 			.tail = 0,
-			.convert_nulls = s->convert_nulls,
 	};
 
 	if (! packer.buffer) {

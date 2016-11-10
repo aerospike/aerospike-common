@@ -575,9 +575,6 @@ int as_pack_val(as_packer *pk, const as_val *val)
 	int rc = 0;
 
 	if (val == NULL) {
-		if (pk->convert_nulls) {
-			return as_pack_val(pk, &as_nil);
-		}
 		rc = 1;
 	}
 	else {	

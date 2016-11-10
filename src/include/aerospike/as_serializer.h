@@ -42,9 +42,6 @@ typedef struct as_serializer_s {
 	 */
 	bool free;
 
-	// Convert nulls to nils on pack.
-	bool convert_nulls;
-
 	/**
 	 *	Hooks for the serializer
 	 */

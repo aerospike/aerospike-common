@@ -17,6 +17,7 @@
 #include <aerospike/as_arraylist.h>
 #include <aerospike/as_arraylist_iterator.h>
 #include <aerospike/as_list.h>
+#include <aerospike/as_nil.h>
 #include <citrusleaf/alloc.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -226,19 +227,31 @@ char * as_arraylist_get_str(const as_arraylist * list, uint32_t index)
 int as_arraylist_set(as_arraylist * list, uint32_t index, as_val * value)
 {
 	int rc = AS_ARRAYLIST_OK;
-	if ( index >= list->capacity ) {
+
+	if (index >= list->capacity) {
 		rc = as_arraylist_ensure(list, (index + 1) - list->size);
-		if ( rc != AS_ARRAYLIST_OK ) {
+
+		if (rc != AS_ARRAYLIST_OK) {
 			return rc;
 		}
 	}
+
 	// Make sure that, before we free (destroy) something, it is within the
 	// legal bounds of the object.
-	if( index < list->size ) {
+	if (index < list->size) {
 		as_val_destroy(list->elements[index]);
 	}
-	list->elements[index] = value;
-	if( index  >= list->size ){
+
+	list->elements[index] = value ? value : (as_val *)&as_nil;
+
+	if (index == list->size) {
+		list->size++;
+	}
+	else if (index > list->size) {
+		for (uint32_t i = list->size; i < index; i++) {
+			list->elements[i] = (as_val *)&as_nil;
+		}
+
 		list->size = index + 1;
 	}
 
@@ -287,13 +300,17 @@ int as_arraylist_insert(as_arraylist * list, uint32_t index, as_val * value)
 		list->elements[i] = list->elements[i - 1];
 	}
 
-	list->elements[index] = value;
+	list->elements[index] = value ? value : (as_val *)&as_nil;
 
-	if (index > list->size) {
-		list->size = index + 1;
+	if (index <= list->size) {
+		list->size++;
 	}
 	else {
-		list->size++;
+		for (uint32_t i = list->size; i < index; i++) {
+			list->elements[i] = (as_val *)&as_nil;
+		}
+
+		list->size = index + 1;
 	}
 
 	return AS_ARRAYLIST_OK;

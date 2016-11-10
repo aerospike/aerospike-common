@@ -25,6 +25,7 @@
 #include <aerospike/as_hashmap_iterator.h>
 #include <aerospike/as_integer.h>
 #include <aerospike/as_map.h>
+#include <aerospike/as_nil.h>
 #include <aerospike/as_string.h>
 #include <aerospike/as_val.h>
 
@@ -212,6 +213,8 @@ int as_hashmap_set(as_hashmap * map, const as_val * k, const as_val * v)
 		return -1;
 	}
 
+	as_val * safe_v = (as_val *)(v ? v : &as_nil);
+
 	uint32_t h = as_val_hashcode(k);
 	uint32_t i = h % map->table_capacity;
 
@@ -222,7 +225,7 @@ int as_hashmap_set(as_hashmap * map, const as_val * k, const as_val * v)
 		map->count++;
 
 		e->p_key = (as_val *)k;
-		e->p_val = (as_val *)v;
+		e->p_val = safe_v;
 
 		return 0;
 	}
@@ -234,7 +237,7 @@ int as_hashmap_set(as_hashmap * map, const as_val * k, const as_val * v)
 			as_val_destroy(e->p_key);
 			as_val_destroy(e->p_val);
 			e->p_key = (as_val *)k;
-			e->p_val = (as_val *)v;
+			e->p_val = safe_v;
 
 			return 0;
 		}
@@ -261,7 +264,7 @@ int as_hashmap_set(as_hashmap * map, const as_val * k, const as_val * v)
 		map->free_q = e->next;
 
 		e->p_key = (as_val *)k;
-		e->p_val = (as_val *)v;
+		e->p_val = safe_v;
 		e->next = 0;
 
 		return 0;
@@ -311,7 +314,7 @@ int as_hashmap_set(as_hashmap * map, const as_val * k, const as_val * v)
 	e = &map->extras[map->insert_at++];
 
 	e->p_key = (as_val *)k;
-	e->p_val = (as_val *)v;
+	e->p_val = safe_v;
 
 	return 0;
 }

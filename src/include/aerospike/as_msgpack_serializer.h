@@ -37,8 +37,6 @@ as_serializer *as_msgpack_new();
  */
 as_serializer *as_msgpack_init(as_serializer *);
 
-void as_msgpack_set_convert_nulls(as_serializer *, bool convert_nulls);
-
 #ifdef __cplusplus
 } // end extern "C"
 #endif
