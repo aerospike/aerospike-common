@@ -69,15 +69,15 @@ as_thread_worker(void* data)
 		}
 	}
 	
-	// Send thread completion event back to caller.
-	uint32_t complete = 1;
-	cf_queue_push(pool->complete_queue, &complete);
-
 	// Run the finalization function, if present.
 	if (pool->fini_fn) {
 		pool->fini_fn();
 	}
 	
+	// Send thread completion event back to caller.
+	uint32_t complete = 1;
+	cf_queue_push(pool->complete_queue, &complete);
+
 	return 0;
 }
 
