@@ -701,7 +701,7 @@ static int as_unpack_blob(as_unpacker *pk, int size, as_val **val)
 
 	if (type == AS_BYTES_STRING) {
 		char *v = cf_strndup((const char *)pk->buffer + pk->offset, size);
-		*val = (as_val*) as_string_new(v, true);
+		*val = (as_val*)as_string_new(v, true);
 	}
 	else if (type == AS_BYTES_GEOJSON) {
 		char *v = cf_strndup((const char *)pk->buffer + pk->offset, size);
@@ -712,18 +712,35 @@ static int as_unpack_blob(as_unpacker *pk, int size, as_val **val)
 
 		if (size) {
 			unsigned char *buf = cf_malloc(size);
+
+			if (! buf) {
+				return -1;
+			}
+
 			memcpy(buf, pk->buffer + pk->offset, size);
 			b = as_bytes_new_wrap(buf, size, true);
+
+			if (! b) {
+				cf_free(buf);
+				return -2;
+			}
 		}
 		else {
 			b = as_bytes_new_wrap(NULL, 0, false);
 		}
 
-		if (b) {
-			b->type = (as_bytes_type) type;
+		if (! b) {
+			return -3;
 		}
+
+		b->type = (as_bytes_type) type;
 		*val = (as_val *)b;
 	}
+
+	if (! *val) {
+		return -4;
+	}
+
 	pk->offset += size;
 	return 0;
 }
@@ -731,15 +748,22 @@ static int as_unpack_blob(as_unpacker *pk, int size, as_val **val)
 static int as_unpack_list(as_unpacker *pk, int size, as_val **val)
 {
 	as_arraylist *list = as_arraylist_new(size, 8);
+
+	if (! list) {
+		return -1;
+	}
 	
 	for (int i = 0; i < size; i++) {
 		as_val *v = 0;
-		as_unpack_val(pk, &v);
-		
-		if (v) {
-			as_arraylist_set(list, i, v);
+
+		if (as_unpack_val(pk, &v) != 0 || ! v) {
+			as_arraylist_destroy(list);
+			return -2;
 		}
+
+		as_arraylist_set(list, i, v);
 	}
+
 	*val = (as_val *)list;
 	return 0;
 }
@@ -749,17 +773,21 @@ static int as_unpack_map_create_list(as_unpacker *pk, int size, as_val **val)
 	// Create list of key value pairs.
 	as_arraylist *list = as_arraylist_new(2 * size, 2 * size);
 
+	if (! list) {
+		return -1;
+	}
+
 	for (int i = 0; i < size; i++) {
 		as_val *k = 0;
 		as_val *v = 0;
 		if (as_unpack_val(pk, &k) != 0) {
 			as_arraylist_destroy(list);
-			return -1;
+			return -2;
 		}
 		if (as_unpack_val(pk, &v) != 0) {
 			as_val_destroy(k);
 			as_arraylist_destroy(list);
-			return -2;
+			return -3;
 		}
 
 		if (k && v) {
@@ -799,6 +827,10 @@ static int as_unpack_map(as_unpacker *pk, int size, as_val **val)
 	}
 
 	as_hashmap *map = as_hashmap_new(size > 32 ? size : 32);
+
+	if (! map) {
+		return -2;
+	}
 
 	for (int i = 0; i < size; i++) {
 		as_val *k = 0;
