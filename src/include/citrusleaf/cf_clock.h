@@ -17,7 +17,6 @@
 #pragma once
 
 #include <citrusleaf/cf_atomic.h>
-#include <citrusleaf/cf_types.h>
 
 #ifdef __linux__
 #include <time.h>
@@ -36,11 +35,16 @@ extern "C" {
 #endif
 
 /******************************************************************************
- * TYPES
+ * TYPES & CONSTANTS
  ******************************************************************************/
 
 typedef uint64_t cf_clock;
 typedef cf_atomic64 cf_atomic_clock;
+
+#define CITRUSLEAF_EPOCH 1262304000
+#define CITRUSLEAF_EPOCH_MS (CITRUSLEAF_EPOCH * 1000UL)
+#define CITRUSLEAF_EPOCH_US (CITRUSLEAF_EPOCH * 1000000UL)
+#define CITRUSLEAF_EPOCH_NS (CITRUSLEAF_EPOCH * 1000000000UL)
 
 /******************************************************************************
  * FUNCTIONS
@@ -94,7 +98,7 @@ static inline cf_clock CF_TIMESPEC_TO_NS( struct timespec ts ) {
     return (uint64_t)ts.tv_nsec + ((uint64_t)ts.tv_sec * 1000000000);
 }
 
-static inline void CF_TIMESPEC_ADD_MS(struct timespec *ts, uint ms) {
+static inline void CF_TIMESPEC_ADD_MS(struct timespec *ts, uint32_t ms) {
     ts->tv_sec += ms / 1000;
     ts->tv_nsec += (ms % 1000) * 1000000;
     if (ts->tv_nsec > 1000000000) {
@@ -119,12 +123,50 @@ static inline uint64_t cf_clepoch_milliseconds() {
 #ifdef __APPLE__
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
-	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000) - (CITRUSLEAF_EPOCH * 1000L);
+	return (tv.tv_sec * 1000) + (tv.tv_usec / 1000) - CITRUSLEAF_EPOCH_MS;
 #else
 	struct timespec ts;
 	clock_gettime(CLOCK_REALTIME, &ts);
-	return CF_TIMESPEC_TO_MS(ts) - (CITRUSLEAF_EPOCH * 1000L);
+	return CF_TIMESPEC_TO_MS(ts) - CITRUSLEAF_EPOCH_MS;
 #endif
+}
+
+// Convert from UTC nanosecond times to Citrusleaf epoch times.
+// UTC nanosecond times before the Citrusleaf epoch are floored to return 0.
+
+static inline uint64_t cf_clepoch_ns_from_utc_ns(uint64_t utc_ns) {
+	return utc_ns > CITRUSLEAF_EPOCH_NS ? utc_ns - CITRUSLEAF_EPOCH_NS : 0;
+}
+
+static inline uint64_t cf_clepoch_us_from_utc_ns(uint64_t utc_ns) {
+	return cf_clepoch_ns_from_utc_ns(utc_ns) / 1000;
+}
+
+static inline uint64_t cf_clepoch_ms_from_utc_ns(uint64_t utc_ns) {
+	return cf_clepoch_ns_from_utc_ns(utc_ns) / 1000000;
+}
+
+static inline uint64_t cf_clepoch_sec_from_utc_ns(uint64_t utc_ns) {
+	return cf_clepoch_ns_from_utc_ns(utc_ns) / 1000000000;
+}
+
+// Convert from Citrusleaf epoch times to UTC nanosecond times.
+// Citrusleaf epoch times that cause overflow of uint64_t are not detected.
+
+static inline uint64_t cf_utc_ns_from_clepoch_ns(uint64_t clepoch_ns) {
+	return CITRUSLEAF_EPOCH_NS + clepoch_ns;
+}
+
+static inline uint64_t cf_utc_ns_from_clepoch_us(uint64_t clepoch_us) {
+	return CITRUSLEAF_EPOCH_NS + (clepoch_us * 1000);
+}
+
+static inline uint64_t cf_utc_ns_from_clepoch_ms(uint64_t clepoch_ms) {
+	return CITRUSLEAF_EPOCH_NS + (clepoch_ms * 1000000);
+}
+
+static inline uint64_t cf_utc_ns_from_clepoch_sec(uint64_t clepoch_sec) {
+	return CITRUSLEAF_EPOCH_NS + (clepoch_sec * 1000000000);
 }
 
 // Special client-only conversion utility.

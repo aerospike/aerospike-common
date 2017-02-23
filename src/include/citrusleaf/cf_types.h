@@ -51,7 +51,6 @@ extern "C" {
  * CONSTANTS
  ******************************************************************************/
 
-#define CITRUSLEAF_EPOCH 1262304000
 #define INVALID_FD (-1)
 #define FALSE 0
 #define TRUE 1
