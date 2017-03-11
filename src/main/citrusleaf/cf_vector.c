@@ -261,7 +261,7 @@ void *cf_vector_getp_vlock(const cf_vector *v, uint32_t index, pthread_mutex_t *
 	if (index >= v->alloc_len)
 		return(0);
 	VECTOR_LOCK(v);
-	*vlock = &v->LOCK;
+	*vlock = &((cf_vector *)v)->LOCK;
 	return(v->vector + (index * v->value_len));
 }
 
