@@ -82,7 +82,7 @@ extern "C" {
 /**
  * A generic call for hash functions the user can create
  */
-typedef uint32_t (*shash_hash_fn) (void *key);
+typedef uint32_t (*shash_hash_fn) (const void *key);
 
 /**
  * Type for a function to be called under the hash table locks to atomically update a hash table entry.
@@ -90,14 +90,14 @@ typedef uint32_t (*shash_hash_fn) (void *key);
  * The new value is allocated by the caller.
  * User data can be anything.
  */
-typedef void (*shash_update_fn) (void *key, void *value_old, void *value_new, void *udata);
+typedef void (*shash_update_fn) (const void *key, void *value_old, void *value_new, void *udata);
 
 /**
  * Typedef for a "reduce" fuction that is called on every node
  * (Note about return value: some kinds of reduces can manipulate the hash table,
  *  allowing deletion. See the particulars of the reduce call.)
  */
-typedef int (*shash_reduce_fn) (void *key, void *data, void *udata);
+typedef int (*shash_reduce_fn) (const void *key, void *data, void *udata);
 
 /**
  * Simple (and slow) element is when
@@ -143,25 +143,25 @@ int shash_create(shash **h, shash_hash_fn h_fn, uint32_t key_len, uint32_t value
  * Place a value into the hash
  * Value will be copied into the hash
  */
-int shash_put(shash *h, void *key, void *value);
+int shash_put(shash *h, const void *key, void *value);
 
 /**
  * Place a unique value into the hash
  * Value will be copied into the hash
  */
-int shash_put_unique(shash *h, void *key, void *value);
+int shash_put_unique(shash *h, const void *key, void *value);
 
 /**
  * Place a duplicate value into the hash
  * Value will be copied into the hash
  */
-int shash_put_duplicate(shash *h, void *key, void *value);
+int shash_put_duplicate(shash *h, const void *key, void *value);
 
 /**
  * call with the buffer you want filled; if you just want to check for
  * existence, call with value set to NULL
  */
-int shash_get(shash *h, void *key, void *value);
+int shash_get(shash *h, const void *key, void *value);
 
 /**
  * Returns the pointer to the internal item, and a locked-lock
@@ -172,31 +172,31 @@ int shash_get(shash *h, void *key, void *value);
  * In the case where nothing is found, no lock is held.
  * It might be better to do it the other way, but you can change it later if you want
  */
-int shash_get_vlock(shash *h, void *key, void **value,pthread_mutex_t **vlock);
+int shash_get_vlock(shash *h, const void *key, void **value,pthread_mutex_t **vlock);
 
 /**
  * Does a get and delete at the same time so you can make sure only one person
  * gets what was inserted
  */
-int shash_get_and_delete(shash *h, void *key, void *value);
+int shash_get_and_delete(shash *h, const void *key, void *value);
 
 /**
  * Atomically update an entry in the hash table using a user-supplied update function and user data.
  * The update function performs the merge of the old and new values, with respect to the user data
  * and returns the new value.
  */
-int shash_update(shash *h, void *key, void *value_old, void *value_new, shash_update_fn update_fn, void *udata);
+int shash_update(shash *h, const void *key, void *value_old, void *value_new, shash_update_fn update_fn, void *udata);
 
 /**
  * Got a key you want removed - this is the function to call
  */
-int shash_delete(shash *h, void *key);
+int shash_delete(shash *h, const void *key);
 
 /**
  * Special function you can call when you already have the lock - such as
  * a vlock get
  */
-int shash_delete_lockfree(shash *h, void *key);
+int shash_delete_lockfree(shash *h, const void *key);
 
 /**
  * Get the number of elements currently in the hash
@@ -212,7 +212,7 @@ uint32_t shash_get_size(shash *h);
  * But take the reference count on the object; must be returned with the
  * return call
  */
-int shash_grab(shash *h, void *key, uint32_t key_len, void **value, uint32_t *value_len);
+int shash_grab(shash *h, const void *key, uint32_t key_len, void **value, uint32_t *value_len);
 
 /**
  * Return a value that has been gotten

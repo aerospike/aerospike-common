@@ -32,8 +32,8 @@ extern "C" {
 /*
  *  Trivial hash function for storing 64-bit values in hash tables.
  */
-static inline uint32_t ptr_hash_fn(void *key) {
-    return (uint32_t) * (uint64_t *) key;
+static inline uint32_t ptr_hash_fn(const void *key) {
+    return (uint32_t) * (const uint64_t *) key;
 }
 
 #ifdef ENHANCED_ALLOC

@@ -26,14 +26,14 @@
  * MACROS
  ******************************************************************************/
 
-#define VECTOR_LOCK(_v) 	pthread_mutex_lock(&_v->LOCK)
-#define VECTOR_UNLOCK(_v) 	pthread_mutex_unlock(&_v->LOCK)
+#define VECTOR_LOCK(_v) 	pthread_mutex_lock(&((cf_vector *)_v)->LOCK)
+#define VECTOR_UNLOCK(_v) 	pthread_mutex_unlock(&((cf_vector *)_v)->LOCK)
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
-cf_vector * cf_vector_create( uint32_t value_len, uint32_t init_sz, uint flags) {
+cf_vector *cf_vector_create(uint32_t value_len, uint32_t init_sz, uint flags) {
 	cf_vector *v;
 
 	v = cf_malloc(sizeof(cf_vector));
@@ -153,7 +153,7 @@ static int cf_vector_resize(cf_vector *v, uint32_t new_sz) {
 	return(0);
 }
 
-int cf_vector_set(cf_vector *v, uint32_t index, void *value) {
+int cf_vector_set(cf_vector *v, uint32_t index, const void *value) {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_LOCK(v);
 
@@ -168,7 +168,7 @@ int cf_vector_set(cf_vector *v, uint32_t index, void *value) {
 	return(0);
 }
 
-int cf_vector_append_lockfree(cf_vector *v, void *value) {
+int cf_vector_append_lockfree(cf_vector *v, const void *value) {
 	if (v->len >= v->alloc_len)
 		if (0 != cf_vector_resize(v, v->len * 2))	return(-1);
 	memcpy(v->vector + (v->len * v->value_len), value, v->value_len);
@@ -179,7 +179,7 @@ int cf_vector_append_lockfree(cf_vector *v, void *value) {
 
 
 
-int cf_vector_append(cf_vector *v, void *value) {
+int cf_vector_append(cf_vector *v, const void *value) {
 	int rv;
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_LOCK(v);
@@ -189,7 +189,7 @@ int cf_vector_append(cf_vector *v, void *value) {
 	return(rv);
 }
 
-int cf_vector_append_unique(cf_vector *v, void *value) {
+int cf_vector_append_unique(cf_vector *v, const void *value) {
 	int rv=0;
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_LOCK(v);
@@ -233,7 +233,7 @@ int cf_vector_pop(cf_vector *v, void *value)
 
 // Copy the vector element into the pointer I give
 
-int cf_vector_get(cf_vector *v, uint32_t index, void *value_p) {
+int cf_vector_get(const cf_vector *v, uint32_t index, void *value_p) {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_LOCK(v);
 	if (index >= v->alloc_len)
@@ -244,7 +244,7 @@ int cf_vector_get(cf_vector *v, uint32_t index, void *value_p) {
 	return(0);
 }
 
-void * cf_vector_getp(cf_vector *v, uint32_t index) {
+void *cf_vector_getp(const cf_vector *v, uint32_t index) {
 	if (v->flags & VECTOR_FLAG_BIGLOCK)
 		VECTOR_LOCK(v);
 	if (index >= v->alloc_len)
@@ -255,7 +255,7 @@ void * cf_vector_getp(cf_vector *v, uint32_t index) {
 	return( r );
 }
 
-void * cf_vector_getp_vlock(cf_vector *v, uint32_t index, pthread_mutex_t **vlock) {
+void *cf_vector_getp_vlock(const cf_vector *v, uint32_t index, pthread_mutex_t **vlock) {
 	if (!v->flags & VECTOR_FLAG_BIGLOCK)
 		return(0);
 	if (index >= v->alloc_len)
