@@ -135,7 +135,7 @@ uint32_t shash_get_size(shash *h) {
             pthread_mutex_t *l = &(h->lock_table[i]);
             pthread_mutex_lock( l );
             
-            shash_elem *list_he = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * i));
+            const shash_elem *list_he = (const shash_elem *) ( ((const uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * i));
             while (list_he) {
                 
                 // not in use is common at head pointer - unused bucket
@@ -165,7 +165,7 @@ uint32_t shash_get_size(shash *h) {
 	return(elements);
 }
 
-int shash_put(shash *h, void *key, void *value) {
+int shash_put(shash *h, const void *key, void *value) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash
@@ -220,7 +220,7 @@ Copy:
 
 // Fail if there's already a value there
 
-int shash_put_unique(shash *h, void *key, void *value) {
+int shash_put_unique(shash *h, const void *key, void *value) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash
@@ -277,7 +277,7 @@ Copy:
  * i.e Once the element is found it is deleted. Only changes is the 
  * presence of the key is not searched for.
  */
-int shash_put_duplicate(shash *h, void *key, void *value) {
+int shash_put_duplicate(shash *h, const void *key, void *value) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash
@@ -317,7 +317,7 @@ Copy:
 	return(SHASH_OK);	
 }
 
-int shash_get(shash *h, void *key, void *value) {
+int shash_get(shash *h, const void *key, void *value) {
 	int rv = SHASH_ERR;
 
 	uint hash = h->h_fn(key);
@@ -361,7 +361,7 @@ Out:
  * In the case where nothing is found, no lock is held.
  * It might be better to do it the other way, but you can change it later if you want
  */
-int shash_get_vlock(shash *h, void *key, void **value, pthread_mutex_t **vlock) {
+int shash_get_vlock(shash *h, const void *key, void **value, pthread_mutex_t **vlock) {
 	int rv = SHASH_ERR;
 	
 	uint hash = h->h_fn(key);
@@ -418,7 +418,7 @@ Out:
  * The old and new values must be allocated by the caller.
  * The user data can be anything.
  */
-int shash_update(shash *h, void *key, void *value_old, void *value_new, shash_update_fn update_fn, void *udata) {
+int shash_update(shash *h, const void *key, void *value_old, void *value_new, shash_update_fn update_fn, void *udata) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	uint hash = h->h_fn(key);
@@ -482,7 +482,7 @@ Update:
 	return(rv);
 }
 
-int shash_delete(shash *h, void *key) {
+int shash_delete(shash *h, const void *key) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash
@@ -559,7 +559,7 @@ Out:
 // it's nice in the lock state to slim down the area under which the lock is taken
 // doing multiple helper functions may be better...
 
-int shash_delete_lockfree(shash *h, void *key) {
+int shash_delete_lockfree(shash *h, const void *key) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash
@@ -614,7 +614,7 @@ int shash_delete_lockfree(shash *h, void *key) {
 	
 }
 
-int shash_get_and_delete(shash *h, void *key, void *value) {
+int shash_get_and_delete(shash *h, const void *key, void *value) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash

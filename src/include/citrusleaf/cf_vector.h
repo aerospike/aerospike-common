@@ -76,7 +76,7 @@ struct cf_vector_s {
 	uint8_t *		vector;
 	bool			stack_struct;
 	bool			stack_vector;
-    pthread_mutex_t LOCK;           // the mutex lock
+    pthread_mutex_t LOCK;      // mutable
 };
 
 /******************************************************************************
@@ -86,7 +86,7 @@ struct cf_vector_s {
 /**
  * Create a vector with malloc for handing around
  */
-cf_vector * cf_vector_create(uint32_t value_len, uint32_t init_sz, uint flags);
+cf_vector *cf_vector_create(uint32_t value_len, uint32_t init_sz, uint flags);
 
 /**
  * create a stack vector, but with an allocated internal-vector-bit
@@ -99,26 +99,26 @@ void cf_vector_init_smalloc(cf_vector *v, uint32_t value_len, uint8_t *sbuf, int
  * Place a value into the vector
  * Value will be copied into the vector
  */
-extern int cf_vector_get(cf_vector *v, uint32_t index, void *value);
+extern int cf_vector_get(const cf_vector *v, uint32_t index, void *value);
 
 /**
  * Retrieve a value from the vector
  */
-extern int cf_vector_set(cf_vector *v, uint32_t index, void *value);
+extern int cf_vector_set(cf_vector *v, uint32_t index, const void *value);
 
 /**
  * this is very dangerous if it's a multithreaded vector. Use _vlock if multithrad.
  */
-extern void * cf_vector_getp(cf_vector *v, uint32_t index);
-extern void * cf_vector_getp_vlock(cf_vector *v, uint32_t index, pthread_mutex_t **vlock);
-extern int cf_vector_append(cf_vector *v, void *value);
+extern void * cf_vector_getp(const cf_vector *v, uint32_t index);
+extern void * cf_vector_getp_vlock(const cf_vector *v, uint32_t index, pthread_mutex_t **vlock);
+extern int cf_vector_append(cf_vector *v, const void *value);
 
 /**
  * Adds a an element to the end, only if it doesn't exist already
  * uses a bit-by-bit compare, thus is O(N) against the current length
  * of the vector
  */
-extern int cf_vector_append_unique(cf_vector *v, void *value);
+extern int cf_vector_append_unique(cf_vector *v, const void *value);
 
 extern int cf_vector_pop(cf_vector *v, void *value);
 
@@ -154,7 +154,7 @@ extern void cf_vector_destroy(cf_vector *v);
 /**
  * Get the number of elements currently in the vector
  */
-static inline uint32_t cf_vector_size(cf_vector *v) {
+static inline uint32_t cf_vector_size(const cf_vector *v) {
 	return(v->len);
 }
 
@@ -171,7 +171,7 @@ static inline int cf_vector_pointer_init(cf_vector *v, uint32_t init_sz, uint32_
 	return(cf_vector_init(v, sizeof(void *), init_sz, flags));
 }
 
-static inline int cf_vector_pointer_set(cf_vector *v, uint32_t index, void *p) {
+static inline int cf_vector_pointer_set(cf_vector *v, uint32_t index, const void *p) {
 	return(cf_vector_set(v, index, &p));
 }
 
@@ -181,7 +181,7 @@ static inline void * cf_vector_pointer_get(cf_vector *v, uint32_t index) {
 	return(p);
 }
 
-static inline int cf_vector_pointer_append(cf_vector *v, void *p) {
+static inline int cf_vector_pointer_append(cf_vector *v, const void *p) {
 	return(cf_vector_append(v, &p));
 }
 

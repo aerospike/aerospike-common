@@ -36,22 +36,22 @@
 //
 
 // Variable key size public API.
-int cf_rchash_put_v(cf_rchash *h, void *key, uint32_t key_size, void *object);
-int cf_rchash_put_unique_v(cf_rchash *h, void *key, uint32_t key_size, void *object);
-int cf_rchash_get_v(cf_rchash *h, void *key, uint32_t key_size, void **object_r);
-int cf_rchash_delete_object_v(cf_rchash *h, void *key, uint32_t key_size, void *object);
+int cf_rchash_put_v(cf_rchash *h, const void *key, uint32_t key_size, void *object);
+int cf_rchash_put_unique_v(cf_rchash *h, const void *key, uint32_t key_size, void *object);
+int cf_rchash_get_v(cf_rchash *h, const void *key, uint32_t key_size, void **object_r);
+int cf_rchash_delete_object_v(cf_rchash *h, const void *key, uint32_t key_size, void *object);
 int cf_rchash_reduce_v(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata);
 
 // Generic utilities.
 static inline void cf_rchash_destroy_elements(cf_rchash *h);
 static inline void cf_rchash_destroy_elements_v(cf_rchash *h);
-static inline uint32_t cf_rchash_calculate_hash(cf_rchash *h, void *key, uint32_t key_size);
+static inline uint32_t cf_rchash_calculate_hash(cf_rchash *h, const void *key, uint32_t key_size);
 static inline pthread_mutex_t *cf_rchash_lock(cf_rchash *h, uint32_t hash);
 static inline void cf_rchash_unlock(pthread_mutex_t *l);
 static inline cf_rchash_elem_f *cf_rchash_get_bucket(cf_rchash *h, uint32_t i);
 static inline cf_rchash_elem_v *cf_rchash_get_bucket_v(cf_rchash *h, uint32_t i);
-static inline void cf_rchash_fill_element(cf_rchash_elem_f *e, cf_rchash *h, void *key, void *object);
-static inline int cf_rchash_fill_element_v(cf_rchash_elem_v *e, cf_rchash *h, void *key, uint32_t key_size, void *object);
+static inline void cf_rchash_fill_element(cf_rchash_elem_f *e, cf_rchash *h, const void *key, void *object);
+static inline int cf_rchash_fill_element_v(cf_rchash_elem_v *e, cf_rchash *h, const void *key, uint32_t key_size, void *object);
 static inline void cf_rchash_size_incr(cf_rchash *h);
 static inline void cf_rchash_size_decr(cf_rchash *h);
 static inline void cf_rchash_release_object(cf_rchash *h, void *object);
@@ -156,7 +156,7 @@ cf_rchash_destroy(cf_rchash *h)
 
 
 uint32_t
-cf_rchash_get_size(cf_rchash *h)
+cf_rchash_get_size(const cf_rchash *h)
 {
 	// For now, not bothering with different methods per lock mode.
 	return cf_atomic32_get(h->n_elements);
@@ -166,7 +166,7 @@ cf_rchash_get_size(cf_rchash *h)
 // If key is not already in hash, insert it with specified rc_malloc'd object.
 // If key is already in hash, replace (and release) existing object.
 int
-cf_rchash_put(cf_rchash *h, void *key, uint32_t key_size, void *object)
+cf_rchash_put(cf_rchash *h, const void *key, uint32_t key_size, void *object)
 {
 	if (! h || ! key || ! object) {
 		return CF_RCHASH_ERR;
@@ -231,7 +231,8 @@ cf_rchash_put(cf_rchash *h, void *key, uint32_t key_size, void *object)
 
 // Like cf_rchash_put(), but if key is already in hash, fail.
 int
-cf_rchash_put_unique(cf_rchash *h, void *key, uint32_t key_size, void *object)
+cf_rchash_put_unique(cf_rchash *h, const void *key, uint32_t key_size,
+		void *object)
 {
 	if (! h || ! key || ! object) {
 		return CF_RCHASH_ERR;
@@ -294,7 +295,7 @@ cf_rchash_put_unique(cf_rchash *h, void *key, uint32_t key_size, void *object)
 //
 // Or, caller may pass NULL object_r to use this method as an existence check.
 int
-cf_rchash_get(cf_rchash *h, void *key, uint32_t key_size, void **object_r)
+cf_rchash_get(cf_rchash *h, const void *key, uint32_t key_size, void **object_r)
 {
 	if (! h || ! key) {
 		return CF_RCHASH_ERR;
@@ -344,7 +345,7 @@ cf_rchash_get(cf_rchash *h, void *key, uint32_t key_size, void **object_r)
 // If this causes the ref-count to hit 0, the object destructor is called and
 // the object is freed.
 int
-cf_rchash_delete(cf_rchash *h, void *key, uint32_t key_size)
+cf_rchash_delete(cf_rchash *h, const void *key, uint32_t key_size)
 {
 	// No check to verify the object.
 	return cf_rchash_delete_object(h, key, key_size, NULL);
@@ -359,7 +360,7 @@ cf_rchash_delete(cf_rchash *h, void *key, uint32_t key_size)
 // inserted with the same key, other threads' deletes would mistakenly remove
 // this new element from the hash if they do not verify the object.
 int
-cf_rchash_delete_object(cf_rchash *h, void *key, uint32_t key_size,
+cf_rchash_delete_object(cf_rchash *h, const void *key, uint32_t key_size,
 		void *object)
 {
 	if (! h || ! key) {
@@ -546,7 +547,7 @@ cf_rchash_reduce(cf_rchash *h, cf_rchash_reduce_fn reduce_fn, void *udata)
 //
 
 int
-cf_rchash_put_v(cf_rchash *h, void *key, uint32_t key_size, void *object)
+cf_rchash_put_v(cf_rchash *h, const void *key, uint32_t key_size, void *object)
 {
 	if (key_size == 0) {
 		return CF_RCHASH_ERR;
@@ -607,7 +608,8 @@ cf_rchash_put_v(cf_rchash *h, void *key, uint32_t key_size, void *object)
 
 
 int
-cf_rchash_put_unique_v(cf_rchash *h, void *key, uint32_t key_size, void *object)
+cf_rchash_put_unique_v(cf_rchash *h, const void *key, uint32_t key_size,
+		void *object)
 {
 	if (key_size == 0) {
 		return CF_RCHASH_ERR;
@@ -661,7 +663,8 @@ cf_rchash_put_unique_v(cf_rchash *h, void *key, uint32_t key_size, void *object)
 
 
 int
-cf_rchash_get_v(cf_rchash *h, void *key, uint32_t key_size, void **object_r)
+cf_rchash_get_v(cf_rchash *h, const void *key, uint32_t key_size,
+		void **object_r)
 {
 	if (key_size == 0) {
 		return CF_RCHASH_ERR;
@@ -699,7 +702,7 @@ cf_rchash_get_v(cf_rchash *h, void *key, uint32_t key_size, void **object_r)
 
 
 int
-cf_rchash_delete_object_v(cf_rchash *h, void *key, uint32_t key_size,
+cf_rchash_delete_object_v(cf_rchash *h, const void *key, uint32_t key_size,
 		void *object)
 {
 	if (key_size == 0) {
@@ -915,7 +918,7 @@ cf_rchash_destroy_elements_v(cf_rchash *h)
 
 
 static inline uint32_t
-cf_rchash_calculate_hash(cf_rchash *h, void *key, uint32_t key_size)
+cf_rchash_calculate_hash(cf_rchash *h, const void *key, uint32_t key_size)
 {
 	return h->h_fn(key, key_size) % h->n_buckets;
 }
@@ -967,7 +970,7 @@ cf_rchash_get_bucket_v(cf_rchash *h, uint32_t i)
 
 
 static inline void
-cf_rchash_fill_element(cf_rchash_elem_f *e, cf_rchash *h, void *key,
+cf_rchash_fill_element(cf_rchash_elem_f *e, cf_rchash *h, const void *key,
 		void *object)
 {
 	memcpy(e->key, key, h->key_size);
@@ -977,7 +980,7 @@ cf_rchash_fill_element(cf_rchash_elem_f *e, cf_rchash *h, void *key,
 
 
 static inline int
-cf_rchash_fill_element_v(cf_rchash_elem_v *e, cf_rchash *h, void *key,
+cf_rchash_fill_element_v(cf_rchash_elem_v *e, cf_rchash *h, const void *key,
 		uint32_t key_size, void *object)
 {
 	e->key = cf_malloc(key_size);
