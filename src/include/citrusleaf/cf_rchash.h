@@ -50,7 +50,7 @@ extern "C" {
 #define CF_RCHASH_CR_MT_MANYLOCK 0x08 // thread-safe with lock per bucket
 
 // User must provide the hash function at create time.
-typedef uint32_t (*cf_rchash_hash_fn)(const void *value, uint32_t value_len);
+typedef uint32_t (*cf_rchash_hash_fn)(const void *key, uint32_t key_size);
 
 // The "reduce" function called for every element. Returned value governs
 // behavior during reduce as follows:
@@ -58,7 +58,7 @@ typedef uint32_t (*cf_rchash_hash_fn)(const void *value, uint32_t value_len);
 // - CF_RCHASH_REDUCE_DELETE - delete the current element, continue iterating
 // - anything else (e.g. CF_RCHASH_ERR) - stop iterating and return reduce_fn's
 //   returned value
-typedef int (*cf_rchash_reduce_fn)(const void *key, uint32_t keylen, void *object, void *udata);
+typedef int (*cf_rchash_reduce_fn)(const void *key, uint32_t key_size, void *object, void *udata);
 
 // User may provide an object "destructor" at create time. The destructor is
 // called - and the deleted element's object freed - from cf_rchash_delete(),
