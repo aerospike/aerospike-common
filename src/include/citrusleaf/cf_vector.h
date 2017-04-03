@@ -66,30 +66,28 @@ extern "C" {
  * TYPES
  ******************************************************************************/
 
-typedef struct cf_vector_s cf_vector;
-
-struct cf_vector_s {
+typedef struct cf_vector_s {
 	uint32_t 		value_len;
 	uint 			flags;
 	uint 			alloc_len; // number of elements currently allocated
 	uint 			len;       // number of elements in table, largest element set
-	uint8_t *		vector;
+	uint8_t			*vector;
 	bool			stack_struct;
 	bool			stack_vector;
     pthread_mutex_t LOCK;      // mutable
-};
+} cf_vector;
 
 /******************************************************************************
  * FUNCTIONS
  ******************************************************************************/
 
 /**
- * Create a vector with malloc for handing around
+ * Create a vector with malloc for handing around.
  */
 cf_vector *cf_vector_create(uint32_t value_len, uint32_t init_sz, uint flags);
 
 /**
- * create a stack vector, but with an allocated internal-vector-bit
+ * Create a stack vector, but with an allocated internal-vector-bit.
  */
 int cf_vector_init(cf_vector *v, uint32_t value_len, uint32_t init_sz, uint flags);
 
@@ -107,10 +105,11 @@ extern int cf_vector_get(const cf_vector *v, uint32_t index, void *value);
 extern int cf_vector_set(cf_vector *v, uint32_t index, const void *value);
 
 /**
- * this is very dangerous if it's a multithreaded vector. Use _vlock if multithrad.
+ * This is very dangerous if it's a multi-threaded vector. Use _vlock if
+ * multithread.
  */
-extern void * cf_vector_getp(const cf_vector *v, uint32_t index);
-extern void * cf_vector_getp_vlock(const cf_vector *v, uint32_t index, pthread_mutex_t **vlock);
+extern void *cf_vector_getp(const cf_vector *v, uint32_t index);
+extern void *cf_vector_getp_vlock(const cf_vector *v, uint32_t index, pthread_mutex_t **vlock);
 extern int cf_vector_append(cf_vector *v, const void *value);
 
 /**
@@ -163,7 +162,7 @@ static inline uint32_t cf_vector_size(const cf_vector *v) {
  * nice wrapper functions
  * very common vector types are pointers, and integers
  */
-static inline cf_vector * cf_vector_pointer_create(uint32_t init_sz, uint32_t flags) {
+static inline cf_vector *cf_vector_pointer_create(uint32_t init_sz, uint32_t flags) {
 	return(cf_vector_create(sizeof(void *), init_sz, flags));
 }
 
@@ -175,10 +174,18 @@ static inline int cf_vector_pointer_set(cf_vector *v, uint32_t index, const void
 	return(cf_vector_set(v, index, &p));
 }
 
-static inline void * cf_vector_pointer_get(cf_vector *v, uint32_t index) {
-	void *p;
-	cf_vector_get(v, index, &p);
-	return(p);
+static inline void *cf_vector_pointer_get(const cf_vector *v, uint32_t index) {
+	if (v->value_len <= sizeof(void *)) {
+		void *p = NULL;
+		cf_vector_get(v, index, &p);
+		return p;
+	}
+
+	uint8_t buf[v->value_len];
+
+	*((void **)buf) = NULL;
+	cf_vector_get(v, index, &buf);
+	return *((void **)buf);
 }
 
 static inline int cf_vector_pointer_append(cf_vector *v, const void *p) {
@@ -189,7 +196,7 @@ static inline int cf_vector_pointer_append(cf_vector *v, const void *p) {
  * integer vectors!
  */
 
-static inline cf_vector * cf_vector_integer_create(uint32_t init_sz, uint32_t flags) {
+static inline cf_vector *cf_vector_integer_create(uint32_t init_sz, uint32_t flags) {
 	return(cf_vector_create(sizeof(int), init_sz, flags));
 }
 
@@ -201,8 +208,8 @@ static inline int cf_vector_integer_set(cf_vector *v, uint32_t index, int i) {
 	return(cf_vector_set(v, index, &i));
 }
 
-static inline int cf_vector_integer_get(cf_vector *v, uint32_t index) {
-	int i;
+static inline int cf_vector_integer_get(const cf_vector *v, uint32_t index) {
+	int i = 0;
 	cf_vector_get(v, index, &i);
 	return(i);
 }
