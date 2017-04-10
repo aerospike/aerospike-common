@@ -100,6 +100,13 @@ cf_vector_element_size(const cf_vector *v)
 	return v->ele_sz;
 }
 
+#define cf_vector_inita(_v, _ele_sz, _ele_cnt, _flags) \
+		cf_vector_init_with_buf(_v, _ele_sz, _ele_cnt, alloca(_ele_sz * _ele_cnt), _flags);
+
+#define cf_vector_inits(_v, _ele_sz, _ele_cnt, _flags) \
+		uint8_t _v ## __mem[(_ele_sz) * (_ele_cnt)]; \
+		cf_vector_init_with_buf(&_v, _ele_sz, _ele_cnt, _v ## __mem, _flags);
+
 //----------------------------------------------------------
 // Deprecated wrappers for helpers for a vector of pointers.
 //
@@ -200,20 +207,6 @@ cf_vector_append_uint32(cf_vector *v, uint32_t val)
 {
 	return cf_vector_append(v, &val);
 }
-
-// Removed - use cf_vector_inita or cf_vector_inits.
-//#define cf_vector_define(__x, __value_len, __flags) \
-//	uint8_t cf_vector##__x[1024]; cf_vector __x; cf_vector_init_smalloc(&__x, __value_len, cf_vector##__x, sizeof(cf_vector##__x), __flags);
-
-// Removed - use cf_vector_clear()
-//#define cf_vector_reset( __v ) (__v)->len = 0; if ( (__v)->flags & VECTOR_FLAG_INITZERO) memset( (__v)->vector, 0, (__v)->alloc_len * (__v)->ele_sz);
-
-#define cf_vector_inita(_v, _ele_sz, _ele_cnt, _flags) \
-		cf_vector_init_with_buf(_v, _ele_sz, _ele_cnt, alloca(_ele_sz * _ele_cnt), _flags);
-
-#define cf_vector_inits(_v, _ele_sz, _ele_cnt, _flags) \
-		uint8_t _v ## __mem[(_ele_sz) * (_ele_cnt)]; \
-		cf_vector_init_with_buf(&_v, _ele_sz, _ele_cnt, _v ## __mem, _flags);
 
 
 #ifdef __cplusplus
