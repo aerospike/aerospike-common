@@ -31,6 +31,7 @@
 // Constants & typedefs.
 //
 
+// Private flags.
 #define VECTOR_FLAG_FREE_SELF   0x10
 #define VECTOR_FLAG_FREE_VECTOR 0x20
 
@@ -39,19 +40,21 @@
 // Forward declarations.
 //
 
-static bool vector_resize(cf_vector *v, uint32_t new_count);
+static bool vector_resize(cf_vector *v, uint32_t new_capacity);
 
 
 //==========================================================
 // Macros.
 //
 
-#define VECTOR_LOCK(_v) if (v->flags & VECTOR_FLAG_BIGLOCK) { \
-		pthread_mutex_lock(&((cf_vector *)_v)->LOCK); \
+#define VECTOR_LOCK(_v) \
+if ((_v->flags & VECTOR_FLAG_BIGLOCK) != 0) { \
+	pthread_mutex_lock(&((cf_vector *)_v)->LOCK); \
 }
 
-#define VECTOR_UNLOCK(_v) if (v->flags & VECTOR_FLAG_BIGLOCK) { \
-		pthread_mutex_unlock(&((cf_vector *)_v)->LOCK); \
+#define VECTOR_UNLOCK(_v) \
+if ((_v->flags & VECTOR_FLAG_BIGLOCK) != 0) { \
+	pthread_mutex_unlock(&((cf_vector *)_v)->LOCK); \
 }
 
 
@@ -60,7 +63,7 @@ static bool vector_resize(cf_vector *v, uint32_t new_count);
 //
 
 cf_vector *
-cf_vector_create(uint32_t ele_sz, uint32_t count, uint32_t flags)
+cf_vector_create(uint32_t ele_sz, uint32_t capacity, uint32_t flags)
 {
 	cf_vector *v = cf_malloc(sizeof(cf_vector));
 
@@ -68,7 +71,7 @@ cf_vector_create(uint32_t ele_sz, uint32_t count, uint32_t flags)
 		return NULL;
 	}
 
-	if (cf_vector_init(v, ele_sz, count,
+	if (cf_vector_init(v, ele_sz, capacity,
 			flags | VECTOR_FLAG_FREE_SELF) != 0) {
 		cf_free(v);
 		return NULL;
@@ -78,41 +81,41 @@ cf_vector_create(uint32_t ele_sz, uint32_t count, uint32_t flags)
 }
 
 int
-cf_vector_init(cf_vector *v, uint32_t ele_sz, uint32_t count, uint32_t flags)
+cf_vector_init(cf_vector *v, uint32_t ele_sz, uint32_t capacity, uint32_t flags)
 {
 	uint8_t *buf;
 
-	if (count) {
-		if (! (buf = cf_malloc(count * ele_sz))) {
+	if (capacity != 0) {
+		if (! (buf = cf_malloc(capacity * ele_sz))) {
 			return -1;
 		}
 	}
 	else {
-		buf = 0;
+		buf = NULL;
 	}
 
-	cf_vector_init_with_buf(v, ele_sz, count, buf,
+	cf_vector_init_with_buf(v, ele_sz, capacity, buf,
 			flags | VECTOR_FLAG_FREE_VECTOR);
 
 	return 0;
 }
 
 void
-cf_vector_init_with_buf(cf_vector *v, uint32_t ele_sz, uint32_t count,
+cf_vector_init_with_buf(cf_vector *v, uint32_t ele_sz, uint32_t capacity,
 		uint8_t *buf, uint32_t flags)
 {
 	v->ele_sz = ele_sz;
 	v->flags = flags;
-	v->alloc_cnt = count;
+	v->capacity = capacity;
 	v->count = 0;
 	v->vector = buf;
 
-	if ((flags & VECTOR_FLAG_INITZERO) && v->vector) {
-		memset(v->vector, 0, count * ele_sz);
+	if ((flags & VECTOR_FLAG_INITZERO) != 0 && v->vector) {
+		memset(v->vector, 0, capacity * ele_sz);
 	}
 
-	if (flags & VECTOR_FLAG_BIGLOCK) {
-		pthread_mutex_init(&v->LOCK, 0);
+	if ((flags & VECTOR_FLAG_BIGLOCK) != 0) {
+		pthread_mutex_init(&v->LOCK, NULL);
 	}
 }
 
@@ -127,15 +130,15 @@ cf_vector_init_smalloc(cf_vector *v, uint32_t ele_sz, uint8_t *sbuf,
 void
 cf_vector_destroy(cf_vector *v)
 {
-	if (v->flags & VECTOR_FLAG_BIGLOCK) {
+	if ((v->flags & VECTOR_FLAG_BIGLOCK) != 0) {
 		pthread_mutex_destroy(&v->LOCK);
 	}
 
-	if (v->vector && (v->flags & VECTOR_FLAG_FREE_VECTOR)) {
+	if (v->vector && (v->flags & VECTOR_FLAG_FREE_VECTOR) != 0) {
 		cf_free(v->vector);
 	}
 
-	if (v->flags & VECTOR_FLAG_FREE_SELF) {
+	if ((v->flags & VECTOR_FLAG_FREE_SELF) != 0) {
 		cf_free(v);
 	}
 }
@@ -145,7 +148,7 @@ cf_vector_set(cf_vector *v, uint32_t idx, const void *val)
 {
 	VECTOR_LOCK(v);
 
-	if (idx >= v->alloc_cnt) {
+	if (idx >= v->capacity) {
 		VECTOR_UNLOCK(v);
 		return -1;
 	}
@@ -164,7 +167,7 @@ cf_vector_set(cf_vector *v, uint32_t idx, const void *val)
 int
 cf_vector_append_lockfree(cf_vector *v, const void *val)
 {
-	if (v->count >= v->alloc_cnt && ! vector_resize(v, v->count * 2)) {
+	if (v->count >= v->capacity && ! vector_resize(v, v->count * 2)) {
 		return -1;
 	}
 
@@ -233,7 +236,7 @@ cf_vector_get(const cf_vector *v, uint32_t idx, void *val)
 {
 	VECTOR_LOCK(v);
 
-	if (idx >= v->alloc_cnt) {
+	if (idx >= v->capacity) {
 		VECTOR_UNLOCK(v);
 		return -1;
 	}
@@ -262,11 +265,11 @@ cf_vector_get_sized(const cf_vector *v, uint32_t idx, void *val, uint32_t sz)
 }
 
 void *
-cf_vector_getp(const cf_vector *v, uint32_t idx)
+cf_vector_getp(cf_vector *v, uint32_t idx)
 {
 	VECTOR_LOCK(v);
 
-	if (idx >= v->alloc_cnt) {
+	if (idx >= v->capacity) {
 		VECTOR_UNLOCK(v);
 		return NULL;
 	}
@@ -279,15 +282,15 @@ cf_vector_getp(const cf_vector *v, uint32_t idx)
 }
 
 void *
-cf_vector_getp_vlock(const cf_vector *v, uint32_t idx, pthread_mutex_t **vlock)
+cf_vector_getp_vlock(cf_vector *v, uint32_t idx, pthread_mutex_t **vlock)
 {
-	if (! v->flags & VECTOR_FLAG_BIGLOCK) {
+	if ((v->flags & VECTOR_FLAG_BIGLOCK) == 0) {
 		return NULL;
 	}
 
 	VECTOR_LOCK(v);
 
-	if (idx >= v->alloc_cnt) {
+	if (idx >= v->capacity) {
 		VECTOR_UNLOCK(v);
 		return NULL;
 	}
@@ -323,7 +326,6 @@ cf_vector_delete(cf_vector *v, uint32_t idx)
 int
 cf_vector_delete_range(cf_vector *v, uint32_t start, uint32_t end)
 {
-
 	if (start >= end) {
 		return -1;
 	}
@@ -357,8 +359,8 @@ cf_vector_clear(cf_vector *v)
 
 	v->count = 0;
 
-	if (v->flags & VECTOR_FLAG_INITZERO) {
-		memset(v->vector, 0, v->alloc_cnt * v->ele_sz);
+	if ((v->flags & VECTOR_FLAG_INITZERO) != 0) {
+		memset(v->vector, 0, v->capacity * v->ele_sz);
 	}
 
 	VECTOR_UNLOCK(v);
@@ -369,9 +371,9 @@ cf_vector_compact(cf_vector *v)
 {
 	VECTOR_LOCK(v);
 
-	if (v->alloc_cnt && (v->count != v->alloc_cnt)) {
-		v->vector = cf_realloc(v->vector, v->count * v->alloc_cnt);
-		v->alloc_cnt = v->count;
+	if (v->capacity != 0 && (v->count != v->capacity)) {
+		v->vector = cf_realloc(v->vector, v->count * v->capacity);
+		v->capacity = v->count;
 	}
 
 	VECTOR_UNLOCK(v);
@@ -383,47 +385,36 @@ cf_vector_compact(cf_vector *v)
 //
 
 static bool
-vector_resize(cf_vector *v, uint32_t new_count)
+vector_resize(cf_vector *v, uint32_t new_capacity)
 {
-	if (v->flags & VECTOR_FLAG_BIGRESIZE) {
-		if (new_count < 50) {
-			new_count = 50;
-		}
-	}
-	else if (new_count == 0) {
-		new_count = 2;
+	if (new_capacity == 0) {
+		new_capacity = 2;
 	}
 
 	uint8_t *p;
 
-	if (v->vector == 0 || ! (v->flags & VECTOR_FLAG_FREE_VECTOR)) {
-		p = cf_malloc(new_count * v->ele_sz);
-
-		if (! p)	{
+	if (! v->vector || (v->flags & VECTOR_FLAG_FREE_VECTOR) == 0) {
+		if (! (p = cf_malloc(new_capacity * v->ele_sz))) {
 			return false;
 		}
 
 		if (v->vector) {
-			memcpy(p, v->vector, v->alloc_cnt * v->ele_sz);
+			memcpy(p, v->vector, v->capacity * v->ele_sz);
 			v->flags |= VECTOR_FLAG_FREE_VECTOR;
 		}
 	}
-	else {
-		p = cf_realloc(v->vector, new_count * v->ele_sz);
-	}
-
-	if (! p) {
+	else if (! (p = cf_realloc(v->vector, new_capacity * v->ele_sz))) {
 		return false;
 	}
 
 	v->vector = p;
 
-	if (v->flags & VECTOR_FLAG_INITZERO) {
-		memset(v->vector + v->alloc_cnt * v->ele_sz, 0,
-				(new_count - v->alloc_cnt) * v->ele_sz);
+	if ((v->flags & VECTOR_FLAG_INITZERO) != 0) {
+		memset(v->vector + v->capacity * v->ele_sz, 0,
+				(new_capacity - v->capacity) * v->ele_sz);
 	}
 
-	v->alloc_cnt = new_count;
+	v->capacity = new_capacity;
 
 	return true;
 }

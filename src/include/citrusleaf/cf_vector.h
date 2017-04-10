@@ -21,7 +21,6 @@
 //
 
 #include <pthread.h>
-#include <stdbool.h>
 #include <stdint.h>
 
 #include <citrusleaf/cf_types.h>
@@ -35,23 +34,22 @@ extern "C" {
 // Constants & typedefs.
 //
 
+// Deprecated - use cf_vector_element_size().
 #define VECTOR_ELEM_SZ(_v) ( _v->ele_sz )
 
-// Multithreaded access with a single big lock.
-#define VECTOR_FLAG_BIGLOCK 0x01
-// Init the vector objects to 0.
-#define VECTOR_FLAG_INITZERO 0x02
-// Appends will be common - speculatively allocate extra memory.
-#define VECTOR_FLAG_BIGRESIZE 0x04
+// Public flags.
+#define VECTOR_FLAG_BIGLOCK		0x01
+#define VECTOR_FLAG_INITZERO	0x02 // vector elements start cleared to 0
 
-// Return to delete during reduce.
+// Return this to delete element during reduce.
 #define VECTOR_REDUCE_DELETE 1
 
+// Private data.
 typedef struct cf_vector_s {
 	uint8_t *vector;
 	uint32_t ele_sz;
-	uint32_t alloc_cnt; // number of elements currently allocated
-	uint32_t count;     // number of elements in table, largest element set
+	uint32_t capacity; // number of elements currently allocated
+	uint32_t count; // number of elements in table, largest element set
 	uint32_t flags;
     pthread_mutex_t LOCK; // mutable
 } cf_vector;
@@ -61,9 +59,9 @@ typedef struct cf_vector_s {
 // Public API.
 //
 
-cf_vector *cf_vector_create(uint32_t ele_sz, uint32_t count, uint32_t flags);
-int cf_vector_init(cf_vector *v, uint32_t ele_sz, uint32_t count, uint32_t flags);
-void cf_vector_init_with_buf(cf_vector *v, uint32_t ele_sz, uint32_t count, uint8_t *buf, uint32_t flags);
+cf_vector *cf_vector_create(uint32_t ele_sz, uint32_t capacity, uint32_t flags);
+int cf_vector_init(cf_vector *v, uint32_t ele_sz, uint32_t capacity, uint32_t flags);
+void cf_vector_init_with_buf(cf_vector *v, uint32_t ele_sz, uint32_t capacity, uint8_t *buf, uint32_t flags);
 
 // Deprecated - use cf_vector_init_with_buf().
 void cf_vector_init_smalloc(cf_vector *v, uint32_t ele_sz, uint8_t *sbuf, uint32_t sbuf_sz, uint32_t flags);
@@ -72,8 +70,8 @@ int cf_vector_get(const cf_vector *v, uint32_t idx, void *val);
 bool cf_vector_get_sized(const cf_vector *v, uint32_t idx, void *val, uint32_t sz);
 int cf_vector_set(cf_vector *v, uint32_t idx, const void *val);
 
-void *cf_vector_getp(const cf_vector *v, uint32_t val);
-void *cf_vector_getp_vlock(const cf_vector *v, uint32_t val, pthread_mutex_t **vlock);
+void *cf_vector_getp(cf_vector *v, uint32_t val);
+void *cf_vector_getp_vlock(cf_vector *v, uint32_t val, pthread_mutex_t **vlock);
 
 int cf_vector_append(cf_vector *v, const void *val);
 // Adds a an element to the end, only if it doesn't exist already. O(N).
@@ -81,13 +79,7 @@ int cf_vector_append_unique(cf_vector *v, const void *val);
 int cf_vector_pop(cf_vector *v, void *val);
 
 int cf_vector_delete(cf_vector *v, uint32_t val);
-/**
- * Delete a range in the vector. Inclusive-Exclusive. Thus:
- *   a vector with len 5, you could delete 3 elements at indices (0,1, and 2)
- *   using start=0, end=3, leaving two elements at the beginning (slot 0)
- *   originally at indices 3 and 4.
- *   returns -1 on bad ranges
- */
+// Inclusive-exclusive, e.g. start 0 & end 3 removes indexes 0,1,2.
 int cf_vector_delete_range(cf_vector *v, uint32_t start, uint32_t end);
 void cf_vector_clear(cf_vector *v);
 
@@ -102,18 +94,28 @@ cf_vector_size(const cf_vector *v)
 	return v->count;
 }
 
+static inline uint32_t
+cf_vector_element_size(const cf_vector *v)
+{
+	return v->ele_sz;
+}
+
+//----------------------------------------------------------
+// Deprecated wrappers for helpers for a vector of pointers.
+//
+
 // Deprecated - use cf_vector_create().
 static inline cf_vector *
-cf_vector_pointer_create(uint32_t count, uint32_t flags)
+cf_vector_pointer_create(uint32_t capacity, uint32_t flags)
 {
-	return cf_vector_create(sizeof(void *), count, flags);
+	return cf_vector_create(sizeof(void *), capacity, flags);
 }
 
 // Deprecated - use cf_vector_init(v, sizeof(void *), ...).
 static inline int
-cf_vector_pointer_init(cf_vector *v, uint32_t count, uint32_t flags)
+cf_vector_pointer_init(cf_vector *v, uint32_t capacity, uint32_t flags)
 {
-	return cf_vector_init(v, sizeof(void *), count, flags);
+	return cf_vector_init(v, sizeof(void *), capacity, flags);
 }
 
 // Deprecated - use cf_vector_set_ptr().
@@ -143,6 +145,10 @@ cf_vector_pointer_append(cf_vector *v, const void *val)
 	return cf_vector_append(v, &val);
 }
 
+//----------------------------------------------------------
+// Helpers for a vector of pointers.
+//
+
 static inline int
 cf_vector_set_ptr(cf_vector *v, uint32_t idx, const void *val)
 {
@@ -167,29 +173,9 @@ cf_vector_append_ptr(cf_vector *v, const void *val)
 	return cf_vector_append(v, &val);
 }
 
-static inline int
-cf_vector_set_int(cf_vector *v, uint32_t idx, int val)
-{
-	return cf_vector_set(v, idx, &val);
-}
-
-static inline int
-cf_vector_get_int(const cf_vector *v, uint32_t idx)
-{
-	int val;
-
-	if (! cf_vector_get_sized(v, idx, &val, sizeof(int))) {
-		return 0;
-	}
-
-	return val;
-}
-
-static inline int
-cf_vector_append_int(cf_vector *v, int val)
-{
-	return cf_vector_append(v, &val);
-}
+//----------------------------------------------------------
+// Helpers for a vector of uint32_t's.
+//
 
 static inline int
 cf_vector_set_uint32(cf_vector *v, uint32_t idx, uint32_t val)
