@@ -101,7 +101,7 @@ cf_vector_element_size(const cf_vector *v)
 }
 
 #define cf_vector_inita(_v, _ele_sz, _ele_cnt, _flags) \
-		cf_vector_init_with_buf(_v, _ele_sz, _ele_cnt, alloca(_ele_sz * _ele_cnt), _flags);
+		cf_vector_init_with_buf(_v, _ele_sz, _ele_cnt, alloca((_ele_sz) * (_ele_cnt)), _flags);
 
 #define cf_vector_inits(_v, _ele_sz, _ele_cnt, _flags) \
 		uint8_t _v ## __mem[(_ele_sz) * (_ele_cnt)]; \
@@ -165,11 +165,9 @@ cf_vector_set_ptr(cf_vector *v, uint32_t idx, const void *val)
 static inline void *
 cf_vector_get_ptr(const cf_vector *v, uint32_t idx)
 {
-	void *p;
+	void *p = NULL;
 
-	if (! cf_vector_get_sized(v, idx, &p, sizeof(void *))) {
-		return NULL;
-	}
+	cf_vector_get_sized(v, idx, &p, sizeof(void *));
 
 	return p;
 }
@@ -193,11 +191,9 @@ cf_vector_set_uint32(cf_vector *v, uint32_t idx, uint32_t val)
 static inline uint32_t
 cf_vector_get_uint32(const cf_vector *v, uint32_t idx)
 {
-	uint32_t val;
+	uint32_t val = 0;
 
-	if (! cf_vector_get_sized(v, idx, &val, sizeof(uint32_t))) {
-		return 0;
-	}
+	cf_vector_get_sized(v, idx, &val, sizeof(uint32_t));
 
 	return val;
 }
