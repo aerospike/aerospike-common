@@ -224,7 +224,7 @@ cf_vector_pop(cf_vector *v, void *val)
 	}
 
 	v->count--;
-	memcpy(val, v->vector + v->count * v->ele_sz, v->ele_sz);
+	memcpy(val, v->vector + (v->count * v->ele_sz), v->ele_sz);
 
 	VECTOR_UNLOCK(v);
 
@@ -410,7 +410,7 @@ vector_resize(cf_vector *v, uint32_t new_capacity)
 	v->vector = p;
 
 	if ((v->flags & VECTOR_FLAG_INITZERO) != 0) {
-		memset(v->vector + v->capacity * v->ele_sz, 0,
+		memset(v->vector + (v->capacity * v->ele_sz), 0,
 				(new_capacity - v->capacity) * v->ele_sz);
 	}
 
