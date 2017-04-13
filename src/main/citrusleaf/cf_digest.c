@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2008-2017 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -15,22 +15,6 @@
  * the License.
  */
 
-#include <stdint.h>
-#include <stdio.h>
-
 #include <citrusleaf/cf_digest.h>
 
-void
-cf_digest_string(cf_digest *digest, char* output)
-{
-    uint8_t *d = (uint8_t *) digest;
-    char* p = output;
-
-    *p++ = '0';
-    *p++ = 'x';
-
-    for (int i = 0; i < CF_DIGEST_KEY_SZ; i++) {
-        sprintf(p, "%02x", d[i]);
-        p += 2;
-    }
-}
+const cf_digest cf_digest_zero = { .digest = { 0 } };
