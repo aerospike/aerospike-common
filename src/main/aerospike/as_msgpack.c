@@ -88,6 +88,8 @@ static int64_t as_unpack_map_elements_size(as_unpacker *pk, uint32_t ele_count, 
 static inline as_val_t bytes_internal_type_to_as_val_t(uint8_t type);
 static int64_t as_unpack_size_non_recursive(as_unpacker *pk, msgpack_parse_memblock *block, msgpack_parse_state *state);
 static inline int64_t as_unpack_size_internal(as_unpacker *pk, uint32_t depth);
+static inline const uint8_t *unpack_str_bin(as_unpacker *pk, uint32_t *sz_r);
+
 
 /******************************************************************************
  * MSGPACK_PARSE FUNCTIONS
@@ -259,7 +261,7 @@ static int as_pack_resize(as_packer *pk, int length)
 	return 0;
 }
 
-static inline int as_pack_append(as_packer *pk, const unsigned char *src, int length)
+static inline int pack_append(as_packer *pk, const unsigned char *src, int length)
 {
 	if (pk->buffer) {
 		if (pk->offset + length > pk->capacity) {
@@ -273,7 +275,7 @@ static inline int as_pack_append(as_packer *pk, const unsigned char *src, int le
 	return 0;
 }
 
-static inline int as_pack_byte(as_packer *pk, uint8_t val, bool resize)
+static inline int pack_byte(as_packer *pk, uint8_t val, bool resize)
 {
 	if (pk->buffer) {
 		if (pk->offset + 1 > pk->capacity) {
@@ -287,7 +289,7 @@ static inline int as_pack_byte(as_packer *pk, uint8_t val, bool resize)
 	return 0;
 }
 
-static inline int as_pack_int8(as_packer *pk, unsigned char type, uint8_t val, bool resize)
+static inline int pack_uint8(as_packer *pk, unsigned char type, uint8_t val, bool resize)
 {
 	if (pk->buffer) {
 		if (pk->offset + 2 > pk->capacity) {
@@ -303,7 +305,7 @@ static inline int as_pack_int8(as_packer *pk, unsigned char type, uint8_t val, b
 	return 0;
 }
 
-static inline int as_pack_int16(as_packer *pk, unsigned char type, uint16_t val, bool resize)
+static inline int pack_uint16(as_packer *pk, unsigned char type, uint16_t val, bool resize)
 {
 	if (pk->buffer) {
 		if (pk->offset + 3 > pk->capacity) {
@@ -322,7 +324,7 @@ static inline int as_pack_int16(as_packer *pk, unsigned char type, uint16_t val,
 	return 0;
 }
 
-static inline int as_pack_int32(as_packer *pk, unsigned char type, uint32_t val, bool resize)
+static inline int pack_uint32(as_packer *pk, unsigned char type, uint32_t val, bool resize)
 {
 	if (pk->buffer) {
 		if (pk->offset + 5 > pk->capacity) {
@@ -339,7 +341,7 @@ static inline int as_pack_int32(as_packer *pk, unsigned char type, uint32_t val,
 	return 0;
 }
 
-static inline int as_pack_int64(as_packer *pk, unsigned char type, uint64_t val, bool resize)
+static inline int pack_int64(as_packer *pk, unsigned char type, uint64_t val, bool resize)
 {
 	if (pk->buffer) {
 		if (pk->offset + 9 > pk->capacity) {
@@ -358,7 +360,7 @@ static inline int as_pack_int64(as_packer *pk, unsigned char type, uint64_t val,
 
 static inline int as_pack_boolean(as_packer *pk, const as_boolean *b)
 {
-	return as_pack_byte(pk, (as_boolean_get(b) == true)? 0xc3 : 0xc2, true);
+	return pack_byte(pk, (as_boolean_get(b) == true)? 0xc3 : 0xc2, true);
 }
 
 static int as_pack_integer(as_packer *pk, const as_integer *i)
@@ -367,46 +369,46 @@ static int as_pack_integer(as_packer *pk, const as_integer *i)
 	
 	if (val >= 0) {
 		if (val < 128) {
-			return as_pack_byte(pk, (uint8_t)val, true);
+			return pack_byte(pk, (uint8_t)val, true);
 		}
 		
 		if (val < 256) {
-			return as_pack_int8(pk, 0xcc, (uint8_t)val, true);
+			return pack_uint8(pk, 0xcc, (uint8_t)val, true);
 		}
 		
 		if (val < 65536) {
-			return as_pack_int16(pk, 0xcd, (uint16_t)val, true);
+			return pack_uint16(pk, 0xcd, (uint16_t)val, true);
 		}
 		
 		if (val < 4294967296) {
-			return as_pack_int32(pk, 0xce, (uint32_t)val, true);
+			return pack_uint32(pk, 0xce, (uint32_t)val, true);
 		}
-		return as_pack_int64(pk, 0xcf, (uint64_t)val, true);
+		return pack_int64(pk, 0xcf, (uint64_t)val, true);
 	}
 	else {
 		if (val >= -32) {
-			return as_pack_byte(pk, (uint8_t)(0xe0 | (val + 32)), true);
+			return pack_byte(pk, (uint8_t)(0xe0 | (val + 32)), true);
 		}
 		
 		if (val >= -128) {
-			return as_pack_int8(pk, 0xd0, (uint8_t)val, true);
+			return pack_uint8(pk, 0xd0, (uint8_t)val, true);
 		}
 		
 		if (val >= -32768) {
-			return as_pack_int16(pk, 0xd1, (uint16_t)val, true);
+			return pack_uint16(pk, 0xd1, (uint16_t)val, true);
 		}
 		
 		if (val >= -0x80000000L) {
-			return as_pack_int32(pk, 0xd2, (uint32_t)val, true);
+			return pack_uint32(pk, 0xd2, (uint32_t)val, true);
 		}
-		return as_pack_int64(pk, 0xd3, (uint64_t)val, true);
+		return pack_int64(pk, 0xd3, (uint64_t)val, true);
 	}
 }
 
 static inline int as_pack_double(as_packer *pk, const as_double *d)
 {
 	double val = as_double_get(d);
-	return as_pack_int64(pk, 0xcb, *(uint64_t *)&val, true);
+	return pack_int64(pk, 0xcb, *(uint64_t *)&val, true);
 }
 
 static int as_pack_byte_array_header(as_packer *pk, uint32_t length, uint8_t type)
@@ -418,11 +420,11 @@ static int as_pack_byte_array_header(as_packer *pk, uint32_t length, uint8_t typ
 	// Continue to pack byte arrays as strings until all servers/clients
 	// have been upgraded to handle new message pack binary type.
 	if (length < 32) {
-		rc = as_pack_byte(pk, (uint8_t)(0xa0 | length), true);
+		rc = pack_byte(pk, (uint8_t)(0xa0 | length), true);
 	} else if (length < 65536) {
-		rc = as_pack_int16(pk, 0xda, (uint16_t)length, true);
+		rc = pack_uint16(pk, 0xda, (uint16_t)length, true);
 	} else {
-		rc = as_pack_int32(pk, 0xdb, length, true);
+		rc = pack_uint32(pk, 0xdb, length, true);
 	}
 	
 	// TODO: Replace with this code after all servers/clients
@@ -440,7 +442,7 @@ static int as_pack_byte_array_header(as_packer *pk, uint32_t length, uint8_t typ
 	 */
 
 	if (rc == 0) {
-		rc = as_pack_byte(pk, type, true);
+		rc = pack_byte(pk, type, true);
 	}
 	return rc;
 }
@@ -452,23 +454,23 @@ static int as_pack_string(as_packer *pk, as_string *s)
 	int rc;
 		
 	if (size < 32) {
-		rc = as_pack_byte(pk, (uint8_t)(0xa0 | size), true);
+		rc = pack_byte(pk, (uint8_t)(0xa0 | size), true);
 	// TODO: Enable this code after all servers/clients
 	// have been upgraded to handle new message pack binary type.
 	//} else if (size < 255) {
 	//	rc = as_pack_int8(pk, 0xd9, (uint8_t)size);
 	} else if (size < 65536) {
-		rc = as_pack_int16(pk, 0xda, (uint16_t)size, true);
+		rc = pack_uint16(pk, 0xda, (uint16_t)size, true);
 	} else {
-		rc = as_pack_int32(pk, 0xdb, size, true);
+		rc = pack_uint32(pk, 0xdb, size, true);
 	}
 		
 	if (rc == 0) {
-		rc = as_pack_byte(pk, AS_BYTES_STRING, true);
+		rc = pack_byte(pk, AS_BYTES_STRING, true);
 	}
 
 	if (rc == 0) {
-		rc = as_pack_append(pk, (unsigned char*)s->value, length);
+		rc = pack_append(pk, (unsigned char*)s->value, length);
 	}
 	return rc;
 }
@@ -479,7 +481,7 @@ static int as_pack_geojson(as_packer *pk, as_geojson *s)
 	int rc = as_pack_byte_array_header(pk, length, AS_BYTES_GEOJSON);
 	
 	if (rc == 0) {
-		rc = as_pack_append(pk, (unsigned char*)s->value, length);
+		rc = pack_append(pk, (unsigned char*)s->value, length);
 	}
 	return rc;
 }
@@ -489,7 +491,7 @@ static int as_pack_bytes(as_packer *pk, const as_bytes *b)
 	int rc = as_pack_byte_array_header(pk, b->size, b->type);
 	
 	if (rc == 0) {
-		rc = as_pack_append(pk, b->value, b->size);
+		rc = pack_append(pk, b->value, b->size);
 	}
 	return rc;
 }
@@ -506,12 +508,12 @@ static int as_pack_list(as_packer *pk, as_list *l)
 	int rc;
 
 	if (size < 16) {
-		rc = as_pack_byte(pk, (uint8_t)(0x90 | size), true);
+		rc = pack_byte(pk, (uint8_t)(0x90 | size), true);
 	}
 	else if (size < 65536) {
-		rc = as_pack_int16(pk, 0xdc, (uint16_t)size, true);
+		rc = pack_uint16(pk, 0xdc, (uint16_t)size, true);
 	} else {
-		rc = as_pack_int32(pk, 0xdd, size, true);
+		rc = pack_uint32(pk, 0xdd, size, true);
 	}
 
 	if (rc == 0) {
@@ -537,11 +539,11 @@ static int as_pack_map(as_packer *pk, const as_map *m)
 	int rc;
 	
 	if (size < 16) {
-		rc = as_pack_byte(pk, (uint8_t)(0x80 | size), true);
+		rc = pack_byte(pk, (uint8_t)(0x80 | size), true);
 	} else if (size < 65536) {
-		rc = as_pack_int16(pk, 0xde, (uint16_t)size, true);
+		rc = pack_uint16(pk, 0xde, (uint16_t)size, true);
 	} else {
-		rc = as_pack_int32(pk, 0xdf, size, true);
+		rc = pack_uint32(pk, 0xdf, size, true);
 	}
 	
 	if (rc == 0) {
@@ -558,7 +560,7 @@ static int as_pack_rec(as_packer *pk, const as_rec *r)
 static int as_pack_pair(as_packer *pk, as_pair *p)
 {
 	unsigned char v = (unsigned char)(0x90 | 2);
-	int rc = as_pack_append(pk, &v, 1);
+	int rc = pack_append(pk, &v, 1);
 		
 	if (rc == 0) {
 		rc = as_pack_val(pk, as_pair_1(p));
@@ -581,7 +583,7 @@ int as_pack_val(as_packer *pk, const as_val *val)
 		// TODO - Make all of these const.
 		switch (as_val_type(val)) {
 			case AS_NIL:
-				rc = as_pack_byte(pk, 0xc0, true);
+				rc = pack_byte(pk, 0xc0, true);
 				break;
 			case AS_BOOLEAN:
 				rc = as_pack_boolean(pk, (const as_boolean *)val);
@@ -999,17 +1001,59 @@ int as_unpack_val(as_unpacker *pk, as_val **val)
  * Pack direct functions
  ******************************************************************************/
 
+int
+as_pack_str(as_packer *pk, const uint8_t *buf, uint32_t sz)
+{
+	int rc;
+
+	if (sz < 32) {
+		rc = pack_byte(pk, (uint8_t)(0xa0 | sz), false);
+	} else if (sz < (1 << 8) - 1) {
+		rc = pack_uint8(pk, 0xd9, (uint8_t)sz, false);
+	} else if (sz < (1 << 16) - 1) {
+		rc = pack_uint16(pk, 0xda, (uint16_t)sz, false);
+	} else {
+		rc = pack_uint32(pk, 0xdb, sz, false);
+	}
+
+	if (rc == 0) {
+		return pack_append(pk, buf, sz);
+	}
+
+	return rc;
+}
+
+int
+as_pack_bin(as_packer *pk, const uint8_t *buf, uint32_t sz)
+{
+	int rc;
+
+	if (sz < (1 << 8) - 1) {
+		rc = pack_uint8(pk, 0xc4, (uint8_t)sz, false);
+	} else if (sz < (1 << 16) - 1) {
+		rc = pack_uint16(pk, 0xc5, (uint16_t)sz, false);
+	} else {
+		rc = pack_uint32(pk, 0xc6, sz, false);
+	}
+
+	if (rc == 0) {
+		return pack_append(pk, buf, sz);
+	}
+
+	return rc;
+}
+
 int as_pack_list_header(as_packer *pk, uint32_t ele_count)
 {
 	int rc;
 	if (ele_count < 16) {
-		rc = as_pack_byte(pk, (uint8_t)(0x90 | ele_count), false);
+		rc = pack_byte(pk, (uint8_t)(0x90 | ele_count), false);
 	}
 	else if (ele_count < 65536) {
-		rc = as_pack_int16(pk, 0xdc, (uint16_t)ele_count, false);
+		rc = pack_uint16(pk, 0xdc, (uint16_t)ele_count, false);
 	}
 	else {
-		rc = as_pack_int32(pk, 0xdd, ele_count, false);
+		rc = pack_uint32(pk, 0xdd, ele_count, false);
 	}
 	return rc;
 }
@@ -1031,13 +1075,13 @@ int as_pack_map_header(as_packer *pk, uint32_t ele_count)
 {
 	int rc;
 	if (ele_count < 16) {
-		rc = as_pack_byte(pk, (uint8_t)(0x80 | ele_count), false);
+		rc = pack_byte(pk, (uint8_t)(0x80 | ele_count), false);
 	}
 	else if (ele_count < 65536) {
-		rc = as_pack_int16(pk, 0xde, (uint16_t)ele_count, false);
+		rc = pack_uint16(pk, 0xde, (uint16_t)ele_count, false);
 	}
 	else {
-		rc = as_pack_int32(pk, 0xdf, ele_count, false);
+		rc = pack_uint32(pk, 0xdf, ele_count, false);
 	}
 	return rc;
 }
@@ -1058,20 +1102,20 @@ int as_pack_ext_header(as_packer *pk, uint32_t content_size, uint8_t type)
 {
 	int rc;
 	if (content_size < 256) {
-		rc = as_pack_int8(pk, 0xc7, (uint8_t)content_size, false);
+		rc = pack_uint8(pk, 0xc7, (uint8_t)content_size, false);
 	}
 	else if (content_size < 0x10000) {
-		rc = as_pack_int16(pk, 0xc8, (uint16_t)content_size, false);
+		rc = pack_uint16(pk, 0xc8, (uint16_t)content_size, false);
 	}
 	else {
-		rc = as_pack_int32(pk, 0xc9, content_size, false);
+		rc = pack_uint32(pk, 0xc9, content_size, false);
 	}
 
 	if (rc != 0) {
 		return rc;
 	}
 
-	return as_pack_byte(pk, type, false);
+	return pack_byte(pk, type, false);
 }
 
 int as_pack_buf_ext_header(uint8_t *buf, uint32_t size, uint32_t content_size, uint8_t type)
@@ -1679,6 +1723,52 @@ int as_unpack_double(as_unpacker *pk, double *x)
 	}
 
 	return 0;
+}
+
+static inline const uint8_t *
+unpack_str_bin(as_unpacker *pk, uint32_t *sz_r)
+{
+	uint8_t type = pk->buffer[pk->offset++];
+
+	switch (type) {
+	case 0xd9:
+	case 0xc4: // str/bin with 8 bit header
+		*sz_r = (uint32_t)pk->buffer[pk->offset++];
+		break;
+	case 0xc5:
+	case 0xda: // str/bin with 16 bit header
+		*sz_r = (uint32_t)as_extract_uint16(pk);
+		break;
+	case 0xc6:
+	case 0xdb: // str/bin with 32 bit header
+		*sz_r = as_extract_uint32(pk);
+		break;
+	default:
+		if ((type & 0xe0) == 0xa0) { // str bytes with 8 bit combined header
+			*sz_r = (uint32_t)(type & 0x1f);
+			break;
+		}
+
+		return NULL;
+	}
+
+	const uint8_t *buf = &pk->buffer[pk->offset];
+
+	pk->offset += *sz_r;
+
+	return buf;
+}
+
+const uint8_t *
+as_unpack_str(as_unpacker *pk, uint32_t *sz)
+{
+	return unpack_str_bin(pk, sz);
+}
+
+const uint8_t *
+as_unpack_bin(as_unpacker *pk, uint32_t *sz)
+{
+	return unpack_str_bin(pk, sz);
 }
 
 int as_unpack_ext(as_unpacker *pk, as_msgpack_ext *ext)

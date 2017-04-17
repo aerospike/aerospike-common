@@ -86,6 +86,12 @@ int as_unpack_val(as_unpacker *pk, as_val **val);
  ******************************************************************************/
 
 /**
+ * Pack a str.
+ * @return 0 on success
+ */
+int as_pack_str(as_packer *pk, const uint8_t *buf, uint32_t sz);
+int as_pack_bin(as_packer *pk, const uint8_t *buf, uint32_t sz);
+/**
  * Pack a list header with ele_count.
  * @return 0 on success
  */
@@ -157,6 +163,16 @@ int as_unpack_uint64(as_unpacker *pk, uint64_t *i);
  * @return 0 on success
  */
 int as_unpack_double(as_unpacker *pk, double *x);
+/**
+ *  Unpack str (or bin).
+ *  @return NULL on failure
+ */
+const uint8_t *as_unpack_str(as_unpacker *pk, uint32_t *sz);
+/**
+ *  Unpack bin (or str).
+ *  @return NULL on failure
+ */
+const uint8_t *as_unpack_bin(as_unpacker *pk, uint32_t *sz);
 /**
  * Unpack extension type.
  * @return true on success
