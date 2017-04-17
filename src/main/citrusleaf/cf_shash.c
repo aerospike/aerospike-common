@@ -29,6 +29,27 @@
 
 #include <citrusleaf/cf_shash.h>
 #include <citrusleaf/alloc.h>
+#include <citrusleaf/cf_hash_math.h>
+
+/******************************************************************************
+ * USEFUL HASH FUNCTIONS
+ ******************************************************************************/
+
+// Interpret first 4 bytes of key as (host-ordered) uint32_t. (Note - caller
+// is responsible for ensuring key size is at least 4 bytes.)
+uint32_t
+cf_shash_fn_u32(const void *key)
+{
+	return *(const uint32_t *)key;
+}
+
+// Useful if key is a null-terminated string. (Note - using fixed-size keys, so
+// key must still be padded to correctly compare keys in a bucket.)
+uint32_t
+cf_shash_fn_zstr(const void *key)
+{
+	return cf_hash_fnv32((const uint8_t *)key, strlen(key));
+}
 
 /******************************************************************************
  * FUNCTIONS

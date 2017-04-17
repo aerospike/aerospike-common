@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2008-2017 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -14,20 +14,18 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 #pragma once
 
 //==========================================================
 // Includes.
 //
 
-#include <inttypes.h>
 #include <pthread.h>
 #include <stdbool.h>
 #include <stdint.h>
 
-#include <citrusleaf/alloc.h>
 #include <citrusleaf/cf_atomic.h>
-#include <citrusleaf/cf_types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -95,6 +93,15 @@ typedef struct cf_rchash_s {
 	pthread_mutex_t *bucket_locks;
 	pthread_mutex_t biglock;
 } cf_rchash;
+
+
+//==========================================================
+// Public API - useful hash functions.
+//
+
+uint32_t cf_rchash_fn_u32(const void *key, uint32_t key_size);
+uint32_t cf_rchash_fn_fnv32(const void *key, uint32_t key_size);
+uint32_t cf_rchash_fn_zstr(const void *key, uint32_t key_size);
 
 
 //==========================================================

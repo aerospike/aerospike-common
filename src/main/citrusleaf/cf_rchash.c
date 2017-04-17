@@ -29,6 +29,7 @@
 
 #include <citrusleaf/alloc.h>
 #include <citrusleaf/cf_atomic.h>
+#include <citrusleaf/cf_hash_math.h>
 
 
 //==========================================================
@@ -55,6 +56,40 @@ static inline int cf_rchash_fill_element_v(cf_rchash_elem_v *e, cf_rchash *h, co
 static inline void cf_rchash_size_incr(cf_rchash *h);
 static inline void cf_rchash_size_decr(cf_rchash *h);
 static inline void cf_rchash_release_object(cf_rchash *h, void *object);
+
+
+//==========================================================
+// Public API - useful hash functions.
+//
+
+// Interpret first 4 bytes of key as (host-ordered) uint32_t. (Note - caller
+// is responsible for ensuring key size is at least 4 bytes.)
+uint32_t
+cf_rchash_fn_u32(const void *key, uint32_t key_size)
+{
+	(void)key_size;
+
+	return *(const uint32_t *)key;
+}
+
+
+// Hash all bytes of key using 32-bit Fowler-Noll-Vo method.
+uint32_t
+cf_rchash_fn_fnv32(const void *key, uint32_t key_size)
+{
+	return cf_hash_fnv32((const uint8_t *)key, (size_t)key_size);
+}
+
+
+// Useful if key is a null-terminated string. (Note - if using fixed-size keys,
+// key must still be padded to correctly compare keys in a bucket.)
+uint32_t
+cf_rchash_fn_zstr(const void *key, uint32_t key_size)
+{
+	(void)key_size;
+
+	return cf_hash_fnv32((const uint8_t *)key, strlen(key));
+}
 
 
 //==========================================================
