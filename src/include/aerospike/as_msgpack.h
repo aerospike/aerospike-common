@@ -167,12 +167,12 @@ int as_unpack_double(as_unpacker *pk, double *x);
  *  Unpack str (or bin).
  *  @return NULL on failure
  */
-const uint8_t *as_unpack_str(as_unpacker *pk, uint32_t *sz);
+const uint8_t *as_unpack_str(as_unpacker *pk, uint32_t *sz_r);
 /**
  *  Unpack bin (or str).
  *  @return NULL on failure
  */
-const uint8_t *as_unpack_bin(as_unpacker *pk, uint32_t *sz);
+const uint8_t *as_unpack_bin(as_unpacker *pk, uint32_t *sz_r);
 /**
  * Unpack extension type.
  * @return true on success
