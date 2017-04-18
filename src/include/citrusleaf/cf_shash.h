@@ -131,6 +131,7 @@ typedef struct shash_s shash;
 
 // TODO - shash may be moved back to server, hash function signature may change.
 uint32_t cf_shash_fn_u32(const void *key);
+uint32_t cf_shash_fn_ptr(const void *key);
 uint32_t cf_shash_fn_zstr(const void *key);
 
 

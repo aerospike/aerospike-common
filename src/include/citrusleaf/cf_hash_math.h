@@ -62,14 +62,14 @@ cf_hash_fnv64(const uint8_t* buf, size_t size)
 
 
 // 32-bit Jenkins One-at-a-Time hash function.
-static inline uint64_t
+static inline uint32_t
 cf_hash_jen32(const uint8_t* buf, size_t size)
 {
 	uint32_t hash = 0;
 	const uint8_t* end = buf + size;
 
 	while (buf < end) {
-		hash += (uint64_t)*buf++;
+		hash += (uint32_t)*buf++;
 		hash += hash << 10;
 		hash ^= hash >> 6;
 	}
@@ -100,4 +100,12 @@ cf_hash_jen64(const uint8_t* buf, size_t size)
 	hash += hash << 15;
 
 	return hash;
+}
+
+
+// 32-bit pointer hash. TODO - what's best here?
+static inline uint32_t
+cf_hash_ptr32(const void* ptr)
+{
+	return (uint32_t)(*(const uint64_t*)ptr >> 3);
 }

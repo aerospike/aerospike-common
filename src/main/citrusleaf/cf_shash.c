@@ -43,6 +43,13 @@ cf_shash_fn_u32(const void *key)
 	return *(const uint32_t *)key;
 }
 
+// Useful if key is a pointer.
+uint32_t
+cf_shash_fn_ptr(const void *key)
+{
+	return cf_hash_ptr32(key);
+}
+
 // Useful if key is a null-terminated string. (Note - using fixed-size keys, so
 // key must still be padded to correctly compare keys in a bucket.)
 uint32_t
