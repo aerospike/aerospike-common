@@ -362,7 +362,7 @@ pack_uint32(as_packer *pk, unsigned char type, uint32_t val, bool resize)
 }
 
 static inline int
-pack_int64(as_packer *pk, unsigned char type, uint64_t val, bool resize)
+pack_uint64(as_packer *pk, unsigned char type, uint64_t val, bool resize)
 {
 	if (pk->buffer) {
 		if (pk->offset + 9 > pk->capacity) {
@@ -407,7 +407,7 @@ pack_integer(as_packer *pk, const as_integer *i)
 			return pack_uint32(pk, 0xce, (uint32_t)val, true);
 		}
 
-		return pack_int64(pk, 0xcf, (uint64_t)val, true);
+		return pack_uint64(pk, 0xcf, (uint64_t)val, true);
 	}
 	else {
 		if (val >= -32) {
@@ -426,7 +426,7 @@ pack_integer(as_packer *pk, const as_integer *i)
 			return pack_uint32(pk, 0xd2, (uint32_t)val, true);
 		}
 
-		return pack_int64(pk, 0xd3, (uint64_t)val, true);
+		return pack_uint64(pk, 0xd3, (uint64_t)val, true);
 	}
 }
 
@@ -434,7 +434,7 @@ static inline int
 pack_double(as_packer *pk, const as_double *d)
 {
 	double val = as_double_get(d);
-	return pack_int64(pk, 0xcb, *(uint64_t *)&val, true);
+	return pack_uint64(pk, 0xcb, *(uint64_t *)&val, true);
 }
 
 static int
@@ -1032,6 +1032,74 @@ as_unpack_val(as_unpacker *pk, as_val **val)
 /******************************************************************************
  * Pack direct functions
  ******************************************************************************/
+
+uint32_t
+as_pack_uint64_size(uint64_t val)
+{
+	if (val < (1UL << 7)) {
+		return 1;
+	}
+
+	if (val < (1UL << 8)) {
+		return 2;
+	}
+
+	if (val < (1UL << 16)) {
+		return 3;
+	}
+
+	if (val < (1UL << 32)) {
+		return 5;
+	}
+
+	return 9;
+}
+
+int
+as_pack_uint64(as_packer *pk, uint64_t val)
+{
+	if (val < (1UL << 7)) {
+		return pack_byte(pk, (uint8_t)val, false);
+	}
+
+	if (val < (1UL << 8)) {
+		return pack_uint8(pk, 0xcc, (uint8_t)val, false);
+	}
+
+	if (val < (1UL << 16)) {
+		return pack_uint16(pk, 0xcd, (uint16_t)val, false);
+	}
+
+	if (val < (1UL << 32)) {
+		return pack_uint32(pk, 0xce, (uint32_t)val, false);
+	}
+
+	return pack_uint64(pk, 0xcf, val, false);
+}
+
+uint32_t
+as_pack_str_size(uint32_t str_sz)
+{
+	if (str_sz < 32) {
+		return 1 + str_sz;
+	}
+
+	return as_pack_buf_size(str_sz);
+}
+
+uint32_t
+as_pack_buf_size(uint32_t buf_sz)
+{
+	if (buf_sz < (1 << 8)) {
+		return 2 + buf_sz;
+	}
+
+	if (buf_sz < (1 << 16)) {
+		return 3 + buf_sz;
+	}
+
+	return 5 + buf_sz;
+}
 
 int
 as_pack_str(as_packer *pk, const uint8_t *buf, uint32_t sz)
