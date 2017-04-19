@@ -558,7 +558,7 @@ pack_list(as_packer *pk, as_list *l)
 	}
 
 	if (rc == 0) {
-		rc = as_list_foreach(l, pack_list_foreach, pk) == true ? 0 : 1;
+		rc = as_list_foreach(l, pack_list_foreach, pk) ? 0 : 1;
 	}
 
 	return rc;
@@ -594,7 +594,7 @@ pack_map(as_packer *pk, const as_map *m)
 	}
 
 	if (rc == 0) {
-		rc = as_map_foreach(m, pack_map_foreach, pk) == true ? 0 : 1;
+		rc = as_map_foreach(m, pack_map_foreach, pk) ? 0 : 1;
 	}
 
 	return rc;
@@ -965,22 +965,22 @@ as_unpack_val(as_unpacker *pk, as_val **val)
 		return unpack_double_val(extract_double(pk), val);
 
 	case 0xd0: // signed 8 bit integer
-		return unpack_integer_val((int64_t)pk->buffer[pk->offset++], val);
+		return unpack_integer_val((int64_t)(int8_t)pk->buffer[pk->offset++],
+				val);
 	case 0xcc: // unsigned 8 bit integer
 		return unpack_integer_val((int64_t)pk->buffer[pk->offset++], val);
 
 	case 0xd1: // signed 16 bit integer
-		return unpack_integer_val((int64_t)extract_uint16(pk), val);
+		return unpack_integer_val((int64_t)(int16_t)extract_uint16(pk), val);
 	case 0xcd: // unsigned 16 bit integer
 		return unpack_integer_val((int64_t)extract_uint16(pk), val);
 
 	case 0xd2: // signed 32 bit integer
-		return unpack_integer_val((int64_t)extract_uint32(pk), val);
+		return unpack_integer_val((int64_t)(int32_t)extract_uint32(pk), val);
 	case 0xce: // unsigned 32 bit integer
 		return unpack_integer_val((int64_t)extract_uint32(pk), val);
 
 	case 0xd3: // signed 64 bit integer
-		return unpack_integer_val((int64_t)extract_uint64(pk), val);
 	case 0xcf: // unsigned 64 bit integer
 		return unpack_integer_val((int64_t)extract_uint64(pk), val);
 
