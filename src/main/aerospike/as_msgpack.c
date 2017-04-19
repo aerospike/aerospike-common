@@ -1621,17 +1621,17 @@ unpack_size_internal(as_unpacker *pk, uint32_t depth)
 	case 0xd8: // fixext 16
 		pk->offset += 1 + 16;
 		return 1 + 1 + 16;
-	case 0xc7: {// ext 8
+	case 0xc7: { // ext 8
 		uint8_t length = pk->buffer[pk->offset++];
 		pk->offset += 1 + length;
 		return 1 + 1 + 1 + length;
 	}
-	case 0xc8: {// ext 16
+	case 0xc8: { // ext 16
 		uint16_t length = extract_uint16(pk);
 		pk->offset += 1 + length;
 		return 1 + 2 + 1 + length;
 	}
-	case 0xc9: {// ext 32
+	case 0xc9: { // ext 32
 		uint32_t length = extract_uint32(pk);
 		pk->offset += 1 + length;
 		return 1 + 4 + 1 + length;
@@ -1736,7 +1736,7 @@ as_unpack_uint64(as_unpacker *pk, uint64_t *i)
 		if (size < 1) {
 			return -1;
 		}
-		*i = (uint64_t)pk->buffer[pk->offset++];
+		*i = (uint64_t)(int8_t)pk->buffer[pk->offset++];
 		break;
 	case 0xcc: // unsigned 8 bit integer
 		if (size < 1) {
@@ -1749,7 +1749,7 @@ as_unpack_uint64(as_unpacker *pk, uint64_t *i)
 		if (size < 2) {
 			return -3;
 		}
-		*i = (uint64_t)extract_uint16(pk);
+		*i = (uint64_t)(int16_t)extract_uint16(pk);
 		break;
 	case 0xcd: // unsigned 16 bit integer
 		if (size < 2) {
@@ -1762,7 +1762,7 @@ as_unpack_uint64(as_unpacker *pk, uint64_t *i)
 		if (size < 4) {
 			return -5;
 		}
-		*i = (uint64_t)extract_uint32(pk);
+		*i = (uint64_t)(int32_t)extract_uint32(pk);
 		break;
 	case 0xce: // unsigned 32 bit integer
 		if (size < 4) {
@@ -1772,14 +1772,9 @@ as_unpack_uint64(as_unpacker *pk, uint64_t *i)
 		break;
 
 	case 0xd3: // signed 64 bit integer
-		if (size < 8) {
-			return -7;
-		}
-		*i = extract_uint64(pk);
-		break;
 	case 0xcf: // unsigned 64 bit integer
 		if (size < 8) {
-			return -8;
+			return -7;
 		}
 		*i = extract_uint64(pk);
 		break;
@@ -1795,7 +1790,7 @@ as_unpack_uint64(as_unpacker *pk, uint64_t *i)
 			break;
 		}
 
-		return -9;
+		return -8;
 	}
 
 	return 0;
