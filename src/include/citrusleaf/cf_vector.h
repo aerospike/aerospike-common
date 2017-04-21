@@ -103,7 +103,8 @@ cf_vector_element_size(const cf_vector *v)
 #define cf_vector_inita(_v, _ele_sz, _ele_cnt, _flags) \
 		cf_vector_init_with_buf(_v, _ele_sz, _ele_cnt, alloca((_ele_sz) * (_ele_cnt)), _flags);
 
-#define cf_vector_inits(_v, _ele_sz, _ele_cnt, _flags) \
+#define cf_vector_define(_v, _ele_sz, _ele_cnt, _flags) \
+		cf_vector _v; \
 		uint8_t _v ## __mem[(_ele_sz) * (_ele_cnt)]; \
 		cf_vector_init_with_buf(&_v, _ele_sz, _ele_cnt, _v ## __mem, _flags);
 
