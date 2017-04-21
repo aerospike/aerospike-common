@@ -14,6 +14,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
+#include <string.h>
 #include <citrusleaf/cf_queue.h>
 #include <citrusleaf/cf_clock.h>
 #include <citrusleaf/alloc.h>
@@ -143,7 +145,7 @@ cf_queue_resize(cf_queue *q, uint32_t new_sz)
 		q->write_offset = q->alloc_sz;
 	}
 	else {
-		byte *newq = (uint8_t*)cf_malloc(new_sz * q->element_sz);
+		uint8_t *newq = (uint8_t*)cf_malloc(new_sz * q->element_sz);
 
 		if (! newq) {
 			return CF_QUEUE_ERR;

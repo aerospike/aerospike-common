@@ -17,6 +17,7 @@
 #include "aerospike/as_thread_pool.h"
 #include <citrusleaf/alloc.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 /******************************************************************************

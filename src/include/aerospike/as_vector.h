@@ -112,7 +112,7 @@ as_vector_clear(as_vector* vector)
 static inline void*
 as_vector_get(as_vector* vector, uint32_t index)
 {
-	return (void *) ((byte *)vector->list + (vector->item_size * index));
+	return (void *) ((uint8_t *)vector->list + (vector->item_size * index));
 }
 
 /**
@@ -121,7 +121,7 @@ as_vector_get(as_vector* vector, uint32_t index)
 static inline void*
 as_vector_get_ptr(as_vector* vector, uint32_t index)
 {
-	return *(void**) ((byte *)vector->list + (vector->item_size * index));
+	return *(void**) ((uint8_t *)vector->list + (vector->item_size * index));
 }
 
 /**
@@ -136,7 +136,7 @@ as_vector_increase_capacity(as_vector* vector);
 static inline void
 as_vector_set(as_vector* vector, uint32_t index, void* value)
 {
-	memcpy((byte *)vector->list + (index * vector->item_size), value, vector->item_size);
+	memcpy((uint8_t *)vector->list + (index * vector->item_size), value, vector->item_size);
 }
 
 /**
@@ -148,7 +148,7 @@ as_vector_append(as_vector* vector, void* value)
 	if (vector->size >= vector->capacity) {
 		as_vector_increase_capacity(vector);
 	}
-	memcpy((byte *)vector->list + (vector->size * vector->item_size), value, vector->item_size);
+	memcpy((uint8_t *)vector->list + (vector->size * vector->item_size), value, vector->item_size);
 	vector->size++;
 }
 
@@ -174,7 +174,7 @@ as_vector_reserve(as_vector* vector)
 	if (vector->size >= vector->capacity) {
 		as_vector_increase_capacity(vector);
 	}
-	void* item = (byte *)vector->list + (vector->size * vector->item_size);
+	void* item = (uint8_t *)vector->list + (vector->size * vector->item_size);
 	memset(item, 0, vector->item_size);
 	vector->size++;
 	return item;
@@ -186,7 +186,7 @@ as_vector_reserve(as_vector* vector)
 static inline void
 as_vector_move(as_vector* vector, uint32_t source, uint32_t target)
 {
-	memcpy((byte *)vector->list + (target * vector->item_size), (byte *)vector->list + (source * vector->item_size), vector->item_size);
+	memcpy((uint8_t *)vector->list + (target * vector->item_size), (uint8_t *)vector->list + (source * vector->item_size), vector->item_size);
 }
 
 #ifdef __cplusplus

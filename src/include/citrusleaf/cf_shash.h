@@ -112,12 +112,12 @@ struct shash_elem_s {
 typedef struct shash_elem_s shash_elem;
 
 struct shash_s {
-	uint 				elements; 		// INVALID in manylocks case - see notes under get_size
+	uint32_t			elements; 		// INVALID in manylocks case - see notes under get_size
 	uint32_t 			key_len;
 	uint32_t 			value_len;
-	uint 				flags;
+	uint32_t			flags;
 	shash_hash_fn		h_fn;
-	uint 				table_len; 		// number of elements currently in the table
+	uint32_t			table_len; 		// number of elements currently in the table
 	void *				table;
 	pthread_mutex_t		biglock;
 	pthread_mutex_t	*	lock_table;
@@ -147,7 +147,7 @@ uint32_t cf_shash_fn_zstr(const void *key);
  * The initial table size
  * a set of flags
  */
-int shash_create(shash **h, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_len, uint32_t sz, uint flags);
+int shash_create(shash **h, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_len, uint32_t sz, uint32_t flags);
 
 /**
  * Place a value into the hash

@@ -18,8 +18,9 @@
 #include <aerospike/as_random.h>
 #include <aerospike/as_string.h>
 #include <stdio.h>
-#include <termios.h>
 #include <string.h>
+#include <termios.h>
+#include <unistd.h>
 #include "crypt_blowfish.h"
 
 #define BCRYPT_RAND_LEN 16

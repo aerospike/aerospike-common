@@ -65,7 +65,7 @@ typedef struct cf_queue_s {
 	size_t          element_sz;     // number of bytes in an element
 	pthread_mutex_t LOCK;           // the mutex lock
 	pthread_cond_t  CV;             // the condvar
-	byte *          elements;       // the block of queue elements
+	uint8_t *       elements;       // the block of queue elements
 } cf_queue;
 
 /******************************************************************************

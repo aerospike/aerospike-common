@@ -30,7 +30,7 @@
 
 #define SEED_SZ 64
 static uint8_t rand_buf[1024 * 8];
-static uint rand_buf_off = 0;
+static uint32_t rand_buf_off = 0;
 static int  seeded = 0;
 static pthread_mutex_t rand_buf_lock = PTHREAD_MUTEX_INITIALIZER;
 
@@ -72,11 +72,11 @@ int cf_rand_reload() {
 #endif
 
 int cf_get_rand_buf(uint8_t *buf, int len) {
-    if ((uint)len >= sizeof(rand_buf))  return(-1);
+    if ((uint32_t)len >= sizeof(rand_buf))  return(-1);
     
     pthread_mutex_lock(&rand_buf_lock);
     
-    if (rand_buf_off < (uint)len ) {
+    if (rand_buf_off < (uint32_t)len ) {
         if (-1 == cf_rand_reload()) {
             pthread_mutex_unlock(&rand_buf_lock);
             return(-1);

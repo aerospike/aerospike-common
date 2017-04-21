@@ -16,10 +16,7 @@
  */
 #pragma once
 
-#include <stdlib.h>
-#include <string.h>
 #include <inttypes.h>
-#include <unistd.h>
 
 #ifndef CF_WINDOWS
 /******************************************************************************
@@ -40,37 +37,3 @@
 #define PRId64 "I64d"
 
 #endif // CF_WINDOWS
-
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/******************************************************************************
- * CONSTANTS
- ******************************************************************************/
-
-#define INVALID_FD (-1)
-#define FALSE 0
-#define TRUE 1
-
-/******************************************************************************
- * TYPES
- ******************************************************************************/
-
-typedef uint8_t byte;
-typedef unsigned int uint;
-
-struct cf_bytearray_t {
-    uint64_t    sz;
-    byte        data[];
-};
-
-typedef struct cf_bytearray_t cf_bytearray;
-
-/******************************************************************************/
-
-#ifdef __cplusplus
-} // end extern "C"
-#endif

@@ -16,6 +16,7 @@
  */
 #pragma once
 
+#include <string.h>
 #include "citrusleaf/cf_types.h"
 
 #ifdef __cplusplus

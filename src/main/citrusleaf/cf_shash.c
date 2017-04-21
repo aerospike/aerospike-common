@@ -71,7 +71,7 @@ cf_shash_fn_zstr(const void *key)
  * (Also note:  Memory for the elements in a tracked hash table is tracked, along with memory for
  *               the hash table itself.) 
  */
-int shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_len, uint32_t sz, uint flags) {
+int shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t value_len, uint32_t sz, uint32_t flags) {
 	shash *h;
 	bool mem_tracked = !(flags & SHASH_CR_UNTRACKED);
 
@@ -102,7 +102,7 @@ int shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t val
 	}
 	
 	shash_elem *table = h->table;
-	for (uint i=0;i<sz;i++) {
+	for (uint32_t i=0;i<sz;i++) {
 		table->in_use = false;
 		table->next = 0;
 		// next element in head table
@@ -134,7 +134,7 @@ int shash_create(shash **h_r, shash_hash_fn h_fn, uint32_t key_len, uint32_t val
 			*h_r = 0;
 			return(SHASH_ERR);
 		}
-		for (uint i=0;i<sz;i++) {
+		for (uint32_t i=0;i<sz;i++) {
 			pthread_mutex_init( &(h->lock_table[i]), 0 );
 		}
 	}
@@ -158,7 +158,7 @@ uint32_t shash_get_size(shash *h) {
 	
 	if (h->flags & SHASH_CR_MT_MANYLOCK) {
         
-        for (uint i=0; i<h->table_len ; i++) {
+        for (uint32_t i=0; i<h->table_len ; i++) {
             
             pthread_mutex_t *l = &(h->lock_table[i]);
             pthread_mutex_lock( l );
@@ -197,7 +197,7 @@ int shash_put(shash *h, const void *key, void *value) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash
-	uint hash = h->h_fn(key);
+	uint32_t hash = h->h_fn(key);
 	hash %= h->table_len;
 
 	pthread_mutex_t		*l = 0;
@@ -252,7 +252,7 @@ int shash_put_unique(shash *h, const void *key, void *value) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash
-	uint hash = h->h_fn(key);
+	uint32_t hash = h->h_fn(key);
 	hash %= h->table_len;
 
 	pthread_mutex_t		*l = 0;
@@ -309,7 +309,7 @@ int shash_put_duplicate(shash *h, const void *key, void *value) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash
-	uint hash = h->h_fn(key);
+	uint32_t hash = h->h_fn(key);
 	hash %= h->table_len;
 
 	pthread_mutex_t		*l = 0;
@@ -348,7 +348,7 @@ Copy:
 int shash_get(shash *h, const void *key, void *value) {
 	int rv = SHASH_ERR;
 
-	uint hash = h->h_fn(key);
+	uint32_t hash = h->h_fn(key);
 	hash %= h->table_len;
 
 	pthread_mutex_t *l = 0;
@@ -360,7 +360,7 @@ int shash_get(shash *h, const void *key, void *value) {
 	}
 	if (l)     pthread_mutex_lock( l );
 
-	shash_elem *e = (shash_elem *) (((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));
+	shash_elem *e = (shash_elem *) (((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));
 
 	if (e->in_use == false) {
 		rv = SHASH_ERR_NOTFOUND;
@@ -392,7 +392,7 @@ Out:
 int shash_get_vlock(shash *h, const void *key, void **value, pthread_mutex_t **vlock) {
 	int rv = SHASH_ERR;
 	
-	uint hash = h->h_fn(key);
+	uint32_t hash = h->h_fn(key);
 	hash %= h->table_len;
 
 	pthread_mutex_t		*l = 0;
@@ -404,7 +404,7 @@ int shash_get_vlock(shash *h, const void *key, void **value, pthread_mutex_t **v
 	}
 	if (l)     pthread_mutex_lock( l );
 	
-	shash_elem *e = (shash_elem *) ( ((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
+	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));
 
 	if (e->in_use == false) {
 		rv = SHASH_ERR_NOTFOUND;
@@ -449,7 +449,7 @@ Out:
 int shash_update(shash *h, const void *key, void *value_old, void *value_new, shash_update_fn update_fn, void *udata) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
-	uint hash = h->h_fn(key);
+	uint32_t hash = h->h_fn(key);
 	hash %= h->table_len;
 	int rv = SHASH_OK;
 
@@ -462,7 +462,7 @@ int shash_update(shash *h, const void *key, void *value_old, void *value_new, sh
 	}
 	if (l)     pthread_mutex_lock( l );
 
-	shash_elem *e = (shash_elem *) (((byte *)h->table) + (SHASH_ELEM_SZ(h) * hash));
+	shash_elem *e = (shash_elem *) (((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));
 	shash_elem *e_head = e;
 
 	if (e->in_use == false) {
@@ -514,7 +514,7 @@ int shash_delete(shash *h, const void *key) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash
-	uint hash = h->h_fn(key);
+	uint32_t hash = h->h_fn(key);
 	hash %= h->table_len;
 	int rv = SHASH_ERR;
 
@@ -591,7 +591,7 @@ int shash_delete_lockfree(shash *h, const void *key) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash
-	uint hash = h->h_fn(key);
+	uint32_t hash = h->h_fn(key);
 	hash %= h->table_len;
 
 	shash_elem *e = (shash_elem *) ( ((uint8_t *)h->table) + (SHASH_ELEM_SZ(h) * hash));	
@@ -646,7 +646,7 @@ int shash_get_and_delete(shash *h, const void *key, void *value) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	// Calculate hash
-	uint hash = h->h_fn(key);
+	uint32_t hash = h->h_fn(key);
 	hash %= h->table_len;
 	int rv = SHASH_ERR;
 
@@ -733,7 +733,7 @@ int shash_reduce(shash *h, shash_reduce_fn reduce_fn, void *udata) {
 		pthread_mutex_lock( &h->biglock);
 	}
 
-	for (uint i=0; i<h->table_len ; i++) {
+	for (uint32_t i=0; i<h->table_len ; i++) {
 		
 		pthread_mutex_t *l = 0;
 		if (h->flags & SHASH_CR_MT_MANYLOCK) {
@@ -782,7 +782,7 @@ int shash_reduce_delete(shash *h, shash_reduce_fn reduce_fn, void *udata) {
 		pthread_mutex_lock( &h->biglock);
 	}
 	
-	for (uint i=0; i<h->table_len ; i++) {
+	for (uint32_t i=0; i<h->table_len ; i++) {
 
 		pthread_mutex_t *l = 0;
 		if (h->flags & SHASH_CR_MT_MANYLOCK) {
@@ -869,7 +869,7 @@ void shash_deleteall_lockfree(shash *h) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	shash_elem *e_table = h->table;
-	for (uint i=0;i<h->table_len;i++) {
+	for (uint32_t i=0;i<h->table_len;i++) {
 		if (e_table->next) {
 			shash_elem *e = e_table->next;
 			shash_elem *t;
@@ -901,7 +901,7 @@ void shash_deleteall(shash *h) {
 	}
 	
 	shash_elem *e_table = h->table;
-	for (uint i=0;i<h->table_len;i++) {
+	for (uint32_t i=0;i<h->table_len;i++) {
 		pthread_mutex_t *l = 0;
 		if (h->flags & SHASH_CR_MT_MANYLOCK) {
 			l = &(h->lock_table[i]);
@@ -945,7 +945,7 @@ void shash_destroy(shash *h) {
 	bool mem_tracked = !(h->flags & SHASH_CR_UNTRACKED);
 
 	shash_elem * e_table = (shash_elem *) h->table;
-	for (uint i=0;i<h->table_len;i++) {
+	for (uint32_t i=0;i<h->table_len;i++) {
 		if (e_table->next) {
 			shash_elem *e = e_table->next;
 			shash_elem *t;
@@ -965,7 +965,7 @@ void shash_destroy(shash *h) {
 		pthread_mutex_destroy(&h->biglock);
 	}
 	if (h->flags & SHASH_CR_MT_MANYLOCK) {
-		for (uint i=0;i<h->table_len;i++) {
+		for (uint32_t i=0;i<h->table_len;i++) {
 			pthread_mutex_destroy(&(h->lock_table[i]));
 		}
 		if (mem_tracked)
