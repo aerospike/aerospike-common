@@ -103,9 +103,9 @@ cf_hash_jen64(const uint8_t* buf, size_t size)
 }
 
 
-// 32-bit pointer hash. TODO - what's best here?
+// 32-bit pointer hash.
 static inline uint32_t
-cf_hash_ptr32(const void* ptr)
+cf_hash_ptr32(const void* p_ptr)
 {
-	return (uint32_t)(*(const uint64_t*)ptr >> 3);
+	return (uint32_t)((*(const uint64_t*)p_ptr * 0xe221f97c30e94e1dULL) >> 32);
 }
