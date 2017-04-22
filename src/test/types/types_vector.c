@@ -162,6 +162,32 @@ TEST( types_vector_pointers, "as_vector pointer elements" ) {
     as_vector_destroy(&v);
 }
 
+TEST( types_vector_remove, "as_vector remove" ) {
+	as_vector v;
+	as_vector_init(&v, sizeof(int), 10);
+
+	for (int i = 0; i < 10; i++) {
+		as_vector_append(&v, &i);
+	}
+
+	as_vector_remove(&v, 2);
+
+	assert(v.size == 9);
+
+	for (int i = 0; i < 9; i++) {
+		int val = *(int*)as_vector_get(&v, i);
+
+		if (i < 2) {
+			assert(val == i);
+		}
+		else {
+			assert(val == i + 1);
+		}
+	}
+	as_vector_destroy(&v);
+}
+
+
 /******************************************************************************
  * TEST SUITE
  *****************************************************************************/
@@ -172,4 +198,5 @@ SUITE( types_vector, "as_vector" ) {
     suite_add( types_vector_heap_create );
     suite_add( types_vector_append_unique );
     suite_add( types_vector_pointers );
+	suite_add( types_vector_remove );
 }

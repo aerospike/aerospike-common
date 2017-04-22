@@ -181,13 +181,10 @@ as_vector_reserve(as_vector* vector)
 }
 
 /**
- *  Move item row position in vector.
+ *  Remove item from vector.
  */
-static inline void
-as_vector_move(as_vector* vector, uint32_t source, uint32_t target)
-{
-	memcpy((uint8_t *)vector->list + (target * vector->item_size), (uint8_t *)vector->list + (source * vector->item_size), vector->item_size);
-}
+bool
+as_vector_remove(as_vector* vector, uint32_t index);
 
 #ifdef __cplusplus
 } // end extern "C"

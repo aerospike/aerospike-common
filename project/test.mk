@@ -7,7 +7,7 @@ TEST_VALGRIND = --tool=memcheck --leak-check=yes --show-reachable=yes --num-call
 TEST_CFLAGS = -I$(TARGET_INCL)
 
 ifeq ($(OS),Darwin)
-TEST_LDFLAGS = -lssl -lcrypto -lpthread -lm
+TEST_LDFLAGS = -L/usr/local/opt/openssl/lib -lssl -lcrypto -lpthread -lm
 else
 TEST_LDFLAGS = -lssl -lcrypto -lpthread -lm -lrt
 endif

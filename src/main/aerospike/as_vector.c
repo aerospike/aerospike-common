@@ -90,3 +90,18 @@ as_vector_to_array(as_vector* vector, uint32_t* size)
 	*size = vector->size;
 	return array;
 }
+
+bool
+as_vector_remove(as_vector* vector, uint32_t index)
+{
+	if (index >= vector->size) {
+		return false;
+	}
+
+	memmove((uint8_t*)vector->list + (index * vector->item_size),
+		    (uint8_t*)vector->list + ((index + 1) * vector->item_size),
+		    (vector->size - index - 1) * vector->item_size);
+
+	vector->size--;
+	return true;
+}

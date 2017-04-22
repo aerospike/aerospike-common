@@ -261,7 +261,7 @@ pack_resize(as_packer *pk, uint32_t sz)
 		return -1;
 	}
 
-	pk->capacity = newcap;
+	pk->capacity = (int)newcap;
 	pk->offset = 0;
 
 	if (pk->tail) {
