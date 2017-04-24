@@ -33,7 +33,7 @@ extern "C" {
 
 
 //==========================================================
-// Constants & typedefs.
+// Typedefs & constants.
 //
 
 // Return codes.
@@ -65,21 +65,6 @@ typedef int (*cf_rchash_reduce_fn)(const void *key, uint32_t key_size, void *obj
 // releasing the object if its ref-count hits 0. The destructor should only
 // clean up the object's "internals".
 typedef void (*cf_rchash_destructor_fn)(void *object);
-
-// Used when key-size is fixed.
-typedef struct cf_rchash_elem_f_s {
-	struct cf_rchash_elem_f_s *next;
-	void *object; // this is a reference counted object
-	uint8_t key[];
-} cf_rchash_elem_f;
-
-// Used when key-size is variable.
-typedef struct cf_rchash_elem_v_s {
-	struct cf_rchash_elem_v_s *next;
-	void *object; // this is a reference counted object
-	uint32_t key_size;
-	void *key;
-} cf_rchash_elem_v;
 
 // Private data.
 typedef struct cf_rchash_s {

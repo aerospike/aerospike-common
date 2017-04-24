@@ -33,6 +33,26 @@
 
 
 //==========================================================
+// Typedefs & constants.
+//
+
+// Used when key-size is fixed.
+typedef struct cf_rchash_elem_f_s {
+	struct cf_rchash_elem_f_s *next;
+	void *object; // this is a reference counted object
+	uint8_t key[];
+} cf_rchash_elem_f;
+
+// Used when key-size is variable.
+typedef struct cf_rchash_elem_v_s {
+	struct cf_rchash_elem_v_s *next;
+	void *object; // this is a reference counted object
+	uint32_t key_size;
+	void *key;
+} cf_rchash_elem_v;
+
+
+//==========================================================
 // Forward declarations.
 //
 
