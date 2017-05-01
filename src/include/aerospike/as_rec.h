@@ -263,7 +263,8 @@ static inline void * as_rec_source(const as_rec * rec)
 }
 
 /**
- *	Remove a bin from a record.
+ *	Set bin value to nil. This will instruct the server to remove the bin when the 
+ *	record is written using aerospike_key_put().
  *
  *	@param rec		The record to remove the bin from.
  *	@param name 	The name of the bin to remove.
