@@ -258,6 +258,7 @@ pack_resize(as_packer *pk, uint32_t sz)
 	size_t newcap = (size_t)((sz > (uint32_t)pk->capacity) ? sz : pk->capacity);
 
 	if (! (pk->buffer = (unsigned char *)cf_malloc(newcap))) {
+		cf_free(entry);
 		return -1;
 	}
 
