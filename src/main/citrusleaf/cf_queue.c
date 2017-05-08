@@ -85,7 +85,6 @@ cf_queue_destroy(cf_queue *q)
 		pthread_mutex_destroy(&q->LOCK);
 	}
 
-	memset(q->elements, 0, sizeof(q->alloc_sz * q->element_sz));
 	cf_free(q->elements);
 
 	if (q->free_struct) {
