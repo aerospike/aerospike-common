@@ -308,7 +308,7 @@ pack_byte(as_packer *pk, uint8_t val, bool resize)
 }
 
 static inline int
-pack_uint8(as_packer *pk, unsigned char type, uint8_t val, bool resize)
+pack_type_uint8(as_packer *pk, unsigned char type, uint8_t val, bool resize)
 {
 	if (pk->buffer) {
 		if (pk->offset + 2 > pk->capacity) {
@@ -325,7 +325,7 @@ pack_uint8(as_packer *pk, unsigned char type, uint8_t val, bool resize)
 }
 
 static inline int
-pack_uint16(as_packer *pk, unsigned char type, uint16_t val, bool resize)
+pack_type_uint16(as_packer *pk, unsigned char type, uint16_t val, bool resize)
 {
 	if (pk->buffer) {
 		if (pk->offset + 3 > pk->capacity) {
@@ -345,7 +345,7 @@ pack_uint16(as_packer *pk, unsigned char type, uint16_t val, bool resize)
 }
 
 static inline int
-pack_uint32(as_packer *pk, unsigned char type, uint32_t val, bool resize)
+pack_type_uint32(as_packer *pk, unsigned char type, uint32_t val, bool resize)
 {
 	if (pk->buffer) {
 		if (pk->offset + 5 > pk->capacity) {
@@ -363,7 +363,7 @@ pack_uint32(as_packer *pk, unsigned char type, uint32_t val, bool resize)
 }
 
 static inline int
-pack_uint64(as_packer *pk, unsigned char type, uint64_t val, bool resize)
+pack_type_uint64(as_packer *pk, unsigned char type, uint64_t val, bool resize)
 {
 	if (pk->buffer) {
 		if (pk->offset + 9 > pk->capacity) {
@@ -381,61 +381,77 @@ pack_uint64(as_packer *pk, unsigned char type, uint64_t val, bool resize)
 }
 
 static inline int
-pack_boolean(as_packer *pk, const as_boolean *b)
+pack_as_boolean(as_packer *pk, const as_boolean *b)
 {
 	return pack_byte(pk, as_boolean_get(b) ? 0xc3 : 0xc2, true);
 }
 
-static int
-pack_integer(as_packer *pk, const as_integer *i)
+static inline int
+pack_uint64(as_packer *pk, uint64_t val, bool resize)
 {
-	int64_t val = as_integer_get(i);
-
-	if (val >= 0) {
-		if (val < 128) {
-			return pack_byte(pk, (uint8_t)val, true);
-		}
-
-		if (val < 256) {
-			return pack_uint8(pk, 0xcc, (uint8_t)val, true);
-		}
-
-		if (val < 65536) {
-			return pack_uint16(pk, 0xcd, (uint16_t)val, true);
-		}
-
-		if (val < 4294967296) {
-			return pack_uint32(pk, 0xce, (uint32_t)val, true);
-		}
-
-		return pack_uint64(pk, 0xcf, (uint64_t)val, true);
+	if (val < (1UL << 7)) {
+		return pack_byte(pk, (uint8_t)val, resize);
 	}
-	else {
-		if (val >= -32) {
-			return pack_byte(pk, (uint8_t)(0xe0 | (val + 32)), true);
-		}
 
-		if (val >= -128) {
-			return pack_uint8(pk, 0xd0, (uint8_t)val, true);
-		}
-
-		if (val >= -32768) {
-			return pack_uint16(pk, 0xd1, (uint16_t)val, true);
-		}
-
-		if (val >= -0x80000000L) {
-			return pack_uint32(pk, 0xd2, (uint32_t)val, true);
-		}
-
-		return pack_uint64(pk, 0xd3, (uint64_t)val, true);
+	if (val < (1UL << 8)) {
+		return pack_type_uint8(pk, 0xcc, (uint8_t)val, resize);
 	}
+
+	if (val < (1UL << 16)) {
+		return pack_type_uint16(pk, 0xcd, (uint16_t)val, resize);
+	}
+
+	if (val < (1UL << 32)) {
+		return pack_type_uint32(pk, 0xce, (uint32_t)val, resize);
+	}
+
+	return pack_type_uint64(pk, 0xcf, val, resize);
 }
 
 static inline int
-pack_double(as_packer *pk, const as_double *d)
+pack_int64(as_packer *pk, int64_t val, bool resize)
+{
+	if (val >= 0) {
+		return pack_uint64(pk, (uint64_t)val, resize);
+	}
+
+	if (val >= -(1L << 5)) {
+		return pack_byte(pk, (uint8_t)(0xe0 | (val + 32)), resize);
+	}
+
+	if (val >= -(1L << 7)) {
+		return pack_type_uint8(pk, 0xd0, (uint8_t)val, resize);
+	}
+
+	if (val >= -(1L << 15)) {
+		return pack_type_uint16(pk, 0xd1, (uint16_t)val, resize);
+	}
+
+	if (val >= -(1L << 31)) {
+		return pack_type_uint32(pk, 0xd2, (uint32_t)val, resize);
+	}
+
+	return pack_type_uint64(pk, 0xd3, (uint64_t)val, resize);
+}
+
+static int
+pack_as_integer(as_packer *pk, const as_integer *i)
+{
+	int64_t val = as_integer_get(i);
+	return pack_int64(pk, val, true);
+}
+
+static inline int
+pack_double(as_packer *pk, double val, bool resize)
+{
+	return pack_type_uint64(pk, 0xcb, *(uint64_t *)&val, resize);
+}
+
+static inline int
+pack_as_double(as_packer *pk, const as_double *d)
 {
 	double val = as_double_get(d);
-	return pack_uint64(pk, 0xcb, *(uint64_t *)&val, true);
+	return pack_double(pk, val, true);
 }
 
 static int
@@ -451,10 +467,10 @@ pack_byte_array_header(as_packer *pk, uint32_t length, uint8_t type)
 		rc = pack_byte(pk, (uint8_t)(0xa0 | length), true);
 	}
 	else if (length < 65536) {
-		rc = pack_uint16(pk, 0xda, (uint16_t)length, true);
+		rc = pack_type_uint16(pk, 0xda, (uint16_t)length, true);
 	}
 	else {
-		rc = pack_uint32(pk, 0xdb, length, true);
+		rc = pack_type_uint32(pk, 0xdb, length, true);
 	}
 
 	// TODO: Replace with this code after all servers/clients
@@ -493,10 +509,10 @@ pack_string(as_packer *pk, as_string *s)
 	//	rc = as_pack_int8(pk, 0xd9, (uint8_t)size);
 	}
 	else if (size < 65536) {
-		rc = pack_uint16(pk, 0xda, (uint16_t)size, true);
+		rc = pack_type_uint16(pk, 0xda, (uint16_t)size, true);
 	}
 	else {
-		rc = pack_uint32(pk, 0xdb, size, true);
+		rc = pack_type_uint32(pk, 0xdb, size, true);
 	}
 
 	if (rc == 0) {
@@ -552,10 +568,10 @@ pack_list(as_packer *pk, as_list *l)
 		rc = pack_byte(pk, (uint8_t)(0x90 | size), true);
 	}
 	else if (size < 65536) {
-		rc = pack_uint16(pk, 0xdc, (uint16_t)size, true);
+		rc = pack_type_uint16(pk, 0xdc, (uint16_t)size, true);
 	}
 	else {
-		rc = pack_uint32(pk, 0xdd, size, true);
+		rc = pack_type_uint32(pk, 0xdd, size, true);
 	}
 
 	if (rc == 0) {
@@ -588,10 +604,10 @@ pack_map(as_packer *pk, const as_map *m)
 		rc = pack_byte(pk, (uint8_t)(0x80 | size), true);
 	}
 	else if (size < 65536) {
-		rc = pack_uint16(pk, 0xde, (uint16_t)size, true);
+		rc = pack_type_uint16(pk, 0xde, (uint16_t)size, true);
 	}
 	else {
-		rc = pack_uint32(pk, 0xdf, size, true);
+		rc = pack_type_uint32(pk, 0xdf, size, true);
 	}
 
 	if (rc == 0) {
@@ -639,13 +655,13 @@ as_pack_val(as_packer *pk, const as_val *val)
 		rc = pack_byte(pk, 0xc0, true);
 		break;
 	case AS_BOOLEAN:
-		rc = pack_boolean(pk, (const as_boolean *)val);
+		rc = pack_as_boolean(pk, (const as_boolean *)val);
 		break;
 	case AS_INTEGER:
-		rc = pack_integer(pk, (const as_integer *)val);
+		rc = pack_as_integer(pk, (const as_integer *)val);
 		break;
 	case AS_DOUBLE:
-		rc = pack_double(pk, (const as_double *)val);
+		rc = pack_as_double(pk, (const as_double *)val);
 		break;
 	case AS_STRING:
 		rc = pack_string(pk, (as_string *)val);
@@ -813,18 +829,26 @@ unpack_blob(as_unpacker *pk, uint32_t size, as_val **val)
 static int
 unpack_list(as_unpacker *pk, uint32_t size, as_val **val)
 {
+	// Skip ext element key which is only at the start for metadata.
+	if (size != 0 && as_unpack_peek_is_ext(pk)) {
+		as_msgpack_ext ext;
+
+		as_unpack_ext(pk, &ext);
+		size--;
+	}
+
 	as_arraylist *list = as_arraylist_new(size, 8);
 
 	if (! list) {
-		return -1;
+		return -2;
 	}
-	
+
 	for (uint32_t i = 0; i < size; i++) {
 		as_val *v = NULL;
 
 		if (as_unpack_val(pk, &v) != 0 || ! v) {
 			as_arraylist_destroy(list);
-			return -2;
+			return -3;
 		}
 
 		as_arraylist_set(list, i, v);
@@ -1056,26 +1080,48 @@ as_pack_uint64_size(uint64_t val)
 	return 9;
 }
 
+uint32_t
+as_pack_int64_size(int64_t val)
+{
+	if (val >= 0) {
+		return as_pack_uint64_size((uint64_t)val);
+	}
+
+	if (val >= -(1L << 5)) {
+		return 1;
+	}
+
+	if (val >= -(1L << 7)) {
+		return 2;
+	}
+
+	if (val >= -(1L << 15)) {
+		return 3;
+	}
+
+	if (val >= -(1L << 31)) {
+		return 5;
+	}
+
+	return 9;
+}
+
 int
 as_pack_uint64(as_packer *pk, uint64_t val)
 {
-	if (val < (1UL << 7)) {
-		return pack_byte(pk, (uint8_t)val, false);
-	}
+	return pack_uint64(pk, val, false);
+}
 
-	if (val < (1UL << 8)) {
-		return pack_uint8(pk, 0xcc, (uint8_t)val, false);
-	}
+int
+as_pack_int64(as_packer *pk, int64_t val)
+{
+	return pack_int64(pk, val, false);
+}
 
-	if (val < (1UL << 16)) {
-		return pack_uint16(pk, 0xcd, (uint16_t)val, false);
-	}
-
-	if (val < (1UL << 32)) {
-		return pack_uint32(pk, 0xce, (uint32_t)val, false);
-	}
-
-	return pack_uint64(pk, 0xcf, val, false);
+int
+as_pack_double(as_packer *pk, double val)
+{
+	return pack_double(pk, val, false);
 }
 
 uint32_t
@@ -1111,13 +1157,13 @@ as_pack_str(as_packer *pk, const uint8_t *buf, uint32_t sz)
 		rc = pack_byte(pk, (uint8_t)(0xa0 | sz), false);
 	}
 	else if (sz < (1 << 8)) {
-		rc = pack_uint8(pk, 0xd9, (uint8_t)sz, false);
+		rc = pack_type_uint8(pk, 0xd9, (uint8_t)sz, false);
 	}
 	else if (sz < (1 << 16)) {
-		rc = pack_uint16(pk, 0xda, (uint16_t)sz, false);
+		rc = pack_type_uint16(pk, 0xda, (uint16_t)sz, false);
 	}
 	else {
-		rc = pack_uint32(pk, 0xdb, sz, false);
+		rc = pack_type_uint32(pk, 0xdb, sz, false);
 	}
 
 	if (rc == 0) {
@@ -1133,13 +1179,13 @@ as_pack_bin(as_packer *pk, const uint8_t *buf, uint32_t sz)
 	int rc;
 
 	if (sz < (1 << 8)) {
-		rc = pack_uint8(pk, 0xc4, (uint8_t)sz, false);
+		rc = pack_type_uint8(pk, 0xc4, (uint8_t)sz, false);
 	}
 	else if (sz < (1 << 16)) {
-		rc = pack_uint16(pk, 0xc5, (uint16_t)sz, false);
+		rc = pack_type_uint16(pk, 0xc5, (uint16_t)sz, false);
 	}
 	else {
-		rc = pack_uint32(pk, 0xc6, sz, false);
+		rc = pack_type_uint32(pk, 0xc6, sz, false);
 	}
 
 	if (rc == 0) {
@@ -1158,10 +1204,10 @@ as_pack_list_header(as_packer *pk, uint32_t ele_count)
 		rc = pack_byte(pk, (uint8_t)(0x90 | ele_count), false);
 	}
 	else if (ele_count < (1 << 16)) {
-		rc = pack_uint16(pk, 0xdc, (uint16_t)ele_count, false);
+		rc = pack_type_uint16(pk, 0xdc, (uint16_t)ele_count, false);
 	}
 	else {
-		rc = pack_uint32(pk, 0xdd, ele_count, false);
+		rc = pack_type_uint32(pk, 0xdd, ele_count, false);
 	}
 
 	return rc;
@@ -1190,10 +1236,10 @@ as_pack_map_header(as_packer *pk, uint32_t ele_count)
 		rc = pack_byte(pk, (uint8_t)(0x80 | ele_count), false);
 	}
 	else if (ele_count < (1 << 16)) {
-		rc = pack_uint16(pk, 0xde, (uint16_t)ele_count, false);
+		rc = pack_type_uint16(pk, 0xde, (uint16_t)ele_count, false);
 	}
 	else {
-		rc = pack_uint32(pk, 0xdf, ele_count, false);
+		rc = pack_type_uint32(pk, 0xdf, ele_count, false);
 	}
 
 	return rc;
@@ -1218,13 +1264,13 @@ as_pack_ext_header(as_packer *pk, uint32_t content_size, uint8_t type)
 	int rc;
 
 	if (content_size < (1 << 8)) {
-		rc = pack_uint8(pk, 0xc7, (uint8_t)content_size, false);
+		rc = pack_type_uint8(pk, 0xc7, (uint8_t)content_size, false);
 	}
 	else if (content_size < (1 << 16)) {
-		rc = pack_uint16(pk, 0xc8, (uint16_t)content_size, false);
+		rc = pack_type_uint16(pk, 0xc8, (uint16_t)content_size, false);
 	}
 	else {
-		rc = pack_uint32(pk, 0xc9, content_size, false);
+		rc = pack_type_uint32(pk, 0xc9, content_size, false);
 	}
 
 	if (rc != 0) {
