@@ -103,11 +103,6 @@ typedef enum as_bytes_type_e {
 	AS_BYTES_LIST		= 20,
 
 	/**
-	 *	Large Date Type
-	 */
-	AS_BYTES_LDT		= 21,
-
-	/**
 	 *	GeoJSON Data
 	 */
 	AS_BYTES_GEOJSON	= 23,

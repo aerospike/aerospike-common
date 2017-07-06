@@ -49,12 +49,6 @@ struct as_aerospike_hooks_s {
 	cf_clock (* get_current_time)( const as_aerospike * );
 	int (*set_context) ( const as_aerospike *, const as_rec *, const uint32_t context );
 	int (*get_config) ( const as_aerospike *, const as_rec *, const char * );
-
-	as_rec *(* create_subrec)(const as_aerospike *, const as_rec *);
-	as_rec *(* open_subrec)(const as_aerospike *, const as_rec *, const char *);
-	int (* update_subrec)(const as_aerospike *, const as_rec *);
-	int (* remove_subrec)(const as_aerospike *, const as_rec *);
-	int (* close_subrec)(const as_aerospike *, const as_rec *);
 };
 
 /******************************************************************************
@@ -109,30 +103,6 @@ static inline int as_aerospike_set_context(const as_aerospike * a, const as_rec 
 static inline int as_aerospike_get_config(const as_aerospike * a, const as_rec *r, const char *name)
 {
 	return as_util_hook(get_config, 0, a, r, name);
-}
-
-static inline as_rec * as_aerospike_crec_create(const as_aerospike * a, const as_rec * r) {
-	return as_util_hook(create_subrec, NULL, a, r);
-}
-
-static inline int as_aerospike_crec_update(const as_aerospike * a, const as_rec * cr)
-{
-	return as_util_hook(update_subrec, 1, a, cr);
-}
-
-static inline int as_aerospike_crec_remove(const as_aerospike * a, const as_rec * cr)
-{
-	return as_util_hook(remove_subrec, 1, a, cr);
-}
-
-static inline as_rec * as_aerospike_crec_open(const as_aerospike * a, const as_rec * r, const char * dig)
-{
-	return as_util_hook(open_subrec, NULL, a, r, dig);
-}
-
-static inline int as_aerospike_crec_close(const as_aerospike * a, const as_rec * cr)
-{
-	return as_util_hook(close_subrec, 1, a, cr);
 }
 
 #ifdef __cplusplus
