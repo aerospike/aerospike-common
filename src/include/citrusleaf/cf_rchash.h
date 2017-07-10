@@ -38,14 +38,14 @@ extern "C" {
 
 // Return codes.
 #define CF_RCHASH_ERR_FOUND -4
-#define CF_RCHASH_ERR_NOTFOUND -3
+#define CF_RCHASH_ERR_NOT_FOUND -3
 #define CF_RCHASH_ERR -1
 #define CF_RCHASH_OK 0
 #define CF_RCHASH_REDUCE_DELETE 1
 
 // Bit-values for 'flags' parameter.
-#define CF_RCHASH_CR_MT_BIGLOCK  0x04 // thread-safe with single big lock
-#define CF_RCHASH_CR_MT_MANYLOCK 0x08 // thread-safe with lock per bucket
+#define CF_RCHASH_BIG_LOCK  0x01 // thread-safe with single big lock
+#define CF_RCHASH_MANY_LOCK 0x02 // thread-safe with lock per bucket
 
 // User must provide the hash function at create time.
 typedef uint32_t (*cf_rchash_hash_fn)(const void *key, uint32_t key_size);
@@ -76,7 +76,7 @@ typedef struct cf_rchash_s {
 	cf_atomic32 n_elements;
 	void *table;
 	pthread_mutex_t *bucket_locks;
-	pthread_mutex_t biglock;
+	pthread_mutex_t big_lock;
 } cf_rchash;
 
 
