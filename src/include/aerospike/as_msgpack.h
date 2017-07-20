@@ -85,8 +85,36 @@ int as_unpack_val(as_unpacker *pk, as_val **val);
  * Pack direct functions
  ******************************************************************************/
 
+static inline uint32_t as_pack_nil_size()
+{
+	return 1;
+}
+static inline uint32_t as_pack_bool_size()
+{
+	return 1;
+}
+int as_pack_nil(as_packer *pk);
+int as_pack_bool(as_packer *pk, bool val);
+
 uint32_t as_pack_uint64_size(uint64_t val);
+uint32_t as_pack_int64_size(int64_t val);
 int as_pack_uint64(as_packer *pk, uint64_t val);
+int as_pack_int64(as_packer *pk, int64_t val);
+
+static inline uint32_t as_pack_float32_size()
+{
+	return 1 + 4;
+}
+static inline uint32_t as_pack_float64_size()
+{
+	return 1 + 8;
+}
+/**
+ * Pack a float.
+ * @return 0 on success
+ */
+int as_pack_float32(as_packer *pk, float val);
+int as_pack_float64(as_packer *pk, double val);
 
 uint32_t as_pack_str_size(uint32_t str_sz);
 uint32_t as_pack_buf_size(uint32_t buf_sz);

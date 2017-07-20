@@ -173,42 +173,42 @@ TEST( msgpack_compare, "compare deep list" )
 
 TEST( msgpack_compare_utf8, "compare utf8" )
 {
-    as_string s1;
-    as_string s2;
+	as_string s1;
+	as_string s2;
 
-    as_string_init(&s1, "hi", false);
-    as_string_init(&s2, "hi", false);
+	as_string_init(&s1, "hi", false);
+	as_string_init(&s2, "hi", false);
 
-    assert( compare_vals((as_val *)&s1, (as_val *)&s2) == MSGPACK_COMPARE_EQUAL );
+	assert( compare_vals((as_val *)&s1, (as_val *)&s2) == MSGPACK_COMPARE_EQUAL );
 
-    as_string_destroy(&s1);
-    as_string_destroy(&s2);
+	as_string_destroy(&s1);
+	as_string_destroy(&s2);
 
-    // smiley face emoji is U+1F603
-    as_string_init(&s1, "hi😃😁😂😄😅😆", false);
-    // neutral face emoji is U+1F610
-    as_string_init(&s2, "hi😐😁😂😄😅😆", false);
+	// smiley face emoji is U+1F603
+	as_string_init(&s1, "hi😃😁😂😄😅😆", false);
+	// neutral face emoji is U+1F610
+	as_string_init(&s2, "hi😐😁😂😄😅😆", false);
 
-    assert( compare_vals((as_val *)&s1, (as_val *)&s2) == MSGPACK_COMPARE_LESS );
+	assert( compare_vals((as_val *)&s1, (as_val *)&s2) == MSGPACK_COMPARE_LESS );
 
-    as_string_destroy(&s1);
-    as_string_destroy(&s2);
+	as_string_destroy(&s1);
+	as_string_destroy(&s2);
 
-    as_string_init(&s1, "hi😃😐😁😂😄😅😆", false);
-    as_string_init(&s2, "hi😃😐😁😂😄😅😆", false);
+	as_string_init(&s1, "hi😃😐😁😂😄😅😆", false);
+	as_string_init(&s2, "hi😃😐😁😂😄😅😆", false);
 
-    assert( compare_vals((as_val *)&s1, (as_val *)&s2) == MSGPACK_COMPARE_EQUAL );
+	assert( compare_vals((as_val *)&s1, (as_val *)&s2) == MSGPACK_COMPARE_EQUAL );
 
-    as_string_destroy(&s1);
-    as_string_destroy(&s2);
+	as_string_destroy(&s1);
+	as_string_destroy(&s2);
 
-    as_string_init(&s1, "hi😃😐😁😂😄😅😆hello", false);
-    as_string_init(&s2, "hi😃😐😁😂😄😅😆", false);
+	as_string_init(&s1, "hi😃😐😁😂😄😅😆hello", false);
+	as_string_init(&s2, "hi😃😐😁😂😄😅😆", false);
 
-    assert( compare_vals((as_val *)&s1, (as_val *)&s2) == MSGPACK_COMPARE_GREATER );
+	assert( compare_vals((as_val *)&s1, (as_val *)&s2) == MSGPACK_COMPARE_GREATER );
 
-    as_string_destroy(&s1);
-    as_string_destroy(&s2);
+	as_string_destroy(&s1);
+	as_string_destroy(&s2);
 }
 
 TEST( msgpack_compare_mixed, "compare mixed" )
@@ -289,6 +289,35 @@ TEST( msgpack_compare_mixed_deep, "compare mixed deep" )
 	as_arraylist_destroy(&list2);
 }
 
+TEST( msgpack_int_direct, "signed int direct" )
+{
+	const int64_t range = 1000000;
+	uint8_t buf[(sizeof(uint64_t) + 1) * 10];
+
+	for (int64_t i = -range; i < range; i += 10) {
+		as_packer pk = {
+				.buffer = buf,
+				.capacity = (int)sizeof(buf)
+		};
+
+		for (int j = 0; j < 10; j++) {
+			as_pack_int64(&pk, i + j);
+		}
+
+		as_unpacker upk = {
+				.buffer = buf,
+				.length = pk.offset
+		};
+
+		for (int j = 0; j < 10; j++) {
+			int64_t result = 0;
+
+			as_unpack_int64(&upk, &result);
+			assert( i + j == result );
+		}
+	}
+}
+
 /******************************************************************************
  * TEST SUITE
  *****************************************************************************/
@@ -299,4 +328,5 @@ SUITE( msgpack_direct, "as_msgpack direct size/compare" ) {
 	suite_add( msgpack_compare_utf8 );
 	suite_add( msgpack_compare_mixed );
 	suite_add( msgpack_compare_mixed_deep );
+	suite_add( msgpack_int_direct );
 }
