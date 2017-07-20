@@ -1034,6 +1034,18 @@ as_unpack_val(as_unpacker *pk, as_val **val)
  * Pack direct functions
  ******************************************************************************/
 
+int
+as_pack_nil(as_packer *pk)
+{
+	return pack_byte(pk, 0xc0, false);
+}
+
+int
+as_pack_bool(as_packer *pk, bool val)
+{
+	return pack_byte(pk, val ? 0xc3 : 0xc2, false);
+}
+
 uint32_t
 as_pack_uint64_size(uint64_t val)
 {
@@ -1056,6 +1068,48 @@ as_pack_uint64_size(uint64_t val)
 	return 9;
 }
 
+uint32_t
+as_pack_int64_size(int64_t val)
+{
+	if (val >= 0) {
+		if (val < (1UL << 5)) {
+			return 1;
+		}
+
+		if (val < (1UL << 7)) {
+			return 1 + 1;
+		}
+
+		if (val < (1UL << 15)) {
+			return 1 + 2;
+		}
+
+		if (val < (1UL << 31)) {
+			return 1 + 4;
+		}
+
+		return 1 + 8;
+	}
+
+	if (val >= -(1UL << 5)) {
+		return 1;
+	}
+
+	if (val >= -(1UL << 7)) {
+		return 1 + 1;
+	}
+
+	if (val >= -(1UL << 15)) {
+		return 1 + 2;
+	}
+
+	if (val >= -(1UL << 31)) {
+		return 1 + 4;
+	}
+
+	return 1 + 8;
+}
+
 int
 as_pack_uint64(as_packer *pk, uint64_t val)
 {
@@ -1076,6 +1130,40 @@ as_pack_uint64(as_packer *pk, uint64_t val)
 	}
 
 	return pack_uint64(pk, 0xcf, val, false);
+}
+
+int
+as_pack_int64(as_packer *pk, int64_t val)
+{
+	if (val >= -(1UL << 5) && val < (1UL << 5)) {
+		return pack_byte(pk, 0xe0 | (uint8_t)val, false);
+	}
+
+	if (val >= -(1UL << 7) && val < (1UL << 7)) {
+		return pack_uint8(pk, 0xd0, (uint8_t)val, false);
+	}
+
+	if (val >= -(1UL << 15) && val < (1UL << 15)) {
+		return pack_uint16(pk, 0xd1, (uint16_t)val, false);
+	}
+
+	if (val >= -(1UL << 31) && val < (1UL << 31)) {
+		return pack_uint32(pk, 0xd2, (uint32_t)val, false);
+	}
+
+	return pack_uint64(pk, 0xd3, (uint64_t)val, false);
+}
+
+int
+as_pack_float32(as_packer *pk, float val)
+{
+	return pack_uint32(pk, 0xca, *(uint32_t *)&val, false);
+}
+
+int
+as_pack_float64(as_packer *pk, double val)
+{
+	return pack_uint64(pk, 0xcb, *(uint64_t *)&val, false);
 }
 
 uint32_t
