@@ -1235,7 +1235,7 @@ as_pack_str(as_packer *pk, const uint8_t *buf, uint32_t sz)
 		rc = pack_type_uint32(pk, 0xdb, sz, false);
 	}
 
-	if (rc == 0) {
+	if (rc == 0 && buf) {
 		return pack_append(pk, buf, sz);
 	}
 
@@ -1257,7 +1257,7 @@ as_pack_bin(as_packer *pk, const uint8_t *buf, uint32_t sz)
 		rc = pack_type_uint32(pk, 0xc6, sz, false);
 	}
 
-	if (rc == 0) {
+	if (rc == 0 && buf) {
 		return pack_append(pk, buf, sz);
 	}
 
@@ -1381,6 +1381,12 @@ as_pack_buf_ext_header(uint8_t *buf, uint32_t size, uint32_t content_size,
 	};
 
 	return as_pack_ext_header(&pk, content_size, type);
+}
+
+int
+as_pack_append(as_packer *pk, const unsigned char *buf, uint32_t sz)
+{
+	return pack_append(pk, buf, sz);
 }
 
 /******************************************************************************

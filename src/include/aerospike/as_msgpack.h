@@ -162,6 +162,8 @@ uint32_t as_pack_ext_header_get_size(uint32_t content_size);
 int as_pack_ext_header(as_packer *pk, uint32_t content_size, uint8_t type);
 int as_pack_buf_ext_header(uint8_t *buf, uint32_t size, uint32_t content_size, uint8_t type);
 
+int as_pack_append(as_packer *pk, const unsigned char *buf, uint32_t sz);
+
 /******************************************************************************
  * Unpack direct functions
  ******************************************************************************/
