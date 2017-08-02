@@ -23,8 +23,6 @@
 #include <aerospike/as_pair.h>
 #include <aerospike/as_val.h>
 
-#include <citrusleaf/cf_shash.h>
-
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>

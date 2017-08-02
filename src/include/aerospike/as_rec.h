@@ -168,16 +168,6 @@ typedef struct as_rec_hooks_s {
 	as_bytes * (* digest)(const as_rec * rec);
 
 	/**
-	 *	Set flags on a bin.
-	 */
-	int (* set_flags)(const as_rec * rec, const char * bin, uint8_t flags);
-
-	/**
-	 *	Set the type of record.
-	 */
-	int (* set_type)(const as_rec * rec, int8_t type);
-
-	/**
 	 *	Set the time to live (ttl) of the record.
 	 */
 	int (* set_ttl)(const as_rec * rec,  uint32_t ttl);
@@ -356,26 +346,6 @@ static inline int as_rec_bin_names(const as_rec * rec, as_rec_bin_names_callback
 static inline as_bytes * as_rec_digest(const as_rec * rec)
 {
 	return as_util_hook(digest, 0, rec);
-}
-
-/**
- *	Set flags on a bin.
- *
- *	@relatesalso as_rec
- */
-static inline int  as_rec_set_flags(const as_rec * rec, const char * name, uint8_t flags)
-{
-	return as_util_hook(set_flags, 0, rec, name, flags);
-}
-
-/**
- *	Set the record type.
- *
- *	@relatesalso as_rec
- */
-static inline int as_rec_set_type(const as_rec * rec, int8_t rec_type)
-{
-	return as_util_hook(set_type, 0, rec, rec_type);
 }
 
 /**
