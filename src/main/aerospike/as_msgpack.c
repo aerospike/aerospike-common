@@ -281,11 +281,11 @@ pack_resize(as_packer *pk, uint32_t sz)
 }
 
 static inline int
-pack_append(as_packer *pk, const unsigned char *src, uint32_t sz)
+pack_append(as_packer *pk, const unsigned char *src, uint32_t sz, bool resize)
 {
 	if (pk->buffer) {
 		if (pk->offset + sz > pk->capacity) {
-			if (pack_resize(pk, sz) != 0) {
+			if (! resize || pack_resize(pk, sz) != 0) {
 				return -1;
 			}
 		}
@@ -523,7 +523,7 @@ pack_string(as_packer *pk, as_string *s)
 	}
 
 	if (rc == 0) {
-		rc = pack_append(pk, (unsigned char*)s->value, length);
+		rc = pack_append(pk, (unsigned char*)s->value, length, true);
 	}
 
 	return rc;
@@ -536,7 +536,7 @@ pack_geojson(as_packer *pk, as_geojson *s)
 	int rc = pack_byte_array_header(pk, length, AS_BYTES_GEOJSON);
 
 	if (rc == 0) {
-		rc = pack_append(pk, (unsigned char*)s->value, length);
+		rc = pack_append(pk, (unsigned char*)s->value, length, true);
 	}
 
 	return rc;
@@ -548,7 +548,7 @@ pack_bytes(as_packer *pk, const as_bytes *b)
 	int rc = pack_byte_array_header(pk, b->size, b->type);
 
 	if (rc == 0) {
-		rc = pack_append(pk, b->value, b->size);
+		rc = pack_append(pk, b->value, b->size, true);
 	}
 
 	return rc;
@@ -630,7 +630,7 @@ static int
 pack_pair(as_packer *pk, as_pair *p)
 {
 	unsigned char v = (unsigned char)(0x90 | 2);
-	int rc = pack_append(pk, &v, 1);
+	int rc = pack_append(pk, &v, 1, true);
 
 	if (rc == 0) {
 		rc = as_pack_val(pk, as_pair_1(p));
@@ -1236,7 +1236,7 @@ as_pack_str(as_packer *pk, const uint8_t *buf, uint32_t sz)
 	}
 
 	if (rc == 0 && buf) {
-		return pack_append(pk, buf, sz);
+		return pack_append(pk, buf, sz, false);
 	}
 
 	return rc;
@@ -1258,7 +1258,7 @@ as_pack_bin(as_packer *pk, const uint8_t *buf, uint32_t sz)
 	}
 
 	if (rc == 0 && buf) {
-		return pack_append(pk, buf, sz);
+		return pack_append(pk, buf, sz, false);
 	}
 
 	return rc;
@@ -1386,7 +1386,7 @@ as_pack_buf_ext_header(uint8_t *buf, uint32_t size, uint32_t content_size,
 int
 as_pack_append(as_packer *pk, const unsigned char *buf, uint32_t sz)
 {
-	return pack_append(pk, buf, sz);
+	return pack_append(pk, buf, sz, false);
 }
 
 /******************************************************************************
