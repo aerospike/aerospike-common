@@ -16,6 +16,8 @@
  */
 #pragma once
 
+#include <stdbool.h>
+
 #include <aerospike/as_serializer.h>
 
 #ifdef __cplusplus
@@ -113,8 +115,8 @@ static inline uint32_t as_pack_float64_size()
  * Pack a float.
  * @return 0 on success
  */
-int as_pack_float32(as_packer *pk, float val);
-int as_pack_float64(as_packer *pk, double val);
+int as_pack_float(as_packer *pk, float val);
+int as_pack_double(as_packer *pk, double val);
 
 uint32_t as_pack_str_size(uint32_t str_sz);
 uint32_t as_pack_buf_size(uint32_t buf_sz);
