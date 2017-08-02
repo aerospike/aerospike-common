@@ -103,11 +103,11 @@ uint32_t as_pack_int64_size(int64_t val);
 int as_pack_uint64(as_packer *pk, uint64_t val);
 int as_pack_int64(as_packer *pk, int64_t val);
 
-static inline uint32_t as_pack_float32_size()
+static inline uint32_t as_pack_float_size()
 {
 	return 1 + 4;
 }
-static inline uint32_t as_pack_float64_size()
+static inline uint32_t as_pack_double_size()
 {
 	return 1 + 8;
 }
@@ -119,7 +119,7 @@ int as_pack_float(as_packer *pk, float val);
 int as_pack_double(as_packer *pk, double val);
 
 uint32_t as_pack_str_size(uint32_t str_sz);
-uint32_t as_pack_buf_size(uint32_t buf_sz);
+uint32_t as_pack_bin_size(uint32_t buf_sz);
 /**
  * Pack a str.
  * @return 0 on success

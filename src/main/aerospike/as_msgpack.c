@@ -1200,11 +1200,11 @@ as_pack_str_size(uint32_t str_sz)
 		return 1 + str_sz;
 	}
 
-	return as_pack_buf_size(str_sz);
+	return as_pack_bin_size(str_sz);
 }
 
 uint32_t
-as_pack_buf_size(uint32_t buf_sz)
+as_pack_bin_size(uint32_t buf_sz)
 {
 	if (buf_sz < (1 << 8)) {
 		return 2 + buf_sz;
