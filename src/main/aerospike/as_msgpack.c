@@ -1160,12 +1160,6 @@ as_pack_uint64(as_packer *pk, uint64_t val)
 }
 
 int
-as_pack_double(as_packer *pk, double val)
-{
-	return pack_double(pk, val, false);
-}
-
-int
 as_pack_int64(as_packer *pk, int64_t val)
 {
 	if (val >= -(1UL << 5) && val < (1UL << 5)) {
@@ -1188,15 +1182,15 @@ as_pack_int64(as_packer *pk, int64_t val)
 }
 
 int
-as_pack_float32(as_packer *pk, float val)
+as_pack_float(as_packer *pk, float val)
 {
 	return pack_type_uint32(pk, 0xca, *(uint32_t *)&val, false);
 }
 
 int
-as_pack_float64(as_packer *pk, double val)
+as_pack_double(as_packer *pk, double val)
 {
-	return pack_type_uint64(pk, 0xcb, *(uint64_t *)&val, false);
+	return pack_double(pk, val, false);
 }
 
 uint32_t
@@ -1323,7 +1317,11 @@ as_pack_map_header(as_packer *pk, uint32_t ele_count)
 uint32_t
 as_pack_ext_header_get_size(uint32_t content_size)
 {
-	if (content_size < (1 << 8)) {
+	if (content_size == 1 || content_size == 2 || content_size == 4 ||
+			content_size == 8 || content_size == 16) {
+		return 1 + 1;
+	}
+	else if (content_size < (1 << 8)) {
 		return 1 + 1 + 1;
 	}
 	else if (content_size < (1 << 16)) {
@@ -1338,7 +1336,22 @@ as_pack_ext_header(as_packer *pk, uint32_t content_size, uint8_t type)
 {
 	int rc;
 
-	if (content_size < (1 << 8)) {
+	if (content_size == 1) {
+		rc = pack_byte(pk, 0xd4, false);
+	}
+	else if (content_size == 2) {
+		rc = pack_byte(pk, 0xd5, false);
+	}
+	else if (content_size == 4) {
+		rc = pack_byte(pk, 0xd6, false);
+	}
+	else if (content_size == 8) {
+		rc = pack_byte(pk, 0xd7, false);
+	}
+	else if (content_size == 16) {
+		rc = pack_byte(pk, 0xd8, false);
+	}
+	else if (content_size < (1 << 8)) {
 		rc = pack_type_uint8(pk, 0xc7, (uint8_t)content_size, false);
 	}
 	else if (content_size < (1 << 16)) {
