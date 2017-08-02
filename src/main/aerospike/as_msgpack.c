@@ -1140,27 +1140,23 @@ as_pack_int64_size(int64_t val)
 int
 as_pack_uint64(as_packer *pk, uint64_t val)
 {
-	if (val >= 0) {
-		return as_pack_uint64_size((uint64_t)val);
+	if (val < (1UL << 7)) {
+		return pack_byte(pk, (uint8_t)val, false);
 	}
 
-	if (val >= -(1L << 5)) {
-		return 1;
+	if (val < (1UL << 8)) {
+		return pack_type_uint8(pk, 0xcc, (uint8_t)val, false);
 	}
 
-	if (val >= -(1L << 7)) {
-		return 2;
+	if (val < (1UL << 16)) {
+		return pack_type_uint16(pk, 0xcd, (uint16_t)val, false);
 	}
 
-	if (val >= -(1L << 15)) {
-		return 3;
+	if (val < (1UL << 32)) {
+		return pack_type_uint32(pk, 0xce, (uint32_t)val, false);
 	}
 
-	if (val >= -(1L << 31)) {
-		return 5;
-	}
-
-	return 9;
+	return pack_type_uint64(pk, 0xcf, val, false);
 }
 
 int
