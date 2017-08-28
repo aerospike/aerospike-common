@@ -38,7 +38,9 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#if !defined ENHANCED_ALLOC
 #include <aerospike/as_log_macros.h>
+#endif
 #include "citrusleaf/alloc.h"
 
 #ifndef BOOL
@@ -561,6 +563,7 @@ BOOL modssl_X509_match_name(apr_pool_t *p, X509 *x509, const char *name,
                 matched = TRUE;
             }
 
+#if !defined ENHANCED_ALLOC
 			if (!matched) {
 				as_log_info("as_tls_match_name: expecting name '%s', "
 							"%smatched by ID '%s'",
@@ -568,6 +571,7 @@ BOOL modssl_X509_match_name(apr_pool_t *p, X509 *x509, const char *name,
 							matched == TRUE ? "" : "NOT ",
 							id[i]);
 			}
+#endif
 
             if (matched == TRUE) {
                 break;
@@ -576,11 +580,13 @@ BOOL modssl_X509_match_name(apr_pool_t *p, X509 *x509, const char *name,
 
     }
 
+#if !defined ENHANCED_ALLOC
 	if (!matched) {
 		as_log_warn("Cert %s for name '%s'",
 					matched == TRUE ? "matches" : "does not match",
 					name);
 	}
+#endif
 
     array_destroy(ids);
     
