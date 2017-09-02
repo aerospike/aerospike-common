@@ -1976,19 +1976,33 @@ as_unpack_double(as_unpacker *pk, double *x)
 static inline const uint8_t *
 unpack_str_bin(as_unpacker *pk, uint32_t *sz_r)
 {
+	if (pk->offset >= pk->length) {
+		return NULL;
+	}
+
 	uint8_t type = pk->buffer[pk->offset++];
+	uint32_t size = pk->length - pk->offset;
 
 	switch (type) {
 	case 0xd9:
 	case 0xc4: // str/bin with 8 bit header
+		if (size < 1) {
+			return NULL;
+		}
 		*sz_r = (uint32_t)pk->buffer[pk->offset++];
 		break;
 	case 0xc5:
 	case 0xda: // str/bin with 16 bit header
+		if (size < 2) {
+			return NULL;
+		}
 		*sz_r = (uint32_t)extract_uint16(pk);
 		break;
 	case 0xc6:
 	case 0xdb: // str/bin with 32 bit header
+		if (size < 4) {
+			return NULL;
+		}
 		*sz_r = extract_uint32(pk);
 		break;
 	default:
@@ -2003,6 +2017,10 @@ unpack_str_bin(as_unpacker *pk, uint32_t *sz_r)
 	const uint8_t *buf = &pk->buffer[pk->offset];
 
 	pk->offset += *sz_r;
+
+	if (pk->offset > pk->length) {
+		return NULL;
+	}
 
 	return buf;
 }
