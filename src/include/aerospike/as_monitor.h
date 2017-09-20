@@ -58,9 +58,9 @@ as_monitor_notify(as_monitor* monitor)
 static inline void
 as_monitor_wait(as_monitor* monitor)
 {
+	pthread_mutex_lock(&monitor->lock);
 	while (! monitor->complete) {
-		pthread_mutex_lock(&monitor->lock);
 		pthread_cond_wait(&monitor->cond, &monitor->lock);
-		pthread_mutex_unlock(&monitor->lock);
 	}
+	pthread_mutex_unlock(&monitor->lock);
 }
