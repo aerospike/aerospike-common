@@ -16,6 +16,30 @@
  */
 #pragma once
 
+#ifdef __GNUC__ // use GCC builtin
+
+#ifdef __ORDER_LITTLE_ENDIAN__
+
+#define cf_swap_to_be16(n) __builtin_bswap16(n)
+#define cf_swap_to_be32(n) __builtin_bswap32(n)
+#define cf_swap_to_be64(n) __builtin_bswap64(n)
+
+#define cf_swap_to_le16(n) (n)
+#define cf_swap_to_le32(n) (n)
+#define cf_swap_to_le64(n) (n)
+
+#define cf_swap_from_be16(n) __builtin_bswap16(n)
+#define cf_swap_from_be32(n) __builtin_bswap32(n)
+#define cf_swap_from_be64(n) __builtin_bswap64(n)
+
+#define cf_swap_from_le16(n) (n)
+#define cf_swap_from_le32(n) (n)
+#define cf_swap_from_le64(n) (n)
+
+#endif
+
+#else // use platform
+
 #if defined(__linux__)
 
 #include <netinet/in.h>
@@ -79,6 +103,8 @@
 #define cf_swap_from_be64(_n) _byteswap_uint64(_n)
 #define cf_swap_from_le64(_n) (_n)
 #endif // CF_WINDOWS
+
+#endif // use platform
 
 static inline double
 cf_swap_to_big_float64(double d)
