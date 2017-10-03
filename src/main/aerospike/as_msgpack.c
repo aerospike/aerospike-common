@@ -1099,38 +1099,22 @@ uint32_t
 as_pack_int64_size(int64_t val)
 {
 	if (val >= 0) {
-		if (val < (1UL << 5)) {
-			return 1;
-		}
-
-		if (val < (1UL << 7)) {
-			return 1 + 1;
-		}
-
-		if (val < (1UL << 15)) {
-			return 1 + 2;
-		}
-
-		if (val < (1UL << 31)) {
-			return 1 + 4;
-		}
-
-		return 1 + 8;
+		return as_pack_uint64_size((uint64_t)val);
 	}
 
-	if (val >= -(1UL << 5)) {
+	if (val >= -(1LL << 5)) {
 		return 1;
 	}
 
-	if (val >= -(1UL << 7)) {
+	if (val >= -(1LL << 7)) {
 		return 1 + 1;
 	}
 
-	if (val >= -(1UL << 15)) {
+	if (val >= -(1LL << 15)) {
 		return 1 + 2;
 	}
 
-	if (val >= -(1UL << 31)) {
+	if (val >= -(1LL << 31)) {
 		return 1 + 4;
 	}
 
@@ -1140,45 +1124,13 @@ as_pack_int64_size(int64_t val)
 int
 as_pack_uint64(as_packer *pk, uint64_t val)
 {
-	if (val < (1UL << 7)) {
-		return pack_byte(pk, (uint8_t)val, false);
-	}
-
-	if (val < (1UL << 8)) {
-		return pack_type_uint8(pk, 0xcc, (uint8_t)val, false);
-	}
-
-	if (val < (1UL << 16)) {
-		return pack_type_uint16(pk, 0xcd, (uint16_t)val, false);
-	}
-
-	if (val < (1UL << 32)) {
-		return pack_type_uint32(pk, 0xce, (uint32_t)val, false);
-	}
-
-	return pack_type_uint64(pk, 0xcf, val, false);
+	return pack_uint64(pk, val, false);
 }
 
 int
 as_pack_int64(as_packer *pk, int64_t val)
 {
-	if (val >= -(1UL << 5) && val < (1UL << 5)) {
-		return pack_byte(pk, 0xe0 | (uint8_t)val, false);
-	}
-
-	if (val >= -(1UL << 7) && val < (1UL << 7)) {
-		return pack_type_uint8(pk, 0xd0, (uint8_t)val, false);
-	}
-
-	if (val >= -(1UL << 15) && val < (1UL << 15)) {
-		return pack_type_uint16(pk, 0xd1, (uint16_t)val, false);
-	}
-
-	if (val >= -(1UL << 31) && val < (1UL << 31)) {
-		return pack_type_uint32(pk, 0xd2, (uint32_t)val, false);
-	}
-
-	return pack_type_uint64(pk, 0xd3, (uint64_t)val, false);
+	return pack_int64(pk, val, false);
 }
 
 int
