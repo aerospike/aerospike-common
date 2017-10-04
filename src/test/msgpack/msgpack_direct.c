@@ -143,7 +143,7 @@ static as_val *random_val()
 
 TEST( msgpack_size, "size deep list" )
 {
-	unsigned char buf[MAX_BUF_SIZE];
+	unsigned char* buf = malloc(MAX_BUF_SIZE);
 
 	memset(buf, 0x91, MAX_BUF_SIZE - 1);
 	buf[MAX_BUF_SIZE - 1] = 0x90;
@@ -155,18 +155,20 @@ TEST( msgpack_size, "size deep list" )
 	};
 
 	int64_t size = as_unpack_size(&pk);
+	free(buf);
 
 	assert( size == MAX_BUF_SIZE );
 }
 
 TEST( msgpack_compare, "compare deep list" )
 {
-	unsigned char buf[MAX_BUF_SIZE];
+	unsigned char* buf = malloc(MAX_BUF_SIZE);
 
 	memset(buf, 0x91, MAX_BUF_SIZE - 1);
 	buf[MAX_BUF_SIZE - 1] = 0x90;
 
 	msgpack_compare_t ret = as_unpack_buf_compare(buf, MAX_BUF_SIZE, buf, MAX_BUF_SIZE);
+	free(buf);
 
 	assert( ret == MSGPACK_COMPARE_EQUAL );
 }
