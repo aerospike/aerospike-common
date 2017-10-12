@@ -70,6 +70,11 @@ typedef struct as_list_s {
 	as_val _;
 
 	/**
+	 *	Information for this instance of as_list.
+	 */
+	uint32_t flags;
+
+	/**
 	 * Hooks for subtypes of as_list to implement.
 	 */
 	const struct as_list_hooks_s * hooks;
