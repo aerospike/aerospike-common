@@ -539,7 +539,7 @@ static inline uint32_t as_list_hashcode(as_list * list)
  *	@return The size of the list.
  *	@relatesalso as_list
  */
-static inline uint32_t as_list_size(as_list * list) 
+static inline uint32_t as_list_size(const as_list * list)
 {
 	return as_util_hook(size, 0, list);
 }
