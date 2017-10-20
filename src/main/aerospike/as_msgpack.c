@@ -832,11 +832,17 @@ unpack_blob(as_unpacker *pk, uint32_t size, as_val **val)
 static int
 unpack_list(as_unpacker *pk, uint32_t size, as_val **val)
 {
+	uint8_t flags = 0;
+
 	// Skip ext element key which is only at the start for metadata.
 	if (size != 0 && as_unpack_peek_is_ext(pk)) {
 		as_msgpack_ext ext;
 
-		as_unpack_ext(pk, &ext);
+		if (as_unpack_ext(pk, &ext) != 0) {
+			return -1;
+		}
+
+		flags = ext.type;
 		size--;
 	}
 
@@ -858,6 +864,7 @@ unpack_list(as_unpacker *pk, uint32_t size, as_val **val)
 	}
 
 	*val = (as_val *)list;
+	list->_.flags = flags;
 
 	return 0;
 }
@@ -911,9 +918,7 @@ unpack_map(as_unpacker *pk, uint32_t size, as_val **val)
 	if (size != 0 && as_unpack_peek_is_ext(pk)) {
 		as_msgpack_ext ext;
 
-		as_unpack_ext(pk, &ext);
-
-		if (as_unpack_size(pk) < 0) {
+		if (as_unpack_ext(pk, &ext) != 0 || as_unpack_size(pk) < 0) {
 			return -1;
 		}
 
