@@ -55,6 +55,7 @@
 		BFBB7F4418C0018F0080851E /* cf_ll.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3A18C0018F0080851E /* cf_ll.c */; };
 		BFBB7F4518C0018F0080851E /* cf_rchash.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3B18C0018F0080851E /* cf_rchash.c */; };
 		BFBB7F4718C0018F0080851E /* cf_vector.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F3D18C0018F0080851E /* cf_vector.c */; };
+		BFC5F3F81F7EB18000AE58D7 /* ssl_util.c in Sources */ = {isa = PBXBuildFile; fileRef = BFC5F3F71F7EB18000AE58D7 /* ssl_util.c */; };
 		BFC65B081C90C9400079DF5A /* as_random.c in Sources */ = {isa = PBXBuildFile; fileRef = BFC65B071C90C9400079DF5A /* as_random.c */; };
 		BFC65E931C93718F0079DF5A /* crypt_blowfish.h in Headers */ = {isa = PBXBuildFile; fileRef = BFC65E921C93718F0079DF5A /* crypt_blowfish.h */; };
 		BFE31C1018C96462002318FE /* cf_queue.c in Sources */ = {isa = PBXBuildFile; fileRef = BFE31C0F18C96462002318FE /* cf_queue.c */; };
@@ -111,6 +112,7 @@
 		BFBB7F3A18C0018F0080851E /* cf_ll.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_ll.c; path = ../src/main/citrusleaf/cf_ll.c; sourceTree = "<group>"; };
 		BFBB7F3B18C0018F0080851E /* cf_rchash.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; lineEnding = 0; name = cf_rchash.c; path = ../src/main/citrusleaf/cf_rchash.c; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.c; };
 		BFBB7F3D18C0018F0080851E /* cf_vector.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_vector.c; path = ../src/main/citrusleaf/cf_vector.c; sourceTree = "<group>"; };
+		BFC5F3F71F7EB18000AE58D7 /* ssl_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = ssl_util.c; path = ../src/main/aerospike/ssl_util.c; sourceTree = "<group>"; };
 		BFC65B071C90C9400079DF5A /* as_random.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_random.c; path = ../src/main/aerospike/as_random.c; sourceTree = "<group>"; };
 		BFC65E8E1C93702E0079DF5A /* include */ = {isa = PBXFileReference; lastKnownFileType = folder; name = include; path = ../src/include; sourceTree = "<group>"; };
 		BFC65E921C93718F0079DF5A /* crypt_blowfish.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = crypt_blowfish.h; path = ../src/main/aerospike/crypt_blowfish.h; sourceTree = "<group>"; };
@@ -225,6 +227,7 @@
 				BF6B7B271926E7F10081A75F /* as_vector.c */,
 				BFBA04BA1947DE0800F9924E /* crypt_blowfish.c */,
 				BFC65E921C93718F0079DF5A /* crypt_blowfish.h */,
+				BFC5F3F71F7EB18000AE58D7 /* ssl_util.c */,
 			);
 			name = aerospike;
 			sourceTree = "<group>";
@@ -309,6 +312,7 @@
 				BFBB7F2318C001560080851E /* as_list.c in Sources */,
 				BFBB7F2918C001560080851E /* as_msgpack.c in Sources */,
 				BFBA04BC1947DE0800F9924E /* crypt_blowfish.c in Sources */,
+				BFC5F3F81F7EB18000AE58D7 /* ssl_util.c in Sources */,
 				BFBB7F1618C001560080851E /* as_arraylist_hooks.c in Sources */,
 				BFBB7F4518C0018F0080851E /* cf_rchash.c in Sources */,
 				BF222D081BB3511C006827A6 /* as_geojson.c in Sources */,

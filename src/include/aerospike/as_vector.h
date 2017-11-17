@@ -16,8 +16,7 @@
  */
 #pragma once
 
-#include <citrusleaf/alloc.h>
-#include <citrusleaf/cf_types.h>
+#include <aerospike/as_std.h>
 #include <string.h>
 
 #ifdef __cplusplus
@@ -82,19 +81,19 @@ typedef struct as_vector_s {
 /**
  *	Initialize a stack allocated as_vector, with item storage on the heap.
  */
-void
+AS_EXTERN void
 as_vector_init(as_vector* vector, uint32_t item_size, uint32_t capacity);
 
 /**
  *	Create a heap allocated as_vector, with item storage on the heap.
  */
-as_vector*
+AS_EXTERN as_vector*
 as_vector_create(uint32_t item_size, uint32_t capacity);
 
 /**
  *	Free vector.
  */
-void
+AS_EXTERN void
 as_vector_destroy(as_vector* vector);
 
 /**
@@ -127,7 +126,7 @@ as_vector_get_ptr(as_vector* vector, uint32_t index)
 /**
  *  Double vector capacity.
  */
-void
+AS_EXTERN void
 as_vector_increase_capacity(as_vector* vector);
 
 /**
@@ -155,13 +154,13 @@ as_vector_append(as_vector* vector, void* value)
 /**
  *  Append item to vector if it doesn't already exist.
  */
-bool
+AS_EXTERN bool
 as_vector_append_unique(as_vector* vector, void* value);
 
 /**
  *	Return shallow heap copy of vector.
  */
-void*
+AS_EXTERN void*
 as_vector_to_array(as_vector* vector, uint32_t* size);
 
 /**
@@ -183,7 +182,7 @@ as_vector_reserve(as_vector* vector)
 /**
  *  Remove item from vector.
  */
-bool
+AS_EXTERN bool
 as_vector_remove(as_vector* vector, uint32_t index);
 
 #ifdef __cplusplus

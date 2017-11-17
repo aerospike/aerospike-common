@@ -16,7 +16,7 @@
  */
 #pragma once
 
-#include <inttypes.h>
+#include <aerospike/as_std.h>
 
 #ifdef __cplusplus
 extern "C" {

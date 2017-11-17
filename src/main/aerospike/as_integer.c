@@ -16,8 +16,6 @@
  */
 #include <aerospike/as_integer.h>
 #include <citrusleaf/alloc.h>
-#include <citrusleaf/cf_types.h>
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -67,7 +65,7 @@ char * as_integer_val_tostring(const as_val * v)
 {
 	as_integer * i = (as_integer *) v;
 	char * str = (char *) cf_malloc(sizeof(char) * 32);
-	bzero(str, 32);
+	memset(str, 0, 32);
 	sprintf(str, "%" PRId64, i->value);
 	return str;
 }

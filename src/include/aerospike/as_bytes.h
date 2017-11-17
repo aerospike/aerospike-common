@@ -17,12 +17,9 @@
 
 #pragma once
 
+#include <aerospike/as_std.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
-
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -322,7 +319,7 @@ typedef struct as_bytes_s {
  *
  *	@relatesalso as_bytes
  */
-as_bytes * as_bytes_init(as_bytes * bytes, uint32_t capacity);
+AS_EXTERN as_bytes * as_bytes_init(as_bytes * bytes, uint32_t capacity);
 
 /**
  *	Initializes a stack allocated `as_bytes`, wrapping the given buffer.
@@ -343,7 +340,7 @@ as_bytes * as_bytes_init(as_bytes * bytes, uint32_t capacity);
  *
  *	@relatesalso as_bytes
  */
-as_bytes * as_bytes_init_wrap(as_bytes * bytes, uint8_t * value, uint32_t size, bool free);
+AS_EXTERN as_bytes * as_bytes_init_wrap(as_bytes * bytes, uint8_t * value, uint32_t size, bool free);
 
 /**
  *	Create and initialize a new heap allocated `as_bytes`. Allocates an 
@@ -359,7 +356,7 @@ as_bytes * as_bytes_init_wrap(as_bytes * bytes, uint8_t * value, uint32_t size, 
  *
  *	@relatesalso as_bytes
  */
-as_bytes * as_bytes_new(uint32_t capacity);
+AS_EXTERN as_bytes * as_bytes_new(uint32_t capacity);
 
 /**
  *	Creates a new heap allocated `as_bytes`, wrapping the given buffer.
@@ -378,7 +375,7 @@ as_bytes * as_bytes_new(uint32_t capacity);
  *
  *	@relatesalso as_bytes
  */
-as_bytes * as_bytes_new_wrap(uint8_t * value, uint32_t size, bool free);
+AS_EXTERN as_bytes * as_bytes_new_wrap(uint8_t * value, uint32_t size, bool free);
 
 /**
  *	Destroy the `as_bytes` and release associated resources.
@@ -527,7 +524,7 @@ static inline uint8_t * as_bytes_get(const as_bytes * bytes)
  *
  *	@relatesalso as_bytes
  */
-uint32_t as_bytes_copy(const as_bytes * bytes, uint32_t index, uint8_t * value, uint32_t size);
+AS_EXTERN uint32_t as_bytes_copy(const as_bytes * bytes, uint32_t index, uint8_t * value, uint32_t size);
 
 /** 
  *	Read a single byte from the given bytes.
@@ -650,7 +647,7 @@ static inline uint32_t as_bytes_get_double(const as_bytes * bytes, uint32_t inde
  *
  *	@relatesalso as_bytes
  */
-uint32_t as_bytes_get_var_int(const as_bytes * bytes, uint32_t index, uint32_t * value);
+AS_EXTERN uint32_t as_bytes_get_var_int(const as_bytes * bytes, uint32_t index, uint32_t * value);
 
 /******************************************************************************
  *	SET AT INDEX
@@ -673,7 +670,7 @@ uint32_t as_bytes_get_var_int(const as_bytes * bytes, uint32_t index, uint32_t *
  *
  *	@relatesalso as_bytes
  */
-bool as_bytes_set(as_bytes * bytes, uint32_t index, const uint8_t * value, uint32_t size);
+AS_EXTERN bool as_bytes_set(as_bytes * bytes, uint32_t index, const uint8_t * value, uint32_t size);
 
 /**
  *	Set a byte at given index.
@@ -771,7 +768,7 @@ static inline bool as_bytes_set_double(as_bytes * bytes, uint32_t index, double 
  *
  *	@relatesalso as_bytes
  */
-uint32_t as_bytes_set_var_int(const as_bytes * bytes, uint32_t index, uint32_t value);
+AS_EXTERN uint32_t as_bytes_set_var_int(const as_bytes * bytes, uint32_t index, uint32_t value);
 
 /******************************************************************************
  *	APPEND TO THE END
@@ -794,7 +791,7 @@ uint32_t as_bytes_set_var_int(const as_bytes * bytes, uint32_t index, uint32_t v
  *
  *	@relatesalso as_bytes
  */
-bool as_bytes_append(as_bytes * bytes, const uint8_t * value, uint32_t size);
+AS_EXTERN bool as_bytes_append(as_bytes * bytes, const uint8_t * value, uint32_t size);
 
 /**
  *	Append a uint8_t (byte).
@@ -900,7 +897,7 @@ static inline bool as_bytes_append_double(as_bytes * bytes, double value)
  *
  *	@relatesalso as_bytes
  */
-bool as_bytes_truncate(as_bytes * bytes, uint32_t n);
+AS_EXTERN bool as_bytes_truncate(as_bytes * bytes, uint32_t n);
 
 /**
  *	Ensure the bytes buffer can handle `capacity` bytes.
@@ -927,7 +924,7 @@ bool as_bytes_truncate(as_bytes * bytes, uint32_t n);
  *
  *	@relatesalso as_bytes
  */
-bool as_bytes_ensure(as_bytes * bytes, uint32_t capacity, bool resize);
+AS_EXTERN bool as_bytes_ensure(as_bytes * bytes, uint32_t capacity, bool resize);
 
 
 /**
@@ -980,19 +977,19 @@ static inline as_bytes * as_bytes_fromval(const as_val * v)
  *	@private
  *	Internal helper function for destroying an as_val.
  */
-void as_bytes_val_destroy(as_val * v);
+AS_EXTERN void as_bytes_val_destroy(as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the hashcode of an as_val.
  */
-uint32_t as_bytes_val_hashcode(const as_val * v);
+AS_EXTERN uint32_t as_bytes_val_hashcode(const as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the string representation of an as_val.
  */
-char * as_bytes_val_tostring(const as_val * v);
+AS_EXTERN char * as_bytes_val_tostring(const as_val * v);
 
 #ifdef __cplusplus
 } // end extern "C"

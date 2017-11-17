@@ -22,11 +22,9 @@
 #include <aerospike/as_integer.h>
 #include <aerospike/as_list.h>
 #include <aerospike/as_map.h>
+#include <aerospike/as_std.h>
 #include <aerospike/as_string.h>
 #include <aerospike/as_val.h>
-
-#include <stdbool.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -204,7 +202,7 @@ typedef enum as_arraylist_status_e {
  *	@return On success, the initialize list. Otherwise NULL.
  *	@relatesalso as_arraylist
  */
-as_arraylist * as_arraylist_init(as_arraylist * list, uint32_t capacity, uint32_t block_size);
+AS_EXTERN as_arraylist * as_arraylist_init(as_arraylist * list, uint32_t capacity, uint32_t block_size);
 
 /**
  *	Create and initialize a heap allocated list as as_arraylist.
@@ -216,7 +214,7 @@ as_arraylist * as_arraylist_init(as_arraylist * list, uint32_t capacity, uint32_
  *	@return On success, the new list. Otherwise NULL.
  *	@relatesalso as_arraylist
  */
-as_arraylist * as_arraylist_new(uint32_t capacity, uint32_t block_size);
+AS_EXTERN as_arraylist * as_arraylist_new(uint32_t capacity, uint32_t block_size);
 
 /**
  *	Destoy the list and release resources.
@@ -224,7 +222,7 @@ as_arraylist * as_arraylist_new(uint32_t capacity, uint32_t block_size);
  *	@param list	The list to destroy.
  *	@relatesalso as_arraylist
  */
-void as_arraylist_destroy(as_arraylist * list);
+AS_EXTERN void as_arraylist_destroy(as_arraylist * list);
 
 /*******************************************************************************
  *	VALUE FUNCTIONS
@@ -238,7 +236,7 @@ void as_arraylist_destroy(as_arraylist * list);
  *	@return The hash value of the list.
  *	@relatesalso as_arraylist
  */
-uint32_t as_arraylist_hashcode(const as_arraylist * list);
+AS_EXTERN uint32_t as_arraylist_hashcode(const as_arraylist * list);
 
 /**
  *  The number of elements in the list.
@@ -248,7 +246,7 @@ uint32_t as_arraylist_hashcode(const as_arraylist * list);
  *	@return The number of elements in the list.
  *	@relatesalso as_arraylist
  */
-uint32_t as_arraylist_size(const as_arraylist * list);
+AS_EXTERN uint32_t as_arraylist_size(const as_arraylist * list);
 
 /*******************************************************************************
  *	ACCESSOR AND MODIFIER FUNCTIONS
@@ -264,7 +262,7 @@ uint32_t as_arraylist_size(const as_arraylist * list);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_concat(as_arraylist * list, const as_arraylist * list2);
+AS_EXTERN int as_arraylist_concat(as_arraylist * list, const as_arraylist * list2);
 
 /**
  *	Delete (and destroy) all elements at and beyond specified index. Capacity is
@@ -276,7 +274,7 @@ int as_arraylist_concat(as_arraylist * list, const as_arraylist * list2);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_trim(as_arraylist * list, uint32_t index);
+AS_EXTERN int as_arraylist_trim(as_arraylist * list, uint32_t index);
 
 /**
  *	Get the first element of the list.
@@ -286,7 +284,7 @@ int as_arraylist_trim(as_arraylist * list, uint32_t index);
  *	@return The first element of the list. Otherwise NULL.
  *	@relatesalso as_arraylist
  */
-as_val * as_arraylist_head(const as_arraylist * list);
+AS_EXTERN as_val * as_arraylist_head(const as_arraylist * list);
 
 /**
  *  Returns a new list containing all elements other than the head
@@ -296,7 +294,7 @@ as_val * as_arraylist_head(const as_arraylist * list);
  *	@return A new list of all elements after the first element.
  *	@relatesalso as_arraylist
  */
-as_arraylist * as_arraylist_tail(const as_arraylist * list);
+AS_EXTERN as_arraylist * as_arraylist_tail(const as_arraylist * list);
 
 /**
  *  Return a new list with the first n elements removed.
@@ -307,7 +305,7 @@ as_arraylist * as_arraylist_tail(const as_arraylist * list);
  *	@return A new list of all elements after the first n elements.
  *	@relatesalso as_arraylist
  */
-as_arraylist * as_arraylist_drop(const as_arraylist * list, uint32_t n);
+AS_EXTERN as_arraylist * as_arraylist_drop(const as_arraylist * list, uint32_t n);
 
 /**
  *  Return a new list containing the first n elements.
@@ -318,7 +316,7 @@ as_arraylist * as_arraylist_drop(const as_arraylist * list, uint32_t n);
  *	@return A new list of the first n elements.
  *	@relatesalso as_arraylist
  */
-as_arraylist * as_arraylist_take(const as_arraylist * list, uint32_t n);
+AS_EXTERN as_arraylist * as_arraylist_take(const as_arraylist * list, uint32_t n);
 
 /******************************************************************************
  *	GET FUNCTIONS
@@ -333,7 +331,7 @@ as_arraylist * as_arraylist_take(const as_arraylist * list, uint32_t n);
  *	@return The value at given index, if it exists. Otherwise NULL.
  *	@relatesalso as_arraylist
  */
-as_val * as_arraylist_get(const as_arraylist * list, uint32_t index);
+AS_EXTERN as_val * as_arraylist_get(const as_arraylist * list, uint32_t index);
 
 /**
  *  Return an int64_t value at the specified index of the list.
@@ -344,7 +342,7 @@ as_val * as_arraylist_get(const as_arraylist * list, uint32_t index);
  *	@return The value at given index, if it exists. Otherwise NULL.
  *	@relatesalso as_arraylist
  */
-int64_t as_arraylist_get_int64(const as_arraylist * list, uint32_t index);
+AS_EXTERN int64_t as_arraylist_get_int64(const as_arraylist * list, uint32_t index);
 
 /**
  *  Return a double value at the specified index of the list.
@@ -355,7 +353,7 @@ int64_t as_arraylist_get_int64(const as_arraylist * list, uint32_t index);
  *	@return The value at given index, if it exists. Otherwise NULL.
  *	@relatesalso as_arraylist
  */
-double as_arraylist_get_double(const as_arraylist * list, uint32_t index);
+AS_EXTERN double as_arraylist_get_double(const as_arraylist * list, uint32_t index);
 
 /**
  *  Return a NULL-terminated value at the specified index of the list.
@@ -366,7 +364,7 @@ double as_arraylist_get_double(const as_arraylist * list, uint32_t index);
  *	@return The value at given index, if it exists. Otherwise NULL.
  *	@relatesalso as_arraylist
  */
-char * as_arraylist_get_str(const as_arraylist * list, uint32_t index);
+AS_EXTERN char * as_arraylist_get_str(const as_arraylist * list, uint32_t index);
 
 /**
  *  Return an as_integer value at the specified index of the list.
@@ -472,7 +470,7 @@ static inline as_map * as_arraylist_get_map(const as_arraylist * list, uint32_t 
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_set(as_arraylist * list, uint32_t index, as_val * value);
+AS_EXTERN int as_arraylist_set(as_arraylist * list, uint32_t index, as_val * value);
 
 /**
  *  Set an int64_t value at the specified index of the list.
@@ -484,7 +482,7 @@ int as_arraylist_set(as_arraylist * list, uint32_t index, as_val * value);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_set_int64(as_arraylist * list, uint32_t index, int64_t value);
+AS_EXTERN int as_arraylist_set_int64(as_arraylist * list, uint32_t index, int64_t value);
 
 /**
  *  Set a double value at the specified index of the list.
@@ -496,7 +494,7 @@ int as_arraylist_set_int64(as_arraylist * list, uint32_t index, int64_t value);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_set_double(as_arraylist * list, uint32_t index, double value);
+AS_EXTERN int as_arraylist_set_double(as_arraylist * list, uint32_t index, double value);
 
 /**
  *  Set a NULL-terminated string value at the specified index of the list.
@@ -508,7 +506,7 @@ int as_arraylist_set_double(as_arraylist * list, uint32_t index, double value);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_set_str(as_arraylist * list, uint32_t index, const char * value);
+AS_EXTERN int as_arraylist_set_str(as_arraylist * list, uint32_t index, const char * value);
 
 /**
  *  Set an as_integer value at the specified index of the list.
@@ -617,7 +615,7 @@ static inline int as_arraylist_set_map(as_arraylist * list, uint32_t index, as_m
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_insert(as_arraylist * list, uint32_t index, as_val * value);
+AS_EXTERN int as_arraylist_insert(as_arraylist * list, uint32_t index, as_val * value);
 
 /**
  *  Insert an int64_t value at the specified index of the list.
@@ -629,7 +627,7 @@ int as_arraylist_insert(as_arraylist * list, uint32_t index, as_val * value);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_insert_int64(as_arraylist * list, uint32_t index, int64_t value);
+AS_EXTERN int as_arraylist_insert_int64(as_arraylist * list, uint32_t index, int64_t value);
 
 /**
  *  Insert a double value at the specified index of the list.
@@ -641,7 +639,7 @@ int as_arraylist_insert_int64(as_arraylist * list, uint32_t index, int64_t value
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_insert_double(as_arraylist * list, uint32_t index, double value);
+AS_EXTERN int as_arraylist_insert_double(as_arraylist * list, uint32_t index, double value);
 
 /**
  *  Insert a NULL-terminated string value at the specified index of the list.
@@ -653,7 +651,7 @@ int as_arraylist_insert_double(as_arraylist * list, uint32_t index, double value
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_insert_str(as_arraylist * list, uint32_t index, const char * value);
+AS_EXTERN int as_arraylist_insert_str(as_arraylist * list, uint32_t index, const char * value);
 
 /**
  *  Insert an as_integer value at the specified index of the list.
@@ -758,7 +756,7 @@ static inline int as_arraylist_insert_map(as_arraylist * list, uint32_t index, a
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_append(as_arraylist * list, as_val * value);
+AS_EXTERN int as_arraylist_append(as_arraylist * list, as_val * value);
 
 /**
  *  Add an int64_t to the end of the list.
@@ -769,7 +767,7 @@ int as_arraylist_append(as_arraylist * list, as_val * value);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_append_int64(as_arraylist * list, int64_t value);
+AS_EXTERN int as_arraylist_append_int64(as_arraylist * list, int64_t value);
 
 /**
  *  Add a double to the end of the list.
@@ -780,7 +778,7 @@ int as_arraylist_append_int64(as_arraylist * list, int64_t value);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_append_double(as_arraylist * list, double value);
+AS_EXTERN int as_arraylist_append_double(as_arraylist * list, double value);
 
 /**
  *  Add a NULL-terminated string to the end of the list.
@@ -791,7 +789,7 @@ int as_arraylist_append_double(as_arraylist * list, double value);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_append_str(as_arraylist * list, const char * value);
+AS_EXTERN int as_arraylist_append_str(as_arraylist * list, const char * value);
 
 /**
  *  Add an as_integer to the end of the list.
@@ -890,7 +888,7 @@ static inline int as_arraylist_append_map(as_arraylist * list, as_map * value)
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_prepend(as_arraylist * list, as_val * value);
+AS_EXTERN int as_arraylist_prepend(as_arraylist * list, as_val * value);
 
 /**
  *  Add an int64_t to the beginning of the list.
@@ -901,7 +899,7 @@ int as_arraylist_prepend(as_arraylist * list, as_val * value);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_prepend_int64(as_arraylist * list, int64_t value);
+AS_EXTERN int as_arraylist_prepend_int64(as_arraylist * list, int64_t value);
 
 /**
  *  Add a double to the beginning of the list.
@@ -912,7 +910,7 @@ int as_arraylist_prepend_int64(as_arraylist * list, int64_t value);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_prepend_double(as_arraylist * list, double value);
+AS_EXTERN int as_arraylist_prepend_double(as_arraylist * list, double value);
 
 /**
  *  Add a NULL-terminated string to the beginning of the list.
@@ -923,7 +921,7 @@ int as_arraylist_prepend_double(as_arraylist * list, double value);
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_prepend_str(as_arraylist * list, const char * value);
+AS_EXTERN int as_arraylist_prepend_str(as_arraylist * list, const char * value);
 
 /**
  *  Add an as_integer to the beginning of the list.
@@ -1025,7 +1023,7 @@ static inline int as_arraylist_prepend_map(as_arraylist * list, as_map * value)
  *	@return AS_ARRAYLIST_OK on success. Otherwise an error occurred.
  *	@relatesalso as_arraylist
  */
-int as_arraylist_remove(as_arraylist * list, uint32_t index);
+AS_EXTERN int as_arraylist_remove(as_arraylist * list, uint32_t index);
 
 /******************************************************************************
  *	ITERATION FUNCTIONS
@@ -1042,7 +1040,7 @@ int as_arraylist_remove(as_arraylist * list, uint32_t index);
  *
  *	@relatesalso as_arraylist
  */
-bool as_arraylist_foreach(const as_arraylist * list, as_list_foreach_callback callback, void * udata);
+AS_EXTERN bool as_arraylist_foreach(const as_arraylist * list, as_list_foreach_callback callback, void * udata);
 
 #ifdef __cplusplus
 } // end extern "C"

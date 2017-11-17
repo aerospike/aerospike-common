@@ -14,11 +14,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <stdlib.h>
-
-#include <citrusleaf/alloc.h>
 #include <aerospike/as_result.h>
+#include <aerospike/as_atomic.h>
+#include <citrusleaf/alloc.h>
+#include <stddef.h>
 
 /******************************************************************************
  * FUNCTIONS
@@ -43,13 +42,13 @@ as_result * as_result_new() {
 }
 
 as_result * as_result_reserve(as_result * r) {
-    cf_atomic32_incr(&(r->count));
+    as_incr_uint32(&r->count);
     return r;
 }
 
 void as_result_destroy(as_result *r) {
     // if we reach the last reference, call the destructor, and free
-    if ( 0 == cf_atomic32_decr(&(r->count)) ) {
+	if (as_aaf_uint32(&r->count, -1) == 0) {
         if (r->value) {
             as_val_destroy(r->value); 
             r->value = NULL;

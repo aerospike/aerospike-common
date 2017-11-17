@@ -14,19 +14,13 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <citrusleaf/alloc.h>
-
 #include <aerospike/as_iterator.h>
 #include <aerospike/as_list.h>
 #include <aerospike/as_list_iterator.h>
 #include <aerospike/as_map.h>
 #include <aerospike/as_util.h>
-
+#include <citrusleaf/alloc.h>
 #include <string.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
 
 /******************************************************************************
  *	INSTANCE FUNCTIONS
@@ -99,7 +93,7 @@ static bool as_list_val_tostring_foreach(as_val * val, void * udata)
 		str = (char *)NULL_STR;
 	}
 
-	int len = (int)strlen(str);
+	uint32_t len = (uint32_t)strlen(str);
 
 	if ( data->pos + len + 2 >= data->cap ) {
 		uint32_t adj = ((len+2) > data->blk) ? len+2 : data->blk;

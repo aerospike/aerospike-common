@@ -14,11 +14,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <string.h>
 #include <citrusleaf/cf_queue.h>
 #include <citrusleaf/cf_clock.h>
 #include <citrusleaf/alloc.h>
+#include <string.h>
 
 /******************************************************************************
  * FUNCTIONS

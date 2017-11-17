@@ -4,3 +4,13 @@ xcuserdata
 *.xccheckout
 *.swp
 *~.nib
+*.suo
+*.user
+*.VC.db
+*.VC.VC.opendb
+.vs
+Debug
+x64
+ipch
+packages
+packages/repositories.config

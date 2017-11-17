@@ -20,104 +20,113 @@
  */
 #ifndef ENHANCED_ALLOC
 
-#include <stdbool.h>
+#include <citrusleaf/alloc.h>
+#include <aerospike/as_atomic.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include <citrusleaf/alloc.h>
-
-void *cf_malloc(size_t sz) {
+void*
+cf_malloc(size_t sz)
+{
 	return malloc(sz);
 }
 
-void *cf_calloc(size_t nmemb, size_t sz) {
+void*
+cf_calloc(size_t nmemb, size_t sz)
+{
 	return calloc(nmemb, sz);
 }
 
-void *cf_realloc(void *ptr, size_t sz) {
+void*
+cf_realloc(void *ptr, size_t sz)
+{
 	return realloc(ptr,sz);
 }
 
-void *cf_strdup(const char *s) {
+void*
+cf_strdup(const char *s)
+{
 	return strdup(s);
 }
 
-void *cf_strndup(const char *s, size_t n) {
+void*
+cf_strndup(const char *s, size_t n)
+{
+#if defined(_MSC_VER)
+	size_t len = strnlen(s, n);
+	char* t = cf_malloc(len + 1);
+
+	if (t == NULL) {
+		return NULL;
+	}
+	t[len] = 0;
+	return memcpy(t, s, len);
+#else
 	return strndup(s, n);
+#endif
 }
 
-void *cf_valloc(size_t sz) {
+void*
+cf_valloc(size_t sz)
+{
+#if defined(_MSC_VER)
+	// valloc is not used by the client.
+	// Since this file is for the client only, just return null.
+	return NULL;
+#else
 	return valloc(sz);
+#endif
 }
 
-void cf_free(void *p) {
+void
+cf_free(void *p)
+{
 	free(p);
 }
 
-/* cf_rc_count
- * Get the reservation count for a memory region */
-cf_atomic_int_t cf_rc_count(void *addr) {
-	cf_rc_counter *rc = (cf_rc_counter *) (((uint8_t *)addr) - sizeof(cf_rc_counter));
-
-	return *rc;
-}
-
-/* cf_rc_reserve
- * Get a reservation on a memory region */
-int cf_rc_reserve(void *addr) {
-	cf_rc_counter *rc = (cf_rc_counter *) (((uint8_t *)addr) - sizeof(cf_rc_counter));
-	int i = (int) cf_atomic32_add(rc, 1);
-
-	smb_mb();
-
-	return i;
-}
-
-/* cf_rc_alloc
- * Allocate a reference-counted memory region.  This region will be filled
- * with uint8_ts of value zero */
-void *cf_rc_alloc(size_t sz)
+int
+cf_rc_reserve(void* addr)
 {
-	size_t asz = sizeof(cf_rc_counter) + sz;
-	uint8_t *addr = malloc(asz);
+	cf_rc_hdr* head = (cf_rc_hdr*)addr - 1;
+	return as_aaf_uint32(&head->count, 1);
+}
 
-	if (NULL == addr) {
-		return NULL;
+void*
+cf_rc_alloc(size_t sz)
+{
+	cf_rc_hdr* head = malloc(sizeof(cf_rc_hdr) + sz);
+
+	as_store_uint32(&head->count, 1);  // Need atomic store?
+	head->sz = (uint32_t)sz;
+
+	return head + 1;
+}
+
+void
+cf_rc_free(void* addr)
+{
+	cf_rc_hdr* head = (cf_rc_hdr*)addr - 1;
+	free(head);
+}
+
+int
+cf_rc_release(void* addr)
+{
+	cf_rc_hdr* head = (cf_rc_hdr*)addr - 1;
+	return (int)as_aaf_uint32(&head->count, -1);
+}
+
+int
+cf_rc_releaseandfree(void* addr)
+{
+	cf_rc_hdr* head = (cf_rc_hdr*)addr - 1;
+	int rc = (int)as_aaf_uint32(&head->count, -1);
+
+	if (rc == 0) {
+		free(head);
 	}
-	cf_atomic_int_set((cf_atomic_int *) addr, 1);
 
-	return addr + sizeof(cf_rc_counter);
-}
-
-/* cf_rc_free
- * Deallocate a reference-counted memory region */
-void cf_rc_free(void *addr) {
-	cf_rc_counter *rc = (cf_rc_counter *) (((uint8_t *)addr) - sizeof(cf_rc_counter));
-	free((void *) rc);
-}
-
-/* cf_rc_release
- * Release a reservation on a memory region */
-static inline cf_atomic_int_t cf_rc_release_x(void *addr, bool autofree) {
-	uint64_t c = 0;
-	cf_rc_counter *rc = (cf_rc_counter *) (((uint8_t *)addr) - sizeof(cf_rc_counter));
-
-	// Release the reservation; if this reduced the reference count to zero,
-	// then free the block if autofree is set, and return 1.  Otherwise,
-	// return 0
-	smb_mb();
-	if (0 == (c = cf_atomic32_decr(rc)) && autofree) {
-		free((void *)rc);
-	}
-
-	return c;
-}
-
-int cf_rc_release(void *addr) {
-	return (int)cf_rc_release_x(addr, false);
-}
-
-int cf_rc_releaseandfree(void *addr) {
-	return (int)cf_rc_release_x(addr, true);
+	return rc;
 }
 
 #endif // defined(ENHANCED_ALLOC)

@@ -19,13 +19,9 @@
 // Includes.
 //
 
-#include <string.h>
-#include <stdlib.h>
-
 #include <citrusleaf/cf_vector.h>
-
 #include <citrusleaf/alloc.h>
-
+#include <string.h>
 
 //==========================================================
 // Constants & typedefs.
@@ -255,7 +251,7 @@ cf_vector_get_sized(const cf_vector *v, uint32_t idx, void *val, uint32_t sz)
 		return cf_vector_get(v, idx, val) == 0;
 	}
 
-	uint8_t buf[v->ele_sz];
+	uint8_t* buf = alloca(v->ele_sz);
 
 	if (cf_vector_get(v, idx, &buf) != 0) {
 		return false;

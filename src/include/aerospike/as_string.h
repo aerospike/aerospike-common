@@ -17,12 +17,9 @@
 
 #pragma once
 
+#include <aerospike/as_std.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
-
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -146,7 +143,7 @@ typedef struct as_string_s {
  *
  *	@relatesalso as_string
  */
-as_string * as_string_init(as_string * string, char * value, bool free);
+AS_EXTERN as_string * as_string_init(as_string * string, char * value, bool free);
 
 /**
  *	Initialize a stack allocated `as_string` and its length.
@@ -162,7 +159,7 @@ as_string * as_string_init(as_string * string, char * value, bool free);
  *
  *	@relatesalso as_string
  */
-as_string * as_string_init_wlen(as_string * string, char * value, size_t len, bool free);
+AS_EXTERN as_string * as_string_init_wlen(as_string * string, char * value, size_t len, bool free);
 
 /**
  *	Create and initialize a new heap allocated `as_string`.
@@ -176,7 +173,7 @@ as_string * as_string_init_wlen(as_string * string, char * value, size_t len, bo
  *
  *	@relatesalso as_string
  */
-as_string * as_string_new(char * value, bool free);
+AS_EXTERN as_string * as_string_new(char * value, bool free);
 
 /**
  *	Create and initialize a new heap allocated `as_string` and its length.
@@ -191,7 +188,7 @@ as_string * as_string_new(char * value, bool free);
  *
  *	@relatesalso as_string
  */
-as_string * as_string_new_wlen(char * value, size_t len, bool free);
+AS_EXTERN as_string * as_string_new_wlen(char * value, size_t len, bool free);
 
 /**
  *	Create and initialize a new heap allocated `as_string`.
@@ -202,7 +199,7 @@ as_string * as_string_new_wlen(char * value, size_t len, bool free);
  *
  *	@return On success, the new string. Otherwise NULL.
  */
-as_string * as_string_new_strdup(const char * value);
+AS_EXTERN as_string * as_string_new_strdup(const char * value);
 
 /**
  *	Destroy the as_string and associated resources.
@@ -227,7 +224,7 @@ static inline void as_string_destroy(as_string * string)
  *
  *	@relatesalso as_string
  */
-size_t as_string_len(as_string * string);
+AS_EXTERN size_t as_string_len(as_string * string);
 
 /**
  *	Get the string value. If string is NULL, then return the fallback value.
@@ -270,7 +267,7 @@ static inline char * as_string_tostring(const as_string * string)
  *
  *	@relatesalso as_string
  */
-const char* as_basename(as_string * filename, const char* path);
+AS_EXTERN const char* as_basename(as_string * filename, const char* path);
 
 /******************************************************************************
  *	CONVERSION FUNCTIONS
@@ -304,19 +301,19 @@ static inline as_string * as_string_fromval(const as_val * v)
  *	@private
  *	Internal helper function for destroying an as_val.
  */
-void as_string_val_destroy(as_val * v);
+AS_EXTERN void as_string_val_destroy(as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the hashcode of an as_val.
  */
-uint32_t as_string_val_hashcode(const as_val * v);
+AS_EXTERN uint32_t as_string_val_hashcode(const as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the string representation of an as_val.
  */
-char * as_string_val_tostring(const as_val * v);
+AS_EXTERN char * as_string_val_tostring(const as_val * v);
 
 /******************************************************************************
  *	String utilities
@@ -338,7 +335,7 @@ char * as_string_val_tostring(const as_val * v);
  *
  *	@relatesalso as_string
  */
-bool as_strncpy(char* trg, const char* src, int size);
+AS_EXTERN bool as_strncpy(char* trg, const char* src, int size);
 
 #ifdef __cplusplus
 } // end extern "C"

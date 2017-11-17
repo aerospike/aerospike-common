@@ -16,8 +16,6 @@
  */
 #include <aerospike/as_bytes.h>
 #include <citrusleaf/alloc.h>
-#include <stdbool.h>
-#include <stdlib.h>
 #include <string.h>
 
 /******************************************************************************
@@ -417,7 +415,7 @@ char * as_bytes_val_tostring(const as_val * v)
     }
     
     int j=0;
-    for ( int i=0; i < sl; i++ ) {
+    for ( uint32_t i=0; i < sl; i++ ) {
         str[j] = hex_chars[ s[i] >> 4 ];
         str[j+1] = hex_chars[ s[i] & 0xf ];
         str[j+2] = ' ';

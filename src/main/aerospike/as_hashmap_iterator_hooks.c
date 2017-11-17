@@ -14,13 +14,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 #include <aerospike/as_hashmap_iterator.h>
 #include <aerospike/as_iterator.h>
 #include <aerospike/as_val.h>
-
-#include <stdbool.h>
-#include <stdint.h>
 
 /******************************************************************************
  *	EXTERN FUNCTIONS

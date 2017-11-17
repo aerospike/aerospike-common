@@ -16,8 +16,7 @@
  */
 #pragma once
 
-#include <stdbool.h>
-
+#include <aerospike/as_std.h>
 #include <aerospike/as_val.h>
 
 #ifdef __cplusplus
@@ -29,10 +28,10 @@ extern "C" {
  ******************************************************************************/
 
 typedef struct as_result_s {
-    bool        is_malloc;
-    cf_atomic32 count;
+	as_val* value;
+	uint32_t count;
+    bool is_malloc;
     bool is_success;
-    as_val * value;
 } as_result;
 
 /******************************************************************************

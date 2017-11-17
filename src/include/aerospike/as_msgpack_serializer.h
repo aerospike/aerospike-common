@@ -30,12 +30,12 @@ extern "C" {
 /**
  * Creates a new serializer for msgpack.
  */
-as_serializer *as_msgpack_new();
+AS_EXTERN as_serializer *as_msgpack_new();
 
 /**
  * Initializes a serializer for msgpack.
  */
-as_serializer *as_msgpack_init(as_serializer *);
+AS_EXTERN as_serializer *as_msgpack_init(as_serializer *);
 
 #ifdef __cplusplus
 } // end extern "C"

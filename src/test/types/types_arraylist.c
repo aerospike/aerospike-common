@@ -7,6 +7,7 @@
 #include <aerospike/as_list_iterator.h>
 #include <aerospike/as_msgpack.h>
 #include <aerospike/as_serializer.h>
+#include <string.h>
 
 /******************************************************************************
  * TEST CASES

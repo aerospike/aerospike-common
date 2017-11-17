@@ -14,13 +14,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 #include <aerospike/as_arraylist.h>
 #include <aerospike/as_arraylist_iterator.h>
 #include <aerospike/as_iterator.h>
-
-#include <stdbool.h>
-#include <stdlib.h>
 
 /******************************************************************************
  *	EXTERN FUNCTIONS

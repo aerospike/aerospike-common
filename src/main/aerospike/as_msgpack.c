@@ -14,13 +14,12 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <stdbool.h>
-
 #include <aerospike/as_msgpack.h>
 #include <aerospike/as_serializer.h>
 #include <aerospike/as_types.h>
+#include <citrusleaf/alloc.h>
 #include <citrusleaf/cf_byte_order.h>
+#include <string.h>
 
 /******************************************************************************
  * INTERNAL TYPEDEFS & CONSTANTS
@@ -73,7 +72,7 @@ static bool msgpack_parse_state_map_size_init(msgpack_parse_state *state, as_unp
 static inline msgpack_compare_t msgpack_compare_int(as_unpacker *pk1, as_unpacker *pk2);
 static inline msgpack_compare_t msgpack_compare_double(as_unpacker *pk1, as_unpacker *pk2);
 static inline int64_t msgpack_get_blob_len(as_unpacker *pk);
-static msgpack_compare_t msgpack_compare_blob_internal(as_unpacker *pk1, int64_t len1, as_unpacker *pk2, int64_t len2);
+static msgpack_compare_t msgpack_compare_blob_internal(as_unpacker *pk1, uint32_t len1, as_unpacker *pk2, uint32_t len2);
 static inline msgpack_compare_t msgpack_compare_blob(as_unpacker *pk1, as_unpacker *pk2);
 static inline msgpack_compare_t msgpack_compare_int64_t(int64_t x1, int64_t x2);
 static bool msgpack_skip(as_unpacker *pk, size_t n);
@@ -101,7 +100,7 @@ static inline const uint8_t *unpack_str_bin(as_unpacker *pk, uint32_t *sz_r);
 static msgpack_parse_memblock *
 msgpack_parse_memblock_create(msgpack_parse_memblock *prev)
 {
-	msgpack_parse_memblock *p = malloc(sizeof(msgpack_parse_memblock));
+	msgpack_parse_memblock *p = cf_malloc(sizeof(msgpack_parse_memblock));
 	p->prev = prev;
 	p->count = 0;
 	return p;
@@ -113,7 +112,7 @@ msgpack_parse_memblock_destroy(msgpack_parse_memblock *block)
 	while (block) {
 		msgpack_parse_memblock *p = block;
 		block = block->prev;
-		free(p);
+		cf_free(p);
 	}
 }
 
@@ -147,7 +146,7 @@ msgpack_parse_memblock_prev(msgpack_parse_memblock **block)
 
 	if (ptr->count <= 1) {
 		ptr = ptr->prev;
-		free(*block);
+		cf_free(*block);
 		*block = ptr;
 	}
 	else {
@@ -392,19 +391,19 @@ pack_as_boolean(as_packer *pk, const as_boolean *b)
 static inline int
 pack_uint64(as_packer *pk, uint64_t val, bool resize)
 {
-	if (val < (1UL << 7)) {
+	if (val < (1ULL << 7)) {
 		return pack_byte(pk, (uint8_t)val, resize);
 	}
 
-	if (val < (1UL << 8)) {
+	if (val < (1ULL << 8)) {
 		return pack_type_uint8(pk, 0xcc, (uint8_t)val, resize);
 	}
 
-	if (val < (1UL << 16)) {
+	if (val < (1ULL << 16)) {
 		return pack_type_uint16(pk, 0xcd, (uint16_t)val, resize);
 	}
 
-	if (val < (1UL << 32)) {
+	if (val < (1ULL << 32)) {
 		return pack_type_uint32(pk, 0xce, (uint32_t)val, resize);
 	}
 
@@ -418,19 +417,19 @@ pack_int64(as_packer *pk, int64_t val, bool resize)
 		return pack_uint64(pk, (uint64_t)val, resize);
 	}
 
-	if (val >= -(1L << 5)) {
+	if (val >= -(1LL << 5)) {
 		return pack_byte(pk, (uint8_t)(0xe0 | (val + 32)), resize);
 	}
 
-	if (val >= -(1L << 7)) {
+	if (val >= -(1LL << 7)) {
 		return pack_type_uint8(pk, 0xd0, (uint8_t)val, resize);
 	}
 
-	if (val >= -(1L << 15)) {
+	if (val >= -(1LL << 15)) {
 		return pack_type_uint16(pk, 0xd1, (uint16_t)val, resize);
 	}
 
-	if (val >= -(1L << 31)) {
+	if (val >= -(1LL << 31)) {
 		return pack_type_uint32(pk, 0xd2, (uint32_t)val, resize);
 	}
 
@@ -1081,19 +1080,19 @@ as_pack_bool(as_packer *pk, bool val)
 uint32_t
 as_pack_uint64_size(uint64_t val)
 {
-	if (val < (1UL << 7)) {
+	if (val < (1ULL << 7)) {
 		return 1;
 	}
 
-	if (val < (1UL << 8)) {
+	if (val < (1ULL << 8)) {
 		return 2;
 	}
 
-	if (val < (1UL << 16)) {
+	if (val < (1ULL << 16)) {
 		return 3;
 	}
 
-	if (val < (1UL << 32)) {
+	if (val < (1ULL << 32)) {
 		return 5;
 	}
 
@@ -2222,8 +2221,8 @@ msgpack_get_blob_len(as_unpacker *pk)
 }
 
 static msgpack_compare_t
-msgpack_compare_blob_internal(as_unpacker *pk1, int64_t len1, as_unpacker *pk2,
-		int64_t len2)
+msgpack_compare_blob_internal(as_unpacker *pk1, uint32_t len1, as_unpacker *pk2,
+	uint32_t len2)
 {
 	int64_t minlen = (len1 < len2) ? len1 : len2;
 
@@ -2255,7 +2254,10 @@ msgpack_compare_blob(as_unpacker *pk1, as_unpacker *pk2)
 	int64_t len1 = msgpack_get_blob_len(pk1);
 	int64_t len2 = msgpack_get_blob_len(pk2);
 
-	return msgpack_compare_blob_internal(pk1, len1, pk2, len2);
+	if (len1 <= 0 || len2 <= 0) {
+		return MSGPACK_COMPARE_ERROR;
+	}
+	return msgpack_compare_blob_internal(pk1, (uint32_t)len1, pk2, (uint32_t)len2);
 }
 
 static inline msgpack_compare_t

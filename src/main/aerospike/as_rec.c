@@ -14,14 +14,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <stdlib.h>
-#include <stdio.h>
-
-#include <citrusleaf/alloc.h>
-
 #include <aerospike/as_rec.h>
-#include <aerospike/as_bytes.h>
+#include <citrusleaf/alloc.h>
 
 /******************************************************************************
  *	INSTANCE FUNCTIONS

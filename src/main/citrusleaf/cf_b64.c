@@ -14,12 +14,7 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 #include "citrusleaf/cf_b64.h"
-
-#include <stdbool.h>
-#include <stdint.h>
-
 
 /******************************************************************************
  * CONSTANTS

@@ -28,9 +28,8 @@
  *
  */
 
+#include <aerospike/as_std.h>
 #include <pthread.h>
-#include <inttypes.h>
-#include <citrusleaf/cf_types.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,7 +1,5 @@
 #include "../test.h"
 
-#include <citrusleaf/alloc.h>
-
 #include <aerospike/as_hashmap.h>
 #include <aerospike/as_hashmap_iterator.h>
 #include <aerospike/as_integer.h>
@@ -11,6 +9,7 @@
 #include <aerospike/as_stringmap.h>
 #include <aerospike/as_msgpack.h>
 #include <aerospike/as_serializer.h>
+#include <citrusleaf/alloc.h>
 
 /******************************************************************************
  * TEST CASES
@@ -75,6 +74,7 @@ TEST( types_hashmap_ops, "as_hashmap ops" ) {
 
 	rc = as_hashmap_remove(m, a);
 
+	assert_int_eq( rc, 0 );
 	assert_int_eq( as_hashmap_size(m), 2 );
 
 	v = (as_integer *) as_hashmap_get(m, a);
@@ -172,6 +172,7 @@ TEST( types_hashmap_map_ops, "as_hashmap w/ as_map ops" ) {
 
 	rc = as_map_remove(m, a);
 
+	assert_int_eq( rc, 0 );
 	assert_int_eq( as_map_size(m), 2 );
 
 	v = (as_integer *) as_map_get(m, a);

@@ -15,11 +15,7 @@
  * the License.
  */
 #include <aerospike/as_stream.h>
-#include <aerospike/as_iterator.h>
-#include <aerospike/as_util.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <citrusleaf/alloc.h>
 
 /******************************************************************************
  * FUNCTIONS

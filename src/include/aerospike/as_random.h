@@ -16,8 +16,7 @@
  */
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
+#include <aerospike/as_std.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,8 +27,8 @@ extern "C" {
  *****************************************************************************/
 
 /**
- *	Random seeds used in xorshift128+ algorithm: http://xorshift.di.unimi.it
- *	Not thread-safe.  Instantiate once per thread.
+ * Random seeds used in xorshift128+ algorithm: http://xorshift.di.unimi.it
+ * Not thread-safe.  Instantiate once per thread.
  */
 typedef struct as_random_s {
 	uint64_t seed0;
@@ -37,38 +36,25 @@ typedef struct as_random_s {
 	bool initialized;
 } as_random;
 
-/**
- *	Thread local random instance.  Do not access directly.
- */
-extern __thread as_random as_rand;
-
 /*******************************************************************************
  * Functions
  ******************************************************************************/
 
 /**
- *	Initialize random instance.
+ * Initialize random instance.
  */
-void
+AS_EXTERN void
 as_random_init(as_random* random);
 
 /**
- *	Get thread local random instance.
+ * Get thread local random instance.
  */
-static inline as_random*
-as_random_instance()
-{
-	as_random* random = &as_rand;
-	
-	if (! random->initialized) {
-		as_random_init(random);
-	}
-	return random;
-}
+AS_EXTERN as_random*
+as_random_instance();
 
 /**
- *	Get random unsigned 64 bit integer from given as_random instance
- *	using xorshift128+ algorithm: http://xorshift.di.unimi.it
+ * Get random unsigned 64 bit integer from given as_random instance
+ * using xorshift128+ algorithm: http://xorshift.di.unimi.it
  */
 static inline uint64_t
 as_random_next_uint64(as_random* random)
@@ -81,9 +67,9 @@ as_random_next_uint64(as_random* random)
 	random->seed1 = (s1 ^ s0 ^ (s1 >> 18) ^ (s0 >> 5));
 	return random->seed1 + s0;
 }
-	
+
 /**
- *	Get random unsigned 32 bit integer from given as_random instance.
+ * Get random unsigned 32 bit integer from given as_random instance.
  */
 static inline uint32_t
 as_random_next_uint32(as_random* random)
@@ -92,19 +78,17 @@ as_random_next_uint32(as_random* random)
 }
 
 /**
- *	Get random bytes of specified length from given as_random instance.
+ * Get random unsigned 64 bit integer from thread local instance.
  */
-void
-as_random_next_bytes(as_random* random, uint8_t* bytes, uint32_t len);
-	
-/**
- *	Get random unsigned 64 bit integer from thread local instance.
- */
-uint64_t
-as_random_get_uint64();
+static inline uint64_t
+as_random_get_uint64()
+{
+	as_random* random = as_random_instance();
+	return as_random_next_uint64(random);
+}
 
 /**
- *	Get random unsigned 32 bit integer from thread local instance.
+ * Get random unsigned 32 bit integer from thread local instance.
  */
 static inline uint32_t
 as_random_get_uint32()
@@ -113,7 +97,13 @@ as_random_get_uint32()
 }
 
 /**
- *	Get random bytes of specified length from thread local instance.
+ * Get random bytes of specified length from given as_random instance.
+ */
+AS_EXTERN void
+as_random_next_bytes(as_random* random, uint8_t* bytes, uint32_t len);
+
+/**
+ * Get random bytes of specified length from thread local instance.
  */
 static inline void
 as_random_get_bytes(uint8_t* bytes, uint32_t len)

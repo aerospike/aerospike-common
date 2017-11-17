@@ -17,10 +17,9 @@
 
 #pragma once
 
+#include <aerospike/as_std.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
-
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -75,7 +74,7 @@ typedef struct as_pair_s {
  *
  *	@relatesalso as_pair
  */
-as_pair * as_pair_new(as_val * _1, as_val * _2);
+AS_EXTERN as_pair * as_pair_new(as_val * _1, as_val * _2);
 
 /**
  *	Initializes a stack allocated `as_pair`.
@@ -88,7 +87,7 @@ as_pair * as_pair_new(as_val * _1, as_val * _2);
  *
  *	@relatesalso as_pair
  */
-as_pair * as_pair_init(as_pair * pair, as_val * _1, as_val * _2);
+AS_EXTERN as_pair * as_pair_init(as_pair * pair, as_val * _1, as_val * _2);
 
 /**
  *	Destroy the `as_pair` and release associated resources.
@@ -154,19 +153,19 @@ static inline as_pair * as_pair_fromval(const as_val * v)
  *	@private
  *	Internal helper function for destroying an as_val.
  */
-void as_pair_val_destroy(as_val *);
+AS_EXTERN void as_pair_val_destroy(as_val *);
 
 /**
  *	@private
  *	Internal helper function for getting the hashcode of an as_val.
  */
-uint32_t as_pair_val_hashcode(const as_val *);
+AS_EXTERN uint32_t as_pair_val_hashcode(const as_val *);
 
 /**
  *	@private
  *	Internal helper function for getting the string representation of an as_val.
  */
-char * as_pair_val_tostring(const as_val *);
+AS_EXTERN char * as_pair_val_tostring(const as_val *);
 
 #ifdef __cplusplus
 } // end extern "C"

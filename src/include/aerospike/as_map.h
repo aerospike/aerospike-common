@@ -18,11 +18,9 @@
 #pragma once
 
 #include <aerospike/as_iterator.h>
+#include <aerospike/as_std.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
-
-#include <stdbool.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -214,7 +212,7 @@ typedef struct as_map_hooks_s {
  *	@return The initialized as_map on success. Otherwise NULL.
  *	@relatesalso as_map
  */
-as_map * as_map_cons(as_map * map, bool free, uint32_t flags, const as_map_hooks * hooks);
+ AS_EXTERN as_map * as_map_cons(as_map * map, bool free, uint32_t flags, const as_map_hooks * hooks);
 
 /**
  *	Initialize a stack allocated map.
@@ -225,7 +223,7 @@ as_map * as_map_cons(as_map * map, bool free, uint32_t flags, const as_map_hooks
  *	@return On success, the initialized map. Otherwise NULL.
  *	@relatesalso as_map
  */
-as_map * as_map_init(as_map * map, const as_map_hooks * hooks);
+ AS_EXTERN as_map * as_map_init(as_map * map, const as_map_hooks * hooks);
 
 /**
  *	Create and initialize a new heap allocated map.
@@ -235,7 +233,7 @@ as_map * as_map_init(as_map * map, const as_map_hooks * hooks);
  *	@return On success, a new list. Otherwise NULL.
  *	@relatesalso as_map
  */
-as_map * as_map_new(const as_map_hooks * hooks);
+ AS_EXTERN as_map * as_map_new(const as_map_hooks * hooks);
 
 /**
  *	Destroy the as_map and associated resources.
@@ -414,19 +412,19 @@ static inline as_map * as_map_fromval(const as_val * val)
  *	@private
  *	Internal helper function for destroying an as_val.
  */
-void as_map_val_destroy(as_val * val);
+AS_EXTERN void as_map_val_destroy(as_val * val);
 
 /**
  *	@private
  *	Internal helper function for getting the hashcode of an as_val.
  */
-uint32_t as_map_val_hashcode(const as_val * val);
+AS_EXTERN uint32_t as_map_val_hashcode(const as_val * val);
 
 /**
  *	@private
  *	Internal helper function for getting the string representation of an as_val.
  */
-char * as_map_val_tostring(const as_val * val);
+AS_EXTERN char * as_map_val_tostring(const as_val * val);
 
 #ifdef __cplusplus
 } // end extern "C"

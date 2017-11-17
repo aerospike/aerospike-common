@@ -14,13 +14,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <stdlib.h>
-#include <string.h>
-
-#include <citrusleaf/alloc.h>
-
 #include <aerospike/as_geojson.h>
+#include <citrusleaf/alloc.h>
+#include <string.h>
 
 /******************************************************************************
  *	INLINE FUNCTIONS

@@ -14,13 +14,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <string.h>
-
-#include <citrusleaf/alloc.h>
-
-#include <aerospike/as_val.h>
 #include <aerospike/as_nil.h>
+#include <citrusleaf/alloc.h>
 
 /******************************************************************************
  *	CONSTANTS

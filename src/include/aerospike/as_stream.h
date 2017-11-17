@@ -17,12 +17,9 @@
 
 #pragma once
 
-#include <stdlib.h>
-
-#include <aerospike/as_val.h>
+#include <aerospike/as_std.h>
 #include <aerospike/as_util.h>
-
-#include <citrusleaf/alloc.h>
+#include <aerospike/as_val.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -104,8 +101,8 @@ typedef struct as_stream_hooks_s {
 /**
  *  Wrapper functions to ensure each CF allocation-related function call has a unique line.
  */
-void *as_stream_malloc(size_t size);
-void as_stream_free(void *ptr);
+AS_EXTERN void *as_stream_malloc(size_t size);
+AS_EXTERN void as_stream_free(void *ptr);
 
 /******************************************************************************
  *	INSTANCE FUNCTIONS

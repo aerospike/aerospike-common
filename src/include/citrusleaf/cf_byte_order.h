@@ -16,6 +16,8 @@
  */
 #pragma once
 
+#include <aerospike/as_std.h>
+
 #if defined(__linux__)
 
 #include <netinet/in.h>
@@ -59,26 +61,24 @@
 
 #endif // __APPLE__
 
-#if defined(CF_WINDOWS)
-#include <stdint.h>
-#include <stdlib.h>
+#if defined(_MSC_VER)
 #include <WinSock2.h>
 
-#define cf_swap_to_be16(_n) _byteswap_uint16(_n)
+#define cf_swap_to_be16(_n) _byteswap_ushort(_n)
 #define cf_swap_to_le16(_n) (_n)
-#define cf_swap_from_be16(_n) _byteswap_uint16(_n)
+#define cf_swap_from_be16(_n) _byteswap_ushort(_n)
 #define cf_swap_from_le16(_n) (_n)
 
-#define cf_swap_to_be32(_n) _byteswap_uint32(_n)
+#define cf_swap_to_be32(_n) _byteswap_ulong(_n)
 #define cf_swap_to_le32(_n) (_n)
-#define cf_swap_from_be32(_n) _byteswap_uint32(_n)
+#define cf_swap_from_be32(_n) _byteswap_ulong(_n)
 #define cf_swap_from_le32(_n) (_n)
 
 #define cf_swap_to_be64(_n) _byteswap_uint64(_n)
 #define cf_swap_to_le64(_n) (_n)
 #define cf_swap_from_be64(_n) _byteswap_uint64(_n)
 #define cf_swap_from_le64(_n) (_n)
-#endif // CF_WINDOWS
+#endif // _MSC_VER
 
 static inline double
 cf_swap_to_big_float64(double d)

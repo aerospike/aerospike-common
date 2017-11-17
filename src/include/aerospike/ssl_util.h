@@ -17,6 +17,7 @@
  
 #pragma once
 
+#include <aerospike/as_std.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 

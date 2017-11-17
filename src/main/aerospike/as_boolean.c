@@ -16,8 +16,6 @@
  */
 #include <aerospike/as_boolean.h>
 #include <citrusleaf/alloc.h>
-#include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 
 /******************************************************************************
@@ -89,7 +87,7 @@ char * as_boolean_val_tostring(const as_val * v)
 	as_boolean * b = (as_boolean *) v;
 	char * str = (char *) cf_malloc(sizeof(char) * 6);
     if (!str) return str;
-	bzero(str,6);
+	memset(str, 0, 6);
 	if ( b->value ) {
 		strcpy(str,"true");
 	}

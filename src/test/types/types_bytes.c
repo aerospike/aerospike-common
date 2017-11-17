@@ -1,6 +1,7 @@
 #include "../test.h"
 
 #include <aerospike/as_bytes.h>
+#include <string.h>
 
 /******************************************************************************
  * TEST CASES

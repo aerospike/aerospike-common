@@ -20,10 +20,8 @@
 // Includes.
 //
 
+#include <aerospike/as_std.h>
 #include <pthread.h>
-#include <stdint.h>
-
-#include <citrusleaf/cf_types.h>
 
 #ifdef __cplusplus
 extern "C" {

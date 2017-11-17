@@ -21,11 +21,8 @@
 // Includes.
 //
 
+#include <aerospike/as_std.h>
 #include <pthread.h>
-#include <stdbool.h>
-#include <stdint.h>
-
-#include <citrusleaf/cf_atomic.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -73,7 +70,7 @@ typedef struct cf_rchash_s {
 	uint32_t key_size; // if key_size == 0, use variable size functions
 	uint32_t n_buckets;
 	uint32_t flags;
-	cf_atomic32 n_elements;
+	uint32_t n_elements;
 	void *table;
 	pthread_mutex_t *bucket_locks;
 	pthread_mutex_t big_lock;

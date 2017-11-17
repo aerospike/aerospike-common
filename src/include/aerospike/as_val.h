@@ -14,13 +14,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
 #pragma once
 
-#include <citrusleaf/cf_atomic.h>
-
-#include <stdbool.h>
-#include <stdint.h>
+#include <aerospike/as_std.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,22 +29,22 @@ extern "C" {
 /**
  *	as_val types
  */
-typedef enum as_val_t {
-	AS_UNDEF		= 0,
-    AS_UNKNOWN      = 0,	//<! @deprecated
-    AS_NIL          = 1,
-    AS_BOOLEAN      = 2,
-    AS_INTEGER      = 3,
-    AS_STRING       = 4,
-    AS_LIST         = 5,
-    AS_MAP          = 6,
-    AS_REC          = 7,
-    AS_PAIR         = 8,
-    AS_BYTES        = 9,
-	AS_DOUBLE       = 10,
-    AS_GEOJSON      = 11,
-    AS_VAL_T_MAX
-} __attribute__((packed)) as_val_t;
+typedef uint8_t as_val_t;
+
+#define AS_UNDEF 0
+#define AS_UNKNOWN 0	//<! @deprecated
+#define AS_NIL 1
+#define AS_BOOLEAN 2
+#define AS_INTEGER 3
+#define AS_STRING 4
+#define AS_LIST 5
+#define AS_MAP 6
+#define AS_REC 7
+#define AS_PAIR 8
+#define AS_BYTES 9
+#define AS_DOUBLE 10
+#define AS_GEOJSON 11
+#define AS_VAL_T_MAX 12
 
 /**
  *	Represents a value
@@ -57,22 +53,22 @@ typedef enum as_val_t {
 typedef struct as_val_s {
 
 	/**
+	 *	Reference count
+	 *	Values are ref counted.
+	 *	To increment the count, use `as_val_reserve()`
+	 */
+	uint32_t count;
+
+	/**
 	 *	Value type
 	 */
-    enum as_val_t type;
+    as_val_t type;
 
     /**
      *	Value can be freed.
      *	Should be false for stack allocated values.
      */
     bool free;
-
-    /**
-     *	Reference count
-     *	Values are ref counted.
-     *	To increment the count, use `as_val_reserve()`
-     */
-    cf_atomic32 count;
 
 } as_val;
 
@@ -86,7 +82,7 @@ typedef struct as_val_s {
  *	@param __v 	The `as_val` to get the type of
  *
  *	@return An as_val_t value. If the type is unknown, then it will 
- *	be AS_UNKNOWN.
+ *	be AS_UNDEF.
  */
 #define as_val_type(__v) (__v ? ((as_val *)__v)->type : AS_UNDEF)
 
@@ -135,26 +131,26 @@ typedef struct as_val_s {
  *	@private
  *	Helper function for incrementing the count of a value.
  */
-as_val * as_val_val_reserve(as_val *);
+AS_EXTERN as_val * as_val_val_reserve(as_val *);
 
 /**
  *	@private
  *	Helper function for decrementing the count of a value,
  *	and if count==0 and free==true, then free the value.
  */
-as_val * as_val_val_destroy(as_val *);
+AS_EXTERN as_val * as_val_val_destroy(as_val *);
 
 /**
  *	@private
  *	Helper function for calculating the hash value.
  */
-uint32_t as_val_val_hashcode(const as_val *);
+AS_EXTERN uint32_t as_val_val_hashcode(const as_val *);
 
 /**
  *	@private
  *	Helper function for generating the string representation.
  */
-char * as_val_val_tostring(const as_val *);
+AS_EXTERN char * as_val_val_tostring(const as_val *);
 
 /******************************************************************************
  *	INSTANCE FUNCTIONS

@@ -19,8 +19,6 @@
 
 #include <stddef.h>
 
-#include <citrusleaf/alloc.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -33,8 +31,8 @@ extern "C" {
  * Calls a hook on a object.
  * If hook not found, then return the default value.
  */
-#define as_util_hook(hook,default,object,args...) \
-	(object && object->hooks && object->hooks->hook ? object->hooks->hook(object, ## args) : default)
+#define as_util_hook(hook,default,object,...) \
+	(object && object->hooks && object->hooks->hook ? object->hooks->hook(object, ##__VA_ARGS__) : default)
 
 /**
  * Converts from an as_val.

@@ -16,11 +16,9 @@
  */
 #pragma once
 
-#include <stdint.h>
-#include <pthread.h>
-#include <stdbool.h>
-#include <stdio.h>
+#include <aerospike/as_std.h>
 #include <openssl/sha.h>
+#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {

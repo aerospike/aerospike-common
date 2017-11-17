@@ -16,7 +16,6 @@
  */
 #include <aerospike/as_string.h>
 #include <citrusleaf/alloc.h>
-#include <stdlib.h>
 #include <string.h>
 
 /******************************************************************************
@@ -76,11 +75,11 @@ size_t as_string_len(as_string * string)
 	return string->len;
 }
 
-#ifdef CF_WINDOWS
-#define FILE_SEPARATOR '\\'
-#else
-#define FILE_SEPARATOR '/'
-#endif
+static inline bool
+as_is_file_separator(char c)
+{
+	return c == '/' || c == '\\';
+}
 
 const char* as_basename(as_string * filename, const char* path)
 {
@@ -90,30 +89,30 @@ const char* as_basename(as_string * filename, const char* path)
 		as_string_cons(filename, false, value, 1, false);
 		return value;
 	}
-	
+
 	const char* p = path;
 	const char* begin = 0;
 
 	// Skip till end of string.
 	while (*p) {
-		if (*p == FILE_SEPARATOR) {
+		if (as_is_file_separator(*p)) {
 			begin = p + 1;
 		}
 		p++;
 	}
-	
+
 	if (begin == 0) {
 		// No slashes found.  Return original string.
 		as_string_cons(filename, false, (char*)path, p - path, false);
 		return path;
 	}
-	
+
 	if (begin == p) {
 		// Found trailing slashes.
 		// Create new string to hold filename without slashes.
 		p--;
-		
-		while (*p == FILE_SEPARATOR) {
+
+		while (as_is_file_separator(*p)) {
 			if (p == path) {
 				// String contains all slashes. Return slash constant.
 				char* value = "/";
@@ -123,15 +122,15 @@ const char* as_basename(as_string * filename, const char* path)
 			p--;
 		}
 		const char* end = p;
-				
-		while (p != path && *p != FILE_SEPARATOR) {
+
+		while (p != path && !as_is_file_separator(*p)) {
 			p--;
 		}
-		
-		if (*p == FILE_SEPARATOR) {
+
+		if (as_is_file_separator(*p)) {
 			p++;
 		}
-		
+
 		size_t len = (end - p) + 1;
 		char* str = cf_malloc(len + 1);
 		memcpy(str, p, len);
@@ -139,7 +138,7 @@ const char* as_basename(as_string * filename, const char* path)
 		as_string_cons(filename, false, str, len, true);
 		return str;
 	}
-	
+
 	// Return begin of filename.
 	as_string_cons(filename, false, (char*)begin, p - begin, false);
 	return begin;

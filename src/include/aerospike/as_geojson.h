@@ -17,12 +17,9 @@
 
 #pragma once
 
+#include <aerospike/as_std.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
-
-#include <stdbool.h>
-#include <stdint.h>
-#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -146,7 +143,7 @@ typedef struct as_geojson_s {
  *
  *	@relatesalso as_geojson
  */
-as_geojson * as_geojson_init(as_geojson * string, char * value, bool free);
+AS_EXTERN as_geojson * as_geojson_init(as_geojson * string, char * value, bool free);
 
 /**
  *	Initialize a stack allocated `as_geojson` and its length.
@@ -162,7 +159,7 @@ as_geojson * as_geojson_init(as_geojson * string, char * value, bool free);
  *
  *	@relatesalso as_geojson
  */
-as_geojson * as_geojson_init_wlen(as_geojson * string, char * value, size_t len, bool free);
+AS_EXTERN as_geojson * as_geojson_init_wlen(as_geojson * string, char * value, size_t len, bool free);
 
 /**
  *	Create and initialize a new heap allocated `as_geojson`.
@@ -176,7 +173,7 @@ as_geojson * as_geojson_init_wlen(as_geojson * string, char * value, size_t len,
  *
  *	@relatesalso as_geojson
  */
-as_geojson * as_geojson_new(char * value, bool free);
+AS_EXTERN as_geojson * as_geojson_new(char * value, bool free);
 
 /**
  *	Create and initialize a new heap allocated `as_geojson` and its length.
@@ -191,7 +188,7 @@ as_geojson * as_geojson_new(char * value, bool free);
  *
  *	@relatesalso as_geojson
  */
-as_geojson * as_geojson_new_wlen(char * value, size_t len, bool free);
+AS_EXTERN as_geojson * as_geojson_new_wlen(char * value, size_t len, bool free);
 
 /**
  *	Create and initialize a new heap allocated `as_geojson`.
@@ -202,7 +199,7 @@ as_geojson * as_geojson_new_wlen(char * value, size_t len, bool free);
  *
  *	@return On success, the new string. Otherwise NULL.
  */
-as_geojson * as_geojson_new_strdup(const char * value);
+AS_EXTERN as_geojson * as_geojson_new_strdup(const char * value);
 
 /**
  *	Destroy the as_geojson and associated resources.
@@ -227,7 +224,7 @@ static inline void as_geojson_destroy(as_geojson * string)
  *
  *	@relatesalso as_geojson
  */
-size_t as_geojson_len(as_geojson * string);
+AS_EXTERN size_t as_geojson_len(as_geojson * string);
 
 /**
  *	Get the string value. If string is NULL, then return the fallback value.
@@ -281,19 +278,19 @@ static inline as_geojson * as_geojson_fromval(const as_val * v)
  *	@private
  *	Internal helper function for destroying an as_val.
  */
-void as_geojson_val_destroy(as_val * v);
+AS_EXTERN void as_geojson_val_destroy(as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the hashcode of an as_val.
  */
-uint32_t as_geojson_val_hashcode(const as_val * v);
+AS_EXTERN uint32_t as_geojson_val_hashcode(const as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the string representation of an as_val.
  */
-char * as_geojson_val_tostring(const as_val * v);
+AS_EXTERN char * as_geojson_val_tostring(const as_val * v);
 
 #ifdef __cplusplus
 } // end extern "C"

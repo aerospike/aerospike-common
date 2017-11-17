@@ -19,9 +19,6 @@
 #include <aerospike/as_map_iterator.h>
 #include <aerospike/as_pair.h>
 #include <citrusleaf/alloc.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 
 /******************************************************************************
@@ -93,12 +90,12 @@ static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, 
 		data->pos += 2;
 	}
 
-	int entlen = keylen + 2 + vallen + 2;
+	uint32_t entlen = keylen + 2 + vallen + 2;
 
 	if ( data->pos + entlen >= data->cap ) {
 		uint32_t adj = entlen > data->blk ? entlen : data->blk;
 		data->buf = cf_realloc(data->buf, sizeof(char) * (data->cap + adj));
-		bzero(data->buf + data->cap, sizeof(char) * adj);
+		memset(data->buf + data->cap, 0, sizeof(char) * adj);
 		data->cap += adj;
 	}
 

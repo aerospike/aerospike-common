@@ -18,17 +18,6 @@
 /**
  *  double linked list functionality
  */
-
-#include <errno.h>
-#include <pthread.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <strings.h>
-#include <time.h>
-#include <unistd.h>
-
 #include <citrusleaf/cf_ll.h>
 #include <citrusleaf/alloc.h>
 

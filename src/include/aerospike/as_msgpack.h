@@ -16,9 +16,8 @@
  */
 #pragma once
 
-#include <stdbool.h>
-
 #include <aerospike/as_serializer.h>
+#include <aerospike/as_std.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,21 +34,21 @@ extern "C" {
 typedef struct as_packer_buffer {
 	struct as_packer_buffer *next;
 	unsigned char *buffer;
-	int length;
+	uint32_t length;
 } as_packer_buffer;
 
 typedef struct as_packer {
 	struct as_packer_buffer *head;
 	struct as_packer_buffer *tail;
 	unsigned char *buffer;
-	int offset;
-	int capacity;
+	uint32_t offset;
+	uint32_t capacity;
 } as_packer;
 
 typedef struct as_unpacker {
 	const unsigned char *buffer;
-	int offset;
-	int length;
+	uint32_t offset;
+	uint32_t length;
 } as_unpacker;
 
 typedef struct as_msgpack_ext_s {
@@ -71,8 +70,8 @@ typedef enum msgpack_compare_e {
  * FUNCTIONS
  ******************************************************************************/
 
-as_serializer *as_msgpack_new();
-as_serializer *as_msgpack_init(as_serializer *);
+AS_EXTERN as_serializer *as_msgpack_new();
+AS_EXTERN as_serializer *as_msgpack_init(as_serializer *);
 
 /**
  * @return 0 on success

@@ -2,6 +2,8 @@
 
 #include <aerospike/as_nil.h>
 #include <aerospike/as_string.h>
+#include <stdlib.h>
+#include <string.h>
 
 /******************************************************************************
  * TEST CASES

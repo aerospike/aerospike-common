@@ -14,9 +14,6 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <citrusleaf/alloc.h>
-
 #include <aerospike/as_boolean.h>
 #include <aerospike/as_bytes.h>
 #include <aerospike/as_double.h>
@@ -28,11 +25,8 @@
 #include <aerospike/as_nil.h>
 #include <aerospike/as_string.h>
 #include <aerospike/as_val.h>
-
-#include <stdbool.h>
+#include <citrusleaf/alloc.h>
 #include <stddef.h>
-#include <stdint.h>
-#include <stdlib.h>
 #include <string.h>
 
 /*******************************************************************************

@@ -17,15 +17,55 @@
 #include <aerospike/as_password.h>
 #include <aerospike/as_random.h>
 #include <aerospike/as_string.h>
-#include <stdio.h>
-#include <string.h>
-#include <termios.h>
-#include <unistd.h>
 #include "crypt_blowfish.h"
+#include <stdio.h>
 
 #define BCRYPT_RAND_LEN 16
 #define BCRYPT_WORK_FACTOR 10
 #define BCRYPT_SALT "$2a$10$7EqJtq98hPqEX7fNZaFWoO"
+
+#if defined(_MSC_VER)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+
+static void
+as_set_echo(bool echo)
+{
+	HANDLE hStdin = GetStdHandle(STD_INPUT_HANDLE);
+	DWORD mode;
+	GetConsoleMode(hStdin, &mode);
+
+	if (echo)
+	{
+		mode |= ENABLE_ECHO_INPUT;
+	}
+	else
+	{
+		mode &= ~ENABLE_ECHO_INPUT;
+	}
+	SetConsoleMode(hStdin, mode);
+}
+#else
+#include <termios.h>
+#include <unistd.h>
+
+static void
+as_set_echo(bool echo)
+{
+	struct termios tty;
+	tcgetattr(STDIN_FILENO, &tty);
+
+	if (echo)
+	{
+		tty.c_lflag |= ECHO;
+	}
+	else
+	{
+		tty.c_lflag &= ~ECHO;
+	}
+	tcsetattr(STDIN_FILENO, TCSANOW, &tty);
+}
+#endif
 
 bool
 as_password_gen_salt(char* salt)
@@ -73,33 +113,28 @@ static void
 as_password_prompt(char* password, int size)
 {
 	// Turn off echo.
-    struct termios oldt;
-    tcgetattr(STDIN_FILENO, &oldt);
-	
-    struct termios newt = oldt;
-    newt.c_lflag &= ~ECHO;
-    tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-	
+	as_set_echo(false);
+
 	// Prompt for password.
 	printf("Enter Password: ");
 	fflush(stdout);
-	
+
 	// Read password until newline.
 	char* s = fgets(password, size, stdin);
-	
+
 	if (s) {
 		int len = (int)strlen(password);
-		
-		if (password[len-1] == '\n') {
+
+		if (password[len - 1] == '\n') {
 			password[--len] = 0;
 		}
 	}
 	else {
 		password[0] = 0;
 	}
-	
+
 	// Restore echo.
-    tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+	as_set_echo(true);
 	printf("\n");
 }
 

@@ -17,10 +17,9 @@
 
 #pragma once
 
+#include <aerospike/as_std.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
-
-#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,7 +68,7 @@ typedef struct as_boolean_s {
  *	Use this when you need to use an `as_boolean` containing `true`,
  *	rather than allocating a new `as_boolean`.
  */
-extern const as_boolean as_true;
+AS_EXTERN extern const as_boolean as_true;
 
 /**
  *	False value.
@@ -77,7 +76,7 @@ extern const as_boolean as_true;
  *	Use this when you need to use an `as_boolean` containing `true`,
  *	rather than allocating a new `as_boolean`.
  */
-extern const as_boolean as_false;
+AS_EXTERN extern const as_boolean as_false;
 
 /******************************************************************************
  *	INSTANCE FUNCTIONS
@@ -93,7 +92,7 @@ extern const as_boolean as_false;
  *
  *	@relatesalso as_boolean
  */
-as_boolean * as_boolean_init(as_boolean * boolean, bool value);
+AS_EXTERN as_boolean * as_boolean_init(as_boolean * boolean, bool value);
 
 /**
  *	Creates a new heap allocated `as_boolean` and initializes with
@@ -105,7 +104,7 @@ as_boolean * as_boolean_init(as_boolean * boolean, bool value);
  *
  *	@relatesalso as_boolean
  */
-as_boolean * as_boolean_new(bool value);
+AS_EXTERN as_boolean * as_boolean_new(bool value);
 
 /**
  *	Destroy the `as_boolean` and release associated resources.
@@ -180,19 +179,19 @@ static inline as_boolean * as_boolean_fromval(const as_val * v) {
  *	@private
  *	Internal helper function for destroying an as_val.
  */
-void as_boolean_val_destroy(as_val * v);
+AS_EXTERN void as_boolean_val_destroy(as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the hashcode of an as_val.
  */
-uint32_t as_boolean_val_hashcode(const as_val * v);
+AS_EXTERN uint32_t as_boolean_val_hashcode(const as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the string representation of an as_val.
  */
-char * as_boolean_val_tostring(const as_val * v);
+AS_EXTERN char * as_boolean_val_tostring(const as_val * v);
 
 #ifdef __cplusplus
 } // end extern "C"

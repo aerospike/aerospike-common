@@ -16,11 +16,7 @@
  */
 #include <aerospike/as_iterator.h>
 #include <aerospike/as_util.h>
-#include <aerospike/as_val.h>
 #include <citrusleaf/alloc.h>
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdlib.h>
 
 /******************************************************************************
  * FUNCTIONS

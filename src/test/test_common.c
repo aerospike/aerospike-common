@@ -1,4 +1,5 @@
 #include "test_common.h"
+#include <string.h>
 
 /******************************************************************************
  * atf_x_equals
@@ -55,7 +56,7 @@ bool atf_list_equals(atf_test_result * __result__, as_list * actual, as_list * e
 {
 	bassert_int_eq( as_list_size(actual), as_list_size(expected) );
 	uint32_t n = as_list_size(actual);
-	for ( int i = 0; i < n; i++ ) {
+	for (uint32_t i = 0; i < n; i++) {
 		as_val * v1 = as_list_get(actual, i);
 		as_val * v2 = as_list_get(expected, i);
 		bassert(atf_val_equals(__result__, v1, v2));

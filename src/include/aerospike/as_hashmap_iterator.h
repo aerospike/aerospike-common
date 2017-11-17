@@ -20,9 +20,7 @@
 #include <aerospike/as_hashmap.h>
 #include <aerospike/as_iterator.h>
 #include <aerospike/as_pair.h>
-
-#include <stdbool.h>
-#include <stdint.h>
+#include <aerospike/as_std.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -137,7 +135,7 @@ typedef struct as_hashmap_iterator_s {
  *
  *	@relatesalso as_hashmap_iterator
  */
-as_hashmap_iterator * as_hashmap_iterator_init(as_hashmap_iterator * iterator, const as_hashmap * map);
+AS_EXTERN as_hashmap_iterator * as_hashmap_iterator_init(as_hashmap_iterator * iterator, const as_hashmap * map);
 
 /**
  *	Creates a heap allocated as_iterator for the given as_hashmap.
@@ -148,7 +146,7 @@ as_hashmap_iterator * as_hashmap_iterator_init(as_hashmap_iterator * iterator, c
  *
  *	@relatesalso as_hashmap_iterator
  */
-as_hashmap_iterator * as_hashmap_iterator_new(const as_hashmap * map);
+AS_EXTERN as_hashmap_iterator * as_hashmap_iterator_new(const as_hashmap * map);
 
 /**
  *	Destroy the iterator and releases resources used by the iterator.
@@ -157,7 +155,7 @@ as_hashmap_iterator * as_hashmap_iterator_new(const as_hashmap * map);
  *
  *	@relatesalso as_hashmap_iterator
  */
-void as_hashmap_iterator_destroy(as_hashmap_iterator * iterator);
+AS_EXTERN void as_hashmap_iterator_destroy(as_hashmap_iterator * iterator);
 
 
 /******************************************************************************
@@ -173,7 +171,7 @@ void as_hashmap_iterator_destroy(as_hashmap_iterator * iterator);
  *
  *	@relatesalso as_hashmap_iterator
  */
-bool as_hashmap_iterator_has_next(const as_hashmap_iterator * iterator);
+AS_EXTERN bool as_hashmap_iterator_has_next(const as_hashmap_iterator * iterator);
 
 /**
  *	Attempts to get the next value from the iterator.
@@ -185,7 +183,7 @@ bool as_hashmap_iterator_has_next(const as_hashmap_iterator * iterator);
  *
  *	@relatesalso as_hashmap_iterator
  */
-const as_val * as_hashmap_iterator_next(as_hashmap_iterator * iterator);
+AS_EXTERN const as_val * as_hashmap_iterator_next(as_hashmap_iterator * iterator);
 
 #ifdef __cplusplus
 } // end extern "C"

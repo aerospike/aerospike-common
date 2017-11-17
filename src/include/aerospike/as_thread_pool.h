@@ -16,6 +16,7 @@
  */
 #pragma once
 
+#include <aerospike/as_std.h>
 #include <citrusleaf/cf_queue.h>
 #include <pthread.h>
 

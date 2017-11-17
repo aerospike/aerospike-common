@@ -1,0 +1,381 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Header Files\citrusleaf">
+      <UniqueIdentifier>{23391302-3006-4523-806b-da0b99025abf}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\aerospike">
+      <UniqueIdentifier>{f02fa418-28e9-4da7-9770-b3d832c1bb07}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\aerospike">
+      <UniqueIdentifier>{8e18ad7a-b86b-409e-b56f-beea078636d9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\citrusleaf">
+      <UniqueIdentifier>{d0b48a4b-e88a-44db-8a68-0b010c49300b}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\include\aerospike\as_aerospike.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_arraylist.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_arraylist_iterator.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_atomic.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_atomic_gcc.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_atomic_win.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_boolean.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_buffer.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_buffer_pool.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_bytes.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_double.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_geojson.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_hashmap.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_hashmap_iterator.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_integer.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_iterator.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_list.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_list_iterator.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_log.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_log_macros.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_map.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_map_iterator.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_memtracker.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_module.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_monitor.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_msgpack.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_msgpack_serializer.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_nil.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_pair.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_password.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_queue.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_random.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_rec.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_result.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_serializer.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_std.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_stream.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_string.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_string_builder.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_stringmap.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_thread_pool.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_timer.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_types.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_udf_context.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_util.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_val.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_vector.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\ssl_util.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\alloc.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_atomic.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_b64.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_byte_order.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_clock.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_crypto.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_digest.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_hash_math.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_ll.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_queue.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_queue_priority.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_random.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_rchash.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_vector.h">
+      <Filter>Header Files\citrusleaf</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_dir.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_sleep.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\main\aerospike\as_aerospike.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_arraylist.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_arraylist_hooks.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_arraylist_iterator.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_arraylist_iterator_hooks.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_boolean.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_buffer.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_buffer_pool.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_bytes.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_double.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_geojson.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_hashmap.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_hashmap_hooks.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_hashmap_iterator.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_hashmap_iterator_hooks.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_integer.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_iterator.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_list.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_log.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_map.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_memtracker.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_module.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_msgpack.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_msgpack_serializer.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_nil.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_pair.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_password.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_queue.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_random.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_rec.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_result.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_serializer.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_stream.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_string.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_string_builder.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_thread_pool.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_timer.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_val.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_vector.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\crypt_blowfish.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\ssl_util.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_alloc.c">
+      <Filter>Source Files\citrusleaf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_b64.c">
+      <Filter>Source Files\citrusleaf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_clock.c">
+      <Filter>Source Files\citrusleaf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_crypto.c">
+      <Filter>Source Files\citrusleaf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_digest.c">
+      <Filter>Source Files\citrusleaf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_ll.c">
+      <Filter>Source Files\citrusleaf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_queue.c">
+      <Filter>Source Files\citrusleaf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_queue_priority.c">
+      <Filter>Source Files\citrusleaf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_random.c">
+      <Filter>Source Files\citrusleaf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_rchash.c">
+      <Filter>Source Files\citrusleaf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_vector.c">
+      <Filter>Source Files\citrusleaf</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

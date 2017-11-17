@@ -22,12 +22,10 @@
 #include <aerospike/as_geojson.h>
 #include <aerospike/as_list.h>
 #include <aerospike/as_map.h>
+#include <aerospike/as_std.h>
 #include <aerospike/as_string.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
-
-#include <stdbool.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -201,7 +199,7 @@ typedef struct as_rec_hooks_s {
  *
  *	@relatesalso as_rec
  */
-as_rec * as_rec_cons(as_rec * rec, bool free, void * data, const as_rec_hooks * hooks);
+AS_EXTERN as_rec * as_rec_cons(as_rec * rec, bool free, void * data, const as_rec_hooks * hooks);
 
 /**
  *	Initialize a stack allocated record.
@@ -214,7 +212,7 @@ as_rec * as_rec_cons(as_rec * rec, bool free, void * data, const as_rec_hooks * 
  *
  *	@relatesalso as_rec
  */
-as_rec * as_rec_init(as_rec * rec, void * data, const as_rec_hooks * hooks);
+AS_EXTERN as_rec * as_rec_init(as_rec * rec, void * data, const as_rec_hooks * hooks);
 
 /**
  *	Create and initialize a new heap allocated record.
@@ -226,7 +224,7 @@ as_rec * as_rec_init(as_rec * rec, void * data, const as_rec_hooks * hooks);
  *
  *	@relatesalso as_rec
  */
-as_rec * as_rec_new(void * data, const as_rec_hooks * hooks);
+AS_EXTERN as_rec * as_rec_new(void * data, const as_rec_hooks * hooks);
 
 /**
  *	Destroy the record.
@@ -799,19 +797,19 @@ static inline as_rec * as_rec_fromval(const as_val * v)
  *	@private
  *	Internal helper function for destroying an as_val.
  */
-void as_rec_val_destroy(as_val *);
+AS_EXTERN void as_rec_val_destroy(as_val *);
 
 /**
  *	@private
  *	Internal helper function for getting the hashcode of an as_val.
  */
-uint32_t as_rec_val_hashcode(const as_val *v);
+AS_EXTERN uint32_t as_rec_val_hashcode(const as_val *v);
 
 /**
  *	@private
  *	Internal helper function for getting the string representation of an as_val.
  */
-char * as_rec_val_tostring(const as_val *v);
+AS_EXTERN char * as_rec_val_tostring(const as_val *v);
 
 #ifdef __cplusplus
 } // end extern "C"

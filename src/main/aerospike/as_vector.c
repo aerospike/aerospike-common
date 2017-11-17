@@ -15,6 +15,7 @@
  * the License.
  */
 #include <aerospike/as_vector.h>
+#include <citrusleaf/alloc.h>
 
 #define FLAGS_HEAP 1
 #define FLAGS_CREATED 2

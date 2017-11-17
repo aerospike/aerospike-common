@@ -1,6 +1,7 @@
 #include "../test.h"
 
 #include <aerospike/as_vector.h>
+#include <citrusleaf/alloc.h>
 
 /******************************************************************************
  * TEST CASES

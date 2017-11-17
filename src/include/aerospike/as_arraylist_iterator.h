@@ -19,9 +19,7 @@
 
 #include <aerospike/as_arraylist.h>
 #include <aerospike/as_iterator.h>
-
-#include <stdbool.h>
-#include <stdint.h>
+#include <aerospike/as_std.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -121,7 +119,7 @@ typedef struct as_arraylist_iterator_s {
  *
  *	@relatesalso as_arraylist_iterator
  */
-as_arraylist_iterator * as_arraylist_iterator_init(as_arraylist_iterator * iterator, const as_arraylist * list);
+AS_EXTERN as_arraylist_iterator * as_arraylist_iterator_init(as_arraylist_iterator * iterator, const as_arraylist * list);
 
 /**
  *	Creates a new heap allocated as_iterator for as_arraylist.
@@ -132,7 +130,7 @@ as_arraylist_iterator * as_arraylist_iterator_init(as_arraylist_iterator * itera
  *
  *	@relatesalso as_arraylist_iterator
  */
-as_arraylist_iterator * as_arraylist_iterator_new(const as_arraylist * list);
+AS_EXTERN as_arraylist_iterator * as_arraylist_iterator_new(const as_arraylist * list);
 
 /**
  *	Destroy the iterator and releases resources used by the iterator.
@@ -141,7 +139,7 @@ as_arraylist_iterator * as_arraylist_iterator_new(const as_arraylist * list);
  *
  *	@relatesalso as_arraylist_iterator
  */
-void as_arraylist_iterator_destroy(as_arraylist_iterator * iterator);
+AS_EXTERN void as_arraylist_iterator_destroy(as_arraylist_iterator * iterator);
 
 /******************************************************************************
  *	ITERATOR FUNCTIONS
@@ -156,7 +154,7 @@ void as_arraylist_iterator_destroy(as_arraylist_iterator * iterator);
  *
  *	@relatesalso as_arraylist_iterator
  */
-bool as_arraylist_iterator_has_next(const as_arraylist_iterator * iterator);
+AS_EXTERN bool as_arraylist_iterator_has_next(const as_arraylist_iterator * iterator);
 
 /**
  *	Attempts to get the next value from the iterator.
@@ -168,7 +166,7 @@ bool as_arraylist_iterator_has_next(const as_arraylist_iterator * iterator);
  *
  *	@relatesalso as_arraylist_iterator
  */
-const as_val * as_arraylist_iterator_next(as_arraylist_iterator * iterator);
+AS_EXTERN const as_val * as_arraylist_iterator_next(as_arraylist_iterator * iterator);
 
 #ifdef __cplusplus
 } // end extern "C"

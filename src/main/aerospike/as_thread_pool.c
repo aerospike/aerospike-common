@@ -14,11 +14,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-#include "aerospike/as_thread_pool.h"
-#include <citrusleaf/alloc.h>
-#include <stdlib.h>
+#include <aerospike/as_thread_pool.h>
 #include <string.h>
-#include <unistd.h>
 
 /******************************************************************************
  * TYPES

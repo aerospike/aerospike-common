@@ -14,12 +14,9 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <stdarg.h>
-#include <stdio.h>
-
 #include <aerospike/as_memtracker.h>
 #include <aerospike/as_util.h>
+#include <citrusleaf/alloc.h>
 
 /*****************************************************************************
  * FUNCTIONS

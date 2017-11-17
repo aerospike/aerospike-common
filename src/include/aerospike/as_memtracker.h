@@ -16,10 +16,8 @@
  */
 #pragma once
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include <aerospike/as_std.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {

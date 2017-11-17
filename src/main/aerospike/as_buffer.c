@@ -16,6 +16,7 @@
  */
 #include <aerospike/as_buffer.h>
 #include <citrusleaf/alloc.h>
+#include <stddef.h>
 
 /******************************************************************************
  * FUNCTIONS

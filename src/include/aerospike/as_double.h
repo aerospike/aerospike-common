@@ -16,6 +16,7 @@
  */
 #pragma once
 
+#include <aerospike/as_std.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
 
@@ -136,7 +137,7 @@ typedef struct as_double_s {
  *
  *	@relatesalso as_double
  */
-as_double*
+AS_EXTERN as_double*
 as_double_init(as_double* value_ptr, double value);
 
 /**
@@ -159,7 +160,7 @@ as_double_init(as_double* value_ptr, double value);
  *
  *	@relatesalso as_double
  */
-as_double*
+AS_EXTERN as_double*
 as_double_new(double value);
 
 /**
@@ -239,21 +240,21 @@ as_double_fromval(const as_val* value)
  *	@private
  *	Internal helper function for destroying an as_val.
  */
-void
+AS_EXTERN void
 as_double_val_destroy(as_val* value);
 
 /**
  *	@private
  *	Internal helper function for getting the hashcode of an as_val.
  */
-uint32_t
+AS_EXTERN uint32_t
 as_double_val_hashcode(const as_val* value);
 
 /**
  *	@private
  *	Internal helper function for getting the string representation of an as_val.
  */
-char*
+AS_EXTERN char*
 as_double_val_tostring(const as_val* value);
 
 #ifdef __cplusplus

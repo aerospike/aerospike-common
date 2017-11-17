@@ -17,10 +17,9 @@
 
 #pragma once
 
+#include <aerospike/as_std.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
-
-#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -84,12 +83,12 @@ typedef struct as_iterator_hooks_s {
 /**
  *	Initialize a stack allocated iterator.
  */
-as_iterator * as_iterator_init(as_iterator * iterator, bool free, void * data, const as_iterator_hooks * hooks);
+AS_EXTERN as_iterator * as_iterator_init(as_iterator * iterator, bool free, void * data, const as_iterator_hooks * hooks);
 
 /**
  *	Destroys the iterator and releasing associated resources.
  */
-void as_iterator_destroy(as_iterator * iterator);
+AS_EXTERN void as_iterator_destroy(as_iterator * iterator);
 
 /******************************************************************************
  *	VALUE FUNCTIONS

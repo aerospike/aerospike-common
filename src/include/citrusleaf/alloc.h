@@ -16,8 +16,7 @@
  */
 #pragma once
 
-#include <stdlib.h>
-#include <citrusleaf/cf_atomic.h>
+#include <aerospike/as_std.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -32,7 +31,9 @@ extern "C" {
 /*
  *  Trivial hash function for storing 64-bit values in hash tables.
  */
-static inline uint32_t ptr_hash_fn(const void *key) {
+static inline uint32_t
+ptr_hash_fn(const void *key)
+{
     return (uint32_t) * (const uint64_t *) key;
 }
 
@@ -48,13 +49,13 @@ static inline uint32_t ptr_hash_fn(const void *key) {
  *  These functions simply wrap the C standard library memory allocation-related functions.
  */
 
-void *cf_malloc(size_t sz);
-void *cf_calloc(size_t nmemb, size_t sz);
-void *cf_realloc(void *ptr, size_t sz);
-void *cf_strdup(const char *s);
-void *cf_strndup(const char *s, size_t n);
-void *cf_valloc(size_t sz);
-void cf_free(void *p);
+AS_EXTERN void* cf_malloc(size_t sz);
+AS_EXTERN void* cf_calloc(size_t nmemb, size_t sz);
+AS_EXTERN void* cf_realloc(void* ptr, size_t sz);
+AS_EXTERN void* cf_strdup(const char* s);
+AS_EXTERN void* cf_strndup(const char* s, size_t n);
+AS_EXTERN void* cf_valloc(size_t sz);
+AS_EXTERN void cf_free(void* p);
 
 /*
  * The "cf_rc_*()" Functions:  Reference Counting Allocation:
@@ -73,19 +74,16 @@ void cf_free(void *p);
  * This will result in undefined behavior.
  */
 
-typedef cf_atomic32 cf_rc_counter;
-
 typedef struct {
-	cf_rc_counter count;
-	uint32_t	sz;
+	uint32_t count;
+	uint32_t sz;
 } cf_rc_hdr;
 
-void *cf_rc_alloc(size_t sz);
-void cf_rc_free(void *addr);
-cf_atomic_int_t cf_rc_count(void *addr);
-int cf_rc_reserve(void *addr);
-int cf_rc_release(void *addr);
-int cf_rc_releaseandfree(void *addr);
+void* cf_rc_alloc(size_t sz);
+void cf_rc_free(void* addr);
+int cf_rc_reserve(void* addr);
+int cf_rc_release(void* addr);
+int cf_rc_releaseandfree(void* addr);
 
 #endif // defined(ENHANCED_ALLOC)
 

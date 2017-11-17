@@ -20,12 +20,10 @@
 #include <aerospike/as_double.h>
 #include <aerospike/as_integer.h>
 #include <aerospike/as_iterator.h>
+#include <aerospike/as_std.h>
 #include <aerospike/as_string.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
-
-#include <stdbool.h>
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -480,7 +478,7 @@ typedef struct as_list_hooks_s {
  *	@return On success, the initialized list. Otherwise NULL.
  *	@relatesalso as_list
  */
-as_list * as_list_cons(as_list * list, bool free, const as_list_hooks * hooks);
+AS_EXTERN as_list * as_list_cons(as_list * list, bool free, const as_list_hooks * hooks);
 
 /**
  *	Initialize a stack allocated list.
@@ -491,7 +489,7 @@ as_list * as_list_cons(as_list * list, bool free, const as_list_hooks * hooks);
  *	@return On succes, the initialized list. Otherwise NULL.
  *	@relatesalso as_list
  */
-as_list * as_list_init(as_list * list, const as_list_hooks * hooks);
+AS_EXTERN as_list * as_list_init(as_list * list, const as_list_hooks * hooks);
 
 /**
  *	Create and initialize a new heap allocated list.
@@ -501,7 +499,7 @@ as_list * as_list_init(as_list * list, const as_list_hooks * hooks);
  *	@return On succes, a new list. Otherwise NULL.
  *	@relatesalso as_list
  */
-as_list * as_list_new(const as_list_hooks * hooks);
+AS_EXTERN as_list * as_list_new(const as_list_hooks * hooks);
 
 /**
  *	Destroy the list and associated resources.
@@ -1476,19 +1474,19 @@ static inline as_list * as_list_fromval(as_val * v)
  *	@private
  *	Internal helper function for destroying an as_val.
  */
-void as_list_val_destroy(as_val * v);
+AS_EXTERN void as_list_val_destroy(as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the hashcode of an as_val.
  */
-uint32_t as_list_val_hashcode(const as_val * v);
+AS_EXTERN uint32_t as_list_val_hashcode(const as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the string representation of an as_val.
  */
-char * as_list_val_tostring(const as_val * v);
+AS_EXTERN char * as_list_val_tostring(const as_val * v);
 
 #ifdef __cplusplus
 } // end extern "C"

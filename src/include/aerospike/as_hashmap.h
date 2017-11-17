@@ -18,9 +18,7 @@
 #pragma once
 
 #include <aerospike/as_map.h>
-
-#include <stdbool.h>
-#include <stdint.h>
+#include <aerospike/as_std.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -149,7 +147,7 @@ typedef struct as_hashmap_s {
  *
  *	@relatesalso as_hashmap
  */
-as_hashmap * as_hashmap_init(as_hashmap * map, uint32_t buckets);
+AS_EXTERN as_hashmap * as_hashmap_init(as_hashmap * map, uint32_t buckets);
 
 /**
  *	Creates a new map as a hashmap.
@@ -160,7 +158,7 @@ as_hashmap * as_hashmap_init(as_hashmap * map, uint32_t buckets);
  *
  *	@relatesalso as_hashmap
  */
-as_hashmap * as_hashmap_new(uint32_t buckets);
+AS_EXTERN as_hashmap * as_hashmap_new(uint32_t buckets);
 
 /**
  *	Free the map and associated resources.
@@ -169,7 +167,7 @@ as_hashmap * as_hashmap_new(uint32_t buckets);
  *
  *	@relatesalso as_hashmap
  */
-void as_hashmap_destroy(as_hashmap * map);
+AS_EXTERN void as_hashmap_destroy(as_hashmap * map);
 
 /*******************************************************************************
  *	INFO FUNCTIONS
@@ -184,7 +182,7 @@ void as_hashmap_destroy(as_hashmap * map);
  *
  *	@relatesalso as_hashmap
  */
-uint32_t as_hashmap_hashcode(const as_hashmap * map);
+AS_EXTERN uint32_t as_hashmap_hashcode(const as_hashmap * map);
 
 /**
  *	Get the number of entries in the map.
@@ -195,7 +193,7 @@ uint32_t as_hashmap_hashcode(const as_hashmap * map);
  *
  *	@relatesalso as_hashmap
  */
-uint32_t as_hashmap_size(const as_hashmap * map);
+AS_EXTERN uint32_t as_hashmap_size(const as_hashmap * map);
 
 /*******************************************************************************
  *	ACCESSOR AND MODIFIER FUNCTIONS
@@ -211,7 +209,7 @@ uint32_t as_hashmap_size(const as_hashmap * map);
  *
  *	@relatesalso as_hashmap
  */
-as_val * as_hashmap_get(const as_hashmap * map, const as_val * key);
+AS_EXTERN as_val * as_hashmap_get(const as_hashmap * map, const as_val * key);
 
 /**
  *	Set the value for specified key.
@@ -224,7 +222,7 @@ as_val * as_hashmap_get(const as_hashmap * map, const as_val * key);
  *
  *	@relatesalso as_hashmap
  */
-int as_hashmap_set(as_hashmap * map, const as_val * key, const as_val * val);
+AS_EXTERN int as_hashmap_set(as_hashmap * map, const as_val * key, const as_val * val);
 
 /**
  *	Remove all entries from the map.
@@ -235,7 +233,7 @@ int as_hashmap_set(as_hashmap * map, const as_val * key, const as_val * val);
  *
  *	@relatesalso as_hashmap
  */
-int as_hashmap_clear(as_hashmap * map);
+AS_EXTERN int as_hashmap_clear(as_hashmap * map);
 
 /**
  *	Remove the entry specified by the key.
@@ -247,7 +245,7 @@ int as_hashmap_clear(as_hashmap * map);
  *
  *	@relatesalso as_hashmap
  */
-int as_hashmap_remove(as_hashmap * map, const as_val * key);
+AS_EXTERN int as_hashmap_remove(as_hashmap * map, const as_val * key);
 
 /******************************************************************************
  *	ITERATION FUNCTIONS
@@ -264,7 +262,7 @@ int as_hashmap_remove(as_hashmap * map, const as_val * key);
  *
  *	@relatesalso as_hashmap
  */
-bool as_hashmap_foreach(const as_hashmap * map, as_map_foreach_callback callback, void * udata);
+AS_EXTERN bool as_hashmap_foreach(const as_hashmap * map, as_map_foreach_callback callback, void * udata);
 
 #ifdef __cplusplus
 } // end extern "C"

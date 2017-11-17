@@ -17,23 +17,27 @@
 #pragma once
 
 #include <inttypes.h>
+#include <stdbool.h>
+#include <stdint.h>
 
-#ifndef CF_WINDOWS
-/******************************************************************************
- * LINUX
- *****************************************************************************/
+#if ! defined(_MSC_VER)
+#include <alloca.h>
+#define AS_EXTERN
 
-#include <stdbool.h>    // A real pity that Linux requires this for bool, true & false:
-#include <alloca.h>     // Use alloca() instead of variable-sized stack arrays for non-gcc portability.
+#else
+#include <malloc.h>
 
-#else // CF_WINDOWS
-/******************************************************************************
- * WINDOWS
- *****************************************************************************/
+#define strcasecmp _stricmp
+#define strncasecmp _strnicmp
+#define strtok_r strtok_s
+#define __thread __declspec(thread)
 
-#include <malloc.h>     // for alloca()
+#if defined(AS_SHARED_EXPORT)
+#define AS_EXTERN __declspec(dllexport)
+#elif defined(AS_SHARED_IMPORT)
+#define AS_EXTERN __declspec(dllimport)
+#else
+#define AS_EXTERN
+#endif
 
-#define PRIu64 "I64u"
-#define PRId64 "I64d"
-
-#endif // CF_WINDOWS
+#endif

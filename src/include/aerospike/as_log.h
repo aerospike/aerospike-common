@@ -16,12 +16,8 @@
  */
 #pragma once 
 
+#include <aerospike/as_std.h>
 #include <stdarg.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -146,8 +142,8 @@ typedef struct as_log_s {
  *	GLOBAL VARIABLES
  *****************************************************************************/
 
-extern as_log g_as_log;
-extern const char* as_log_level_strings[];
+AS_EXTERN extern as_log g_as_log;
+AS_EXTERN extern const char* as_log_level_strings[];
 
 /******************************************************************************
  *	FUNCTIONS

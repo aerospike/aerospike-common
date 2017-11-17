@@ -14,11 +14,8 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <stdlib.h>
-
-#include <citrusleaf/alloc.h>
-
+#include <aerospike/as_val.h>
+#include <aerospike/as_atomic.h>
 #include <aerospike/as_boolean.h>
 #include <aerospike/as_bytes.h>
 #include <aerospike/as_double.h>
@@ -30,7 +27,7 @@
 #include <aerospike/as_pair.h>
 #include <aerospike/as_rec.h>
 #include <aerospike/as_string.h>
-#include <aerospike/as_val.h>
+#include <citrusleaf/alloc.h>
 
 /******************************************************************************
  *	TYPES
@@ -132,8 +129,7 @@ static as_val * as_val_reserve_noop(as_val * v)
 
 static as_val * as_val_reserve_count(as_val * v)
 {
-	// return after ref-counting !!
-	cf_atomic32_add(&(v->count),1);
+	as_incr_uint32(&v->count);
 	return v;
 }
 
@@ -151,17 +147,19 @@ as_val * as_val_val_reserve(as_val * v)
 {
 	if ( !v ) return v;
 	return as_val_reserve_callbacks[ v->type ](v);
-	// cf_atomic32_add(&(v->count),1);
-	// return v;
 }
 
 as_val * as_val_val_destroy(as_val * v)
 {
-	if ( v == NULL || !v->count ) return v;
+	if (v == NULL || !v->count) {
+		return v;
+	}
+
 	// if we reach the last reference, call the destructor, and free
-	if ( 0 == cf_atomic32_decr(&(v->count)) ) {
-		as_val_destroy_callbacks[ v->type ](v);     
-		if ( v->free ) {
+	if (as_aaf_uint32(&v->count, -1) == 0) {
+		as_val_destroy_callbacks[v->type](v);
+
+		if (v->free) {
 			cf_free(v);
 		}
 		v = NULL;

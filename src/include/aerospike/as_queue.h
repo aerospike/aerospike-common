@@ -16,9 +16,7 @@
  */
 #pragma once
 
-#include <stdint.h>
-#include <stddef.h>
-#include <stdbool.h>
+#include <aerospike/as_std.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -93,19 +91,19 @@ typedef struct as_queue_s {
 /**
  *	Initialize a stack allocated as_queue, with item storage on the heap.
  */
-bool
+AS_EXTERN bool
 as_queue_init(as_queue* queue, uint32_t item_size, uint32_t capacity);
 
 /**
  *	Create a heap allocated as_queue, with item storage on the heap.
  */
-as_queue*
+AS_EXTERN as_queue*
 as_queue_create(uint32_t item_size, uint32_t capacity);
 
 /**
  *	Release queue memory.
  */
-void
+AS_EXTERN void
 as_queue_destroy(as_queue* queue);
 
 /**
@@ -129,25 +127,25 @@ as_queue_empty(as_queue* queue)
 /**
  * Push to the tail of the queue.
  */
-bool
+AS_EXTERN bool
 as_queue_push(as_queue* queue, const void* ptr);
 
 /**
  * Push element on the queue only if size < capacity.
  */
-bool
+AS_EXTERN bool
 as_queue_push_limit(as_queue* queue, const void* ptr);
 
 /**
  *	Push to the front of the queue.
  */
-bool
+AS_EXTERN bool
 as_queue_push_head(as_queue* queue, const void* ptr);
 
 /**
  *	Pop from the head of the queue.
  */
-bool
+AS_EXTERN bool
 as_queue_pop(as_queue* queue, void* ptr);
 	
 /**

@@ -17,9 +17,8 @@
 
 #pragma once
 
+#include <aerospike/as_std.h>
 #include <aerospike/as_val.h>
-
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -33,7 +32,7 @@ extern "C" {
  *	NIL value
  *	@ingroup aerospike_t
  */
-extern const as_val as_nil;
+AS_EXTERN extern const as_val as_nil;
 
 /******************************************************************************
  *	FUNCTIONS
@@ -43,19 +42,19 @@ extern const as_val as_nil;
  *	@private
  *	Internal helper function for destroying an as_val.
  */
-void as_nil_val_destroy(as_val * v);
+AS_EXTERN void as_nil_val_destroy(as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the hashcode of an as_val.
  */
-uint32_t as_nil_val_hashcode(const as_val * v);
+AS_EXTERN uint32_t as_nil_val_hashcode(const as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the string representation of an as_val.
  */
-char * as_nil_val_tostring(const as_val * v);
+AS_EXTERN char * as_nil_val_tostring(const as_val * v);
 
 #ifdef __cplusplus
 } // end extern "C"

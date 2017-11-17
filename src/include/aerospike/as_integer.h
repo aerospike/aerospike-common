@@ -17,10 +17,9 @@
 
 #pragma once
 
+#include <aerospike/as_std.h>
 #include <aerospike/as_util.h>
 #include <aerospike/as_val.h>
-
-#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -142,7 +141,7 @@ typedef struct as_integer_s {
  *
  *	@relatesalso as_integer
  */
-as_integer * as_integer_init(as_integer * integer, int64_t value);
+AS_EXTERN as_integer * as_integer_init(as_integer * integer, int64_t value);
 
 /**
  *	Creates a new heap allocated as_integer.
@@ -164,7 +163,7 @@ as_integer * as_integer_init(as_integer * integer, int64_t value);
  *
  *	@relatesalso as_integer
  */
-as_integer * as_integer_new(int64_t value);
+AS_EXTERN as_integer * as_integer_new(int64_t value);
 
 /**
  *	Destroy the `as_integer` and release resources.
@@ -243,19 +242,19 @@ static inline as_integer * as_integer_fromval(const as_val * v) {
  *	@private
  *	Internal helper function for destroying an as_val.
  */
-void as_integer_val_destroy(as_val * v);
+AS_EXTERN void as_integer_val_destroy(as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the hashcode of an as_val.
  */
-uint32_t as_integer_val_hashcode(const as_val * v);
+AS_EXTERN uint32_t as_integer_val_hashcode(const as_val * v);
 
 /**
  *	@private
  *	Internal helper function for getting the string representation of an as_val.
  */
-char * as_integer_val_tostring(const as_val * v);
+AS_EXTERN char * as_integer_val_tostring(const as_val * v);
 
 #ifdef __cplusplus
 } // end extern "C"

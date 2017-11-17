@@ -20,6 +20,7 @@
  * A simple priority queue implementation, which is simply a set of queues underneath.
  * This currently doesn't support 'delete' and 'reduce' functionality
  */
+#include <aerospike/as_std.h>
 #include "cf_queue.h"
 
 #ifdef __cplusplus

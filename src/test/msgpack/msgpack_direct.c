@@ -12,6 +12,8 @@
 #include <aerospike/as_serializer.h>
 #include <aerospike/as_string.h>
 #include <aerospike/as_stringmap.h>
+#include <stdlib.h>
+#include <string.h>
 
 #define MAX_BUF_SIZE	2000000
 
@@ -29,8 +31,8 @@ static msgpack_compare_t compare_vals(as_val *v1, as_val *v2)
 	uint32_t size1 = as_serializer_serialize_getsize(&ser, v1);
 	uint32_t size2 = as_serializer_serialize_getsize(&ser, v2);
 
-	unsigned char buf1[size1];
-	unsigned char buf2[size2];
+	unsigned char* buf1 = alloca(size1);
+	unsigned char* buf2 = alloca(size2);
 
 	as_serializer_serialize_presized(&ser, v1, buf1);
 	as_serializer_serialize_presized(&ser, v2, buf2);
@@ -79,7 +81,7 @@ static as_val *random_integer()
 static as_val *random_string()
 {
 	int len = rand() % 200;
-	char str[len + 1];
+	char* str = alloca(len + 1);
 
 	for (int i = 0; i < len; i++) {
 		str[i] = rand() % 256;
@@ -298,8 +300,8 @@ TEST( msgpack_int_direct, "signed int direct" )
 
 	for (int64_t i = -range; i < range; i += 10) {
 		as_packer pk = {
-				.buffer = buf,
-				.capacity = (int)sizeof(buf)
+			.buffer = buf,
+			.capacity = (uint32_t)sizeof(buf)
 		};
 
 		for (int j = 0; j < 10; j++) {
@@ -307,8 +309,8 @@ TEST( msgpack_int_direct, "signed int direct" )
 		}
 
 		as_unpacker upk = {
-				.buffer = buf,
-				.length = pk.offset
+			.buffer = buf,
+			.length = pk.offset
 		};
 
 		for (int j = 0; j < 10; j++) {

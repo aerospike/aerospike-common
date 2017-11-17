@@ -20,13 +20,8 @@
  * Good at multithreading
  * Just, hopefully, the last reasonable hash table you'll ever need
  */
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
-#include <openssl/sha.h>
-
 #include <citrusleaf/cf_crypto.h>
+#include <stdio.h>
 
 /******************************************************************************
  * FUNCTIONS
@@ -35,11 +30,15 @@
  * cf_convert_sha1_to_hex
  * Desc: Convert a sha1 returned hash to a hexadecimal string. 
  */
-bool cf_convert_sha1_to_hex(unsigned char * hash, unsigned char * sha1_hex_buff) { 
-        if (!sha1_hex_buff || !hash) return false; 
-        for (unsigned int i = 0; i < SHA_DIGEST_LENGTH; i++) { 
-                sprintf((char *)(sha1_hex_buff + (i * 2)), "%02x", hash[i]); 
-        } 
-        return true; 
-}
+bool
+cf_convert_sha1_to_hex(unsigned char * hash, unsigned char * sha1_hex_buff)
+{
+	if (!sha1_hex_buff || !hash) {
+		return false;
+	}
 
+	for (unsigned int i = 0; i < SHA_DIGEST_LENGTH; i++) { 
+		sprintf((char *)(sha1_hex_buff + (i * 2)), "%02x", hash[i]); 
+	} 
+	return true; 
+}

@@ -16,8 +16,8 @@
  */
 #pragma once
 
+#include <aerospike/as_std.h>
 #include <pthread.h>
-#include <stdbool.h>
 
 typedef struct {
 	pthread_mutex_t lock;

@@ -14,16 +14,11 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <citrusleaf/alloc.h>
-
 #include <aerospike/as_hashmap.h>
 #include <aerospike/as_hashmap_iterator.h>
 #include <aerospike/as_iterator.h>
 #include <aerospike/as_pair.h>
-
-#include <stdbool.h>
-#include <stdint.h>
+#include <citrusleaf/alloc.h>
 
 /*******************************************************************************
  *	EXTERNS

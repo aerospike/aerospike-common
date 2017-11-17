@@ -1,28 +1,21 @@
-# Aerospike Common
+# Aerospike common module
 
 Library for commonly used or shared code.
+Used by Aerospike Server and Aerospike C Client.
 
 ## Build
 
-aerospike-common currently builds both a static archive and a dynamic shared library.
-
-To only build the static archive:
-
-	$ make libaerospike-common.a
-
-To only build the dynamic shared library:
-
-	$ make libaerospike-common.so
-
-Alternatively, you can use `all` target:
-
-	$ make all
-
-To clean up:
+### Linux and MacOS
 
 	$ make clean
+	$ make
 
-To run tests:
+### MacOS XCode
 
-	# make test
+- Double click xcode/aerospike-common.xcworkspace
+- Click Product -> Build
 
+### Windows Visual Studio 2015 (or greater)
+
+- Double click vs/aerospike-common.sln
+- Click Build -> Build Solution

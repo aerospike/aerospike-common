@@ -19,9 +19,6 @@
 #include <aerospike/as_list.h>
 #include <aerospike/as_nil.h>
 #include <citrusleaf/alloc.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdbool.h>
 #include <string.h>
 
 /*******************************************************************************
@@ -94,7 +91,7 @@ as_arraylist * as_arraylist_new(uint32_t capacity, uint32_t block_size)
 bool as_arraylist_release(as_arraylist * list)
 {
 	if ( list->elements ) {
-		for (int i = 0; i < list->size; i++ ) {
+		for (uint32_t i = 0; i < list->size; i++ ) {
 			if (list->elements[i]) {
 				as_val_destroy(list->elements[i]);
 			}
@@ -477,7 +474,7 @@ as_arraylist * as_arraylist_tail(const as_arraylist * list)
 
 	as_arraylist * list2 = as_arraylist_new(list->size-1, list->block_size);
 
-	for(int i = 1, j = 0; i < list->size; i++, j++) {
+	for(uint32_t i = 1, j = 0; i < list->size; i++, j++) {
 		if (list->elements[i]) {
 			as_val_reserve(list->elements[i]);
 			list2->elements[j] = list2->elements[i];
@@ -500,7 +497,7 @@ as_arraylist * as_arraylist_drop(const as_arraylist * list, uint32_t n)
 	as_arraylist *	list2	= as_arraylist_new(sz-c, list->block_size);
 	
 	list2->size = sz-c;
-	for(int i = c, j = 0; j < list2->size; i++, j++) {
+	for(uint32_t i = c, j = 0; j < list2->size; i++, j++) {
 		if (list->elements[i]) {
 			as_val_reserve(list->elements[i]);
 			list2->elements[j] = list->elements[i];
@@ -523,7 +520,7 @@ as_arraylist * as_arraylist_take(const as_arraylist * list, uint32_t n)
 	as_arraylist *	list2	= as_arraylist_new(c, list->block_size);
 
 	list2->size = c;
-	for(int i = 0; i < c; i++) {
+	for(uint32_t i = 0; i < c; i++) {
 		if (list->elements[i]) {
 			as_val_reserve(list->elements[i]);
 			list2->elements[i] = list->elements[i];
@@ -545,7 +542,7 @@ as_arraylist * as_arraylist_take(const as_arraylist * list, uint32_t n)
  */
 bool as_arraylist_foreach(const as_arraylist * list, as_list_foreach_callback callback, void * udata) 
 {
-	for(int i = 0; i < list->size; i++ ) {
+	for(uint32_t i = 0; i < list->size; i++ ) {
 		if (! callback(list->elements[i], udata)) {
 			return false;
 		}

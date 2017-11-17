@@ -33,7 +33,6 @@
 
 #include <assert.h>
 #include <string.h>
-#include <sys/syslog.h>
 
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>

@@ -18,6 +18,9 @@
 #include <aerospike/as_msgpack_serializer.h>
 #include <aerospike/as_serializer.h>
 #include <aerospike/as_types.h>
+#include <citrusleaf/alloc.h>
+#include <limits.h>
+#include <string.h>
 
 /******************************************************************************
  * STATIC FUNCTIONS

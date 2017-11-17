@@ -39,6 +39,17 @@ as_random_init(as_random* random)
 	random->initialized = true;
 }
 
+as_random*
+as_random_instance()
+{
+	as_random* random = &as_rand;
+
+	if (!random->initialized) {
+		as_random_init(random);
+	}
+	return random;
+}
+
 void
 as_random_next_bytes(as_random* random, uint8_t* bytes, uint32_t len)
 {
@@ -61,11 +72,4 @@ as_random_next_bytes(as_random* random, uint8_t* bytes, uint32_t len)
 			*p++ = *t++;
 		}
 	}
-}
-
-uint64_t
-as_random_get_uint64()
-{
-	as_random* random = as_random_instance();
-	return as_random_next_uint64(random);
 }

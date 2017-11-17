@@ -20,17 +20,12 @@
 //
 
 #include <citrusleaf/cf_rchash.h>
-
-#include <pthread.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
-
+#include <aerospike/as_atomic.h>
 #include <citrusleaf/alloc.h>
-#include <citrusleaf/cf_atomic.h>
 #include <citrusleaf/cf_hash_math.h>
-
+#include <pthread.h>
+#include <stddef.h>
+#include <string.h>
 
 //==========================================================
 // Typedefs & constants.
@@ -214,7 +209,7 @@ uint32_t
 cf_rchash_get_size(const cf_rchash *h)
 {
 	// For now, not bothering with different methods per lock mode.
-	return cf_atomic32_get(h->n_elements);
+	return as_load_uint32(&h->n_elements);
 }
 
 
@@ -1023,7 +1018,7 @@ static inline void
 cf_rchash_size_incr(cf_rchash *h)
 {
 	// For now, not bothering with different methods per lock mode.
-	cf_atomic32_incr(&h->n_elements);
+	as_incr_int32(&h->n_elements);
 }
 
 
@@ -1031,7 +1026,7 @@ static inline void
 cf_rchash_size_decr(cf_rchash *h)
 {
 	// For now, not bothering with different methods per lock mode.
-	cf_atomic32_decr(&h->n_elements);
+	as_decr_int32(&h->n_elements);
 }
 
 

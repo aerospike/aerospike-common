@@ -14,11 +14,10 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
-
-#include <string.h>
 #include <citrusleaf/cf_queue_priority.h>
 #include <citrusleaf/cf_clock.h>
 #include <citrusleaf/alloc.h>
+#include <string.h>
 
 /******************************************************************************
  * FUNCTIONS
@@ -307,7 +306,7 @@ int cf_queue_priority_reduce_change(cf_queue_priority *priority_q, int new_pri, 
 
 			if (rv == -1) {
 				// Found it - move to desired queue and return.
-				uint8_t buf[q->element_sz];
+				uint8_t* buf = alloca(q->element_sz);
 
 				memcpy(buf, CF_Q_ELEM_PTR(q, i), q->element_sz);
 				cf_queue_delete_offset(q, i);

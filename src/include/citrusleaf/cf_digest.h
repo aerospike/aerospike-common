@@ -16,11 +16,10 @@
  */
 #pragma once
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
+#include <aerospike/as_std.h>
 #include <openssl/ripemd.h>
+#include <string.h>
+#include <stdio.h>
 
 #ifdef __APPLE__
 // Openssl is deprecated on mac, but the library is still included.

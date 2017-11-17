@@ -25,14 +25,6 @@
  * Atomic addition: add a value b into an atomic integer a, and return the result
  **/
 
-#include <stdbool.h>
-#include <stdint.h>
-
-#ifdef CF_WINDOWS
-#include <intrin.h>
-#include <WinSock2.h> // LONGLONG
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -81,32 +73,8 @@ typedef uint64_t cf_atomic_int_t; // the point here is a type of the same size a
 #define cf_atomic_int_decr(_a) cf_atomic64_add((_a), -1)
 
 /******************************************************************************
- * WINDOWS FUNCTIONS
- *****************************************************************************/
-
-#ifdef CF_WINDOWS
-
-#define smb_mb() _ReadWriteBarrier()
-
-static inline int64_t cf_atomic64_add(cf_atomic64 *a, int64_t b) {
-	int64_t i = b;
-	b = _InterlockedExchangeAdd64((LONGLONG *)a, b);
-	return(b + i);
-}
-
-static inline int32_t cf_atomic32_add(cf_atomic32 *a, int32_t b){
-	int32_t i = b;
-	b = _InterlockedExchangeAdd((volatile long *)a, b);
-	return(b + i);
-}
-
-#endif // ifdef CF_WINDOWS
-
-/******************************************************************************
  * LINUX FUNCTIONS
  *****************************************************************************/
-
-#ifndef CF_WINDOWS
 
 #define cf_atomic_int_setmax(_a, _x) cf_atomic64_setmax(_a, _x)
 
@@ -166,7 +134,6 @@ static inline bool cf_atomic32_setmax(cf_atomic32 *a, int32_t x) {
 	// Proposed value not swapped in as new maximum.
 	return false;
 }
-#endif // ifndef CF_WINDOWS
 
 #ifdef __cplusplus
 } // end extern "C"

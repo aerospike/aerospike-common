@@ -16,8 +16,8 @@
  */
 #pragma once
 
+#include <aerospike/as_std.h>
 #include <string.h>
-#include "citrusleaf/cf_types.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -66,7 +66,7 @@ as_password_get_constant_hash(const char* password, char* hash);
  *	If the input password is not hashed, convert to bcrypt hashed password.
  *	Return true if hash was successful.
  */
-bool
+AS_EXTERN bool
 as_password_prompt_hash(const char* password, char* hash);
 
 /**

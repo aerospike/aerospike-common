@@ -16,11 +16,10 @@
  */
 #pragma once
 
-#include <aerospike/as_util.h>
-#include <aerospike/as_types.h>
 #include <aerospike/as_buffer.h>
-
-#include <stdint.h>
+#include <aerospike/as_std.h>
+#include <aerospike/as_types.h>
+#include <aerospike/as_util.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -63,13 +62,13 @@ typedef struct as_serializer_hooks_s {
  * FUNCTIONS
  *****************************************************************************/
 
-as_serializer *as_serializer_cons(as_serializer *serializer, bool free, const as_serializer_hooks *hooks);
+AS_EXTERN as_serializer *as_serializer_cons(as_serializer *serializer, bool free, const as_serializer_hooks *hooks);
 
-as_serializer *as_serializer_init(as_serializer *serializer, const as_serializer_hooks *hooks);
+AS_EXTERN as_serializer *as_serializer_init(as_serializer *serializer, const as_serializer_hooks *hooks);
 
-as_serializer *as_serializer_new(const as_serializer_hooks *);
+AS_EXTERN as_serializer *as_serializer_new(const as_serializer_hooks *);
 
-void as_serializer_destroy(as_serializer *);
+AS_EXTERN void as_serializer_destroy(as_serializer *);
 
 /******************************************************************************
  * INLINE FUNCTIONS

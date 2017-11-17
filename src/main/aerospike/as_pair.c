@@ -17,7 +17,6 @@
 #include <aerospike/as_pair.h>
 #include <aerospike/as_util.h>
 #include <citrusleaf/alloc.h>
-#include <stdlib.h>
 #include <string.h>
 
 /******************************************************************************

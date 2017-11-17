@@ -17,7 +17,6 @@
 #include <aerospike/as_aerospike.h>
 #include <citrusleaf/alloc.h>
 #include <citrusleaf/cf_clock.h>
-#include <stdlib.h>
 
 /******************************************************************************
  * FUNCTIONS

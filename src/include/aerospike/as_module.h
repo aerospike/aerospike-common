@@ -16,11 +16,10 @@
  */
 #pragma once
 
-#include <stdlib.h>
-
 #include <aerospike/as_aerospike.h>
 #include <aerospike/as_stream.h>
 #include <aerospike/as_result.h>
+#include <aerospike/as_std.h>
 #include <aerospike/as_types.h>
 #include <aerospike/as_udf_context.h>
 

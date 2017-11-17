@@ -1,0 +1,225 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{09C4202C-F95F-445D-AFA6-7362984F668C}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>common</RootNamespace>
+    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <ProjectName>aerospike-common</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="..\props\base.props" />
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="..\props\base.props" />
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <LinkIncremental>true</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>..\..\src\include;$(IncludePath)</IncludePath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>_DEBUG;_WINDOWS;_USRDLL;COMMON_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile />
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>pthreadVC2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>NDEBUG;_WINDOWS;_USRDLL;COMMON_EXPORTS;_CRT_SECURE_NO_DEPRECATE;_TIMESPEC_DEFINED;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PrecompiledHeaderFile />
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>pthreadVC2.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\src\include\aerospike\as_aerospike.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_arraylist.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_arraylist_iterator.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_atomic.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_atomic_gcc.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_atomic_win.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_boolean.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_buffer.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_buffer_pool.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_bytes.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_dir.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_double.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_geojson.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_hashmap.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_hashmap_iterator.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_integer.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_iterator.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_list.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_list_iterator.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_log.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_log_macros.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_map.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_map_iterator.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_memtracker.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_module.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_monitor.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_msgpack.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_msgpack_serializer.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_nil.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_pair.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_password.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_queue.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_random.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_rec.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_result.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_serializer.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_sleep.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_std.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_stream.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_string.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_stringmap.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_string_builder.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_thread_pool.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_timer.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_types.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_udf_context.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_util.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_val.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_vector.h" />
+    <ClInclude Include="..\..\src\include\aerospike\ssl_util.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\alloc.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_atomic.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_b64.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_byte_order.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_clock.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_crypto.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_digest.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_hash_math.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_ll.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_queue.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_queue_priority.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_random.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_rchash.h" />
+    <ClInclude Include="..\..\src\include\citrusleaf\cf_vector.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\src\main\aerospike\as_aerospike.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_arraylist.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_arraylist_hooks.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_arraylist_iterator.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_arraylist_iterator_hooks.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_boolean.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_buffer.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_buffer_pool.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_bytes.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_double.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_geojson.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_hashmap.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_hashmap_hooks.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_hashmap_iterator.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_hashmap_iterator_hooks.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_integer.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_iterator.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_list.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_log.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_map.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_memtracker.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_module.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_msgpack.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_msgpack_serializer.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_nil.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_pair.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_password.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_queue.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_random.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_rec.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_result.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_serializer.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_stream.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_string.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_string_builder.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_thread_pool.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_timer.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_val.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_vector.c" />
+    <ClCompile Include="..\..\src\main\aerospike\crypt_blowfish.c" />
+    <ClCompile Include="..\..\src\main\aerospike\ssl_util.c" />
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_alloc.c" />
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_b64.c" />
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_clock.c" />
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_crypto.c" />
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_digest.c" />
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_ll.c" />
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_queue.c" />
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_queue_priority.c" />
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_random.c" />
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_rchash.c" />
+    <ClCompile Include="..\..\src\main\citrusleaf\cf_vector.c" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+    <Import Project="packages\zlib.v120.windesktop.msvcstl.dyn.rt-dyn.1.2.8.8\build\native\zlib.v120.windesktop.msvcstl.dyn.rt-dyn.targets" Condition="Exists('packages\zlib.v120.windesktop.msvcstl.dyn.rt-dyn.1.2.8.8\build\native\zlib.v120.windesktop.msvcstl.dyn.rt-dyn.targets')" />
+    <Import Project="packages\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x64.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x64.targets" Condition="Exists('packages\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x64.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x64.targets')" />
+    <Import Project="packages\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x86.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x86.targets" Condition="Exists('packages\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x86.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x86.targets')" />
+    <Import Project="packages\zlib.v140.windesktop.msvcstl.dyn.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.dyn.rt-dyn.targets" Condition="Exists('packages\zlib.v140.windesktop.msvcstl.dyn.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.dyn.rt-dyn.targets')" />
+    <Import Project="packages\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x64.1.0.2.0\build\native\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x64.targets" Condition="Exists('packages\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x64.1.0.2.0\build\native\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x64.targets')" />
+    <Import Project="packages\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x86.1.0.2.0\build\native\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x86.targets" Condition="Exists('packages\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x86.1.0.2.0\build\native\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x86.targets')" />
+  </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('packages\zlib.v120.windesktop.msvcstl.dyn.rt-dyn.1.2.8.8\build\native\zlib.v120.windesktop.msvcstl.dyn.rt-dyn.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib.v120.windesktop.msvcstl.dyn.rt-dyn.1.2.8.8\build\native\zlib.v120.windesktop.msvcstl.dyn.rt-dyn.targets'))" />
+    <Error Condition="!Exists('packages\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x64.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x64.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x64.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x64.targets'))" />
+    <Error Condition="!Exists('packages\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x86.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x86.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x86.1.0.2.0\build\native\openssl.v120.windesktop.msvcstl.dyn.rt-dyn.x86.targets'))" />
+    <Error Condition="!Exists('packages\zlib.v140.windesktop.msvcstl.dyn.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.dyn.rt-dyn.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\zlib.v140.windesktop.msvcstl.dyn.rt-dyn.1.2.8.8\build\native\zlib.v140.windesktop.msvcstl.dyn.rt-dyn.targets'))" />
+    <Error Condition="!Exists('packages\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x64.1.0.2.0\build\native\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x64.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x64.1.0.2.0\build\native\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x64.targets'))" />
+    <Error Condition="!Exists('packages\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x86.1.0.2.0\build\native\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x86.targets')" Text="$([System.String]::Format('$(ErrorText)', 'packages\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x86.1.0.2.0\build\native\openssl.v140.windesktop.msvcstl.dyn.rt-dyn.x86.targets'))" />
+  </Target>
+</Project>

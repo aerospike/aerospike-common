@@ -16,8 +16,7 @@
  */
 #pragma once
 
-#include <stdint.h>
-#include <stdbool.h>
+#include <aerospike/as_std.h>
 
 #ifdef __cplusplus
 extern "C" {
