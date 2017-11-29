@@ -219,6 +219,9 @@
     <ClInclude Include="..\..\src\include\aerospike\as_sleep.h">
       <Filter>Header Files\aerospike</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_queue_mt.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main\aerospike\as_aerospike.c">
@@ -376,6 +379,9 @@
     </ClCompile>
     <ClCompile Include="..\..\src\main\citrusleaf\cf_vector.c">
       <Filter>Source Files\citrusleaf</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_queue_mt.c">
+      <Filter>Source Files\aerospike</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

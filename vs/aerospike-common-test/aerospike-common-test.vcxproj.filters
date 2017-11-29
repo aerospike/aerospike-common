@@ -83,5 +83,8 @@
     <ClCompile Include="..\..\src\test\types\types_vector.c">
       <Filter>Source Files\types</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\test\types\types_queue_mt.c">
+      <Filter>Source Files\types</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
