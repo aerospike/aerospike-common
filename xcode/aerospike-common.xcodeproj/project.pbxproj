@@ -10,6 +10,7 @@
 		BF222D081BB3511C006827A6 /* as_geojson.c in Sources */ = {isa = PBXBuildFile; fileRef = BF222D061BB3511C006827A6 /* as_geojson.c */; };
 		BF222D091BB3511C006827A6 /* as_queue.c in Sources */ = {isa = PBXBuildFile; fileRef = BF222D071BB3511C006827A6 /* as_queue.c */; };
 		BF27197F19E4AF6B0059CE60 /* as_log.c in Sources */ = {isa = PBXBuildFile; fileRef = BF27197E19E4AF6B0059CE60 /* as_log.c */; };
+		BF49BF881FCF56A50093C754 /* as_queue_mt.c in Sources */ = {isa = PBXBuildFile; fileRef = BF49BF871FCF56A50093C754 /* as_queue_mt.c */; };
 		BF6B745F1AFAB36E0014B530 /* as_thread_pool.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B745E1AFAB36E0014B530 /* as_thread_pool.c */; };
 		BF6B74611AFAB3B70014B530 /* as_buffer_pool.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B74601AFAB3B70014B530 /* as_buffer_pool.c */; };
 		BF6B7B281926E7F10081A75F /* as_timer.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B7B261926E7F10081A75F /* as_timer.c */; };
@@ -66,6 +67,7 @@
 		BF222D061BB3511C006827A6 /* as_geojson.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_geojson.c; path = ../src/main/aerospike/as_geojson.c; sourceTree = "<group>"; };
 		BF222D071BB3511C006827A6 /* as_queue.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_queue.c; path = ../src/main/aerospike/as_queue.c; sourceTree = "<group>"; };
 		BF27197E19E4AF6B0059CE60 /* as_log.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_log.c; path = ../src/main/aerospike/as_log.c; sourceTree = "<group>"; };
+		BF49BF871FCF56A50093C754 /* as_queue_mt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_queue_mt.c; path = ../src/main/aerospike/as_queue_mt.c; sourceTree = "<group>"; };
 		BF6B745E1AFAB36E0014B530 /* as_thread_pool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_thread_pool.c; path = ../src/main/aerospike/as_thread_pool.c; sourceTree = "<group>"; };
 		BF6B74601AFAB3B70014B530 /* as_buffer_pool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_buffer_pool.c; path = ../src/main/aerospike/as_buffer_pool.c; sourceTree = "<group>"; };
 		BF6B7B261926E7F10081A75F /* as_timer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_timer.c; path = ../src/main/aerospike/as_timer.c; sourceTree = "<group>"; };
@@ -214,6 +216,7 @@
 				BFBB7F0C18C001560080851E /* as_pair.c */,
 				BFBA04B91947DE0800F9924E /* as_password.c */,
 				BF222D071BB3511C006827A6 /* as_queue.c */,
+				BF49BF871FCF56A50093C754 /* as_queue_mt.c */,
 				BFC65B071C90C9400079DF5A /* as_random.c */,
 				BFBB7F0D18C001560080851E /* as_rec.c */,
 				BFBB7F0E18C001560080851E /* as_result.c */,
@@ -328,6 +331,7 @@
 				BF222D091BB3511C006827A6 /* as_queue.c in Sources */,
 				BFBB7F1D18C001560080851E /* as_hashmap_hooks.c in Sources */,
 				BFBB7F2A18C001560080851E /* as_nil.c in Sources */,
+				BF49BF881FCF56A50093C754 /* as_queue_mt.c in Sources */,
 				BFBB7F4018C0018F0080851E /* cf_clock.c in Sources */,
 				BFBA04C01947E1BB00F9924E /* cf_random.c in Sources */,
 				BFBB7F2218C001560080851E /* as_iterator.c in Sources */,
