@@ -44,7 +44,7 @@ ck_pr_barrier(void)
 #ifndef CK_F_PR
 #define CK_F_PR
 
-#include <stdbool.h>
+#include <aerospike/ck/ck_stdbool.h>
 #include <aerospike/ck/ck_stdint.h>
 
 /*
@@ -61,7 +61,7 @@ ck_pr_barrier(void)
 	{							\
 		T r;						\
 		ck_pr_barrier();				\
-		r = CK_PR_ACCESS(*(T *)target);			\
+		r = CK_PR_ACCESS(*(const T *)target);		\
 		ck_pr_barrier();				\
 		return (r);					\
 	}							\
@@ -80,7 +80,7 @@ ck_pr_md_load_ptr(const void *target)
 	void *r;
 
 	ck_pr_barrier();
-	r = CK_PR_ACCESS(*(void **)target);
+	r = CK_CC_DECONST_PTR(CK_PR_ACCESS(target));
 	ck_pr_barrier();
 
 	return r;
@@ -91,7 +91,7 @@ ck_pr_md_store_ptr(void *target, const void *v)
 {
 
 	ck_pr_barrier();
-	CK_PR_ACCESS(*(void **)target) = (void *)v;
+	CK_PR_ACCESS(target) = CK_CC_DECONST_PTR(v);
 	ck_pr_barrier();
 	return;
 }
@@ -101,7 +101,9 @@ ck_pr_md_store_ptr(void *target, const void *v)
 CK_PR_LOAD_S(char, char)
 CK_PR_LOAD_S(uint, unsigned int)
 CK_PR_LOAD_S(int, int)
+#ifndef CK_PR_DISABLE_DOUBLE
 CK_PR_LOAD_S(double, double)
+#endif
 CK_PR_LOAD_S(64, uint64_t)
 CK_PR_LOAD_S(32, uint32_t)
 CK_PR_LOAD_S(16, uint16_t)
