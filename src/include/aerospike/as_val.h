@@ -31,20 +31,22 @@ extern "C" {
  */
 typedef uint8_t as_val_t;
 
-#define AS_UNDEF 0
-#define AS_UNKNOWN 0	//<! @deprecated
-#define AS_NIL 1
-#define AS_BOOLEAN 2
-#define AS_INTEGER 3
-#define AS_STRING 4
-#define AS_LIST 5
-#define AS_MAP 6
-#define AS_REC 7
-#define AS_PAIR 8
-#define AS_BYTES 9
-#define AS_DOUBLE 10
-#define AS_GEOJSON 11
-#define AS_VAL_T_MAX 12
+typedef enum {
+    AS_UNDEF        = 0,
+    AS_UNKNOWN      = 0,    //<! @deprecated
+    AS_NIL          = 1,
+    AS_BOOLEAN      = 2,
+    AS_INTEGER      = 3,
+    AS_STRING       = 4,
+    AS_LIST         = 5,
+    AS_MAP          = 6,
+    AS_REC          = 7,
+    AS_PAIR         = 8,
+    AS_BYTES        = 9,
+    AS_DOUBLE       = 10,
+    AS_GEOJSON      = 11,
+    AS_VAL_T_MAX
+} as_val_type_e;
 
 /**
  *	Represents a value
