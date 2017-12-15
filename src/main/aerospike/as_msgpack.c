@@ -2224,19 +2224,15 @@ static msgpack_compare_t
 msgpack_compare_blob_internal(as_unpacker *pk1, uint32_t len1, as_unpacker *pk2,
 	uint32_t len2)
 {
-	int64_t minlen = (len1 < len2) ? len1 : len2;
+	uint32_t minlen = (len1 < len2) ? len1 : len2;
 
-	if (minlen < 0) {
-		return MSGPACK_COMPARE_ERROR;
-	}
-
-	int offset1 = pk1->offset;
-	int offset2 = pk2->offset;
+	uint32_t offset1 = pk1->offset;
+	uint32_t offset2 = pk2->offset;
 
 	pk1->offset += len1;
 	pk2->offset += len2;
 
-	for (int64_t i = 0; i < minlen; i++) {
+	for (uint32_t i = 0; i < minlen; i++) {
 		unsigned char c1 = pk1->buffer[offset1++];
 		unsigned char c2 = pk2->buffer[offset2++];
 
@@ -2254,9 +2250,10 @@ msgpack_compare_blob(as_unpacker *pk1, as_unpacker *pk2)
 	int64_t len1 = msgpack_get_blob_len(pk1);
 	int64_t len2 = msgpack_get_blob_len(pk2);
 
-	if (len1 <= 0 || len2 <= 0) {
+	if (len1 < 0 || len2 < 0) {
 		return MSGPACK_COMPARE_ERROR;
 	}
+
 	return msgpack_compare_blob_internal(pk1, (uint32_t)len1, pk2, (uint32_t)len2);
 }
 
@@ -2277,6 +2274,7 @@ msgpack_skip(as_unpacker *pk, size_t n)
 			return false;
 		}
 	}
+
 	return true;
 }
 
