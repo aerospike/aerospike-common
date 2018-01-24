@@ -26,15 +26,6 @@
  ******************************************************************************/
 
 /**
- * Get the number of elements currently in the queue.
- */
-static inline void*
-as_queue_get(as_queue* queue, uint32_t index)
-{
-	return &queue->data[(index % queue->capacity) * queue->item_size];
-}
-
-/**
  *	We have to guard against wrap-around, so call this occasionally. We really
  *	expect this will never get called, however it can be a symptom of a queue
  *	getting really, really deep.
@@ -213,22 +204,5 @@ as_queue_push_head(as_queue *queue, const void* ptr)
 		queue->tail++;
 	}
 	as_queue_unwrap(queue);
-	return true;
-}
-
-bool
-as_queue_pop(as_queue* queue, void* ptr)
-{
-	if (as_queue_empty(queue)) {
-		return false;
-	}
-
-	memcpy(ptr, as_queue_get(queue, queue->head), queue->item_size);
-	queue->head++;
-
-	// This probably keeps the cache fresher because the queue is fully empty.
-	if (queue->head == queue->tail) {
-		queue->head = queue->tail = 0;
-	}
 	return true;
 }

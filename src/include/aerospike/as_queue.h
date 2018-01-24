@@ -17,6 +17,7 @@
 #pragma once
 
 #include <aerospike/as_std.h>
+#include <string.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -143,11 +144,34 @@ AS_EXTERN bool
 as_queue_push_head(as_queue* queue, const void* ptr);
 
 /**
+ * Get item at virtual index.  For internal use only.
+ */
+static inline void*
+as_queue_get(as_queue* queue, uint32_t index)
+{
+	return &queue->data[(index % queue->capacity) * queue->item_size];
+}
+	
+/**
  *	Pop from the head of the queue.
  */
-AS_EXTERN bool
-as_queue_pop(as_queue* queue, void* ptr);
-	
+static inline bool
+as_queue_pop(as_queue* queue, void* ptr)
+{
+	if (as_queue_empty(queue)) {
+		return false;
+	}
+
+	memcpy(ptr, as_queue_get(queue, queue->head), queue->item_size);
+	queue->head++;
+
+	// This probably keeps the cache fresher because the queue is fully empty.
+	if (queue->head == queue->tail) {
+		queue->head = queue->tail = 0;
+	}
+	return true;
+}
+
 /**
  *	Increment total counter if within capacity.
  */
