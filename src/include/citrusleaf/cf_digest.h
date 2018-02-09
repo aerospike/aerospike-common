@@ -79,6 +79,11 @@ cf_digest_compare(const cf_digest *d1, const cf_digest *d2)
 static inline void
 cf_digest_string(const cf_digest *d, char* output)
 {
+	if (d == NULL) {
+		strcpy(output, "NULL");
+		return;
+	}
+
 	char* p = output;
 
 	*p++ = '0';
