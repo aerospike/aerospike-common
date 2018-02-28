@@ -69,6 +69,9 @@ as_password_get_constant_hash(const char* password, char* hash);
 AS_EXTERN bool
 as_password_prompt_hash(const char* password, char* hash);
 
+AS_EXTERN void
+as_password_acquire(char* password_trg, const char* password_src, int size);
+
 /**
  *	Verify password hash. Hash length should always be 60.
  *	Return true if hashes are equal.

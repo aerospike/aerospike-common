@@ -152,3 +152,14 @@ as_password_prompt_hash(const char* password, char* hash)
 	
 	return as_password_get_constant_hash(pass, hash);
 }
+
+void
+as_password_acquire(char* password_trg, const char* password_src, int size)
+{
+	if (password_src && *password_src) {
+		as_strncpy(password_trg, password_src, size);
+	}
+	else {
+		as_password_prompt(password_trg, size);
+	}
+}
