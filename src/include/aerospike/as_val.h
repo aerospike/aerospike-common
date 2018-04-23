@@ -86,7 +86,7 @@ typedef struct as_val_s {
  *	@return An as_val_t value. If the type is unknown, then it will 
  *	be AS_UNDEF.
  */
-#define as_val_type(__v) (__v ? ((as_val *)__v)->type : AS_UNDEF)
+#define as_val_type(__v) (__v ? (as_val_type_e)((as_val *)__v)->type : AS_UNDEF)
 
 /**
  *	Increment the `as_val.count` of a value.
