@@ -21,7 +21,7 @@
 #include <stdint.h>
 
 #if ! defined(_MSC_VER)
-#include <alloca.h>
+#include <stdlib.h>
 #define AS_EXTERN
 
 #else
