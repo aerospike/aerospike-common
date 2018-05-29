@@ -26,12 +26,19 @@ ifeq ($(PREPRO),1)
 endif
 
 ifeq ($(OS),Darwin)
-CC_FLAGS += -D_DARWIN_UNLIMITED_SELECT
-ifneq ($(wildcard /usr/local/opt/openssl/include),)
-  CC_FLAGS += -I/usr/local/opt/openssl/include
-endif
+  CC_FLAGS += -D_DARWIN_UNLIMITED_SELECT
+
+  # homebrew openssl include path
+  ifneq ($(wildcard /usr/local/opt/openssl/include),)
+    CC_FLAGS += -I/usr/local/opt/openssl/include
+  endif
+
+  # macports openssl include path
+  ifneq ($(wildcard /opt/local/include/openssl),)
+    CC_FLAGS += -I/opt/local/include
+  endif
 else
-CC_FLAGS += -finline-functions -rdynamic
+  CC_FLAGS += -finline-functions -rdynamic
 endif
 
 ifneq ($(CF), )
