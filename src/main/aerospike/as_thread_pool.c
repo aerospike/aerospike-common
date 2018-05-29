@@ -217,7 +217,7 @@ as_thread_pool_resize(as_thread_pool* pool, uint32_t thread_size)
 			// new tasks onto thread pool when thread_size is set to zero. Therefore, set
 			// thread_size as early as possible.
 			// Note: There still is a slight possibility that new tasks can still be queued
-			// after disabliing thread pool because the thread_size check is not done under lock.
+			// after disabling thread pool because the thread_size check is not done under lock.
 			// These tasks will either timeout or be suspended until thread pool is resized to > 0
 			// threads.
 			pool->thread_size = thread_size;
