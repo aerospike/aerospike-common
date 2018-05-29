@@ -374,14 +374,14 @@
     <ClCompile Include="..\..\src\main\citrusleaf\cf_random.c">
       <Filter>Source Files\citrusleaf</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\main\citrusleaf\cf_rchash.c">
-      <Filter>Source Files\citrusleaf</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\src\main\citrusleaf\cf_vector.c">
       <Filter>Source Files\citrusleaf</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\main\aerospike\as_queue_mt.c">
       <Filter>Source Files\aerospike</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

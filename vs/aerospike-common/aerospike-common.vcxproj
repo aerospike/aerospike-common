@@ -34,6 +34,7 @@
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="Shared">
+    <Import Project="..\packages\aerospike-client-c-dependencies.1.0.1\build\native\aerospike-client-c-dependencies.targets" Condition="Exists('..\packages\aerospike-client-c-dependencies.1.0.1\build\native\aerospike-client-c-dependencies.targets')" />
   </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="..\props\base.props" />
@@ -201,8 +202,16 @@
     <ClCompile Include="..\..\src\main\citrusleaf\cf_queue.c" />
     <ClCompile Include="..\..\src\main\citrusleaf\cf_queue_priority.c" />
     <ClCompile Include="..\..\src\main\citrusleaf\cf_random.c" />
-    <ClCompile Include="..\..\src\main\citrusleaf\cf_rchash.c" />
     <ClCompile Include="..\..\src\main\citrusleaf\cf_vector.c" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\aerospike-client-c-dependencies.1.0.1\build\native\aerospike-client-c-dependencies.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\aerospike-client-c-dependencies.1.0.1\build\native\aerospike-client-c-dependencies.targets'))" />
+  </Target>
 </Project>

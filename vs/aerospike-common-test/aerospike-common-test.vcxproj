@@ -63,6 +63,9 @@
     </Link>
     <PostBuildEvent />
     <PostBuildEvent />
+    <PostBuildEvent>
+      <Command>XCOPY ..\..\..\aerospike-client-c\vs\packages\aerospike-client-c-dependencies.1.0.1\build\native\lib\x64\$(Configuration)\*.dll "$(TargetDir)" /D /K /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -112,7 +115,17 @@
     <ClCompile Include="..\..\src\test\types\types_string.c" />
     <ClCompile Include="..\..\src\test\types\types_vector.c" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
+    <Import Project="..\packages\aerospike-client-c-dependencies.1.0.1\build\native\aerospike-client-c-dependencies.targets" Condition="Exists('..\packages\aerospike-client-c-dependencies.1.0.1\build\native\aerospike-client-c-dependencies.targets')" />
   </ImportGroup>
+  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
+    <PropertyGroup>
+      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
+    </PropertyGroup>
+    <Error Condition="!Exists('..\packages\aerospike-client-c-dependencies.1.0.1\build\native\aerospike-client-c-dependencies.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\aerospike-client-c-dependencies.1.0.1\build\native\aerospike-client-c-dependencies.targets'))" />
+  </Target>
 </Project>
