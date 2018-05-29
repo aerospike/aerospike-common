@@ -19,9 +19,9 @@
 #include <inttypes.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <stdlib.h>
 
 #if ! defined(_MSC_VER)
-#include <alloca.h>
 #define AS_EXTERN
 
 #else
