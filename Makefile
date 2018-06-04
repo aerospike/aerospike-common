@@ -37,6 +37,8 @@ ifeq ($(OS),Darwin)
   ifneq ($(wildcard /opt/local/include/openssl),)
     CC_FLAGS += -I/opt/local/include
   endif
+else ifeq ($(OS),FreeBSD)
+  CC_FLAGS += -finline-functions
 else
   CC_FLAGS += -finline-functions -rdynamic
 endif

@@ -69,7 +69,7 @@ cf_strndup(const char *s, size_t n)
 void*
 cf_valloc(size_t sz)
 {
-#if defined(_MSC_VER)
+#if defined(_MSC_VER) || defined(__FreeBSD__)
 	// valloc is not used by the client.
 	// Since this file is for the client only, just return null.
 	return NULL;

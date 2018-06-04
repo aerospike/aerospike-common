@@ -31,7 +31,7 @@ static uint32_t rand_buf_off = 0;
 static int  seeded = 0;
 static pthread_mutex_t rand_buf_lock = PTHREAD_MUTEX_INITIALIZER;
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__FreeBSD__)
 #include <unistd.h>
 
 int

@@ -80,6 +80,25 @@
 #define cf_swap_from_le64(_n) (_n)
 #endif // _MSC_VER
 
+#if defined(__FreeBSD__)
+#include <sys/endian.h>
+
+#define cf_swap_to_be16(_n) htobe16(_n)
+#define cf_swap_to_le16(_n) htole16(_n)
+#define cf_swap_from_be16(_n) be16toh(_n)
+#define cf_swap_from_le16(_n) le16toh(_n)
+
+#define cf_swap_to_be32(_n) htobe32(_n)
+#define cf_swap_to_le32(_n) htole32(_n)
+#define cf_swap_from_be32(_n) be32toh(_n)
+#define cf_swap_from_le32(_n) le32toh(_n)
+
+#define cf_swap_to_be64(_n) htobe64(_n)
+#define cf_swap_to_le64(_n) htole64(_n)
+#define cf_swap_from_be64(_n) be64toh(_n)
+#define cf_swap_from_le64(_n) le64toh(_n)
+#endif // __FreeBSD__
+
 static inline double
 cf_swap_to_big_float64(double d)
 {

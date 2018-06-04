@@ -38,7 +38,7 @@ typedef uint64_t cf_clock;
  * LINUX INLINE FUNCTIONS
  ******************************************************************************/
 
-#if defined(__linux__)
+#if defined(__linux__) || defined(__FreeBSD__)
 
 // MONOTONIC
 
