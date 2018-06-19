@@ -113,6 +113,7 @@ as_string_builder_append_char(as_string_builder* sb, char value)
 {
 	if (sb->length + 1 < sb->capacity) {
 		sb->data[sb->length++] = value;
+		sb->data[sb->length] = 0;
 		return true;
 	}
 	
