@@ -80,7 +80,7 @@ ck_pr_md_load_ptr(const void *target)
 	void *r;
 
 	ck_pr_barrier();
-	r = CK_CC_DECONST_PTR(CK_PR_ACCESS(target));
+	r = CK_CC_DECONST_PTR(*(void **)CK_PR_ACCESS(target));
 	ck_pr_barrier();
 
 	return r;
@@ -91,7 +91,7 @@ ck_pr_md_store_ptr(void *target, const void *v)
 {
 
 	ck_pr_barrier();
-	CK_PR_ACCESS(target) = CK_CC_DECONST_PTR(v);
+	CK_PR_ACCESS(*(void **)target) = CK_CC_DECONST_PTR(v);
 	ck_pr_barrier();
 	return;
 }
