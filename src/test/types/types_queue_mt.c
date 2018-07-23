@@ -199,6 +199,8 @@ TEST(types_queue_mt_thread, "types_queue_mt_thread")
 	pthread_join(thread2, NULL);
 
 	assert(count == max);
+
+	as_queue_mt_destroy(&shared_queue);
 }
 
 /******************************************************************************
