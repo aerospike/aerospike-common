@@ -187,22 +187,13 @@ as_queue_push_head(as_queue *queue, const void* ptr)
 		}
 	}
 
-	if (as_queue_empty(queue)) {
-		// Easy case, tail insert is head insert.
-		memcpy(as_queue_get(queue, queue->tail), ptr, queue->item_size);
-		queue->tail++;
+	if (queue->head == 0) {
+		queue->head += queue->capacity;
+		queue->tail += queue->capacity;
 	}
-	else if (queue->head > 0) {
-		// Another easy case, there's space up front.
-		queue->head--;
-		memcpy(as_queue_get(queue, queue->head), ptr, queue->item_size);
-	}
-	else {
-		// Hard case, we're going to have to shift everything back.
-		memmove(as_queue_get(queue, 1), as_queue_get(queue, 0), as_queue_size(queue) * queue->item_size);
-		memcpy(as_queue_get(queue, 0), ptr, queue->item_size);
-		queue->tail++;
-	}
+
+	queue->head--;
+	memcpy(as_queue_get(queue, queue->head), ptr, queue->item_size);
 	as_queue_unwrap(queue);
 	return true;
 }
