@@ -52,7 +52,13 @@ TEST( string_builder_resize_stack, "string builder resize stack" ) {
 	assert(sb.free);
 	
 	// This append should succeed without resize.
-	status = as_string_builder_append(&sb, "012345678");
+	status = as_string_builder_append(&sb, "01234567");
+	assert(status);
+	assert(strcmp(sb.data, "abcdefghij01234567") == 0);
+	assert(sb.capacity == 20);
+
+	// This append should succeed without resize.
+	status = as_string_builder_append_char(&sb, '8');
 	assert(status);
 	assert(strcmp(sb.data, "abcdefghij012345678") == 0);
 	assert(sb.capacity == 20);

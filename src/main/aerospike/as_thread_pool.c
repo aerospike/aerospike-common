@@ -96,6 +96,7 @@ as_thread_pool_create_threads(as_thread_pool* pool, uint32_t count)
 			threads_created++;
 		}
 	}
+	pthread_attr_destroy(&attrs);
 	return threads_created;
 }
 

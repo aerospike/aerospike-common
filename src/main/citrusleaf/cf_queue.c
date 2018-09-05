@@ -301,24 +301,13 @@ cf_queue_push_head(cf_queue *q, const void *ptr)
 		}
 	}
 
-	// Easy case, tail insert is head insert.
-	if (CF_Q_EMPTY(q)) {
-		memcpy(CF_Q_ELEM_PTR(q, q->write_offset), ptr, q->element_sz);
-		q->write_offset++;
+	if (q->read_offset == 0) {
+		q->read_offset += q->alloc_sz;
+		q->write_offset += q->alloc_sz;
 	}
-	// Another easy case, there's space up front.
-	else if (q->read_offset > 0) {
-		q->read_offset--;
-		memcpy(CF_Q_ELEM_PTR(q, q->read_offset), ptr, q->element_sz);
-	}
-	// Hard case, we're going to have to shift everything back.
-	// TODO - we can do better than this...
-	else {
-		memmove(CF_Q_ELEM_PTR(q, 1), CF_Q_ELEM_PTR(q, 0),
-				q->element_sz * CF_Q_SZ(q));
-		memcpy(CF_Q_ELEM_PTR(q, 0), ptr, q->element_sz);
-		q->write_offset++;
-	}
+
+	q->read_offset--;
+	memcpy(CF_Q_ELEM_PTR(q, q->read_offset), ptr, q->element_sz);
 
 	cf_queue_unwrap(q);
 
