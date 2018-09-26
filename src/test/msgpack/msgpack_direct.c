@@ -186,7 +186,9 @@ random_val()
 
 TEST( msgpack_size, "size deep list" )
 {
-	uint8_t buf[MAX_BUF_SIZE];
+	// uint8_t buf[MAX_BUF_SIZE] will cause stack overflow on windows.
+	// Use malloc instead.
+	uint8_t* buf = malloc(MAX_BUF_SIZE);
 
 	memset(buf, 0x91, MAX_BUF_SIZE - 1);
 	buf[MAX_BUF_SIZE - 1] = 0x90;
@@ -198,18 +200,22 @@ TEST( msgpack_size, "size deep list" )
 	};
 
 	int64_t size = as_unpack_size(&pk);
+	free(buf);
 
 	assert( size == MAX_BUF_SIZE );
 }
 
 TEST( msgpack_compare, "compare deep list" )
 {
-	uint8_t buf[MAX_BUF_SIZE];
+	// uint8_t buf[MAX_BUF_SIZE] will cause stack overflow on windows.
+	// Use malloc instead.
+	uint8_t* buf = malloc(MAX_BUF_SIZE);
 
 	memset(buf, 0x91, MAX_BUF_SIZE - 1);
 	buf[MAX_BUF_SIZE - 1] = 0x90;
 
 	msgpack_compare_t ret = as_unpack_buf_compare(buf, MAX_BUF_SIZE, buf, MAX_BUF_SIZE);
+	free(buf);
 
 	assert( ret == MSGPACK_COMPARE_EQUAL );
 }
@@ -434,17 +440,19 @@ TEST( msgpack_int_direct, "signed int direct" )
 
 TEST( msgpack_deep, "deep list/map" )
 {
-	uint8_t buf0[MAX_BUF_SIZE];
-	uint8_t buf1[MAX_BUF_SIZE];
+	// uint8_t buf[MAX_BUF_SIZE] will cause stack overflow on windows.
+	// Use malloc instead.
+	uint8_t* buf0 = malloc(MAX_BUF_SIZE);
+	uint8_t* buf1 = malloc(MAX_BUF_SIZE);
 
 	as_packer pk0 = {
 			.buffer = buf0,
-			.capacity = sizeof(buf0)
+			.capacity = MAX_BUF_SIZE
 	};
 
 	as_packer pk1 = {
 			.buffer = buf1,
-			.capacity = sizeof(buf1)
+			.capacity = MAX_BUF_SIZE
 	};
 
 	for (int i = 0; i < 300; i++) {
@@ -609,6 +617,9 @@ TEST( msgpack_deep, "deep list/map" )
 	cmp = compare_bufs(pk0.buffer + shift, pk0.offset - shift,
 			pk1.buffer + shift, pk1.offset - shift);
 	assert_int_eq(cmp, MSGPACK_COMPARE_GREATER);
+
+	free(buf0);
+	free(buf1);
 }
 
 /******************************************************************************

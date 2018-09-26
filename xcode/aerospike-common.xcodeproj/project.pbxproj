@@ -15,6 +15,7 @@
 		BF6B74611AFAB3B70014B530 /* as_buffer_pool.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B74601AFAB3B70014B530 /* as_buffer_pool.c */; };
 		BF6B7B281926E7F10081A75F /* as_timer.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B7B261926E7F10081A75F /* as_timer.c */; };
 		BF6B7B291926E7F10081A75F /* as_vector.c in Sources */ = {isa = PBXBuildFile; fileRef = BF6B7B271926E7F10081A75F /* as_vector.c */; };
+		BF7E78A9215C235800D0C520 /* as_msgpack_ext.c in Sources */ = {isa = PBXBuildFile; fileRef = BF7E78A8215C235800D0C520 /* as_msgpack_ext.c */; };
 		BFA4BAD11B4B4C5C002612A7 /* as_double.c in Sources */ = {isa = PBXBuildFile; fileRef = BFA4BAD01B4B4C5C002612A7 /* as_double.c */; };
 		BFB7BC5E18CA4AB500F0D4A0 /* cf_queue_priority.c in Sources */ = {isa = PBXBuildFile; fileRef = BFB7BC5D18CA4AB500F0D4A0 /* cf_queue_priority.c */; };
 		BFBA04BB1947DE0800F9924E /* as_password.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBA04B91947DE0800F9924E /* as_password.c */; };
@@ -71,6 +72,7 @@
 		BF6B74601AFAB3B70014B530 /* as_buffer_pool.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_buffer_pool.c; path = ../src/main/aerospike/as_buffer_pool.c; sourceTree = "<group>"; };
 		BF6B7B261926E7F10081A75F /* as_timer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_timer.c; path = ../src/main/aerospike/as_timer.c; sourceTree = "<group>"; };
 		BF6B7B271926E7F10081A75F /* as_vector.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_vector.c; path = ../src/main/aerospike/as_vector.c; sourceTree = "<group>"; };
+		BF7E78A8215C235800D0C520 /* as_msgpack_ext.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_msgpack_ext.c; path = ../src/main/aerospike/as_msgpack_ext.c; sourceTree = "<group>"; };
 		BFA4BAD01B4B4C5C002612A7 /* as_double.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_double.c; path = ../src/main/aerospike/as_double.c; sourceTree = "<group>"; };
 		BFB7BC5D18CA4AB500F0D4A0 /* cf_queue_priority.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cf_queue_priority.c; path = ../src/main/citrusleaf/cf_queue_priority.c; sourceTree = "<group>"; };
 		BFBA04B91947DE0800F9924E /* as_password.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_password.c; path = ../src/main/aerospike/as_password.c; sourceTree = "<group>"; };
@@ -209,6 +211,7 @@
 				BFBB7F0818C001560080851E /* as_module.c */,
 				BFBB7F0918C001560080851E /* as_msgpack_serializer.c */,
 				BFBB7F0A18C001560080851E /* as_msgpack.c */,
+				BF7E78A8215C235800D0C520 /* as_msgpack_ext.c */,
 				BFBB7F0B18C001560080851E /* as_nil.c */,
 				BFBB7F0C18C001560080851E /* as_pair.c */,
 				BFBA04B91947DE0800F9924E /* as_password.c */,
@@ -339,6 +342,7 @@
 				BFBB7F2718C001560080851E /* as_module.c in Sources */,
 				BFBA04BB1947DE0800F9924E /* as_password.c in Sources */,
 				BFBB7F2118C001560080851E /* as_integer.c in Sources */,
+				BF7E78A9215C235800D0C520 /* as_msgpack_ext.c in Sources */,
 				BFBB7F2E18C001560080851E /* as_serializer.c in Sources */,
 				BFC65B081C90C9400079DF5A /* as_random.c in Sources */,
 				BFBB7F1E18C001560080851E /* as_hashmap_iterator_hooks.c in Sources */,

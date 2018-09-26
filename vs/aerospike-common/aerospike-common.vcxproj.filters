@@ -222,6 +222,9 @@
     <ClInclude Include="..\..\src\include\aerospike\as_queue_mt.h">
       <Filter>Header Files\aerospike</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_msgpack_ext.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main\aerospike\as_aerospike.c">
@@ -378,6 +381,9 @@
       <Filter>Source Files\citrusleaf</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\main\aerospike\as_queue_mt.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_msgpack_ext.c">
       <Filter>Source Files\aerospike</Filter>
     </ClCompile>
   </ItemGroup>
