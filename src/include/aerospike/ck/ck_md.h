@@ -28,11 +28,19 @@
 #define CK_MD_H
 
 #ifndef CK_MD_CACHELINE
+#if defined(__powerpc64__)
+#define CK_MD_CACHELINE (128)
+#else
 #define CK_MD_CACHELINE (64)
+#endif
 #endif
 
 #ifndef CK_MD_PAGESIZE
+#if defined(__powerpc64__)
+#define CK_MD_PAGESIZE (65536)
+#else
 #define CK_MD_PAGESIZE (4096)
+#endif
 #endif
 
 #ifndef CK_MD_RTM_DISABLE
