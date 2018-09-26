@@ -97,6 +97,17 @@ static inline uint32_t as_pack_bool_size()
 int as_pack_nil(as_packer *pk);
 int as_pack_bool(as_packer *pk, bool val);
 
+static inline uint32_t as_pack_cmp_inf_size()
+{
+	return 3;
+}
+static inline uint32_t as_pack_cmp_wildcard_size()
+{
+	return 3;
+}
+int as_pack_cmp_inf(as_packer *pk);
+int as_pack_cmp_wildcard(as_packer *pk);
+
 uint32_t as_pack_uint64_size(uint64_t val);
 uint32_t as_pack_int64_size(int64_t val);
 int as_pack_uint64(as_packer *pk, uint64_t val);

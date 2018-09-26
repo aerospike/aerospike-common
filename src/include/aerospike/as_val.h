@@ -32,20 +32,25 @@ extern "C" {
 typedef uint8_t as_val_t;
 
 typedef enum {
-    AS_UNDEF        = 0,
-    AS_UNKNOWN      = 0,    //<! @deprecated
-    AS_NIL          = 1,
-    AS_BOOLEAN      = 2,
-    AS_INTEGER      = 3,
-    AS_STRING       = 4,
-    AS_LIST         = 5,
-    AS_MAP          = 6,
-    AS_REC          = 7,
-    AS_PAIR         = 8,
-    AS_BYTES        = 9,
-    AS_DOUBLE       = 10,
-    AS_GEOJSON      = 11,
-    AS_VAL_T_MAX
+	AS_UNDEF        = 0,
+	AS_UNKNOWN      = 0,    //<! @deprecated
+	AS_NIL          = 1,
+	AS_BOOLEAN      = 2,
+	AS_INTEGER      = 3,
+	AS_STRING       = 4,
+	AS_LIST         = 5,
+	AS_MAP          = 6,
+	AS_REC          = 7,
+	AS_PAIR         = 8,
+	AS_BYTES        = 9,
+	AS_DOUBLE       = 10,
+	AS_GEOJSON      = 11,
+
+	// Non-storage types, need to be after storage types.
+	AS_CMP_WILDCARD, // not a storage type
+	AS_CMP_INF,      // not a storage type, must be last (biggest value)
+
+	AS_VAL_T_MAX
 } as_val_type_e;
 
 /**

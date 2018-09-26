@@ -89,6 +89,7 @@ AEROSPIKE-OBJECTS += as_map.o
 AEROSPIKE-OBJECTS += as_memtracker.o
 AEROSPIKE-OBJECTS += as_module.o
 AEROSPIKE-OBJECTS += as_msgpack.o
+AEROSPIKE-OBJECTS += as_msgpack_ext.o
 AEROSPIKE-OBJECTS += as_msgpack_serializer.o
 AEROSPIKE-OBJECTS += as_nil.o
 AEROSPIKE-OBJECTS += as_pair.o

@@ -14,12 +14,17 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 #include <aerospike/as_msgpack.h>
+
+#include <string.h>
+
+#include <aerospike/as_msgpack_ext.h>
 #include <aerospike/as_serializer.h>
 #include <aerospike/as_types.h>
+
 #include <citrusleaf/alloc.h>
 #include <citrusleaf/cf_byte_order.h>
-#include <string.h>
 
 /******************************************************************************
  * INTERNAL TYPEDEFS & CONSTANTS
@@ -27,6 +32,10 @@
 
 #define MSGPACK_COMPARE_MAX_DEPTH	256
 #define MSGPACK_PARSE_MEMBLOCK_STATE_COUNT	256
+
+#define ASVAL_CMP_EXT_TYPE	0xFF
+#define ASVAL_CMP_WILDCARD	0x00
+#define ASVAL_CMP_INF		0x01
 
 typedef struct msgpack_parse_state_s {
 	uint32_t len1;
@@ -76,13 +85,18 @@ static msgpack_compare_t msgpack_compare_blob_internal(as_unpacker *pk1, uint32_
 static inline msgpack_compare_t msgpack_compare_blob(as_unpacker *pk1, as_unpacker *pk2);
 static inline msgpack_compare_t msgpack_compare_int64_t(int64_t x1, int64_t x2);
 static bool msgpack_skip(as_unpacker *pk, size_t n);
-static bool msgpack_compare_unwind(as_unpacker *pk1, as_unpacker *pk2, msgpack_parse_memblock *block, msgpack_parse_state *state);
+static bool msgpack_compare_unwind(as_unpacker *pk1, as_unpacker *pk2, msgpack_parse_memblock *block, const msgpack_parse_state *state);
+static bool msgpack_compare_unwind_all(as_unpacker *pk1, as_unpacker *pk2, msgpack_parse_memblock *block);
 static msgpack_compare_t msgpack_compare_list(as_unpacker *pk1, as_unpacker *pk2, size_t depth);
 static msgpack_compare_t msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth);
 static inline msgpack_compare_t msgpack_peek_compare_type(const as_unpacker *pk1, const as_unpacker *pk2, as_val_t *type);
 static msgpack_compare_t msgpack_compare_non_recursive(as_unpacker *pk1, as_unpacker *pk2, msgpack_parse_memblock *block, msgpack_parse_state *state);
 static inline msgpack_compare_t msgpack_compare_type(as_unpacker *pk1, as_unpacker *pk2, as_val_t type, size_t depth);
-static inline msgpack_compare_t msgpack_compare_internal(as_unpacker *pk1, as_unpacker *pk2, size_t depth);
+static inline msgpack_compare_t msgpack_compare_internal(as_unpacker *pk1, as_unpacker *pk2, size_t depth, as_val_t *type);
+
+// pack direct
+static int as_pack_inf_internal(as_packer *pk, bool resize);
+static int as_pack_wildcard_internal(as_packer *pk, bool resize);
 
 // unpack direct
 static int64_t unpack_list_elements_size(as_unpacker *pk, uint32_t ele_count, uint32_t depth);
@@ -686,6 +700,12 @@ as_pack_val(as_packer *pk, const as_val *val)
 	case AS_GEOJSON:
 		rc = pack_geojson(pk, (as_geojson *)val);
 		break;
+	case AS_CMP_WILDCARD:
+		rc = as_pack_wildcard_internal(pk, true);
+		break;
+	case AS_CMP_INF:
+		rc = as_pack_inf_internal(pk, true);
+		break;
 	default:
 		return -2;
 	}
@@ -747,6 +767,26 @@ unpack_nil(as_val **v)
 {
 	*v = (as_val *)&as_nil;
 	return 0;
+}
+
+static inline int
+unpack_ext(as_unpacker *pk, uint8_t type, as_val **v)
+{
+	uint8_t ext_type = pk->buffer[pk->offset++];
+	uint8_t data = pk->buffer[pk->offset++];
+
+	if (ext_type == ASVAL_CMP_EXT_TYPE) {
+		if (data == ASVAL_CMP_WILDCARD) {
+			*v = (as_val *)&as_cmp_wildcard;
+			return 0;
+		}
+		else if (data == ASVAL_CMP_INF) {
+			*v = (as_val *)&as_cmp_inf;
+			return 0;
+		}
+	}
+
+	return -1;
 }
 
 static inline int
@@ -1036,6 +1076,9 @@ as_unpack_val(as_unpacker *pk, as_val **val)
 	case 0xdf: // map with 32 bit header
 		return unpack_map(pk, extract_uint32(pk), val);
 
+	case 0xd4: // fixext 1
+		return unpack_ext(pk, type, val);
+
 	default:
 		if ((type & 0xe0) == 0xa0) { // raw bytes with 8 bit combined header
 			return unpack_blob(pk, (uint32_t)(type & 0x1f), val);
@@ -1075,6 +1118,32 @@ int
 as_pack_bool(as_packer *pk, bool val)
 {
 	return pack_byte(pk, val ? 0xc3 : 0xc2, false);
+}
+
+static int
+as_pack_inf_internal(as_packer *pk, bool resize)
+{
+	uint8_t fixext[3] = {0xD4, ASVAL_CMP_EXT_TYPE, ASVAL_CMP_INF};
+	return pack_append(pk, fixext, 3, resize);
+}
+
+int
+as_pack_cmp_inf(as_packer *pk)
+{
+	return as_pack_inf_internal(pk, false);
+}
+
+static int
+as_pack_wildcard_internal(as_packer *pk, bool resize)
+{
+	uint8_t fixext[3] = {0xD4, ASVAL_CMP_EXT_TYPE, ASVAL_CMP_WILDCARD};
+	return pack_append(pk, fixext, 3, resize);
+}
+
+int
+as_pack_cmp_wildcard(as_packer *pk)
+{
+	return as_pack_wildcard_internal(pk, false);
 }
 
 uint32_t
@@ -1503,6 +1572,24 @@ as_unpack_peek_type(const as_unpacker *pk)
 	case 0xde: // map with 16 bit header
 	case 0xdf: // map with 32 bit header
 		return AS_MAP;
+
+	case 0xd4: {
+		uint8_t ext_type = pk->buffer[pk->offset + 1];
+
+		if (ext_type == ASVAL_CMP_EXT_TYPE) {
+			uint8_t data = pk->buffer[pk->offset + 2];
+
+			if (data == ASVAL_CMP_WILDCARD) {
+				return AS_CMP_WILDCARD;
+			}
+
+			if (data == ASVAL_CMP_INF) {
+				return AS_CMP_INF;
+			}
+		}
+
+		return AS_UNDEF;
+	}
 
 	default:
 		if ((type & 0xe0) == 0xa0) { // raw bytes with 8 bit combined header
@@ -2280,28 +2367,45 @@ msgpack_skip(as_unpacker *pk, size_t n)
 
 static bool
 msgpack_compare_unwind(as_unpacker *pk1, as_unpacker *pk2,
-		msgpack_parse_memblock *block, msgpack_parse_state *state)
+		msgpack_parse_memblock *block, const msgpack_parse_state *state)
 {
-	while (true) {
-		if (state->type == AS_LIST) {
-			if (! msgpack_skip(pk1, state->len1 - state->index)) {
-				return false;
-			}
-
-			if (! msgpack_skip(pk2, state->len2 - state->index)) {
-				return false;
-			}
+	if (state->type == AS_LIST) {
+		if (! msgpack_skip(pk1, state->len1 - state->index)) {
+			return false;
 		}
-		else if (state->type == AS_MAP) {
-			if (! msgpack_skip(pk1,
-					2 * (state->len1 - state->index) - state->map_pair)) {
-				return false;
-			}
 
-			if (! msgpack_skip(pk2,
-					2 * (state->len2 - state->index) - state->map_pair)) {
-				return false;
-			}
+		if (! msgpack_skip(pk2, state->len2 - state->index)) {
+			return false;
+		}
+	}
+	else if (state->type == AS_MAP) {
+		if (! msgpack_skip(pk1,
+				2 * (state->len1 - state->index) - state->map_pair)) {
+			return false;
+		}
+
+		if (! msgpack_skip(pk2,
+				2 * (state->len2 - state->index) - state->map_pair)) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static bool
+msgpack_compare_unwind_all(as_unpacker *pk1, as_unpacker *pk2,
+		msgpack_parse_memblock *block)
+{
+	if (block->count == 0) {
+		return true;
+	}
+
+	const msgpack_parse_state *state = &block->buffer[block->count - 1];
+
+	while (true) {
+		if (! msgpack_compare_unwind(pk1, pk2, block, state)) {
+			return false;
 		}
 
 		if (! msgpack_parse_memblock_has_prev(block)) {
@@ -2328,7 +2432,8 @@ msgpack_compare_list(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 		msgpack_compare_t ret = msgpack_compare_non_recursive(pk1, pk2, block,
 				state);
 
-		if (! msgpack_compare_unwind(pk1, pk2, block, state)) {
+		if (ret == MSGPACK_COMPARE_ERROR ||
+				! msgpack_compare_unwind_all(pk1, pk2, block)) {
 			msgpack_parse_memblock_destroy(block);
 			return MSGPACK_COMPARE_ERROR;
 		}
@@ -2347,9 +2452,12 @@ msgpack_compare_list(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 	}
 
 	for (int64_t i = 0; i < minlen; i++) {
-		msgpack_compare_t ret = msgpack_compare_internal(pk1, pk2, depth);
+		as_val_t type;
+		msgpack_compare_t ret = msgpack_compare_internal(pk1, pk2, depth,
+				&type);
 
-		if (ret != MSGPACK_COMPARE_EQUAL) {
+		if (ret != MSGPACK_COMPARE_EQUAL || (ret == MSGPACK_COMPARE_EQUAL &&
+				type == AS_CMP_WILDCARD)) {
 			if (! msgpack_skip(pk1, len1 - i - 1)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
@@ -2361,6 +2469,16 @@ msgpack_compare_list(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 			return ret;
 		}
 	}
+
+	if (! msgpack_skip(pk1, len1 - minlen)) {
+		return MSGPACK_COMPARE_ERROR;
+	}
+
+	if (! msgpack_skip(pk2, len2 - minlen)) {
+		return MSGPACK_COMPARE_ERROR;
+	}
+
+	MSGPACK_COMPARE_RET_LESS_OR_GREATER(len1, len2);
 
 	return MSGPACK_COMPARE_EQUAL;
 }
@@ -2383,6 +2501,13 @@ msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 
 		msgpack_compare_t ret = msgpack_compare_non_recursive(pk1, pk2, block,
 				state);
+
+		if (ret == MSGPACK_COMPARE_ERROR ||
+				! msgpack_compare_unwind_all(pk1, pk2, block)) {
+			msgpack_parse_memblock_destroy(block);
+			return MSGPACK_COMPARE_ERROR;
+		}
+
 		msgpack_parse_memblock_destroy(block);
 
 		return ret;
@@ -2396,12 +2521,25 @@ msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 		return MSGPACK_COMPARE_ERROR;
 	}
 
-	MSGPACK_COMPARE_RET_LESS_OR_GREATER(len1, len2);
+	if (len1 != len2) {
+		if (! msgpack_skip(pk1, len1)) {
+			return MSGPACK_COMPARE_ERROR;
+		}
+
+		if (! msgpack_skip(pk2, len2)) {
+			return MSGPACK_COMPARE_ERROR;
+		}
+
+		MSGPACK_COMPARE_RET_LESS_OR_GREATER(len1, len2);
+	}
 
 	for (int64_t i = 0; i < minlen; i++) {
-		msgpack_compare_t ret = msgpack_compare_internal(pk1, pk2, depth);
+		as_val_t type;
+		msgpack_compare_t ret = msgpack_compare_internal(pk1, pk2, depth,
+				&type);
 
-		if (ret != MSGPACK_COMPARE_EQUAL) {
+		if (ret != MSGPACK_COMPARE_EQUAL|| (ret == MSGPACK_COMPARE_EQUAL &&
+				type == AS_CMP_WILDCARD)) {
 			if (! msgpack_skip(pk1, 2 * (len1 - i) - 1)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
@@ -2413,9 +2551,10 @@ msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 			return ret;
 		}
 
-		ret = msgpack_compare_internal(pk1, pk2, depth);
+		ret = msgpack_compare_internal(pk1, pk2, depth, &type);
 
-		if (ret != MSGPACK_COMPARE_EQUAL) {
+		if (ret != MSGPACK_COMPARE_EQUAL|| (ret == MSGPACK_COMPARE_EQUAL &&
+				type == AS_CMP_WILDCARD)) {
 			if (! msgpack_skip(pk1, 2 * (len1 - i - 1))) {
 				return MSGPACK_COMPARE_ERROR;
 			}
@@ -2453,6 +2592,12 @@ msgpack_peek_compare_type(const as_unpacker *pk1, const as_unpacker *pk2,
 		return MSGPACK_COMPARE_ERROR;
 	}
 
+	if (type1 == AS_CMP_WILDCARD || type2 == AS_CMP_WILDCARD) {
+		*type = AS_CMP_WILDCARD;
+
+		return MSGPACK_COMPARE_EQUAL;
+	}
+
 	MSGPACK_COMPARE_RET_LESS_OR_GREATER(type1, type2);
 
 	*type = type1;
@@ -2466,11 +2611,20 @@ msgpack_compare_non_recursive(as_unpacker *pk1, as_unpacker *pk2,
 {
 	while (state) {
 		while (state->index >= state->len) {
+			if (! msgpack_compare_unwind(pk1, pk2, block, state)) {
+				return MSGPACK_COMPARE_ERROR;
+			}
+
 			if (! msgpack_parse_memblock_has_prev(block)) {
 				return state->default_compare_type;
 			}
 
+			uint32_t len1 = state->len1;
+			uint32_t len2 = state->len2;
+
 			state = msgpack_parse_memblock_prev(&block);
+
+			MSGPACK_COMPARE_RET_LESS_OR_GREATER(len1, len2);
 		}
 
 		if (state->type == AS_LIST) {
@@ -2492,12 +2646,8 @@ msgpack_compare_non_recursive(as_unpacker *pk1, as_unpacker *pk2,
 		as_val_t type;
 		msgpack_compare_t ret = msgpack_peek_compare_type(pk1, pk2, &type);
 
-		if (ret == MSGPACK_COMPARE_ERROR) {
+		if (ret == MSGPACK_COMPARE_ERROR || ret == MSGPACK_COMPARE_END) {
 			return MSGPACK_COMPARE_ERROR;
-		}
-
-		if (ret == MSGPACK_COMPARE_END) {
-			return MSGPACK_COMPARE_EQUAL;
 		}
 
 		if (ret != MSGPACK_COMPARE_EQUAL) {
@@ -2527,10 +2677,28 @@ msgpack_compare_non_recursive(as_unpacker *pk1, as_unpacker *pk2,
 				return MSGPACK_COMPARE_ERROR;
 			}
 
+			MSGPACK_COMPARE_RET_LESS_OR_GREATER(state->len1, state->len2);
 			continue;
 		}
 
-		ret = msgpack_compare_internal(pk1, pk2, 0);
+		if (type == AS_CMP_WILDCARD) {
+			if (! msgpack_skip(pk1, 1) || ! msgpack_skip(pk2, 1)) {
+				return MSGPACK_COMPARE_ERROR;
+			}
+
+			if (! msgpack_compare_unwind(pk1, pk2, block, state)) {
+				return MSGPACK_COMPARE_ERROR;
+			}
+
+			if (! msgpack_parse_memblock_has_prev(block)) {
+				return MSGPACK_COMPARE_EQUAL;
+			}
+
+			state = msgpack_parse_memblock_prev(&block);
+			continue;
+		}
+
+		ret = msgpack_compare_type(pk1, pk2, type, 0);
 
 		if (ret != MSGPACK_COMPARE_EQUAL) {
 			return ret;
@@ -2578,6 +2746,11 @@ msgpack_compare_type(as_unpacker *pk1, as_unpacker *pk2, as_val_t type,
 		return msgpack_compare_double(pk1, pk2);
 	case AS_GEOJSON:
 		return msgpack_compare_blob(pk1, pk2);
+	case AS_CMP_WILDCARD:
+	case AS_CMP_INF:
+		pk1->offset += 3;
+		pk2->offset += 3;
+		break;
 	default:
 		return MSGPACK_COMPARE_ERROR;
 	}
@@ -2586,12 +2759,16 @@ msgpack_compare_type(as_unpacker *pk1, as_unpacker *pk2, as_val_t type,
 }
 
 static inline msgpack_compare_t
-msgpack_compare_internal(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
+msgpack_compare_internal(as_unpacker *pk1, as_unpacker *pk2, size_t depth,
+		as_val_t *type)
 {
-	as_val_t type;
-	msgpack_compare_t ret = msgpack_peek_compare_type(pk1, pk2, &type);
+	msgpack_compare_t ret = msgpack_peek_compare_type(pk1, pk2, type);
 
-	if (ret != MSGPACK_COMPARE_EQUAL) {
+	if (ret == MSGPACK_COMPARE_ERROR || ret == MSGPACK_COMPARE_END) {
+		return MSGPACK_COMPARE_ERROR;
+	}
+
+	if (ret != MSGPACK_COMPARE_EQUAL || *type == AS_CMP_WILDCARD) {
 		if (as_unpack_size(pk1) < 0) {
 			return MSGPACK_COMPARE_ERROR;
 		}
@@ -2603,7 +2780,7 @@ msgpack_compare_internal(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 		return ret;
 	}
 
-	return msgpack_compare_type(pk1, pk2, type, depth);
+	return msgpack_compare_type(pk1, pk2, *type, depth);
 }
 
 msgpack_compare_t
@@ -2620,12 +2797,14 @@ as_unpack_buf_compare(const uint8_t *buf1, uint32_t size1, const uint8_t *buf2,
 			.offset = 0,
 			.length = size2
 	};
+	as_val_t type;
 
-	return msgpack_compare_internal(&pk1, &pk2, 0);
+	return msgpack_compare_internal(&pk1, &pk2, 0, &type);
 }
 
 msgpack_compare_t
 as_unpack_compare(as_unpacker *pk1, as_unpacker *pk2)
 {
-	return msgpack_compare_internal(pk1, pk2, 0);
+	as_val_t type;
+	return msgpack_compare_internal(pk1, pk2, 0, &type);
 }
