@@ -15,6 +15,8 @@
  * the License.
  */
 #pragma once
+#ifndef CF_ATOMIC_H
+#define CF_ATOMIC_H
 
 /**
  * SYNOPSIS
@@ -28,6 +30,78 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#ifdef GCC_ATOMICS
+
+typedef uint64_t cf_atomic64;
+typedef uint32_t cf_atomic32;
+typedef uint64_t cf_atomic_p;
+typedef uint64_t cf_atomic_int;
+
+#define cf_atomic32_get(a) __atomic_load_n((a), __ATOMIC_SEQ_CST)
+#define cf_atomic32_set(a, b) __atomic_store_n((a), (b), __ATOMIC_SEQ_CST)
+#define cf_atomic32_sub(a, b) __atomic_sub_fetch((a), (b), __ATOMIC_SEQ_CST)
+#define cf_atomic32_add(a, b) __atomic_add_fetch((a), (b), __ATOMIC_SEQ_CST)
+#define cf_atomic32_incr(a)  __atomic_add_fetch((a), 1, __ATOMIC_SEQ_CST)
+#define cf_atomic32_decr(a)  __atomic_sub_fetch((a), 1, __ATOMIC_SEQ_CST)
+
+#define cf_atomic64_get(a) __atomic_load_n((a), __ATOMIC_SEQ_CST)
+#define cf_atomic64_set(a, b) __atomic_store_n((a), (b), __ATOMIC_SEQ_CST)
+#define cf_atomic64_sub(a, b) __atomic_sub_fetch((a), (b), __ATOMIC_SEQ_CST)
+#define cf_atomic64_add(a, b) __atomic_add_fetch((a), (b), __ATOMIC_SEQ_CST)
+#define cf_atomic64_incr(a)  __atomic_add_fetch((a), 1, __ATOMIC_SEQ_CST)
+#define cf_atomic64_decr(a)  __atomic_sub_fetch((a), 1, __ATOMIC_SEQ_CST)
+#define cf_atomic64_cas(a, b, c) __atomic_compare_exchange_n((a), (b), (c), 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
+
+#define cf_atomic_p_get(a) __atomic_load_n((a), __ATOMIC_SEQ_CST)
+#define cf_atomic_p_set(a, b) __atomic_store_n((a), (b), __ATOMIC_SEQ_CST)
+#define cf_atomic_p_sub(a, b) __atomic_sub_fetch((a), (b), __ATOMIC_SEQ_CST)
+#define cf_atomic_p_add(a, b) __atomic_add_fetch((a), (b), __ATOMIC_SEQ_CST)
+#define cf_atomic_p_incr(a)  __atomic_add_fetch((a), 1, __ATOMIC_SEQ_CST)
+#define cf_atomic_p_decr(a)  __atomic_sub_fetch((a), 1, __ATOMIC_SEQ_CST)
+#define cf_atomic_p_cas(a, b, c) __atomic_compare_exchange_n((a), (b), (c), 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
+
+#define cf_atomic_int_get(a) __atomic_load_n((a), __ATOMIC_SEQ_CST)
+#define cf_atomic_int_set(a, b) __atomic_store_n((a), (b), __ATOMIC_SEQ_CST)
+#define cf_atomic_int_sub(a, b) __atomic_sub_fetch((a), (b), __ATOMIC_SEQ_CST)
+#define cf_atomic_int_add(a, b) __atomic_add_fetch((a), (b), __ATOMIC_SEQ_CST)
+#define cf_atomic_int_incr(a)  __atomic_add_fetch((a), 1, __ATOMIC_SEQ_CST)
+#define cf_atomic_int_decr(a)  __atomic_sub_fetch((a), 1, __ATOMIC_SEQ_CST)
+
+static inline int cf_atomic32_setmax(cf_atomic32 *a, int32_t x) {
+	// Get the current value of the atomic integer.
+	int32_t cur = cf_atomic32_get(a);
+
+	while (x > cur) {
+		// Proposed value is larger than current - attempt compare-and-swap.
+		if (__atomic_compare_exchange_n(a, &cur, x, 1, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+			return 1;
+		}
+		// Current value had changed, go around again.
+	}
+
+	// Proposed value not swapped in as new maximum.
+	return 0;
+}
+
+static inline int cf_atomic64_setmax(cf_atomic64 *a, int64_t x) {
+	// Get the current value of the atomic integer.
+
+	int32_t cur = cf_atomic64_get(a);
+	while (x > cur) {
+		// Proposed value is larger than current - attempt compare-and-swap.
+		if (__atomic_compare_exchange_n(a, &cur, x, 1, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)) {
+			return 1;
+		}
+		// Current value had changed, go around again.
+	}
+
+	// Proposed value not swapped in as new maximum.
+	return 0;
+}
+
+#else
+
 
 // Concurrency kit needs to be under extern "C" when compiling C++.
 #include <aerospike/ck/ck_pr.h>
@@ -47,25 +121,30 @@ typedef uint64_t cf_atomic_int_t; // the point here is a type of the same size a
  * MACROS
  *****************************************************************************/
 
-#define cf_atomic32_get(a) (a)
+static inline cf_atomic32 cf_xx_atomic32_get(const cf_atomic32 *a) { return *a; }
+#define cf_atomic32_get(a) cf_xx_atomic32_get((const cf_atomic32 *) a)
 #define cf_atomic32_set(a, b) (*(a) = (b))
-#define cf_atomic32_sub(a,b) (cf_atomic32_add((a), (0 - (b))))
-#define cf_atomic32_incr(a) (cf_atomic32_add((a), 1))
-#define cf_atomic32_decr(a) (cf_atomic32_add((a), -1))
+#define cf_atomic32_sub(a, b) ((cf_atomic32)cf_atomic32_add((a), (0 - (b))))
+#define cf_atomic32_incr(a) ((cf_atomic32)cf_atomic32_add((a), 1))
+#define cf_atomic32_decr(a) ((cf_atomic32)cf_atomic32_add((a), -1))
 
-#define cf_atomic64_get(a) (a)
+static inline cf_atomic64 cf_xx_atomic64_get(const cf_atomic64 *a) { return *a; }
+#define cf_atomic64_get(a) cf_xx_atomic64_get((const cf_atomic64 *) a)
 #define cf_atomic64_set(a, b) (*(a) = (b))
-#define cf_atomic64_sub(a,b) (cf_atomic64_add((a), (0 - (b))))
-#define cf_atomic64_incr(a) (cf_atomic64_add((a), 1))
-#define cf_atomic64_decr(a) (cf_atomic64_add((a), -1))
+#define cf_atomic64_sub(a, b) ((cf_atomic64)cf_atomic64_add((a), (0 - (b))))
+#define cf_atomic64_incr(a) ((cf_atomic64)cf_atomic64_add((a), 1))
+#define cf_atomic64_decr(a) ((cf_atomic64)cf_atomic64_add((a), -1))
+#define cf_atomic64_cas(a, b, c) (ck_pr_cas_64((a), (*b), (c)))
 
-#define cf_atomic_p_get(_a) cf_atomic64_get(_a)
+#define cf_atomic_p_get(a) (*a)
 #define cf_atomic_p_set(_a, _b) cf_atomic64_set(_a, _b)
 #define cf_atomic_p_add(_a, _b) cf_atomic64_add(_a, _b)
 #define cf_atomic_p_incr(_a) cf_atomic64_add((_a), 1)
 #define cf_atomic_p_decr(_a) cf_atomic64_add((_a), -1)
+#define cf_atomic_p_cas(a, b, c) __atomic_compare_exchange_n((a), (b), (c), 0, __ATOMIC_SEQ_CST, __ATOMIC_SEQ_CST)
 
-#define cf_atomic_int_get(_a) cf_atomic64_get(_a)
+static inline cf_atomic_int cf_xx_atomic_int_get(const cf_atomic_int *a) { return *a; }
+#define cf_atomic_int_get(a) cf_xx_atomic_int_get((const cf_atomic_int *) a)
 #define cf_atomic_int_set(_a, _b) cf_atomic64_set(_a, _b)
 #define cf_atomic_int_add(_a, _b) cf_atomic64_add(_a, _b)
 #define cf_atomic_int_sub(_a, _b) cf_atomic64_sub(_a, _b)
@@ -91,7 +170,7 @@ static inline bool cf_atomic64_setmax(cf_atomic64 *a, int64_t x) {
 	uint64_t prior;
 
 	// Get the current value of the atomic integer.
-	int64_t cur = cf_atomic64_get(*a);
+	int64_t cur = cf_atomic64_get(a);
 
 	while (x > cur) {
 		// Proposed value is larger than current - attempt compare-and-swap.
@@ -119,7 +198,7 @@ static inline bool cf_atomic32_setmax(cf_atomic32 *a, int32_t x) {
 	uint32_t prior;
 
 	// Get the current value of the atomic integer.
-	int32_t cur = cf_atomic32_get(*a);
+	int32_t cur = cf_atomic32_get(a);
 
 	while (x > cur) {
 		// Proposed value is larger than current - attempt compare-and-swap.
@@ -135,6 +214,10 @@ static inline bool cf_atomic32_setmax(cf_atomic32 *a, int32_t x) {
 	return false;
 }
 
+#endif // GCC_ATOMICS
+
 #ifdef __cplusplus
 } // end extern "C"
 #endif
+
+#endif // CF_ATOMIC_H
