@@ -55,7 +55,15 @@
 #define CK_MD_POINTER_PACK_DISABLE
 #endif /* CK_MD_POINTER_PACK_DISABLE */
 
-#ifndef CK_MD_VMA_BITS 
+#ifndef CK_MD_SSE_ENABLE
+#define CK_MD_SSE_ENABLE
+#endif /* CK_MD_SSE_ENABLE */
+
+#ifndef CK_MD_PPC32_LWSYNC_DISABLE
+#define CK_MD_PPC32_LWSYNC_DISABLE
+#endif /* CK_MD_PPC32_LWSYNC_DISABLE */
+
+#ifndef CK_MD_VMA_BITS
 #define CK_MD_VMA_BITS 48ULL
 #endif /* CK_MD_VMA_BITS */
 
@@ -67,7 +75,7 @@
 #define CK_PR_ENABLE_DOUBLE
 #endif /* CK_PR_ENABLE_DOUBLE */
 
-#define CK_VERSION "1.0.0"
-#define CK_GIT_SHA "0d1e86d"
+#define CK_VERSION "0.7.0"
+#define CK_GIT_SHA "0b299a6"
 
 #endif /* CK_MD_H */
