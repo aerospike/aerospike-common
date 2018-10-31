@@ -20,6 +20,8 @@
 
 #if defined(__linux__)
 
+#if ! defined(AS_ALPINE)
+// Standard linux
 #include <netinet/in.h>
 #include <asm/byteorder.h>
 
@@ -37,6 +39,26 @@
 #define cf_swap_to_le64(_n) __cpu_to_le64(_n)
 #define cf_swap_from_be64(_n) __be64_to_cpu(_n)
 #define cf_swap_from_le64(_n) __le64_to_cpu(_n)
+
+#else
+// Alpine linux
+#include <endian.h>
+
+#define cf_swap_to_be16(_n) htobe16(_n)
+#define cf_swap_to_le16(_n) htole16(_n)
+#define cf_swap_from_be16(_n) be16toh(_n)
+#define cf_swap_from_le16(_n) le16toh(_n)
+
+#define cf_swap_to_be32(_n) htobe32(_n)
+#define cf_swap_to_le32(_n) htole32(_n)
+#define cf_swap_from_be32(_n) be32toh(_n)
+#define cf_swap_from_le32(_n) le32toh(_n)
+
+#define cf_swap_to_be64(_n) htobe64(_n)
+#define cf_swap_to_le64(_n) htole64(_n)
+#define cf_swap_from_be64(_n) be64toh(_n)
+#define cf_swap_from_le64(_n) le64toh(_n)
+#endif
 
 #endif // __linux__
 

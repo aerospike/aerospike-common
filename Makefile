@@ -41,6 +41,10 @@ else ifeq ($(OS),FreeBSD)
   CC_FLAGS += -finline-functions
 else
   CC_FLAGS += -finline-functions -rdynamic
+
+  ifneq ($(wildcard /etc/alpine-release),)
+    CC_FLAGS += -DAS_ALPINE
+  endif
 endif
 
 ifneq ($(CF), )
