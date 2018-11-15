@@ -21,3 +21,71 @@
 #else
 #include <aerospike/as_atomic_gcc.h>
 #endif
+
+/******************************************************************************
+ * LOAD
+ *****************************************************************************/
+
+// double as_load_double(const double* target)
+#define as_load_double(_target) ({ \
+		uint64_t v =  as_load_uint64((const uint64_t*)_target); \
+		*(double*)&v; \
+	})
+
+// float as_load_float(const float* target)
+#define as_load_float(_target) ({ \
+		uint32_t v =  as_load_uint32((const uint32_t*)_target); \
+		*(float*)&v; \
+	})
+
+/******************************************************************************
+ * STORE
+ *****************************************************************************/
+
+// void as_store_double(double* target, double value)
+#define as_store_double(_target, _value) ({ \
+		double v = _value; \
+		as_store_uint64((uint64_t*)_target, *(uint64_t*)&v); \
+	})
+
+// void as_store_float(float* target, float value)
+#define as_store_float(_target, _value) ({ \
+		float v = _value; \
+		as_store_uint32((uint32_t*)_target, *(uint32_t*)&v); \
+	})
+
+/******************************************************************************
+ * FETCH AND SWAP
+ *****************************************************************************/
+
+// double as_fas_double(double* target, double value)
+#define as_fas_double(_target, _value) ({ \
+		double nv = _value; \
+		uint64_t ov = as_fas_uint64((uint64_t*)_target, *(uint64_t*)&nv); \
+		*(double*)&ov; \
+	})
+
+// float as_fas_float(float* target, float value)
+#define as_fas_float(_target, _value) ({ \
+		float nv = _value; \
+		uint32_t ov = as_fas_uint32((uint32_t*)_target, *(uint32_t*)&nv); \
+		*(float*)&ov; \
+	})
+
+/******************************************************************************
+ * COMPARE AND SWAP
+ *****************************************************************************/
+
+// bool as_cas_double(double* target, double old_value, double new_value)
+#define as_cas_double(_target, _old_value, _new_value) ({ \
+		double ov = _old_value; \
+		double nv = _new_value; \
+		as_cas_uint64((uint64_t*)_target, *(uint64_t*)&ov, *(uint64_t*)&nv); \
+	})
+
+// bool as_cas_float(float* target, float old_value, float new_value)
+#define as_cas_float(_target, _old_value, _new_value) ({ \
+		float ov = _old_value; \
+		float nv = _new_value; \
+		as_cas_uint32((uint32_t*)_target, *(uint32_t*)&ov, *(uint32_t*)&nv); \
+	})

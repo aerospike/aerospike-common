@@ -116,135 +116,135 @@ extern "C" {
  *****************************************************************************/
 
 // void as_decr_uint64(uint64_t* target)
-#define	as_decr_uint64(_target) ck_pr_dec_64(_target)
+#define as_decr_uint64(_target) ck_pr_dec_64(_target)
 
 // void as_decr_int64(int64_t* target)
-#define	as_decr_int64(_target) ck_pr_dec_64((uint64_t*)(_target))
+#define as_decr_int64(_target) ck_pr_dec_64((uint64_t*)(_target))
 
 // void as_decr_uint32(uint32_t* target)
-#define	as_decr_uint32(_target) ck_pr_dec_32(_target)
+#define as_decr_uint32(_target) ck_pr_dec_32(_target)
 
 // void as_decr_int32(int32_t* target)
-#define	as_decr_int32(_target) ck_pr_dec_32((uint32_t*)(_target))
+#define as_decr_int32(_target) ck_pr_dec_32((uint32_t*)(_target))
 
 // void as_decr_uint16(uint16_t* target)
-#define	as_decr_uint16(_target) ck_pr_dec_16(_target)
+#define as_decr_uint16(_target) ck_pr_dec_16(_target)
 
 // void as_decr_int16(int16_t* target)
-#define	as_decr_int16(_target) ck_pr_dec_16((uint16_t*)(_target))
+#define as_decr_int16(_target) ck_pr_dec_16((uint16_t*)(_target))
 
 /******************************************************************************
  * ADD
  *****************************************************************************/
 
 // void as_add_uint64(uint64_t* target, int64_t value)
-#define	as_add_uint64(_target, _value) ck_pr_add_64(_target, (uint64_t)(_value))
+#define as_add_uint64(_target, _value) ck_pr_add_64(_target, (uint64_t)(_value))
 
 // void as_add_int64(int64_t* target, int64_t value)
-#define	as_add_int64(_target, _value) ck_pr_add_64((uint64_t*)(_target), (uint64_t)(_value))
+#define as_add_int64(_target, _value) ck_pr_add_64((uint64_t*)(_target), (uint64_t)(_value))
 
 // void as_add_uint32(uint32_t* target, int32_t value)
-#define	as_add_uint32(_target, _value) ck_pr_add_32(_target, (uint32_t)(_value))
+#define as_add_uint32(_target, _value) ck_pr_add_32(_target, (uint32_t)(_value))
 
 // void as_add_int32(int32_t* target, int32_t value)
-#define	as_add_int32(_target, _value) ck_pr_add_32((uint32_t*)(_target), (uint32_t)(_value))
+#define as_add_int32(_target, _value) ck_pr_add_32((uint32_t*)(_target), (uint32_t)(_value))
 
 // void as_add_uint16(uint16_t* target, int16_t value)
-#define	as_add_uint16(_target, _value) ck_pr_add_16(_target, (uint16_t)(_value))
+#define as_add_uint16(_target, _value) ck_pr_add_16(_target, (uint16_t)(_value))
 
 // void as_add_int16(int16_t* target, int16_t value)
-#define	as_add_int16(_target, _value) ck_pr_add_16((uint16_t*)(_target), (uint16_t)(_value))
+#define as_add_int16(_target, _value) ck_pr_add_16((uint16_t*)(_target), (uint16_t)(_value))
 
 /******************************************************************************
  * FETCH AND ADD
  *****************************************************************************/
 
 // uint64_t as_faa_uint64(uint64_t* target, int64_t value)
-#define	as_faa_uint64(_target, _value) ck_pr_faa_64(_target, (uint64_t)(_value))
+#define as_faa_uint64(_target, _value) ck_pr_faa_64(_target, (uint64_t)(_value))
 
 // int64_t as_faa_int64(int64_t* target, int64_t value)
-#define	as_faa_int64(_target, _value) ck_pr_faa_64((uint64_t*)(_target), (uint64_t)(_value))
+#define as_faa_int64(_target, _value) ck_pr_faa_64((uint64_t*)(_target), (uint64_t)(_value))
 
 // uint32_t as_faa_uint32(uint32_t* target, int32_t value)
-#define	as_faa_uint32(_target, _value) ck_pr_faa_32(_target, (uint32_t)(_value))
+#define as_faa_uint32(_target, _value) ck_pr_faa_32(_target, (uint32_t)(_value))
 
 // int32_t as_faa_int32(int32_t* target, int32_t value)
-#define	as_faa_int32(_target, _value) ck_pr_faa_32((uint32_t*)(_target), (uint32_t)(_value))
+#define as_faa_int32(_target, _value) ck_pr_faa_32((uint32_t*)(_target), (uint32_t)(_value))
 
 // uint16_t as_faa_uint16(uint16_t* target, int16_t value)
-#define	as_faa_uint16(_target, _value) ck_pr_faa_16(_target, (uint16_t)(_value))
+#define as_faa_uint16(_target, _value) ck_pr_faa_16(_target, (uint16_t)(_value))
 
 // int16_t as_faa_int16(int16_t* target, int16_t value)
-#define	as_faa_int16(_target, _value) ck_pr_faa_16((uint16_t*)(_target), (uint16_t)(_value))
+#define as_faa_int16(_target, _value) ck_pr_faa_16((uint16_t*)(_target), (uint16_t)(_value))
 
 /******************************************************************************
  * ADD AND FETCH
  *****************************************************************************/
 
 // uint64_t as_aaf_uint64(uint64_t* target, int64_t value)
-#define	as_aaf_uint64(_target, _value) (ck_pr_faa_64(_target, (uint64_t)(_value)) + (uint64_t)(_value))
+#define as_aaf_uint64(_target, _value) (ck_pr_faa_64(_target, (uint64_t)(_value)) + (uint64_t)(_value))
 
 // int64_t as_aaf_int64(int64_t* target, int64_t value)
-#define	as_aaf_int64(_target, _value) ((int64_t)ck_pr_faa_64((uint64_t*)(_target), (uint64_t)(_value)) + (_value))
+#define as_aaf_int64(_target, _value) ((int64_t)ck_pr_faa_64((uint64_t*)(_target), (uint64_t)(_value)) + (_value))
 
 // uint32_t as_aaf_uint32(uint32_t* target, int32_t value)
-#define	as_aaf_uint32(_target, _value) (ck_pr_faa_32(_target, (uint32_t)(_value)) + (uint32_t)(_value))
+#define as_aaf_uint32(_target, _value) (ck_pr_faa_32(_target, (uint32_t)(_value)) + (uint32_t)(_value))
 
 // int32_t as_aaf_int32(int32_t* target, int32_t value)
-#define	as_aaf_int32(_target, _value) ((int32_t)ck_pr_faa_32((uint32_t*)(_target), (uint32_t)(_value)) + (_value))
+#define as_aaf_int32(_target, _value) ((int32_t)ck_pr_faa_32((uint32_t*)(_target), (uint32_t)(_value)) + (_value))
 
 // uint16_t as_aaf_uint16(uint16_t* target, int16_t value)
-#define	as_aaf_uint16(_target, _value) (ck_pr_faa_16(_target, (uint16_t)(_value)) + (uint16_t)(_value))
+#define as_aaf_uint16(_target, _value) (ck_pr_faa_16(_target, (uint16_t)(_value)) + (uint16_t)(_value))
 
 // int16_t as_aaf_int16(int16_t* target, int16_t value)
-#define	as_aaf_int16(_target, _value) ((int16_t)ck_pr_faa_16((uint16_t*)(_target), (uint16_t)(_value)) + (_value))
+#define as_aaf_int16(_target, _value) ((int16_t)ck_pr_faa_16((uint16_t*)(_target), (uint16_t)(_value)) + (_value))
 
 /******************************************************************************
  * FETCH AND SWAP
  *****************************************************************************/
 
 // uint64_t as_fas_uint64(uint64_t* target, uint64_t value)
-#define	as_fas_uint64(_target, _value) ck_pr_fas_64(_target, _value)
+#define as_fas_uint64(_target, _value) ck_pr_fas_64(_target, _value)
 
 // int64_t as_fas_int64(int64_t* target, int64_t value)
-#define	as_fas_int64(_target, _value) (int64_t)ck_pr_fas_64((uint64_t*)(_target), (uint64_t)(_value))
+#define as_fas_int64(_target, _value) (int64_t)ck_pr_fas_64((uint64_t*)(_target), (uint64_t)(_value))
 
 // uint32_t as_fas_uint32(uint32_t* target, uint32_t value)
-#define	as_fas_uint32(_target, _value) ck_pr_fas_32(_target, _value)
+#define as_fas_uint32(_target, _value) ck_pr_fas_32(_target, _value)
 
 // int32_t as_fas_int32(int32_t* target, int32_t value)
-#define	as_fas_int32(_target, _value) (int32_t)ck_pr_fas_32((uint32_t*)(_target), (uint32_t)(_value))
+#define as_fas_int32(_target, _value) (int32_t)ck_pr_fas_32((uint32_t*)(_target), (uint32_t)(_value))
 
 // uint16_t as_fas_uint16(uint16_t* target, uint16_t value)
-#define	as_fas_uint16(_target, _value) ck_pr_fas_16(_target, _value)
+#define as_fas_uint16(_target, _value) ck_pr_fas_16(_target, _value)
 
 // int16_t as_fas_int16(int16_t* target, int16_t value)
-#define	as_fas_int16(_target, _value) (int16_t)ck_pr_fas_16((uint16_t*)(_target), (uint16_t)(_value))
-	
+#define as_fas_int16(_target, _value) (int16_t)ck_pr_fas_16((uint16_t*)(_target), (uint16_t)(_value))
+
 /******************************************************************************
  * COMPARE AND SWAP
  *****************************************************************************/
 
 // bool as_cas_uint64(uint64_t* target, uint64_t old_value, uint64_t new_value)
-#define	as_cas_uint64(_target, _old_value, _new_value) ck_pr_cas_64(_target, _old_value, _new_value)
+#define as_cas_uint64(_target, _old_value, _new_value) ck_pr_cas_64(_target, _old_value, _new_value)
 
 // bool as_cas_int64(int64_t* target, int64_t old_value, int64_t new_value)
-#define	as_cas_int64(_target, _old_value, _new_value) ck_pr_cas_64((uint64_t*)(_target), (uint64_t)(_old_value), (uint64_t)(_new_value))
+#define as_cas_int64(_target, _old_value, _new_value) ck_pr_cas_64((uint64_t*)(_target), (uint64_t)(_old_value), (uint64_t)(_new_value))
 
 // bool as_cas_uint32(uint32_t* target, uint32_t old_value, uint32_t new_value)
-#define	as_cas_uint32(_target, _old_value, _new_value) ck_pr_cas_32(_target, _old_value, _new_value)
+#define as_cas_uint32(_target, _old_value, _new_value) ck_pr_cas_32(_target, _old_value, _new_value)
 
 // bool as_cas_int32(int32_t* target, int32_t old_value, int32_t new_value)
-#define	as_cas_int32(_target, _old_value, _new_value) ck_pr_cas_32((uint32_t*)(_target), (uint32_t)(_old_value), (uint32_t)(_new_value))
+#define as_cas_int32(_target, _old_value, _new_value) ck_pr_cas_32((uint32_t*)(_target), (uint32_t)(_old_value), (uint32_t)(_new_value))
 
 // bool as_cas_uint16(uint16_t* target, uint16_t old_value, uint16_t new_value)
-#define	as_cas_uint16(_target, _old_value, _new_value) ck_pr_cas_16(_target, _old_value, _new_value)
+#define as_cas_uint16(_target, _old_value, _new_value) ck_pr_cas_16(_target, _old_value, _new_value)
 
 // bool as_cas_int16(int16_t* target, int16_t old_value, int16_t new_value)
-#define	as_cas_int16(_target, _old_value, _new_value) ck_pr_cas_16((uint16_t*)(_target), (uint16_t)(_old_value), (uint16_t)(_new_value))
+#define as_cas_int16(_target, _old_value, _new_value) ck_pr_cas_16((uint16_t*)(_target), (uint16_t)(_old_value), (uint16_t)(_new_value))
 
 // bool as_cas_uint8(uint8_t* target, uint8_t old_value, uint8_t new_value)
-#define	as_cas_uint8(_target, _old_value, _new_value) ck_pr_cas_8(_target, _old_value, _new_value)
+#define as_cas_uint8(_target, _old_value, _new_value) ck_pr_cas_8(_target, _old_value, _new_value)
 
 /******************************************************************************
  * MEMORY FENCE
@@ -340,7 +340,7 @@ as_setmax_int32(int32_t* target, int32_t x)
 	// Proposed value not swapped in as new maximum.
 	return false;
 }
-	
+
 #ifdef __cplusplus
 } // end extern "C"
 #endif

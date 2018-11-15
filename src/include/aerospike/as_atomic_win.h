@@ -148,117 +148,117 @@ extern "C" {
  *****************************************************************************/
 
 // void as_decr_uint64(uint64_t* target)
-#define	as_decr_uint64(_target) InterlockedDecrement64((LONGLONG volatile*)(_target))
+#define as_decr_uint64(_target) InterlockedDecrement64((LONGLONG volatile*)(_target))
 
 // void as_decr_int64(int64_t* target)
-#define	as_decr_int64(_target) InterlockedDecrement64((LONGLONG volatile*)(_target))
+#define as_decr_int64(_target) InterlockedDecrement64((LONGLONG volatile*)(_target))
 
 // void as_decr_uint32(uint32_t* target)
-#define	as_decr_uint32(_target) InterlockedDecrement((LONG volatile*)(_target))
+#define as_decr_uint32(_target) InterlockedDecrement((LONG volatile*)(_target))
 
 // void as_decr_int32(int32_t* target)
-#define	as_decr_int32(_target) InterlockedDecrement((LONG volatile*)(_target))
+#define as_decr_int32(_target) InterlockedDecrement((LONG volatile*)(_target))
 
 // void as_decr_uint16(uint16_t* target)
-#define	as_decr_uint16(_target) InterlockedDecrement16((short volatile*)(_target))
+#define as_decr_uint16(_target) InterlockedDecrement16((short volatile*)(_target))
 
 // void as_decr_int16(int16_t* target)
-#define	as_decr_int16(_target) InterlockedDecrement16((short volatile*)(_target))
+#define as_decr_int16(_target) InterlockedDecrement16((short volatile*)(_target))
 
 /******************************************************************************
  * ADD
  *****************************************************************************/
 
 // void as_add_uint64(uint64_t* target, int64_t value)
-#define	as_add_uint64(_target, _value) InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
+#define as_add_uint64(_target, _value) InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
 
 // void as_add_int64(int64_t* target, int64_t value)
-#define	as_add_int64(_target, _value) InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
+#define as_add_int64(_target, _value) InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
 
 // void as_add_uint32(uint32_t* target, int32_t value)
-#define	as_add_uint32(_target, _value) InterlockedExchangeAdd((LONG volatile*)(_target), _value)
+#define as_add_uint32(_target, _value) InterlockedExchangeAdd((LONG volatile*)(_target), _value)
 
 // void as_add_int32(int32_t* target, int32_t value)
-#define	as_add_int32(_target, _value) InterlockedExchangeAdd((LONG volatile*)(_target), _value)
+#define as_add_int32(_target, _value) InterlockedExchangeAdd((LONG volatile*)(_target), _value)
 
 /******************************************************************************
  * FETCH AND ADD
  *****************************************************************************/
 
 // uint64_t as_faa_uint64(uint64_t* target, int64_t value)
-#define	as_faa_uint64(_target, _value) (uint64_t)InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
+#define as_faa_uint64(_target, _value) (uint64_t)InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
 
 // int64_t as_faa_int64(int64_t* target, int64_t value)
-#define	as_faa_int64(_target, _value) InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
+#define as_faa_int64(_target, _value) InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
 
 // uint32_t as_faa_uint32(uint32_t* target, int32_t value)
-#define	as_faa_uint32(_target, _value) (uint32_t)InterlockedExchangeAdd((LONG volatile*)(_target), _value)
+#define as_faa_uint32(_target, _value) (uint32_t)InterlockedExchangeAdd((LONG volatile*)(_target), _value)
 
 // int32_t as_faa_int32(int32_t* target, int32_t value)
-#define	as_faa_int32(_target, _value) InterlockedExchangeAdd((LONG volatile*)(_target), _value)
+#define as_faa_int32(_target, _value) InterlockedExchangeAdd((LONG volatile*)(_target), _value)
 
 /******************************************************************************
  * ADD AND FETCH
  *****************************************************************************/
 
 // uint64_t as_aaf_uint64(uint64_t* target, int64_t value)
-#define	as_aaf_uint64(_target, _value) (uint64_t)InterlockedAdd64((LONGLONG volatile*)(_target), _value)
+#define as_aaf_uint64(_target, _value) (uint64_t)InterlockedAdd64((LONGLONG volatile*)(_target), _value)
 
 // int64_t as_aaf_int64(int64_t* target, int64_t value)
-#define	as_aaf_int64(_target, _value) InterlockedAdd64((LONGLONG volatile*)(_target), _value)
+#define as_aaf_int64(_target, _value) InterlockedAdd64((LONGLONG volatile*)(_target), _value)
 
 // uint32_t as_aaf_uint32(uint32_t* target, int32_t value)
-#define	as_aaf_uint32(_target, _value) (uint32_t)InterlockedAdd((LONG volatile*)(_target), _value)
+#define as_aaf_uint32(_target, _value) (uint32_t)InterlockedAdd((LONG volatile*)(_target), _value)
 
 // int32_t as_aaf_int32(int32_t* target, int32_t value)
-#define	as_aaf_int32(_target, _value) InterlockedAdd((LONG volatile*)(_target), _value)
+#define as_aaf_int32(_target, _value) InterlockedAdd((LONG volatile*)(_target), _value)
 
 /******************************************************************************
  * FETCH AND SWAP
  *****************************************************************************/
 
 // uint64_t as_fas_uint64(uint64_t* target, uint64_t value)
-#define	as_fas_uint64(_target, _value) (uint64_t)InterlockedExchange64((LONGLONG volatile*)(_target), (LONGLONG)(_value))
+#define as_fas_uint64(_target, _value) (uint64_t)InterlockedExchange64((LONGLONG volatile*)(_target), (LONGLONG)(_value))
 
 // int64_t as_fas_int64(int64_t* target, int64_t value)
-#define	as_fas_int64(_target, _value) InterlockedExchange64((LONGLONG volatile*)(_target), (LONGLONG)(_value))
+#define as_fas_int64(_target, _value) InterlockedExchange64((LONGLONG volatile*)(_target), (LONGLONG)(_value))
 
 // uint32_t as_fas_uint32(uint32_t* target, uint32_t value)
-#define	as_fas_uint32(_target, _value) (uint32_t)InterlockedExchange((LONG volatile*)(_target), (LONG)(_value))
+#define as_fas_uint32(_target, _value) (uint32_t)InterlockedExchange((LONG volatile*)(_target), (LONG)(_value))
 
 // int32_t as_fas_int32(int32_t* target, int32_t value)
-#define	as_fas_int32(_target, _value) InterlockedExchange((LONG volatile*)(_target), (LONG)(_value))
+#define as_fas_int32(_target, _value) InterlockedExchange((LONG volatile*)(_target), (LONG)(_value))
 
 // uint16_t as_fas_uint16(uint16_t* target, uint16_t value)
-#define	as_fas_uint16(_target, _value) (uint16_t)InterlockedExchange16((short volatile*)(_target), (LONG)(_value))
+#define as_fas_uint16(_target, _value) (uint16_t)InterlockedExchange16((short volatile*)(_target), (LONG)(_value))
 
 // int16_t as_fas_int16(int16_t* target, int16_t value)
-#define	as_fas_int16(_target, _value) InterlockedExchange16((short volatile*)(_target), (LONG)(_value))
+#define as_fas_int16(_target, _value) InterlockedExchange16((short volatile*)(_target), (LONG)(_value))
 
 /******************************************************************************
  * COMPARE AND SWAP
  *****************************************************************************/
 
 // bool as_cas_uint64(uint64_t* target, uint64_t old_value, uint64_t new_value)
-#define	as_cas_uint64(_target, _old_value, _new_value) (InterlockedCompareExchange64((LONGLONG volatile*)(_target), (LONGLONG)(_new_value), (LONGLONG)(_old_value)) == (LONGLONG)(_old_value))
+#define as_cas_uint64(_target, _old_value, _new_value) (InterlockedCompareExchange64((LONGLONG volatile*)(_target), (LONGLONG)(_new_value), (LONGLONG)(_old_value)) == (LONGLONG)(_old_value))
 
 // bool as_cas_int64(int64_t* target, int64_t old_value, int64_t new_value)
-#define	as_cas_int64(_target, _old_value, _new_value) (InterlockedCompareExchange64((LONGLONG volatile*)(_target), (LONGLONG)(_new_value), (LONGLONG)(_old_value)) == (LONGLONG)(_old_value))
+#define as_cas_int64(_target, _old_value, _new_value) (InterlockedCompareExchange64((LONGLONG volatile*)(_target), (LONGLONG)(_new_value), (LONGLONG)(_old_value)) == (LONGLONG)(_old_value))
 
 // bool as_cas_uint32(uint32_t* target, uint32_t old_value, uint32_t new_value)
-#define	as_cas_uint32(_target, _old_value, _new_value) (InterlockedCompareExchange((LONG volatile*)(_target), (LONG)(_new_value), (LONG)(_old_value)) == (LONG)(_old_value))
+#define as_cas_uint32(_target, _old_value, _new_value) (InterlockedCompareExchange((LONG volatile*)(_target), (LONG)(_new_value), (LONG)(_old_value)) == (LONG)(_old_value))
 
 // bool as_cas_int32(int32_t* target, int32_t old_value, int32_t new_value)
-#define	as_cas_int32(_target, _old_value, _new_value) (InterlockedCompareExchange((LONG volatile*)(_target), (LONG)(_new_value), (LONG)(_old_value)) == (LONG)(_old_value))
+#define as_cas_int32(_target, _old_value, _new_value) (InterlockedCompareExchange((LONG volatile*)(_target), (LONG)(_new_value), (LONG)(_old_value)) == (LONG)(_old_value))
 
 // bool as_cas_uint16(uint16_t* target, uint16_t old_value, uint16_t new_value)
-#define	as_cas_uint16(_target, _old_value, _new_value) (InterlockedCompareExchange16((short volatile*)(_target), (short)(_new_value), (short)(_old_value)) == (short)(_old_value))
+#define as_cas_uint16(_target, _old_value, _new_value) (InterlockedCompareExchange16((short volatile*)(_target), (short)(_new_value), (short)(_old_value)) == (short)(_old_value))
 
 // bool as_cas_int16(int16_t* target, int16_t old_value, int16_t new_value)
-#define	as_cas_int16(_target, _old_value, _new_value) (InterlockedCompareExchange16((short volatile*)(_target), (short)(_new_value), (short)(_old_value)) == (short)(_old_value))
+#define as_cas_int16(_target, _old_value, _new_value) (InterlockedCompareExchange16((short volatile*)(_target), (short)(_new_value), (short)(_old_value)) == (short)(_old_value))
 
 // bool as_cas_uint8(uint8_t* target, uint8_t old_value, uint8_t new_value)
-#define	as_cas_uint8(_target, _old_value, _new_value) (_InterlockedCompareExchange8((char volatile*)(_target), (char)(_new_value), (char)(_old_value)) == (char)(_old_value))
+#define as_cas_uint8(_target, _old_value, _new_value) (_InterlockedCompareExchange8((char volatile*)(_target), (char)(_new_value), (char)(_old_value)) == (char)(_old_value))
 
 /******************************************************************************
  * MEMORY FENCE
