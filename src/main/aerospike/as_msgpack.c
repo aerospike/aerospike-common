@@ -70,7 +70,7 @@ typedef struct msgpack_parse_memblock_s {
 static msgpack_parse_memblock *msgpack_parse_memblock_create(msgpack_parse_memblock *prev);
 static void msgpack_parse_memblock_destroy(msgpack_parse_memblock *block);
 static msgpack_parse_state *msgpack_parse_memblock_next(msgpack_parse_memblock **block);
-static inline bool msgpack_parse_memblock_has_prev(msgpack_parse_memblock *block);
+static inline bool msgpack_parse_memblock_has_prev(const msgpack_parse_memblock *block);
 static msgpack_parse_state *msgpack_parse_memblock_prev(msgpack_parse_memblock **block);
 static bool msgpack_parse_state_list_cmp_init(msgpack_parse_state *state, as_unpacker *pk1, as_unpacker *pk2);
 static bool msgpack_parse_state_list_size_init(msgpack_parse_state *state, as_unpacker *pk);
@@ -85,12 +85,12 @@ static msgpack_compare_t msgpack_compare_blob_internal(as_unpacker *pk1, uint32_
 static inline msgpack_compare_t msgpack_compare_blob(as_unpacker *pk1, as_unpacker *pk2);
 static inline msgpack_compare_t msgpack_compare_int64_t(int64_t x1, int64_t x2);
 static bool msgpack_skip(as_unpacker *pk, size_t n);
-static bool msgpack_compare_unwind(as_unpacker *pk1, as_unpacker *pk2, msgpack_parse_memblock *block, const msgpack_parse_state *state);
-static bool msgpack_compare_unwind_all(as_unpacker *pk1, as_unpacker *pk2, msgpack_parse_memblock *block);
+static bool msgpack_compare_unwind(as_unpacker *pk1, as_unpacker *pk2, const msgpack_parse_state *state);
+static bool msgpack_compare_unwind_all(as_unpacker *pk1, as_unpacker *pk2, msgpack_parse_memblock **block);
 static msgpack_compare_t msgpack_compare_list(as_unpacker *pk1, as_unpacker *pk2, size_t depth);
 static msgpack_compare_t msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth);
 static inline msgpack_compare_t msgpack_peek_compare_type(const as_unpacker *pk1, const as_unpacker *pk2, as_val_t *type);
-static msgpack_compare_t msgpack_compare_non_recursive(as_unpacker *pk1, as_unpacker *pk2, msgpack_parse_memblock *block, msgpack_parse_state *state);
+static msgpack_compare_t msgpack_compare_non_recursive(as_unpacker *pk1, as_unpacker *pk2, msgpack_parse_memblock **block, msgpack_parse_state *state);
 static inline msgpack_compare_t msgpack_compare_type(as_unpacker *pk1, as_unpacker *pk2, as_val_t type, size_t depth);
 static inline msgpack_compare_t msgpack_compare_internal(as_unpacker *pk1, as_unpacker *pk2, size_t depth, as_val_t *type);
 
@@ -144,7 +144,7 @@ msgpack_parse_memblock_next(msgpack_parse_memblock **block)
 }
 
 static inline bool
-msgpack_parse_memblock_has_prev(msgpack_parse_memblock *block)
+msgpack_parse_memblock_has_prev(const msgpack_parse_memblock *block)
 {
 	if (block->prev || block->count > 1) {
 		return true;
@@ -2367,7 +2367,7 @@ msgpack_skip(as_unpacker *pk, size_t n)
 
 static bool
 msgpack_compare_unwind(as_unpacker *pk1, as_unpacker *pk2,
-		msgpack_parse_memblock *block, const msgpack_parse_state *state)
+		const msgpack_parse_state *state)
 {
 	if (state->type == AS_LIST) {
 		if (! msgpack_skip(pk1, state->len1 - state->index)) {
@@ -2395,24 +2395,24 @@ msgpack_compare_unwind(as_unpacker *pk1, as_unpacker *pk2,
 
 static bool
 msgpack_compare_unwind_all(as_unpacker *pk1, as_unpacker *pk2,
-		msgpack_parse_memblock *block)
+		msgpack_parse_memblock **block)
 {
-	if (block->count == 0) {
+	if ((*block)->count == 0) {
 		return true;
 	}
 
-	const msgpack_parse_state *state = &block->buffer[block->count - 1];
+	const msgpack_parse_state *state = &(*block)->buffer[(*block)->count - 1];
 
 	while (true) {
-		if (! msgpack_compare_unwind(pk1, pk2, block, state)) {
+		if (! msgpack_compare_unwind(pk1, pk2, state)) {
 			return false;
 		}
 
-		if (! msgpack_parse_memblock_has_prev(block)) {
+		if (! msgpack_parse_memblock_has_prev(*block)) {
 			break;
 		}
 
-		state = msgpack_parse_memblock_prev(&block);
+		state = msgpack_parse_memblock_prev(block);
 	}
 
 	return true;
@@ -2426,14 +2426,15 @@ msgpack_compare_list(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 		msgpack_parse_state *state = msgpack_parse_memblock_next(&block);
 
 		if (! msgpack_parse_state_list_cmp_init(state, pk1, pk2)) {
+			msgpack_parse_memblock_destroy(block);
 			return MSGPACK_COMPARE_ERROR;
 		}
 
-		msgpack_compare_t ret = msgpack_compare_non_recursive(pk1, pk2, block,
+		msgpack_compare_t ret = msgpack_compare_non_recursive(pk1, pk2, &block,
 				state);
 
 		if (ret == MSGPACK_COMPARE_ERROR ||
-				! msgpack_compare_unwind_all(pk1, pk2, block)) {
+				! msgpack_compare_unwind_all(pk1, pk2, &block)) {
 			msgpack_parse_memblock_destroy(block);
 			return MSGPACK_COMPARE_ERROR;
 		}
@@ -2456,8 +2457,7 @@ msgpack_compare_list(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 		msgpack_compare_t ret = msgpack_compare_internal(pk1, pk2, depth,
 				&type);
 
-		if (ret != MSGPACK_COMPARE_EQUAL || (ret == MSGPACK_COMPARE_EQUAL &&
-				type == AS_CMP_WILDCARD)) {
+		if (ret != MSGPACK_COMPARE_EQUAL || type == AS_CMP_WILDCARD) {
 			if (! msgpack_skip(pk1, len1 - i - 1)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
@@ -2491,6 +2491,7 @@ msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 		msgpack_parse_state *state = msgpack_parse_memblock_next(&block);
 
 		if (! msgpack_parse_state_map_cmp_init(state, pk1, pk2)) {
+			msgpack_parse_memblock_destroy(block);
 			return MSGPACK_COMPARE_ERROR;
 		}
 
@@ -2499,11 +2500,11 @@ msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 			return state->default_compare_type;
 		}
 
-		msgpack_compare_t ret = msgpack_compare_non_recursive(pk1, pk2, block,
+		msgpack_compare_t ret = msgpack_compare_non_recursive(pk1, pk2, &block,
 				state);
 
 		if (ret == MSGPACK_COMPARE_ERROR ||
-				! msgpack_compare_unwind_all(pk1, pk2, block)) {
+				! msgpack_compare_unwind_all(pk1, pk2, &block)) {
 			msgpack_parse_memblock_destroy(block);
 			return MSGPACK_COMPARE_ERROR;
 		}
@@ -2538,8 +2539,7 @@ msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 		msgpack_compare_t ret = msgpack_compare_internal(pk1, pk2, depth,
 				&type);
 
-		if (ret != MSGPACK_COMPARE_EQUAL|| (ret == MSGPACK_COMPARE_EQUAL &&
-				type == AS_CMP_WILDCARD)) {
+		if (ret != MSGPACK_COMPARE_EQUAL|| type == AS_CMP_WILDCARD) {
 			if (! msgpack_skip(pk1, 2 * (len1 - i) - 1)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
@@ -2553,8 +2553,7 @@ msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 
 		ret = msgpack_compare_internal(pk1, pk2, depth, &type);
 
-		if (ret != MSGPACK_COMPARE_EQUAL|| (ret == MSGPACK_COMPARE_EQUAL &&
-				type == AS_CMP_WILDCARD)) {
+		if (ret != MSGPACK_COMPARE_EQUAL || type == AS_CMP_WILDCARD) {
 			if (! msgpack_skip(pk1, 2 * (len1 - i - 1))) {
 				return MSGPACK_COMPARE_ERROR;
 			}
@@ -2607,22 +2606,22 @@ msgpack_peek_compare_type(const as_unpacker *pk1, const as_unpacker *pk2,
 
 static msgpack_compare_t
 msgpack_compare_non_recursive(as_unpacker *pk1, as_unpacker *pk2,
-		msgpack_parse_memblock *block, msgpack_parse_state *state)
+		msgpack_parse_memblock **block, msgpack_parse_state *state)
 {
 	while (state) {
 		while (state->index >= state->len) {
-			if (! msgpack_compare_unwind(pk1, pk2, block, state)) {
+			if (! msgpack_compare_unwind(pk1, pk2, state)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
 
-			if (! msgpack_parse_memblock_has_prev(block)) {
+			if (! msgpack_parse_memblock_has_prev(*block)) {
 				return state->default_compare_type;
 			}
 
 			uint32_t len1 = state->len1;
 			uint32_t len2 = state->len2;
 
-			state = msgpack_parse_memblock_prev(&block);
+			state = msgpack_parse_memblock_prev(block);
 
 			MSGPACK_COMPARE_RET_LESS_OR_GREATER(len1, len2);
 		}
@@ -2661,7 +2660,7 @@ msgpack_compare_non_recursive(as_unpacker *pk1, as_unpacker *pk2,
 		}
 
 		if (type == AS_LIST ) {
-			state = msgpack_parse_memblock_next(&block);
+			state = msgpack_parse_memblock_next(block);
 
 			if (! msgpack_parse_state_list_cmp_init(state, pk1, pk2)) {
 				return MSGPACK_COMPARE_ERROR;
@@ -2671,7 +2670,7 @@ msgpack_compare_non_recursive(as_unpacker *pk1, as_unpacker *pk2,
 		}
 
 		if (type == AS_MAP) {
-			state = msgpack_parse_memblock_next(&block);
+			state = msgpack_parse_memblock_next(block);
 
 			if (! msgpack_parse_state_map_cmp_init(state, pk1, pk2)) {
 				return MSGPACK_COMPARE_ERROR;
@@ -2686,15 +2685,15 @@ msgpack_compare_non_recursive(as_unpacker *pk1, as_unpacker *pk2,
 				return MSGPACK_COMPARE_ERROR;
 			}
 
-			if (! msgpack_compare_unwind(pk1, pk2, block, state)) {
+			if (! msgpack_compare_unwind(pk1, pk2, state)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
 
-			if (! msgpack_parse_memblock_has_prev(block)) {
+			if (! msgpack_parse_memblock_has_prev(*block)) {
 				return MSGPACK_COMPARE_EQUAL;
 			}
 
-			state = msgpack_parse_memblock_prev(&block);
+			state = msgpack_parse_memblock_prev(block);
 			continue;
 		}
 
