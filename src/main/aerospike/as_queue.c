@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2019 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -26,9 +26,9 @@
  ******************************************************************************/
 
 /**
- *	We have to guard against wrap-around, so call this occasionally. We really
- *	expect this will never get called, however it can be a symptom of a queue
- *	getting really, really deep.
+ * We have to guard against wrap-around, so call this occasionally. We really
+ * expect this will never get called, however it can be a symptom of a queue
+ * getting really, really deep.
  */
 static inline void
 as_queue_unwrap(as_queue* queue)

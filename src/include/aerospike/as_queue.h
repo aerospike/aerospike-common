@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2019 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -28,54 +28,54 @@ extern "C" {
  ******************************************************************************/
 
 /**
- *	A fast, non-thread-safe dynamic queue implementation.
- *  as_queue is not part of the generic as_val family.
+ * A fast, non-thread-safe dynamic queue implementation.
+ * as_queue is not part of the generic as_val family.
  */
 typedef struct as_queue_s {
 	/**
-	 *	The block of items in the queue.
+	 * The block of items in the queue.
 	 */
 	uint8_t* data;
 	
 	/**
-	 *	The total number of items allocated.
+	 * The total number of items allocated.
 	 */
 	uint32_t capacity;
 	
 	/**
-	 *	Item offset of head.
+	 * Item offset of head.
 	 */
 	uint32_t head;
 	
 	/**
-	 *	Item offset of tail.
+	 * Item offset of tail.
 	 */
 	uint32_t tail;
 	
 	/**
-	 *	The size of a single item.
+	 * The size of a single item.
 	 */
 	uint32_t item_size;
 	
 	/**
-	 *	Total items used which includes items in queue and items popped from queue.
+	 * Total items used which includes items in queue and items popped from queue.
 	 */
 	uint32_t total;
 
 	/**
-	 *	Internal queue flags.
+	 * Internal queue flags.
 	 */
 	uint32_t flags;
 } as_queue;
 
 /******************************************************************************
- *	MACROS
+ * MACROS
  ******************************************************************************/
 
 /**
- *	Initialize a stack allocated as_queue, with item storage on the stack.
- *  as_queue_inita() will transfer stack memory to the heap if a resize is
- *  required.
+ * Initialize a stack allocated as_queue, with item storage on the stack.
+ * as_queue_inita() will transfer stack memory to the heap if a resize is
+ * required.
  */
 #define as_queue_inita(__q, __item_size, __capacity)\
 (__q)->data = alloca((__capacity) * (__item_size));\
@@ -90,25 +90,25 @@ typedef struct as_queue_s {
  ******************************************************************************/
 
 /**
- *	Initialize a stack allocated as_queue, with item storage on the heap.
+ * Initialize a stack allocated as_queue, with item storage on the heap.
  */
 AS_EXTERN bool
 as_queue_init(as_queue* queue, uint32_t item_size, uint32_t capacity);
 
 /**
- *	Create a heap allocated as_queue, with item storage on the heap.
+ * Create a heap allocated as_queue, with item storage on the heap.
  */
 AS_EXTERN as_queue*
 as_queue_create(uint32_t item_size, uint32_t capacity);
 
 /**
- *	Release queue memory.
+ * Release queue memory.
  */
 AS_EXTERN void
 as_queue_destroy(as_queue* queue);
 
 /**
- * Get the number of elements currently in the queue.
+ * Get the number of items currently in the queue.
  */
 static inline uint32_t
 as_queue_size(as_queue* queue)
@@ -117,7 +117,7 @@ as_queue_size(as_queue* queue)
 }
 	
 /**
- *	Is queue empty?
+ * Is queue empty?
  */
 static inline bool
 as_queue_empty(as_queue* queue)
@@ -126,19 +126,19 @@ as_queue_empty(as_queue* queue)
 }
 
 /**
- * Push to the tail of the queue.
+ * Push item to the tail of the queue.
  */
 AS_EXTERN bool
 as_queue_push(as_queue* queue, const void* ptr);
 
 /**
- * Push element on the queue only if size < capacity.
+ * Push item to the tail of the queue only if size < capacity.
  */
 AS_EXTERN bool
 as_queue_push_limit(as_queue* queue, const void* ptr);
 
 /**
- *	Push to the front of the queue.
+ * Push item to the head of the queue.
  */
 AS_EXTERN bool
 as_queue_push_head(as_queue* queue, const void* ptr);
@@ -153,7 +153,7 @@ as_queue_get(as_queue* queue, uint32_t index)
 }
 	
 /**
- *	Pop from the head of the queue.
+ * Pop item from the head of the queue.
  */
 static inline bool
 as_queue_pop(as_queue* queue, void* ptr)
@@ -173,7 +173,7 @@ as_queue_pop(as_queue* queue, void* ptr)
 }
 
 /**
- *	Increment total counter if within capacity.
+ * Increment total counter if within capacity.
  */
 static inline bool
 as_queue_incr_total(as_queue* queue)
@@ -186,7 +186,7 @@ as_queue_incr_total(as_queue* queue)
 }
 
 /**
- *	Decrement total counter.
+ * Decrement total counter.
  */
 static inline void
 as_queue_decr_total(as_queue* queue)
