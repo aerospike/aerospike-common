@@ -173,6 +173,25 @@ as_queue_pop(as_queue* queue, void* ptr)
 }
 
 /**
+ * Pop item from the tail of the queue.
+ */
+static inline bool
+as_queue_pop_tail(as_queue* queue, void* ptr)
+{
+	if (as_queue_empty(queue)) {
+		return false;
+	}
+
+	queue->tail--;
+	memcpy(ptr, as_queue_get(queue, queue->tail), queue->item_size);
+
+	if (queue->head == queue->tail) {
+		queue->head = queue->tail = 0;
+	}
+	return true;
+}
+
+/**
  * Increment total counter if within capacity.
  */
 static inline bool

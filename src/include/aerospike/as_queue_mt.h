@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2019 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -176,6 +176,18 @@ as_queue_mt_push_head(as_queue_mt* queue, const void* ptr)
  */
 AS_EXTERN bool
 as_queue_mt_pop(as_queue_mt* queue, void* ptr, int wait_ms);
+
+/**
+ * Pop from the tail of the queue.
+ *
+ * If the queue is empty, wait_ms is the maximum time in milliseconds to wait
+ * for an available entry.  If wait_ms is AS_QUEUE_FOREVER (-1), the wait time will be forever.
+ * If wait_ms is AS_QUEUE_NOWAIT (0), the function will not wait.
+ *
+ * The return value is true if an entry was successfully retrieved.
+ */
+AS_EXTERN bool
+as_queue_mt_pop_tail(as_queue_mt* queue, void* ptr, int wait_ms);
 
 #ifdef __cplusplus
 } // end extern "C"

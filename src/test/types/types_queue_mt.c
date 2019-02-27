@@ -161,6 +161,31 @@ TEST(types_queue_mt_pointers, "as_queue_mt pointer elements")
     as_queue_mt_destroy(&v);
 }
 
+TEST(types_queue_mt_pop_tail, "as_queue_mt pop tail" ) {
+	as_queue_mt v;
+	as_queue_mt_init(&v, sizeof(int), 10);
+
+	for (int i = 0; i < 11; i++) {
+		as_queue_mt_push(&v, &i);
+	}
+
+	assert(as_queue_mt_size(&v) == 11);
+	assert(v.queue.capacity == 20);
+	assert(v.queue.flags == 1);
+
+	int result;
+	for (int i = 10; i >= 0; i--) {
+		if (as_queue_mt_pop_tail(&v, &result, AS_QUEUE_NOWAIT)) {
+			assert(result == i);
+		}
+		else {
+			assert(false);
+		}
+	}
+
+	as_queue_mt_destroy(&v);
+}
+
 static as_queue_mt shared_queue;
 static int max = 100;
 static int count = 0;
@@ -212,5 +237,6 @@ SUITE(types_queue_mt, "as_queue_mt") {
     suite_add(types_queue_mt_heap_init);
     suite_add(types_queue_mt_heap_create);
     suite_add(types_queue_mt_pointers);
+	suite_add(types_queue_mt_pop_tail);
 	suite_add(types_queue_mt_thread);
 }

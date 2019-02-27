@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2019 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -20,6 +20,36 @@
 
 #define ITEMS_ON_HEAP 1
 #define ALL_ON_HEAP 2
+
+/******************************************************************************
+ * STATIC FUNCTIONS
+ ******************************************************************************/
+
+static void
+as_queue_mt_wait(as_queue_mt* queue, int wait_ms)
+{
+	// as_queue_empty() is checked in as_queue_pop(), so no need
+	// to check here on AS_QUEUE_NOWAIT.
+	if (wait_ms == AS_QUEUE_NOWAIT || ! as_queue_empty(&queue->queue)) {
+		return;
+	}
+
+	if (wait_ms == AS_QUEUE_FOREVER) {
+		// Note that we have to use a while() loop. The pthread_cond_signal()
+		// documentation says that AT LEAST ONE waiting thread will be awakened.
+		// If more than one are awakened, the first will get the popped element,
+		// others will find the queue empty and go back to waiting.
+		do {
+			pthread_cond_wait(&queue->cond, &queue->lock);
+		} while (as_queue_empty(&queue->queue));
+
+		return;
+	}
+
+	struct timespec tp;
+	cf_set_wait_timespec(wait_ms, &tp);
+	pthread_cond_timedwait(&queue->cond, &queue->lock, &tp);
+}
 
 /******************************************************************************
  * FUNCTIONS
@@ -66,33 +96,18 @@ bool
 as_queue_mt_pop(as_queue_mt* queue, void* ptr, int wait_ms)
 {
 	pthread_mutex_lock(&queue->lock);
-
-	// Note that we have to use a while() loop. The pthread_cond_signal()
-	// documentation says that AT LEAST ONE waiting thread will be awakened.
-	// If more than one are awakened, the first will get the popped element,
-	// others will find the queue empty and go back to waiting.
-	while (as_queue_empty(&queue->queue)) {
-		if (wait_ms == AS_QUEUE_FOREVER) {
-			pthread_cond_wait(&queue->cond, &queue->lock);
-		}
-		else if (wait_ms == AS_QUEUE_NOWAIT) {
-			pthread_mutex_unlock(&queue->lock);
-			return false;
-		}
-		else {
-			struct timespec tp;
-
-			cf_set_wait_timespec(wait_ms, &tp);
-			pthread_cond_timedwait(&queue->cond, &queue->lock, &tp);
-
-			if (as_queue_empty(&queue->queue)) {
-				pthread_mutex_unlock(&queue->lock);
-				return false;
-			}
-		}
-	}
-
+	as_queue_mt_wait(queue, wait_ms);
 	bool status = as_queue_pop(&queue->queue, ptr);
+	pthread_mutex_unlock(&queue->lock);
+	return status;
+}
+
+bool
+as_queue_mt_pop_tail(as_queue_mt* queue, void* ptr, int wait_ms)
+{
+	pthread_mutex_lock(&queue->lock);
+	as_queue_mt_wait(queue, wait_ms);
+	bool status = as_queue_pop_tail(&queue->queue, ptr);
 	pthread_mutex_unlock(&queue->lock);
 	return status;
 }

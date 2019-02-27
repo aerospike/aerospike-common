@@ -182,6 +182,31 @@ TEST( types_queue_push_head, "as_queue push head" ) {
 	as_queue_destroy(&v);
 }
 
+TEST( types_queue_pop_tail, "as_queue pop tail" ) {
+	as_queue v;
+	as_queue_init(&v, sizeof(int), 10);
+
+	for (int i = 0; i < 11; i++) {
+		as_queue_push(&v, &i);
+	}
+
+	assert(as_queue_size(&v) == 11);
+	assert(v.capacity == 20);
+	assert(v.flags == 1);
+
+	int result;
+	for (int i = 10; i >= 0; i--) {
+		if (as_queue_pop_tail(&v, &result)) {
+			assert(result == i);
+		}
+		else {
+			assert(false);
+		}
+	}
+
+	as_queue_destroy(&v);
+}
+
 /******************************************************************************
  * TEST SUITE
  *****************************************************************************/
@@ -192,4 +217,5 @@ SUITE( types_queue, "as_queue" ) {
     suite_add( types_queue_heap_create );
     suite_add( types_queue_pointers );
 	suite_add( types_queue_push_head );
+	suite_add( types_queue_pop_tail );
 }
