@@ -166,6 +166,22 @@ as_queue_mt_push_head(as_queue_mt* queue, const void* ptr)
 }
 
 /**
+ * Push to the front of the queue only if size < capacity.
+ */
+static inline bool
+as_queue_mt_push_head_limit(as_queue_mt* queue, const void* ptr)
+{
+	pthread_mutex_lock(&queue->lock);
+	bool status = as_queue_push_head_limit(&queue->queue, ptr);
+
+	if (status) {
+		pthread_cond_signal(&queue->cond);
+	}
+	pthread_mutex_unlock(&queue->lock);
+	return status;
+}
+
+/**
  * Pop from the head of the queue.
  *
  * If the queue is empty, wait_ms is the maximum time in milliseconds to wait 

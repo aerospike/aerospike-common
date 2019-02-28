@@ -144,6 +144,12 @@ AS_EXTERN bool
 as_queue_push_head(as_queue* queue, const void* ptr);
 
 /**
+ * Push item to the head of the queue only if size < capacity.
+ */
+AS_EXTERN bool
+as_queue_push_head_limit(as_queue* queue, const void* ptr);
+
+/**
  * Get item at virtual index.  For internal use only.
  */
 static inline void*
