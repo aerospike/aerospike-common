@@ -25,21 +25,25 @@
 /**
  * Get the source of the module.
  */
-void * as_module_source(as_module * m) {
+inline void * as_module_source(as_module * m) {
     return (m ? (void *) m->source : NULL);
 }
 
 /**
  * Module Destroyer.
  */
-int as_module_destroy(as_module * m) {
+inline int as_module_destroy(as_module * m) {
     return as_util_hook(destroy, 1, m);
 }
 
 /**
  * Module Configurator.
  */
-int as_module_configure(as_module * m, void * config) {
+inline int as_module_configure(
+    as_module * m,
+    void * config
+)
+{
     as_module_event e = {
         .type = AS_MODULE_EVENT_CONFIGURE,
         .data.config = config
@@ -50,14 +54,18 @@ int as_module_configure(as_module * m, void * config) {
 /**
  * Update a Module.
  */
-int as_module_update(as_module * m, as_module_event * e) {
+inline int as_module_update(
+    as_module * m,
+    as_module_event * e
+)
+{
     return as_util_hook(update, 1, m, e);
 }
 
 /**
  * Validates a UDF provided by a string.
  */
-int as_module_validate(
+inline int as_module_validate(
     as_module * m,
     as_aerospike * as,
     const char * const filename,
@@ -72,7 +80,7 @@ int as_module_validate(
 /**
  * Applies a UDF to a record with provided arguments.
  */
-int as_module_apply_record(
+inline int as_module_apply_record(
     as_module * m,
     as_udf_context *ctx,
     const char * const filename,
@@ -88,7 +96,7 @@ int as_module_apply_record(
 /**
  * Applies a UDF to a stream with provided arguments.
  */
-int as_module_apply_stream(
+inline int as_module_apply_stream(
     as_module * m,
     as_udf_context * ctx,
     const char * const filename,
