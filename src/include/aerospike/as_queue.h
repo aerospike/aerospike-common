@@ -16,8 +16,9 @@
  */
 #pragma once
 
-#include <aerospike/as_std.h>
 #include <string.h>
+
+#include <aerospike/as_std.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,27 +37,27 @@ typedef struct as_queue_s {
 	 * The block of items in the queue.
 	 */
 	uint8_t* data;
-	
+
 	/**
 	 * The total number of items allocated.
 	 */
 	uint32_t capacity;
-	
+
 	/**
 	 * Item offset of head.
 	 */
 	uint32_t head;
-	
+
 	/**
 	 * Item offset of tail.
 	 */
 	uint32_t tail;
-	
+
 	/**
 	 * The size of a single item.
 	 */
 	uint32_t item_size;
-	
+
 	/**
 	 * Total items used which includes items in queue and items popped from queue.
 	 */
@@ -115,7 +116,7 @@ as_queue_size(as_queue* queue)
 {
 	return queue->tail - queue->head;
 }
-	
+
 /**
  * Is queue empty?
  */
@@ -157,7 +158,7 @@ as_queue_get(as_queue* queue, uint32_t index)
 {
 	return &queue->data[(index % queue->capacity) * queue->item_size];
 }
-	
+
 /**
  * Pop item from the head of the queue.
  */

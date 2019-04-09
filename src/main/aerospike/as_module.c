@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright 2008-2018 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -57,20 +57,47 @@ int as_module_update(as_module * m, as_module_event * e) {
 /**
  * Validates a UDF provided by a string.
  */
-int as_module_validate(as_module * m, as_aerospike * as, const char * filename, const char * content, uint32_t size, as_module_error * error) {
+int as_module_validate(
+    as_module * m,
+    as_aerospike * as,
+    const char * const filename,
+    const char * const content,
+    uint32_t size,
+    as_module_error * error
+)
+{
     return as_util_hook(validate, 1, m, as, filename, content, size, error);
 }
 
 /**
  * Applies a UDF to a record with provided arguments.
  */
-int as_module_apply_record(as_module * m, as_udf_context *ctx, const char * filename, const char * function, as_rec * r, as_list * args, as_result * res) {
+int as_module_apply_record(
+    as_module * m,
+    as_udf_context *ctx,
+    const char * const filename,
+    const char * const function,
+    as_rec * r,
+    as_list * args,
+    as_result * res
+)
+{
     return as_util_hook(apply_record, 1, m, ctx, filename, function, r, args, res);
 }
 
 /**
  * Applies a UDF to a stream with provided arguments.
  */
-int as_module_apply_stream(as_module * m, as_udf_context * ctx, const char * filename, const char * function, as_stream * istream, as_list * args, as_stream * ostream, as_result *res) {
+int as_module_apply_stream(
+    as_module * m,
+    as_udf_context * ctx,
+    const char * const filename,
+    const char * const function,
+    as_stream * istream,
+    as_list * args,
+    as_stream * ostream,
+    as_result *res
+)
+{
     return as_util_hook(apply_stream, 1, m, ctx, filename, function, istream, args, ostream, res);
 }

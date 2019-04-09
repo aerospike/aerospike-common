@@ -251,7 +251,7 @@ static inline void * as_rec_source(const as_rec * rec)
 }
 
 /**
- *	Set bin value to nil. This will instruct the server to remove the bin when the 
+ *	Set bin value to nil. This will instruct the server to remove the bin when the
  *	record is written using aerospike_key_put().
  *
  *	@param rec		The record to remove the bin from.
@@ -484,7 +484,7 @@ static inline as_double * as_rec_get_as_double(const as_rec * rec, const char * 
 	as_val * v = as_util_hook(get, NULL, rec, name);
 	return as_double_fromval(v);
 }
-	
+
 /**
  *	Get a bin's value as an as_string.
  *
