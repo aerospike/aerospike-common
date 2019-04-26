@@ -1857,6 +1857,14 @@ unpack_size_internal(as_unpacker *pk, uint32_t depth)
 	return -8;
 }
 
+int
+as_unpack_nil(as_unpacker *pk)
+{
+	uint8_t type = pk->buffer[pk->offset++];
+
+	return type == 0xc0 ? 0 : -1;
+}
+
 int64_t
 as_unpack_size(as_unpacker *pk)
 {

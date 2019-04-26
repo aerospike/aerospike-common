@@ -190,6 +190,11 @@ as_val_t as_unpack_buf_peek_type(const uint8_t *buf, uint32_t size);
  */
 bool as_unpack_peek_is_ext(const as_unpacker *pk);
 /**
+ * Unpack nil.
+ * @return 0 on success
+ */
+int as_unpack_nil(as_unpacker *pk);
+/**
  * Get size of packed value.
  * @return negative int on error, size on success
  */
