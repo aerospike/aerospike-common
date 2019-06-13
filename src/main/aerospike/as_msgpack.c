@@ -1858,6 +1858,19 @@ unpack_size_internal(as_unpacker *pk, uint32_t depth)
 }
 
 int
+as_unpack_boolean(as_unpacker *pk, bool *value)
+{
+	uint8_t type = pk->buffer[pk->offset++];
+
+	if (type == 0xc3 || type == 0xc2) {
+		*value = type == 0xc3;
+		return 0;
+	}
+
+	return -1;
+}
+
+int
 as_unpack_nil(as_unpacker *pk)
 {
 	uint8_t type = pk->buffer[pk->offset++];
