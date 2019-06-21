@@ -82,6 +82,20 @@ void
 as_string_builder_init(as_string_builder* sb, uint32_t capacity, bool resize);
 
 /**
+ *	Assign external buffer to string builder.  External buffers are not resized.
+ */
+static inline void
+as_string_builder_assign(as_string_builder* sb, uint32_t buffer_size, char* buffer)
+{
+	sb->data = buffer;
+	sb->data[0] = 0;
+	sb->capacity = buffer_size;
+	sb->length = 0;
+	sb->resize = false;
+	sb->free = false;
+}
+
+/**
  *	Free the resources allocated to the buffer.
  */
 void
