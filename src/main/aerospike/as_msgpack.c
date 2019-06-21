@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2019 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -1216,6 +1216,17 @@ int
 as_pack_double(as_packer *pk, double val)
 {
 	return pack_double(pk, val, false);
+}
+
+int
+as_pack_bytes(as_packer *pk, const uint8_t *buf, uint32_t sz)
+{
+	int rc = pack_byte_array_header(pk, sz, AS_BYTES_BLOB);
+
+	if (rc == 0) {
+		rc = pack_append(pk, buf, sz, false);
+	}
+	return rc;
 }
 
 uint32_t

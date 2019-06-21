@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2019 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -127,6 +127,8 @@ static inline uint32_t as_pack_double_size()
  */
 int as_pack_float(as_packer *pk, float val);
 int as_pack_double(as_packer *pk, double val);
+
+int as_pack_bytes(as_packer *pk, const uint8_t *buf, uint32_t sz);
 
 uint32_t as_pack_str_size(uint32_t str_sz);
 uint32_t as_pack_bin_size(uint32_t buf_sz);
