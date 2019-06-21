@@ -133,6 +133,13 @@ as_string_builder_append_char(as_string_builder* sb, char value);
 bool
 as_string_builder_append_bytes(as_string_builder* sb, uint8_t* src, uint32_t size);
 
+/**
+ *	Append integer to string buffer.
+ *	Returns if successful or not.
+ */
+bool
+as_string_builder_append_int(as_string_builder* sb, int val);
+
 #ifdef __cplusplus
 } // end extern "C"
 #endif

@@ -17,6 +17,7 @@
 #include <aerospike/as_string_builder.h>
 #include <citrusleaf/alloc.h>
 #include <string.h>
+#include <stdio.h>
 
 extern const char as_hex_chars[];
 
@@ -203,4 +204,12 @@ as_string_builder_append_bytes(as_string_builder* sb, uint8_t* src, uint32_t siz
 		}
 	}
 	return true;
+}
+
+bool
+as_string_builder_append_int(as_string_builder* sb, int val)
+{
+	char buf[64];
+	snprintf(buf, sizeof(buf), "%d", val);
+	return as_string_builder_append(sb, buf);
 }
