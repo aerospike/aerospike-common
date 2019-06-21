@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2019 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -111,6 +111,13 @@ as_string_builder_append(as_string_builder* sb, const char* value);
  */
 bool
 as_string_builder_append_char(as_string_builder* sb, char value);
+
+/**
+ *	Append bytes in hex format to string buffer.
+ *	Returns if successful or not.
+ */
+bool
+as_string_builder_append_bytes(as_string_builder* sb, uint8_t* src, uint32_t size);
 
 #ifdef __cplusplus
 } // end extern "C"

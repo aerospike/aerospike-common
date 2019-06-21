@@ -93,6 +93,49 @@ TEST( string_builder_resize_heap, "string builder resize heap" ) {
 	as_string_builder_destroy(&sb);
 }
 
+TEST( string_builder_bytes, "string builder append bytes" ) {
+	
+	as_string_builder sb;
+	as_string_builder_inita(&sb, 11, false);
+	
+	// Normal append
+	uint8_t b1[] = {0x11, 0x22, 0x33};
+	bool status = as_string_builder_append_bytes(&sb, b1, sizeof(b1));
+	assert(status);
+	assert(sb.length == 10);
+	assert(sb.capacity == 11);
+	
+	// This append will not be successful because extra byte doesn't fit.
+	uint8_t b2[] = {0x44};
+	status = as_string_builder_append_bytes(&sb, b2, sizeof(b2));
+	assert(!status);
+
+	// Verify expected string.
+	assert(sb.length == 10);
+	assert(strcmp(sb.data, "[11 22 33]") == 0);
+
+	as_string_builder_destroy(&sb);
+}
+
+TEST( string_builder_bytes_resize, "string builder append bytes with resize" ) {
+	
+	as_string_builder sb;
+	as_string_builder_inita(&sb, 12, true);
+	
+	// Normal append
+	uint8_t b1[] = {0x11, 0x22, 0x33, 0x44};
+	bool status = as_string_builder_append_bytes(&sb, b1, sizeof(b1));
+	assert(status);
+	assert(sb.length == 13);
+	assert(sb.capacity == 24);
+	
+	// Verify expected string.
+	assert(sb.length == 13);
+	assert(strcmp(sb.data, "[11 22 33 44]") == 0);
+
+	as_string_builder_destroy(&sb);
+}
+
 /******************************************************************************
  * TEST SUITE
  *****************************************************************************/
@@ -101,4 +144,6 @@ SUITE( string_builder, "string builder" ) {
     suite_add( string_builder_noresize );
     suite_add( string_builder_resize_stack );
     suite_add( string_builder_resize_heap );
+    suite_add( string_builder_bytes );
+    suite_add( string_builder_bytes_resize );
 }

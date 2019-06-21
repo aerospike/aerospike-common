@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2019 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -22,7 +22,7 @@
  * VARIABLES
  ******************************************************************************/
 
-static const char hex_chars[] = "0123456789ABCDEF";
+const char as_hex_chars[] = "0123456789ABCDEF";
 
 /******************************************************************************
  *	INSTANCE FUNCTIONS
@@ -416,8 +416,8 @@ char * as_bytes_val_tostring(const as_val * v)
     
     int j=0;
     for ( uint32_t i=0; i < sl; i++ ) {
-        str[j] = hex_chars[ s[i] >> 4 ];
-        str[j+1] = hex_chars[ s[i] & 0xf ];
+        str[j] = as_hex_chars[ s[i] >> 4 ];
+        str[j+1] = as_hex_chars[ s[i] & 0xf ];
         str[j+2] = ' ';
         j += 3;
     }

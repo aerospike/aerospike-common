@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2019 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -17,6 +17,8 @@
 #include <aerospike/as_string_builder.h>
 #include <citrusleaf/alloc.h>
 #include <string.h>
+
+extern const char as_hex_chars[];
 
 void
 as_string_builder_init(as_string_builder* sb, uint32_t capacity, bool resize)
@@ -39,28 +41,21 @@ as_string_builder_destroy(as_string_builder* sb)
 }
 
 static bool
-as_string_builder_append_increase(as_string_builder* sb, const char* src)
+as_sb_increase_capacity(as_string_builder* sb, uint32_t min_capacity)
 {
-	uint32_t remaining_len = (uint32_t)strlen(src);
 	uint32_t capacity = sb->capacity * 2;
-	uint32_t initial_len = sb->capacity - 1;
-	uint32_t total_len = initial_len + remaining_len;
-	uint32_t capacity_min = total_len + 1;
-	
-	if (capacity < capacity_min) {
-		capacity = capacity_min;
+
+	if (capacity < min_capacity) {
+		capacity = min_capacity;
 	}
-	
+
 	if (sb->free) {
 		// String already allocated on heap.  Realloc.
 		char* data = cf_realloc(sb->data, capacity);
 		
 		if (data) {
-			memcpy(&data[initial_len], src, remaining_len);
-			data[total_len] = 0;
 			sb->data = data;
 			sb->capacity = capacity;
-			sb->length = total_len;
 			return true;
 		}
 	}
@@ -69,12 +64,10 @@ as_string_builder_append_increase(as_string_builder* sb, const char* src)
 		char* data = cf_malloc(capacity);
 		
 		if (data) {
-			memcpy(data, sb->data, initial_len);
-			memcpy(&data[initial_len], src, remaining_len);
-			data[total_len] = 0;
+			memcpy(data, sb->data, sb->length);
+			data[sb->length] = 0;
 			sb->data = data;
 			sb->capacity = capacity;
-			sb->length = total_len;
 			sb->free = true;
 			return true;
 		}
@@ -82,29 +75,45 @@ as_string_builder_append_increase(as_string_builder* sb, const char* src)
 	return false;
 }
 
+static bool
+as_sb_expand(as_string_builder* sb, const char* src)
+{
+	uint32_t remaining_len = (uint32_t)strlen(src);
+	uint32_t min_capacity = sb->length + remaining_len + 1;
+
+	if (! as_sb_increase_capacity(sb, min_capacity)) {
+		return false;
+	}
+
+	memcpy(&sb->data[sb->length], src, remaining_len);
+	sb->length += remaining_len;
+	sb->data[sb->length] = 0;
+	return true;
+}
+
 bool
 as_string_builder_append(as_string_builder* sb, const char* src)
 {
 	char* trg = &sb->data[sb->length];
-	uint32_t max = sb->capacity;
-	uint32_t i = sb->length + 1;
-	
+
 	while (*src) {
-		if (i >= max) {
-			if (sb->resize) {
-				return as_string_builder_append_increase(sb, src);
-			}
-			else {
-				*trg = 0;
-				sb->length = i - 1;
-				return false;
-			}
+		if (++sb->length < sb->capacity) {
+			*trg++ = *src++;
+			continue;
 		}
-		*trg++ = *src++;
-		i++;
+
+		// Optimistic increase of length failed. Roll it back.
+		sb->length--;
+
+		if (sb->resize) {
+			return as_sb_expand(sb, src);
+		}
+		else {
+			*trg = 0;
+			return false;
+		}
 	}
 	*trg = 0;
-	sb->length = i - 1;
 	return true;
 }
 
@@ -119,7 +128,79 @@ as_string_builder_append_char(as_string_builder* sb, char value)
 	
 	if (sb->resize) {
 		char buf[] = {value, '\0'};
-		return as_string_builder_append_increase(sb, buf);
+		return as_sb_expand(sb, buf);
 	}
 	return false;
+}
+
+static inline bool
+as_sb_append_char(as_string_builder* sb, char value)
+{
+	if (sb->length + 1 < sb->capacity) {
+		sb->data[sb->length++] = value;
+		sb->data[sb->length] = 0;
+		return true;
+	}
+	return false;
+}
+
+static bool
+as_sb_append_byte(as_string_builder* sb, uint8_t b)
+{
+	if (sb->length + 3 < sb->capacity) {
+		sb->data[sb->length++] = as_hex_chars[b >> 4];
+		sb->data[sb->length++] = as_hex_chars[b & 0xf];
+		sb->data[sb->length++] = ' ';
+		sb->data[sb->length] = 0;
+		return true;
+	}
+	return false;
+}
+
+bool
+as_string_builder_append_bytes(as_string_builder* sb, uint8_t* src, uint32_t size)
+{
+	if (sb->resize) {
+		// Ensure buffer is large enough to receive bytes.
+		// min capacity = old length + 3 chars per byte including separator + 2 bracket chars
+		// - 1 extra separator + 1 null byte.
+		uint32_t min_capacity = sb->length + (size * 3) + 2;
+
+		if (min_capacity > sb->capacity) {
+			if (! as_sb_increase_capacity(sb, min_capacity)) {
+				return false;
+			}
+		}
+
+		char* trg = &sb->data[sb->length];
+		*trg++ = '[';
+
+		for (uint32_t i = 0; i < size; i++) {
+			uint8_t b = src[i];
+			*trg++ = as_hex_chars[b >> 4];
+			*trg++ = as_hex_chars[b & 0xf];
+			*trg++ = ' ';
+		}
+		trg--; // truncate last separator
+		*trg++ = ']';
+		*trg = 0;
+		sb->length = (int)(trg - sb->data);
+	}
+	else {
+		if (! as_sb_append_char(sb, '[')) {
+			return false;
+		}
+
+		for (uint32_t i = 0; i < size; i++) {
+			if (! as_sb_append_byte(sb, src[i])) {
+				return false;
+			}
+		}
+		sb->length--; // truncate last separator
+
+		if (! as_sb_append_char(sb, ']')) {
+			return false;
+		}
+	}
+	return true;
 }
