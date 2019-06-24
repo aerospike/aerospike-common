@@ -78,7 +78,7 @@ typedef struct as_string_builder_s {
 /**
  *	Initialize string builder with a heap allocated buffer.
  */
-void
+AS_EXTERN void
 as_string_builder_init(as_string_builder* sb, uint32_t capacity, bool resize);
 
 /**
@@ -98,7 +98,7 @@ as_string_builder_assign(as_string_builder* sb, uint32_t buffer_size, char* buff
 /**
  *	Free the resources allocated to the buffer.
  */
-void
+AS_EXTERN void
 as_string_builder_destroy(as_string_builder* sb);
 
 /**
@@ -116,28 +116,28 @@ as_string_builder_reset(as_string_builder* sb)
  *	Append null terminated string value to string buffer.
  *	Returns if successful or not.
  */
-bool
+AS_EXTERN bool
 as_string_builder_append(as_string_builder* sb, const char* value);
 
 /**
  *	Append a single character to string buffer.
  *	Returns if successful or not.
  */
-bool
+AS_EXTERN bool
 as_string_builder_append_char(as_string_builder* sb, char value);
 
 /**
  *	Append bytes in hex format to string buffer.
  *	Returns if successful or not.
  */
-bool
+AS_EXTERN bool
 as_string_builder_append_bytes(as_string_builder* sb, uint8_t* src, uint32_t size);
 
 /**
  *	Append integer to string buffer.
  *	Returns if successful or not.
  */
-bool
+AS_EXTERN bool
 as_string_builder_append_int(as_string_builder* sb, int val);
 
 #ifdef __cplusplus
