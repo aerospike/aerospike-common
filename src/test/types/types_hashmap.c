@@ -394,7 +394,11 @@ TEST( types_hashmap_types, "as_hashmap types" ) {
 	for (i=0; i<20; i++) {
 		assert_int_eq (*bytes++,i);
 	}
-	
+
+	char* str = as_val_tostring((as_val*)m);
+	info("map string: %s", str);
+	cf_free(str);
+
 	as_map_destroy(m);
 
 }

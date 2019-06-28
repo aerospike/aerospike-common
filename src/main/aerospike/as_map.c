@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2019 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -80,15 +80,10 @@ static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, 
 
 	char * valstr = as_val_tostring(val);
     if (!valstr) {
+		cf_free(keystr);
     	return false;
     }
 	int vallen = (int)strlen(valstr);
-
-	if ( data->sep ) {
-		data->buf[data->pos] = ',';
-		data->buf[data->pos + 1] = ' ';
-		data->pos += 2;
-	}
 
 	uint32_t entlen = keylen + 2 + vallen + 2;
 
@@ -99,13 +94,19 @@ static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, 
 		data->cap += adj;
 	}
 
-	strncpy(data->buf + data->pos, keystr, keylen);
+	if ( data->sep ) {
+		data->buf[data->pos] = ',';
+		data->buf[data->pos + 1] = ' ';
+		data->pos += 2;
+	}
+
+	strcpy(data->buf + data->pos, keystr);
 	data->pos += keylen;
 
 	strcpy(data->buf + data->pos, ":");
 	data->pos += 1;
 
-	strncpy(data->buf + data->pos, valstr, vallen);
+	strcpy(data->buf + data->pos, valstr);
 	data->pos += vallen;
 
 	data->sep = true;
@@ -123,7 +124,7 @@ char * as_map_val_tostring(const as_val * v)
 {
 	as_map_val_tostring_data data = {
 		.buf = NULL,
-		.blk = 256,
+		.blk = 1024,
 		.cap = 1024,
 		.pos = 0,
 		.sep = false
