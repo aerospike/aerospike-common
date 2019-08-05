@@ -3,28 +3,28 @@
 ###############################################################################
 
 $(TARGET_PATH):
-	mkdir $@
+	mkdir -p $@
 
 $(TARGET_BASE): | $(TARGET_PATH)
-	mkdir $@
+	mkdir -p $@
 
 $(TARGET_BIN): | $(TARGET_BASE)
-	mkdir $@
+	mkdir -p $@
 
 $(TARGET_DOC): | $(TARGET_BASE)
-	mkdir $@
+	mkdir -p $@
 
 $(TARGET_LIB): | $(TARGET_BASE)
-	mkdir $@
+	mkdir -p $@
 
 $(TARGET_OBJ): | $(TARGET_BASE)
-	mkdir $@
+	mkdir -p $@
 
 $(TARGET_SRC): | $(TARGET_BASE)
-	mkdir $@
+	mkdir -p $@
 
 $(TARGET_INCL): | $(TARGET_BASE)
-	mkdir $@
+	mkdir -p $@
 
 .PHONY: info
 info:
