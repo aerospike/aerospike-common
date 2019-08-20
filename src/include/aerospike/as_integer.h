@@ -48,12 +48,12 @@ extern "C" {
  *	To create and initialize a heap allocated as_integer, use as_integer_new():
  *	
  *	~~~~~~~~~~{.c}
- *	as_integer * i = as_integer_new(100);
+ *	as_integer* i = as_integer_new(100);
  *	~~~~~~~~~~
  *
  *	## Destruction
  *
- *	When the as_integer instance is no longer required, then you should
+ *	When a heap allocated as_integer instance is no longer required, then you should
  *	release the resources associated with it via as_integer_destroy():
  *
  *	~~~~~~~~~~{.c}
@@ -94,8 +94,6 @@ extern "C" {
  *	as_integer * i = as_integer_fromval(val);
  *	~~~~~~~~~~
  *
- *
- *
  *	@extends as_val
  *	@ingroup aerospike_t
  */
@@ -127,12 +125,7 @@ typedef struct as_integer_s {
  *	as_integer_init(&i, 123);
  *	~~~~~~~~~~
  *
- *	When the `as_integer` is no longer needed, you should release it an it's 
- *	resources:
- *
- *	~~~~~~~~~~{.c}
- *	as_integer_destroy(&i);
- *	~~~~~~~~~~
+ *	as_integer_destroy() is not required for a stack allocated as_integer.
  *
  *	@param integer		The `as_integer` to initialize.
  *	@param value		The integer value.

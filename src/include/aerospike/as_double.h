@@ -41,18 +41,18 @@ extern "C" {
  *
  *	~~~~~~~~~~{.c}
  *	as_double v;
- *	as_double_init(&v, 100);
+ *	as_double_init(&v, 100.0);
  *	~~~~~~~~~~
  *
  *	To create and initialize a heap allocated as_double, use as_double_new():
  *	
  *	~~~~~~~~~~{.c}
- *	as_double* v = as_double_new(100);
+ *	as_double* v = as_double_new(100.0);
  *	~~~~~~~~~~
  *
  *	## Destruction
  *
- *	When the as_double instance is no longer required, then you should
+ *	When a heap allocated as_double instance is no longer required, then you should
  *	release the resources associated with it via as_double_destroy():
  *
  *	~~~~~~~~~~{.c}
@@ -123,12 +123,7 @@ typedef struct as_double_s {
  *	as_double_init(&v, 123.45);
  *	~~~~~~~~~~
  *
- *	When the `as_double` is no longer needed, you should release it an it's 
- *	resources:
- *
- *	~~~~~~~~~~{.c}
- *	as_double_destroy(&i);
- *	~~~~~~~~~~
+ *	as_double_destroy() is not required for a stack allocated as_double.
  *
  *	@param value_ptr	The `as_double` to initialize.
  *	@param value		The double value.
