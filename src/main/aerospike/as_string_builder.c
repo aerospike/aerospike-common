@@ -213,3 +213,11 @@ as_string_builder_append_int(as_string_builder* sb, int val)
 	snprintf(buf, sizeof(buf), "%d", val);
 	return as_string_builder_append(sb, buf);
 }
+
+bool
+as_string_builder_append_uint(as_string_builder* sb, uint32_t val)
+{
+	char buf[64];
+	snprintf(buf, sizeof(buf), "%u", val);
+	return as_string_builder_append(sb, buf);
+}

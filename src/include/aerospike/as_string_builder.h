@@ -140,6 +140,23 @@ as_string_builder_append_bytes(as_string_builder* sb, uint8_t* src, uint32_t siz
 AS_EXTERN bool
 as_string_builder_append_int(as_string_builder* sb, int val);
 
+/**
+ * Append unsigned integer to string buffer.
+ * Returns if successful or not.
+ */
+AS_EXTERN bool
+as_string_builder_append_uint(as_string_builder* sb, uint32_t val);
+
+/**
+ * Append newline to string buffer.
+ * Returns if successful or not.
+ */
+static inline bool
+as_string_builder_append_newline(as_string_builder* sb)
+{
+	return as_string_builder_append_char(sb, '\n');
+}
+
 #ifdef __cplusplus
 } // end extern "C"
 #endif
