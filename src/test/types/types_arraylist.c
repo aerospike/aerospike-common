@@ -21,6 +21,18 @@ TEST(types_arraylist_empty, "as_arraylist is empty")
 	as_list_destroy((as_list *) &l);
 }
 
+TEST(types_arraylist_cap0, "as_arraylist initial capacity zero")
+{
+	as_arraylist list;
+	as_arraylist_init(&list, 0, 8);
+	as_arraylist_append_int64(&list, 3);
+
+	int64_t val = as_arraylist_get_int64(&list, 0);
+	assert_int_eq(val, 3);
+
+	as_arraylist_destroy(&list);
+}
+
 TEST(types_arraylist_cap10_blk0, "as_arraylist w/ capacity 10, block_size 0")
 {
 	int rc = 0;
@@ -449,6 +461,7 @@ TEST(types_arraylist_msgpack, "as_arraylist msgpack")
 SUITE(types_arraylist, "as_arraylist")
 {
 	suite_add(types_arraylist_empty);
+	suite_add(types_arraylist_cap0);
 	suite_add(types_arraylist_cap10_blk0);
 	suite_add(types_arraylist_cap10_blk10);
 	suite_add(types_arraylist_1);

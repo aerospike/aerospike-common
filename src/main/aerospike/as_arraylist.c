@@ -133,6 +133,7 @@ as_arraylist_ensure(as_arraylist* list, uint32_t delta)
 		// Set the new array pointer and capacity.
 		list->elements = elements;
 		list->capacity = new_capacity;
+		list->free = true;
 	}
 
 	return AS_ARRAYLIST_OK;
