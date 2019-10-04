@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2019 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -22,31 +22,27 @@
 #include <string.h>
 
 /*******************************************************************************
- *	EXTERNS
+ * EXTERNS
  ******************************************************************************/
 
 extern const as_list_hooks as_arraylist_list_hooks;
 
 /*******************************************************************************
- *	INSTANCE FUNCTIONS
+ * INSTANCE FUNCTIONS
  ******************************************************************************/
 
-/**
- *	Initialize an arraylist, with room for  "capacity" number of elements
- *	and with the new (delta) allocation amount of "block_size" elements.
- *	Use cf_calloc() for the new element memory so that it is initialized to zero
- */
-as_arraylist * as_arraylist_init(as_arraylist * list, uint32_t capacity, uint32_t block_size) 
+as_arraylist*
+as_arraylist_init(as_arraylist* list, uint32_t capacity, uint32_t block_size)
 {
-	if ( !list ) return list;
+	if (!list) return list;
 
 	as_list_cons((as_list *) list, false, &as_arraylist_list_hooks);
 	list->block_size = block_size;
 	list->capacity = capacity;
 	list->size = 0;
-	if ( list->capacity > 0 ) {
+	if (list->capacity > 0) {
 		list->free = true;
-		list->elements = (as_val **) cf_calloc( capacity, sizeof(as_val *) );
+		list->elements = (as_val**) cf_calloc(capacity, sizeof(as_val*));
 	}
 	else {
 		list->free = false;
@@ -55,23 +51,19 @@ as_arraylist * as_arraylist_init(as_arraylist * list, uint32_t capacity, uint32_
 	return list;
 }
 
-/**
- *	Create a new arraylist, with room for  "capacity" number of elements
- *	and with the new (delta) allocation amount of "block_size" elements.
- *	Use cf_calloc() for the new element memory so that it is initialized to zero
- */
-as_arraylist * as_arraylist_new(uint32_t capacity, uint32_t block_size) 
+as_arraylist*
+as_arraylist_new(uint32_t capacity, uint32_t block_size)
 {
-	as_arraylist * list = (as_arraylist *) cf_malloc(sizeof(as_arraylist));
-	if ( !list ) return list;
+	as_arraylist* list = (as_arraylist*) cf_malloc(sizeof(as_arraylist));
+	if (!list) return list;
 
 	as_list_cons((as_list *) list, true, &as_arraylist_list_hooks);
 	list->block_size = block_size;
 	list->capacity = capacity;
 	list->size = 0;
-	if ( list->capacity > 0 ) {
+	if (list->capacity > 0) {
 		list->free = true;
-		list->elements = (as_val **) cf_calloc( capacity, sizeof(as_val *) );
+		list->elements = (as_val**) cf_calloc(capacity, sizeof(as_val*));
 	}
 	else {
 		list->free = false;
@@ -80,25 +72,18 @@ as_arraylist * as_arraylist_new(uint32_t capacity, uint32_t block_size)
 	return list;
 }
 
-/**
- *	@private
- *	Release resources allocated to the list.
- *
- *	@param list	The list.
- *
- *	@return TRUE on success.
- */
-bool as_arraylist_release(as_arraylist * list)
+bool
+as_arraylist_release(as_arraylist* list)
 {
-	if ( list->elements ) {
-		for (uint32_t i = 0; i < list->size; i++ ) {
+	if (list->elements) {
+		for (uint32_t i = 0; i < list->size; i++) {
 			if (list->elements[i]) {
 				as_val_destroy(list->elements[i]);
 			}
 			list->elements[i] = NULL;
 		}
 
-		if ( list->free ) {
+		if (list->free) {
 			cf_free(list->elements);
 		}
 	}
@@ -110,34 +95,25 @@ bool as_arraylist_release(as_arraylist * list)
 	return true;
 }
 
-/**
- *	as_arraylist_destroy
- *	helper function for those who like the joy of as_arraylist_new
- */
-void as_arraylist_destroy(as_arraylist * l)
+void
+as_arraylist_destroy(as_arraylist* l)
 {
 	as_list_destroy((as_list *) l);
 }
 
-
 /*******************************************************************************
- *	STATIC FUNCTIONS
+ * STATIC FUNCTIONS
  ******************************************************************************/
 
-/**
- *	Ensure delta elements can be added to the list, growing the list if necessary.
- * 
- *	@param l – the list to be ensure the capacity of.
- *	@param delta – the number of elements to be added.
- */
-static int as_arraylist_ensure(as_arraylist * list, uint32_t delta)
+static int
+as_arraylist_ensure(as_arraylist* list, uint32_t delta)
 {
 	// Check for capacity (in terms of elements, NOT size in bytes), and if we
 	// need to allocate more, do a realloc.
-	if ( (list->size + delta) > list->capacity ) {
+	if ((list->size + delta) > list->capacity) {
 		// by convention - we allocate more space ONLY when the unit of
 		// (new) allocation is > 0.
-		if ( list->block_size == 0 ) {
+		if (list->block_size == 0) {
 			return AS_ARRAYLIST_ERR_MAX;
 		}
 		// Compute how much room we're missing for the new stuff
@@ -146,13 +122,13 @@ static int as_arraylist_ensure(as_arraylist * list, uint32_t delta)
 		// This will get us (conservatively) at least one block
 		int new_blocks = (new_room + list->block_size) / list->block_size;
 		int new_capacity = list->capacity + (new_blocks * list->block_size);
-		size_t new_bytes = sizeof(as_val *) * new_capacity;
-		as_val ** elements = (as_val **) cf_realloc(list->elements, new_bytes);
-		if ( ! elements ) {
+		size_t new_bytes = sizeof(as_val*) * new_capacity;
+		as_val** elements = (as_val**) cf_realloc(list->elements, new_bytes);
+		if (! elements) {
 			return AS_ARRAYLIST_ERR_ALLOC;
 		}
 		// Zero everything beyond the old pointers.
-		size_t old_bytes = sizeof(as_val *) * list->capacity;
+		size_t old_bytes = sizeof(as_val*) * list->capacity;
 		memset((uint8_t *)elements + old_bytes, 0, new_bytes - old_bytes);
 		// Set the new array pointer and capacity.
 		list->elements = elements;
@@ -163,65 +139,55 @@ static int as_arraylist_ensure(as_arraylist * list, uint32_t delta)
 }
 
 /*******************************************************************************
- *	INFO FUNCTIONS
+ * INFO FUNCTIONS
  ******************************************************************************/
 
-/**
- *	The hash value of the list.
- */
-uint32_t as_arraylist_hashcode(const as_arraylist * list) 
+uint32_t
+as_arraylist_hashcode(const as_arraylist* list)
 {
 	return 0;
 }
 
-/**
- *	The number of elements in the list.
- */
-uint32_t as_arraylist_size(const as_arraylist * list) 
+uint32_t
+as_arraylist_size(const as_arraylist* list)
 {
 	return list->size;
 }
 
 /*******************************************************************************
- *	GET FUNCTIONS
+ * GET FUNCTIONS
  ******************************************************************************/
 
-/**
- *	Return the element at the specified index.
- */
-as_val * as_arraylist_get(const as_arraylist * list, uint32_t index)
+as_val*
+as_arraylist_get(const as_arraylist* list, uint32_t index)
 {
 	return index < list->size ? list->elements[index] : NULL;
 }
 
-int64_t as_arraylist_get_int64(const as_arraylist * list, uint32_t index)
+int64_t
+as_arraylist_get_int64(const as_arraylist* list, uint32_t index)
 {
 	return as_integer_get(as_integer_fromval(as_arraylist_get(list, index)));
 }
 
-double as_arraylist_get_double(const as_arraylist * list, uint32_t index)
+double
+as_arraylist_get_double(const as_arraylist* list, uint32_t index)
 {
 	return as_double_get(as_double_fromval(as_arraylist_get(list, index)));
 }
 
-char * as_arraylist_get_str(const as_arraylist * list, uint32_t index)
+char*
+as_arraylist_get_str(const as_arraylist* list, uint32_t index)
 {
 	return as_string_get(as_string_fromval(as_arraylist_get(list, index)));
 }
 
 /*******************************************************************************
- *	SET FUNCTIONS
+ * SET FUNCTIONS
  ******************************************************************************/
 
-/**
- *	Set the arraylist (L) at element index position (i) with element value (v).
- *	Notice that in order to maintain proper object/memory management, we
- *	just first destroy (as_val_destroy()) the old object at element position(i)
- *	before assigning the new element.  Also note that the object at element
- *	position (i) is assumed to exist, so all element positions must be
- *	appropriately initialized to zero.
- */
-int as_arraylist_set(as_arraylist * list, uint32_t index, as_val * value)
+int
+as_arraylist_set(as_arraylist* list, uint32_t index, as_val* value)
 {
 	int rc = AS_ARRAYLIST_OK;
 
@@ -239,14 +205,14 @@ int as_arraylist_set(as_arraylist * list, uint32_t index, as_val * value)
 		as_val_destroy(list->elements[index]);
 	}
 
-	list->elements[index] = value ? value : (as_val *)&as_nil;
+	list->elements[index] = value ? value : (as_val*)&as_nil;
 
 	if (index == list->size) {
 		list->size++;
 	}
 	else if (index > list->size) {
 		for (uint32_t i = list->size; i < index; i++) {
-			list->elements[i] = (as_val *)&as_nil;
+			list->elements[i] = (as_val*)&as_nil;
 		}
 
 		list->size = index + 1;
@@ -255,31 +221,30 @@ int as_arraylist_set(as_arraylist * list, uint32_t index, as_val * value)
 	return rc;
 }
 
-int as_arraylist_set_int64(as_arraylist * list, uint32_t index, int64_t value)
+int
+as_arraylist_set_int64(as_arraylist* list, uint32_t index, int64_t value)
 {
-	return as_arraylist_set(list, index, (as_val *) as_integer_new(value));
+	return as_arraylist_set(list, index, (as_val*) as_integer_new(value));
 }
 
-int as_arraylist_set_double(as_arraylist * list, uint32_t index, double value)
+int
+as_arraylist_set_double(as_arraylist* list, uint32_t index, double value)
 {
-	return as_arraylist_set(list, index, (as_val *) as_double_new(value));
+	return as_arraylist_set(list, index, (as_val*) as_double_new(value));
 }
 
-int as_arraylist_set_str(as_arraylist * list, uint32_t index, const char * value)
+int
+as_arraylist_set_str(as_arraylist* list, uint32_t index, const char * value)
 {
-	return as_arraylist_set(list, index, (as_val *) as_string_new_strdup(value));
+	return as_arraylist_set(list, index, (as_val*) as_string_new_strdup(value));
 }
 
 /*******************************************************************************
- *	INSERT FUNCTIONS
+ * INSERT FUNCTIONS
  ******************************************************************************/
 
-/**
- *	Insert element at index position (i) with element (value). Any elements at
- *	and beyond (i) will be shifted so their indexes increase by 1. It's ok to
- *	insert beyond the current end of the list.
- */
-int as_arraylist_insert(as_arraylist * list, uint32_t index, as_val * value)
+int
+as_arraylist_insert(as_arraylist* list, uint32_t index, as_val* value)
 {
 	uint32_t delta = 1;
 
@@ -297,14 +262,14 @@ int as_arraylist_insert(as_arraylist * list, uint32_t index, as_val * value)
 		list->elements[i] = list->elements[i - 1];
 	}
 
-	list->elements[index] = value ? value : (as_val *)&as_nil;
+	list->elements[index] = value ? value : (as_val*)&as_nil;
 
 	if (index <= list->size) {
 		list->size++;
 	}
 	else {
 		for (uint32_t i = list->size; i < index; i++) {
-			list->elements[i] = (as_val *)&as_nil;
+			list->elements[i] = (as_val*)&as_nil;
 		}
 
 		list->size = index + 1;
@@ -313,85 +278,86 @@ int as_arraylist_insert(as_arraylist * list, uint32_t index, as_val * value)
 	return AS_ARRAYLIST_OK;
 }
 
-int as_arraylist_insert_int64(as_arraylist * list, uint32_t index, int64_t value)
+int
+as_arraylist_insert_int64(as_arraylist* list, uint32_t index, int64_t value)
 {
-	return as_arraylist_insert(list, index, (as_val *) as_integer_new(value));
+	return as_arraylist_insert(list, index, (as_val*) as_integer_new(value));
 }
 
-int as_arraylist_insert_double(as_arraylist * list, uint32_t index, double value)
+int
+as_arraylist_insert_double(as_arraylist* list, uint32_t index, double value)
 {
-	return as_arraylist_insert(list, index, (as_val *) as_double_new(value));
+	return as_arraylist_insert(list, index, (as_val*) as_double_new(value));
 }
 
-int as_arraylist_insert_str(as_arraylist * list, uint32_t index, const char * value)
+int
+as_arraylist_insert_str(as_arraylist* list, uint32_t index, const char * value)
 {
-	return as_arraylist_insert(list, index, (as_val *) as_string_new_strdup(value));
+	return as_arraylist_insert(list, index, (as_val*) as_string_new_strdup(value));
 }
 
 /*******************************************************************************
- *	APPEND FUNCTIONS
+ * APPEND FUNCTIONS
  ******************************************************************************/
 
-/**
- *	Add the element to the end of the list.
- */
-int as_arraylist_append(as_arraylist * list, as_val * value) 
+int
+as_arraylist_append(as_arraylist* list, as_val* value)
 {
 	return as_arraylist_insert(list, list->size, value);
 }
 
-int as_arraylist_append_int64(as_arraylist * list, int64_t value) 
+int
+as_arraylist_append_int64(as_arraylist* list, int64_t value)
 {
-	return as_arraylist_append(list, (as_val *) as_integer_new(value));
+	return as_arraylist_append(list, (as_val*) as_integer_new(value));
 }
 
-int as_arraylist_append_double(as_arraylist * list, double value)
+int
+as_arraylist_append_double(as_arraylist* list, double value)
 {
-	return as_arraylist_append(list, (as_val *) as_double_new(value));
+	return as_arraylist_append(list, (as_val*) as_double_new(value));
 }
 
-int as_arraylist_append_str(as_arraylist * list, const char * value) 
+int
+as_arraylist_append_str(as_arraylist* list, const char * value)
 {
-	return as_arraylist_append(list, (as_val *) as_string_new_strdup(value));
+	return as_arraylist_append(list, (as_val*) as_string_new_strdup(value));
 }
 
 /*******************************************************************************
- *	PREPEND FUNCTIONS
+ * PREPEND FUNCTIONS
  ******************************************************************************/
 
-/**
- *	Add the element to the beginning of the list.
- */
-int as_arraylist_prepend(as_arraylist * list, as_val * value) 
+int
+as_arraylist_prepend(as_arraylist* list, as_val* value)
 {
 	return as_arraylist_insert(list, 0, value);
 }
 
-int as_arraylist_prepend_int64(as_arraylist * list, int64_t value) 
+int
+as_arraylist_prepend_int64(as_arraylist* list, int64_t value)
 {
-	return as_arraylist_prepend(list, (as_val *) as_integer_new(value));
+	return as_arraylist_prepend(list, (as_val*) as_integer_new(value));
 }
 
-int as_arraylist_prepend_double(as_arraylist * list, double value)
+int
+as_arraylist_prepend_double(as_arraylist* list, double value)
 {
-	return as_arraylist_prepend(list, (as_val *) as_double_new(value));
+	return as_arraylist_prepend(list, (as_val*) as_double_new(value));
 }
 
-int as_arraylist_prepend_str(as_arraylist * list, const char * value) 
+int
+as_arraylist_prepend_str(as_arraylist* list, const char * value)
 {
-	return as_arraylist_prepend(list, (as_val *) as_string_new_strdup(value));
+	return as_arraylist_prepend(list, (as_val*) as_string_new_strdup(value));
 }
 
 /*******************************************************************************
- *	REMOVE FUNCTION
+ * REMOVE FUNCTION
  ******************************************************************************/
 
-/**
- *	Remove element at specified index. Any elements beyond specified index will
- *	be shifted so their indexes decrease by 1. The element at specified index
- *	will be destroyed via as_val_destroy().
- */
-int as_arraylist_remove(as_arraylist * list, uint32_t index)
+int
+as_arraylist_remove(as_arraylist* list, uint32_t index)
 {
 	if (index >= list->size) {
 		return AS_ARRAYLIST_ERR_INDEX;
@@ -412,14 +378,11 @@ int as_arraylist_remove(as_arraylist * list, uint32_t index)
 }
 
 /*******************************************************************************
- *	ACCESSOR & MODIFICATION FUNCTIONS
+ * ACCESSOR & MODIFICATION FUNCTIONS
  ******************************************************************************/
 
-/**
- *	Append all elements of list2, in order, to list. No new list object is
- *	created.
- */
-int as_arraylist_concat(as_arraylist * list, const as_arraylist * list2)
+int
+as_arraylist_concat(as_arraylist* list, const as_arraylist* list2)
 {
 	int rc = as_arraylist_ensure(list, list2->size);
 
@@ -438,11 +401,8 @@ int as_arraylist_concat(as_arraylist * list, const as_arraylist * list2)
 	return AS_ARRAYLIST_OK;
 }
 
-/**
- *	Delete (and destroy) all elements at and beyond specified index. Capacity is
- *	not reduced.
- */
-int as_arraylist_trim(as_arraylist * list, uint32_t index)
+int
+as_arraylist_trim(as_arraylist* list, uint32_t index)
 {
 	if (index >= list->size) {
 		return AS_ARRAYLIST_ERR_INDEX;
@@ -460,19 +420,18 @@ int as_arraylist_trim(as_arraylist * list, uint32_t index)
 	return AS_ARRAYLIST_OK;
 }
 
-as_val * as_arraylist_head(const as_arraylist * list) 
+as_val*
+as_arraylist_head(const as_arraylist* list)
 {
 	return list->elements[0];
 }
 
-/**
- *	returns all elements other than the head
- */
-as_arraylist * as_arraylist_tail(const as_arraylist * list) 
+as_arraylist*
+as_arraylist_tail(const as_arraylist* list)
 {
-	if ( list->size == 0 ) return NULL;
+	if (list->size == 0) return NULL;
 
-	as_arraylist * list2 = as_arraylist_new(list->size-1, list->block_size);
+	as_arraylist* list2 = as_arraylist_new(list->size-1, list->block_size);
 
 	for(uint32_t i = 1, j = 0; i < list->size; i++, j++) {
 		if (list->elements[i]) {
@@ -487,14 +446,12 @@ as_arraylist * as_arraylist_tail(const as_arraylist * list)
 	return list2;
 }
 
-/**
- *	Return a new list with the first n elements removed.
- */
-as_arraylist * as_arraylist_drop(const as_arraylist * list, uint32_t n) 
+as_arraylist*
+as_arraylist_drop(const as_arraylist* list, uint32_t n)
 {
 	uint32_t		sz		= list->size;
 	uint32_t		c		= n < sz ? n : sz;
-	as_arraylist *	list2	= as_arraylist_new(sz-c, list->block_size);
+	as_arraylist*	list2	= as_arraylist_new(sz-c, list->block_size);
 	
 	list2->size = sz-c;
 	for(uint32_t i = c, j = 0; j < list2->size; i++, j++) {
@@ -510,14 +467,12 @@ as_arraylist * as_arraylist_drop(const as_arraylist * list, uint32_t n)
 	return list2;
 }
 
-/**
- *	Return a new list containing the first n elements.
- */
-as_arraylist * as_arraylist_take(const as_arraylist * list, uint32_t n) 
+as_arraylist*
+as_arraylist_take(const as_arraylist* list, uint32_t n)
 {
 	uint32_t		sz		= list->size;
 	uint32_t		c		= n < sz ? n : sz;
-	as_arraylist *	list2	= as_arraylist_new(c, list->block_size);
+	as_arraylist*	list2	= as_arraylist_new(c, list->block_size);
 
 	list2->size = c;
 	for(uint32_t i = 0; i < c; i++) {
@@ -537,12 +492,10 @@ as_arraylist * as_arraylist_take(const as_arraylist * list, uint32_t n)
  *	ITERATION FUNCTIONS
  ******************************************************************************/
 
-/** 
- *	Call the callback function for each element in the list.
- */
-bool as_arraylist_foreach(const as_arraylist * list, as_list_foreach_callback callback, void * udata) 
+bool
+as_arraylist_foreach(const as_arraylist* list, as_list_foreach_callback callback, void* udata)
 {
-	for(uint32_t i = 0; i < list->size; i++ ) {
+	for(uint32_t i = 0; i < list->size; i++) {
 		if (! callback(list->elements[i], udata)) {
 			return false;
 		}
