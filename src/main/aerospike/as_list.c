@@ -36,6 +36,7 @@ as_list * as_list_cons(as_list * list, bool free, const as_list_hooks * hooks)
 
 	as_val_cons((as_val *) list, AS_LIST, free);
 	list->hooks = hooks;
+	list->flags = 0;
 	return list;
 }
 /**
