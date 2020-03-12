@@ -3,6 +3,7 @@
 #include <aerospike/as_random.h>
 #include <pthread.h>
 #include <string.h>
+#include <ctype.h>
 
 /******************************************************************************
  * TEST CASES
@@ -47,7 +48,7 @@ TEST(random_number, "random numbers" )
 	assert(n5 != n6);
 }
 
-TEST(random_bytes, "random numbers" )
+TEST(random_bytes, "random bytes" )
 {
 	uint8_t b1[3];
 	memset(b1, 0, sizeof(b1));
@@ -68,6 +69,17 @@ TEST(random_bytes, "random numbers" )
 	assert(b2[63] == 0);
 }
 
+TEST(random_str, "random string" )
+{
+	char buf[10];
+	int len = sizeof(buf) - 1;
+	as_random_get_str(buf, len);
+
+	for (int i = 0; i < len; i++) {
+		//printf("%c\n", buf[i]);
+		assert(isalnum(buf[i]));
+	}
+}
 
 /******************************************************************************
  * TEST SUITE
@@ -77,4 +89,5 @@ SUITE(random_numbers, "random number generator")
 {
     suite_add(random_number);
     suite_add(random_bytes);
+    suite_add(random_str);
 }

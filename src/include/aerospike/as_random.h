@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2020 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -110,6 +110,24 @@ as_random_get_bytes(uint8_t* bytes, uint32_t len)
 {
 	as_random* random = as_random_instance();
 	as_random_next_bytes(random, bytes, len);
+}
+
+/**
+ * Get null terminated random alphanumeric string of specified length using given
+ * as_random instance. String buffer must include space for extra null byte.
+ */
+AS_EXTERN void
+as_random_next_str(as_random* random, char* str, uint32_t len);
+
+/**
+ * Get null terminated random alphanumeric string of specified length from thread
+ * local random instance. String buffer must include space for extra null byte.
+ */
+static inline void
+as_random_get_str(char* str, uint32_t len)
+{
+	as_random* random = as_random_instance();
+	as_random_next_str(random, str, len);
 }
 
 #ifdef __cplusplus

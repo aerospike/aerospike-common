@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2020 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -17,6 +17,17 @@
 #include <aerospike/as_random.h>
 #include <citrusleaf/cf_random.h>
 #include <stddef.h>
+
+/******************************************************************************
+ * Static Variables
+ *****************************************************************************/
+
+static const uint8_t alphanum[] =
+	"0123456789"
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	"abcdefghijklmnopqrstuvwxyz";
+
+static int alphanum_len = sizeof(alphanum) - 1;
 
 /******************************************************************************
  * Thread Local Variables
@@ -72,4 +83,16 @@ as_random_next_bytes(as_random* random, uint8_t* bytes, uint32_t len)
 			*p++ = *t++;
 		}
 	}
+}
+
+void
+as_random_next_str(as_random* random, char* str, uint32_t len)
+{
+	uint8_t* p = (uint8_t*)str;
+	as_random_next_bytes(random, p, len);
+	
+	for (uint32_t i = 0; i < len; i++) {
+		p[i] = alphanum[p[i] % alphanum_len];
+	}
+	p[len] = 0;
 }
