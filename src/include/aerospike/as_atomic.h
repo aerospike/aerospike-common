@@ -38,6 +38,12 @@
 		*(float*)&v; \
 	})
 
+// Note - this assumes bool is implemented as a single byte.
+// bool as_load_bool(const bool* target)
+#define as_load_bool(_target) ({ \
+		(bool)as_load_uint8((const uint8_t*)_target); \
+	})
+
 /******************************************************************************
  * STORE
  *****************************************************************************/
@@ -52,6 +58,12 @@
 #define as_store_float(_target, _value) ({ \
 		float v = _value; \
 		as_store_uint32((uint32_t*)_target, *(uint32_t*)&v); \
+	})
+
+// Note - this assumes bool is implemented as a single byte.
+// void as_store_bool(bool* target, bool value)
+#define as_store_bool(_target, _value) ({ \
+		as_store_uint8((uint8_t*)_target, (uint8_t)_value); \
 	})
 
 /******************************************************************************
