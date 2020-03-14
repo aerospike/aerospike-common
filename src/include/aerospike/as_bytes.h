@@ -90,6 +90,11 @@ typedef enum as_bytes_type_e {
 	AS_BYTES_ERLANG		= 12,
 
 	/**
+	 *	HyperLogLog
+	 */
+	AS_BYTES_HLL		= 13,
+
+	/**
 	 *	Map
 	 */
 	AS_BYTES_MAP		= 19,
@@ -98,11 +103,6 @@ typedef enum as_bytes_type_e {
 	 *	List
 	 */
 	AS_BYTES_LIST		= 20,
-
-	/**
-	 *	LDT  TODO - remove this as soon as client is ready to move forward.
-	 */
-	AS_BYTES_LDT		= 21,
 
 	/**
 	 *	GeoJSON Data
