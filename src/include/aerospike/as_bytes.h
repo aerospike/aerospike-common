@@ -92,7 +92,7 @@ typedef enum as_bytes_type_e {
 	/**
 	 *	HyperLogLog
 	 */
-	AS_BYTES_HLL		= 13,
+	AS_BYTES_HLL		= 18,
 
 	/**
 	 *	Map
