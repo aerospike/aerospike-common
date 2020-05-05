@@ -76,8 +76,8 @@ TEST(random_str, "random string" )
 	as_random_get_str(buf, len);
 
 	for (int i = 0; i < len; i++) {
-		//printf("%c\n", buf[i]);
-		assert(isalnum(buf[i]));
+		int rv = isalnum(buf[i]);
+		assert(rv != 0);
 	}
 }
 

@@ -113,7 +113,6 @@
     <ClCompile Include="..\..\src\test\types\types_queue.c" />
     <ClCompile Include="..\..\src\test\types\types_queue_mt.c" />
     <ClCompile Include="..\..\src\test\types\types_string.c" />
-    <ClCompile Include="..\..\src\test\types\types_vector.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

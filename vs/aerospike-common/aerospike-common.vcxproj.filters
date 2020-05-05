@@ -210,9 +210,6 @@
     <ClInclude Include="..\..\src\include\citrusleaf\cf_rchash.h">
       <Filter>Header Files\citrusleaf</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\include\citrusleaf\cf_vector.h">
-      <Filter>Header Files\citrusleaf</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\include\aerospike\as_dir.h">
       <Filter>Header Files\aerospike</Filter>
     </ClInclude>
@@ -375,9 +372,6 @@
       <Filter>Source Files\citrusleaf</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\main\citrusleaf\cf_random.c">
-      <Filter>Source Files\citrusleaf</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\main\citrusleaf\cf_vector.c">
       <Filter>Source Files\citrusleaf</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\main\aerospike\as_queue_mt.c">

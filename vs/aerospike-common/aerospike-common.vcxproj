@@ -149,7 +149,6 @@
     <ClInclude Include="..\..\src\include\citrusleaf\cf_queue_priority.h" />
     <ClInclude Include="..\..\src\include\citrusleaf\cf_random.h" />
     <ClInclude Include="..\..\src\include\citrusleaf\cf_rchash.h" />
-    <ClInclude Include="..\..\src\include\citrusleaf\cf_vector.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main\aerospike\as_aerospike.c" />
@@ -204,7 +203,6 @@
     <ClCompile Include="..\..\src\main\citrusleaf\cf_queue.c" />
     <ClCompile Include="..\..\src\main\citrusleaf\cf_queue_priority.c" />
     <ClCompile Include="..\..\src\main\citrusleaf\cf_random.c" />
-    <ClCompile Include="..\..\src\main\citrusleaf\cf_vector.c" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
