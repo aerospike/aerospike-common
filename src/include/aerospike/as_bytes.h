@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2020 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -990,6 +990,48 @@ AS_EXTERN uint32_t as_bytes_val_hashcode(const as_val * v);
  *	Internal helper function for getting the string representation of an as_val.
  */
 AS_EXTERN char * as_bytes_val_tostring(const as_val * v);
+
+/******************************************************************************
+ * Byte utilities
+ *****************************************************************************/
+
+/**
+ * Convert byte array to hexidecimal string.
+ *
+ * @param bytes			Source byte array.
+ * @param bytes_size	Size of byte array.
+ * @param str			Target hex string.
+ * @param str_size		Size of hex string.
+ *
+ * @return true on success, false on string truncation.
+ */
+AS_EXTERN bool
+as_bytes_to_string(const uint8_t* bytes, uint32_t bytes_size, char* str, uint32_t str_size);
+
+/**
+ * Convert byte array to hexidecimal string with 0x prefix.
+ *
+ * @param bytes			Source byte array.
+ * @param bytes_size	Size of byte array.
+ * @param str			Target hex string.
+ * @param str_size		Size of hex string.
+ *
+ * @return true on success, false on string truncation.
+ */
+AS_EXTERN bool
+as_bytes_to_string_with_prefix(const uint8_t* bytes, uint32_t bytes_size, char* str, uint32_t str_size);
+
+/**
+ * Convert hexidecimal string to byte array.
+ *
+ * @param bytes			Target byte array.
+ * @param bytes_size	Size of byte array.
+ * @param str			Source hex string in format [0x][0-9]|[a-f]|[A-F]. 0x prefix is optional.
+ *
+ * @return count of bytes converted or -1 on invalid hex chars or byte array truncation.
+ */
+AS_EXTERN int
+as_bytes_from_string(uint8_t* bytes, uint32_t bytes_size, const char* str);
 
 #ifdef __cplusplus
 } // end extern "C"

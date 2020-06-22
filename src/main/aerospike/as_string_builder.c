@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2019 Aerospike, Inc.
+ * Copyright 2008-2020 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -149,7 +149,7 @@ static bool
 as_sb_append_byte(as_string_builder* sb, uint8_t b)
 {
 	if (sb->length + 3 < sb->capacity) {
-		sb->data[sb->length++] = as_hex_chars[b >> 4];
+		sb->data[sb->length++] = as_hex_chars[(b >> 4) & 0xf];
 		sb->data[sb->length++] = as_hex_chars[b & 0xf];
 		sb->data[sb->length++] = ' ';
 		sb->data[sb->length] = 0;
@@ -178,7 +178,7 @@ as_string_builder_append_bytes(as_string_builder* sb, uint8_t* src, uint32_t siz
 
 		for (uint32_t i = 0; i < size; i++) {
 			uint8_t b = src[i];
-			*trg++ = as_hex_chars[b >> 4];
+			*trg++ = as_hex_chars[(b >> 4) & 0xf];
 			*trg++ = as_hex_chars[b & 0xf];
 			*trg++ = ' ';
 		}

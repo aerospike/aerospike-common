@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2019 Aerospike, Inc.
+ * Copyright 2008-2020 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -416,8 +416,8 @@ char * as_bytes_val_tostring(const as_val * v)
     
     int j=0;
     for ( uint32_t i=0; i < sl; i++ ) {
-        str[j] = as_hex_chars[ s[i] >> 4 ];
-        str[j+1] = as_hex_chars[ s[i] & 0xf ];
+        str[j] = as_hex_chars[(s[i] >> 4) & 0xf];
+        str[j+1] = as_hex_chars[s[i] & 0xf];
         str[j+2] = ' ';
         j += 3;
     }
@@ -426,4 +426,105 @@ char * as_bytes_val_tostring(const as_val * v)
     str[j] = 0;
     
     return str;
+}
+
+/******************************************************************************
+ * Byte Utils
+ *****************************************************************************/
+
+bool
+as_bytes_to_string(const uint8_t* bytes, uint32_t bytes_size, char* str, uint32_t str_size)
+{
+	// Ensure hex string has enough space including null terminator.
+	if ((bytes_size * 2 + 1) > str_size) {
+		if (str_size > 0) {
+			*str = 0;
+		}
+		return false;
+	}
+
+	while (bytes_size > 0) {
+		uint8_t b = *bytes++;
+		*str++ = as_hex_chars[(b >> 4) & 0xf];
+		*str++ = as_hex_chars[b & 0xf];
+		bytes_size--;
+	}
+	*str = 0;
+	return true;
+}
+
+bool
+as_bytes_to_string_with_prefix(
+	const uint8_t* bytes, uint32_t bytes_size, char* str, uint32_t str_size
+	)
+{
+	if (as_bytes_to_string(bytes, bytes_size, str + 2, str_size - 2)) {
+		*str++ = '0';
+		*str = 'x';
+		return true;
+	}
+
+	if (str_size > 0) {
+		*str = 0;
+	}
+	return false;
+}
+
+static inline uint8_t
+hex_char_to_byte(const char c)
+{
+    if (c >= '0' && c <= '9') {
+		return (uint8_t)(c - '0');
+	}
+
+    if (c >= 'A' && c <= 'F') {
+		return (uint8_t)(c - 'A' + 10);
+	}
+
+    if (c >= 'a' && c <= 'f') {
+		return (unsigned char)(c - 'a' + 10);
+	}
+    return 0xff;
+}
+
+int
+as_bytes_from_string(uint8_t* bytes, uint32_t bytes_size, const char* str)
+{
+	// Skip prefix if it exists.
+	if (*str == '0' && *(str+1) == 'x') {
+		str += 2;
+	}
+
+	int len = (int)strlen(str);
+	int count = len / 2;
+	int rem = len - (count * 2);
+
+	// Hex string length must be even (2 chars per byte).
+	if (rem != 0) {
+		return -1;
+	}
+
+	// Byte array must have enough space.
+	if (count > bytes_size) {
+		return -1;
+	}
+
+	uint8_t hb; // high byte
+	uint8_t lb; // low byte
+
+	while (*str) {
+		hb = hex_char_to_byte(*str++);
+
+		if (hb == 0xff) {
+			return -1;
+		}
+
+		lb = hex_char_to_byte(*str++);
+
+		if (lb == 0xff) {
+			return -1;
+		}
+		*bytes++ = (hb << 4) + lb;
+	}
+	return count;
 }
