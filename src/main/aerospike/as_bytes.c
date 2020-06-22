@@ -505,7 +505,7 @@ as_bytes_from_string(uint8_t* bytes, uint32_t bytes_size, const char* str)
 	}
 
 	// Byte array must have enough space.
-	if (count > bytes_size) {
+	if ((uint32_t)count > bytes_size) {
 		return -1;
 	}
 
