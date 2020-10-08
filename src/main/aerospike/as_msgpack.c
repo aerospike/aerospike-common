@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2019 Aerospike, Inc.
+ * Copyright 2008-2020 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -471,65 +471,46 @@ pack_as_double(as_packer *pk, const as_double *d)
 }
 
 static int
-pack_byte_array_header(as_packer *pk, uint32_t length, uint8_t type)
+pack_byte_array_header(as_packer *pk, uint32_t size)
 {
-	length++;  // Account for extra aerospike type.
-
-	int rc;
-
-	// Continue to pack byte arrays as strings until all servers/clients
-	// have been upgraded to handle new message pack binary type.
-	if (length < 32) {
-		rc = pack_byte(pk, (uint8_t)(0xa0 | length), true);
-	}
-	else if (length < 65536) {
-		rc = pack_type_uint16(pk, 0xda, (uint16_t)length, true);
-	}
-	else {
-		rc = pack_type_uint32(pk, 0xdb, length, true);
+	if (size < 32) {
+		return pack_byte(pk, (uint8_t)(0xa0 | size), true);
 	}
 
-	// TODO: Replace with this code after all servers/clients
-	// have been upgraded to handle new message pack binary type.
-	/*
-	 if (length < 32) {
-		rc = as_pack_byte(pk, (uint8_t)(0xa0 | length));
-	 } else if (length < 256) {
-		rc = as_pack_int8(pk, 0xc4, (uint8_t)length);
-	 } else if (length < 65536) {
-		rc = as_pack_int16(pk, 0xc5, (uint16_t)length);
-	 } else {
-		rc = as_pack_int32(pk, 0xc6, length);
-	 }
-	 */
-
-	if (rc == 0) {
-		rc = pack_byte(pk, type, true);
+	if (size < 256) {
+		return pack_type_uint8(pk, 0xc4, (uint8_t)size, true);
 	}
 
-	return rc;
+	if (size < 65536) {
+		return pack_type_uint16(pk, 0xc5, (uint16_t)size, true);
+	}
+
+	return pack_type_uint32(pk, 0xc6, size, true);
+}
+
+static int
+pack_string_header(as_packer *pk, uint32_t size)
+{
+	if (size < 32) {
+		return pack_byte(pk, (uint8_t)(0xa0 | size), true);
+	}
+
+	if (size < 256) {
+		return pack_type_uint8(pk, 0xd9, (uint8_t)size, true);
+	}
+
+	if (size < 65536) {
+		return pack_type_uint16(pk, 0xda, (uint16_t)size, true);
+	}
+
+	return pack_type_uint32(pk, 0xdb, size, true);
 }
 
 static int
 pack_string(as_packer *pk, as_string *s)
 {
 	uint32_t length = (uint32_t)as_string_len(s);
-	uint32_t size = length + 1;
-	int rc;
-
-	if (size < 32) {
-		rc = pack_byte(pk, (uint8_t)(0xa0 | size), true);
-	// TODO: Enable this code after all servers/clients
-	// have been upgraded to handle new message pack binary type.
-	//} else if (size < 255) {
-	//	rc = as_pack_int8(pk, 0xd9, (uint8_t)size);
-	}
-	else if (size < 65536) {
-		rc = pack_type_uint16(pk, 0xda, (uint16_t)size, true);
-	}
-	else {
-		rc = pack_type_uint32(pk, 0xdb, size, true);
-	}
+	int rc = pack_string_header(pk, length + 1);
 
 	if (rc == 0) {
 		rc = pack_byte(pk, AS_BYTES_STRING, true);
@@ -546,7 +527,11 @@ static int
 pack_geojson(as_packer *pk, as_geojson *s)
 {
 	uint32_t length = (uint32_t)as_geojson_len(s);
-	int rc = pack_byte_array_header(pk, length, AS_BYTES_GEOJSON);
+	int rc = pack_byte_array_header(pk, length + 1);
+
+	if (rc == 0) {
+		rc = pack_byte(pk, AS_BYTES_GEOJSON, true);
+	}
 
 	if (rc == 0) {
 		rc = pack_append(pk, (unsigned char*)s->value, length, true);
@@ -558,7 +543,11 @@ pack_geojson(as_packer *pk, as_geojson *s)
 static int
 pack_bytes(as_packer *pk, const as_bytes *b)
 {
-	int rc = pack_byte_array_header(pk, b->size, b->type);
+	int rc = pack_byte_array_header(pk, b->size + 1);
+
+	if (rc == 0) {
+		rc = pack_byte(pk, b->type, true);
+	}
 
 	if (rc == 0) {
 		rc = pack_append(pk, b->value, b->size, true);
@@ -1221,7 +1210,11 @@ as_pack_double(as_packer *pk, double val)
 int
 as_pack_bytes(as_packer *pk, const uint8_t *buf, uint32_t sz)
 {
-	int rc = pack_byte_array_header(pk, sz, AS_BYTES_BLOB);
+	int rc = pack_byte_array_header(pk, sz + 1);
+
+	if (rc == 0) {
+		rc = pack_byte(pk, AS_BYTES_BLOB, true);
+	}
 
 	if (rc == 0) {
 		rc = pack_append(pk, buf, sz, false);
@@ -1256,20 +1249,7 @@ as_pack_bin_size(uint32_t buf_sz)
 int
 as_pack_str(as_packer *pk, const uint8_t *buf, uint32_t sz)
 {
-	int rc;
-
-	if (sz < 32) {
-		rc = pack_byte(pk, (uint8_t)(0xa0 | sz), false);
-	}
-	else if (sz < (1 << 8)) {
-		rc = pack_type_uint8(pk, 0xd9, (uint8_t)sz, false);
-	}
-	else if (sz < (1 << 16)) {
-		rc = pack_type_uint16(pk, 0xda, (uint16_t)sz, false);
-	}
-	else {
-		rc = pack_type_uint32(pk, 0xdb, sz, false);
-	}
+	int rc = pack_string_header(pk, sz);
 
 	if (rc == 0 && buf) {
 		return pack_append(pk, buf, sz, false);
