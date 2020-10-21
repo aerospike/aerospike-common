@@ -471,24 +471,6 @@ pack_as_double(as_packer *pk, const as_double *d)
 }
 
 static int
-pack_byte_array_header(as_packer *pk, uint32_t size)
-{
-	if (size < 32) {
-		return pack_byte(pk, (uint8_t)(0xa0 | size), true);
-	}
-
-	if (size < 256) {
-		return pack_type_uint8(pk, 0xc4, (uint8_t)size, true);
-	}
-
-	if (size < 65536) {
-		return pack_type_uint16(pk, 0xc5, (uint16_t)size, true);
-	}
-
-	return pack_type_uint32(pk, 0xc6, size, true);
-}
-
-static int
 pack_string_header(as_packer *pk, uint32_t size)
 {
 	if (size < 32) {
@@ -504,6 +486,13 @@ pack_string_header(as_packer *pk, uint32_t size)
 	}
 
 	return pack_type_uint32(pk, 0xdb, size, true);
+}
+
+static inline int
+pack_byte_array_header(as_packer *pk, uint32_t size)
+{
+	// Use string header codes for byte arrays.
+	return pack_string_header(pk, size);
 }
 
 static int
