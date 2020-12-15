@@ -81,6 +81,11 @@
 #define cf_swap_from_le64(_n) (_n)
 #endif // _MSC_VER
 
+#if defined(__GNUC__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstrict-aliasing"
+#endif
+
 static inline double
 cf_swap_to_big_float64(double d)
 {
@@ -108,3 +113,7 @@ cf_swap_from_little_float64(double d)
 	uint64_t i = cf_swap_from_le64(*(uint64_t*)&d);
 	return *(double*)&i;
 }
+
+#if defined(__GNUC__)
+#pragma GCC diagnostic pop
+#endif
