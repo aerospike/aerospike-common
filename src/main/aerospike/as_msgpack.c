@@ -22,6 +22,7 @@
 #include <aerospike/as_msgpack_ext.h>
 #include <aerospike/as_serializer.h>
 #include <aerospike/as_types.h>
+#include <aerospike/as_vector.h>
 
 #include <citrusleaf/alloc.h>
 #include <citrusleaf/cf_byte_order.h>
@@ -589,6 +590,244 @@ pack_map_foreach(const as_val *key, const as_val *val, void *udata)
 }
 
 static int
+as_bytes_cmp(as_bytes* b1, as_bytes* b2)
+{
+	if (b1->size == b2->size) {
+		return memcmp(b1->value, b2->value, b1->size);
+	}
+	else if (b1->size < b2->size) {
+		int cmp = memcmp(b1->value, b2->value, b1->size);
+		return cmp != 0 ? cmp : -1;
+	}
+	else {
+		int cmp = memcmp(b1->value, b2->value, b2->size);
+		return cmp != 0 ? cmp : 1;
+	}
+}
+
+static int
+as_val_cmp(const as_val* v1, const as_val* v2);
+
+static int
+as_list_cmp_max(const as_list* l1, const as_list* l2, uint32_t max, uint32_t fin)
+{
+	for (uint32_t i = 0; i < max; i++) {
+		int cmp = as_val_cmp(as_list_get(l1, i), as_list_get(l2, i));
+
+		if (cmp != 0) {
+			return cmp;
+		}
+	}
+	return fin;
+}
+
+static int
+as_list_cmp(const as_list* l1, const as_list* l2)
+{
+	uint32_t s1 = as_list_size(l1);
+	uint32_t s2 = as_list_size(l2);
+
+	if (s1 == s2) {
+		return as_list_cmp_max(l1, l2, s1, 0);
+	}
+	else if (s1 < s2) {
+		return as_list_cmp_max(l1, l2, s1, -1);
+	}
+	else {
+		return as_list_cmp_max(l1, l2, s2, 1);
+	}
+}
+
+typedef struct {
+	const as_val* key;
+	const as_val* val;
+} key_val;
+
+static int
+as_vector_cmp_max(as_vector* l1, as_vector* l2, bool sort_kv, uint32_t max, uint32_t fin)
+{
+	for (uint32_t i = 0; i < max; i++) {
+		key_val* kv1 = as_vector_get(l1, i);
+		key_val* kv2 = as_vector_get(l2, i);
+
+		int cmp = as_val_cmp(kv1->key, kv2->key);
+
+		if (sort_kv && cmp == 0) {
+			cmp = as_val_cmp(kv1->val, kv2->val);
+		}
+
+		if (cmp != 0) {
+			return cmp;
+		}
+	}
+	return fin;
+}
+
+static int
+as_vector_cmp(as_vector* l1, as_vector* l2, bool sort_kv)
+{
+	uint32_t s1 = l1->size;
+	uint32_t s2 = l2->size;
+
+	if (s1 == s2) {
+		return as_vector_cmp_max(l1, l2, sort_kv, s1, 0);
+	}
+	else if (s1 < s2) {
+		return as_vector_cmp_max(l1, l2, sort_kv, s1, -1);
+	}
+	else {
+		return as_vector_cmp_max(l1, l2, sort_kv, s2, 1);
+	}
+}
+
+static bool
+map_to_list(const as_val* key, const as_val* val, void* udata)
+{
+	key_val kv = {key, val};
+	as_vector_append(udata, &kv);
+	return true;
+}
+
+typedef int (*map_comparator)(const void *, const void *);
+
+static int
+compare_key_val(const void* v1, const void* v2)
+{
+	int cmp = as_val_cmp(((key_val*)v1)->key, ((key_val*)v2)->key);
+
+	if (cmp == 0) {
+		cmp = as_val_cmp(((key_val*)v1)->val, ((key_val*)v2)->val);
+	}
+	return cmp;
+}
+
+static int
+compare_key(const void* v1, const void* v2)
+{
+	return as_val_cmp(((key_val*)v1)->key, ((key_val*)v2)->key);
+}
+
+static inline map_comparator
+map_get_comparator(const as_map* map)
+{
+	return (map->flags & AS_PACKED_MAP_FLAG_V_ORDERED) ? compare_key_val : compare_key;
+}
+
+static bool
+map_to_sorted_keys(const as_map* map, as_vector* list)
+{
+	uint32_t size = as_map_size(map);
+
+	as_vector_init(list, sizeof(key_val), size);
+
+	if (! as_map_foreach(map, map_to_list, list)) {
+		return false;
+	}
+
+	// Sort list of map entries.
+	map_comparator compare_fn = map_get_comparator(map);
+	qsort(list->list, list->size, sizeof(key_val), compare_fn);
+	return true;
+}
+
+static int
+as_val_cmp(const as_val* v1, const as_val* v2)
+{
+	if (v1->type == AS_CMP_WILDCARD || v2->type == AS_CMP_WILDCARD) {
+		return 0;
+	}
+
+	if (v1->type != v2->type) {
+		return v1->type - v2->type;
+	}
+
+	switch (v1->type) {
+	case AS_BOOLEAN:
+		return ((as_boolean*)v1)->value - ((as_boolean*)v2)->value;
+
+	case AS_INTEGER: {
+		int64_t cmp = ((as_integer*)v1)->value - ((as_integer*)v2)->value;
+		return cmp < 0 ? -1 : cmp > 0 ? 1 : 0;
+	}
+
+	case AS_DOUBLE: {
+		double cmp = ((as_double*)v1)->value - ((as_double*)v2)->value;
+		return cmp < 0.0 ? -1 : cmp > 0.0 ? 1 : 0;
+	}
+
+	case AS_STRING:
+		return strcmp(((as_string*)v1)->value, ((as_string*)v2)->value);
+
+	case AS_GEOJSON:
+		return strcmp(((as_geojson*)v1)->value, ((as_geojson*)v2)->value);
+
+	case AS_BYTES: {
+		return as_bytes_cmp((as_bytes*)v1, (as_bytes*)v2);
+	}
+
+	case AS_LIST: {
+		return as_list_cmp((as_list*)v1, (as_list*)v2);
+	}
+
+	case AS_MAP: {
+		// Maps are converted to lists and sorted by key/value before comparing.
+		as_vector l1;
+		int cmp = 0;
+
+		if (map_to_sorted_keys((as_map*)v1, &l1)) {
+			as_vector l2;
+
+			if (map_to_sorted_keys((as_map*)v2, &l2)) {
+				bool sort_kv = (((as_map*)v1)->flags & AS_PACKED_MAP_FLAG_V_ORDERED) ? true : false;
+				cmp = as_vector_cmp(&l1, &l2, sort_kv);
+			}
+			as_vector_destroy(&l2);
+		}
+		as_vector_destroy(&l1);
+		return cmp;
+	}
+
+	default:
+		return 0;
+	}
+}
+
+static int
+pack_map_ordered(as_packer *pk, const as_map *m, uint32_t size, map_comparator compare_fn)
+{
+	// Sort map before packing.
+	// Copy map to a list.
+	as_vector list;
+
+	if (size <= 500) {
+		as_vector_inita(&list, sizeof(key_val), size);
+	}
+	else {
+		as_vector_init(&list, sizeof(key_val), size);
+	}
+
+	if (!as_map_foreach(m, map_to_list, &list)) {
+		as_vector_destroy(&list);
+		return 1;
+	}
+
+	// Sort list of map entries.
+	qsort(list.list, list.size, sizeof(key_val), compare_fn);
+
+	// Pack sorted list of map entries.
+	for (uint32_t i = 0; i < list.size; i++) {
+		key_val* kv = as_vector_get(&list, i);
+
+		if (!pack_map_foreach(kv->key, kv->val, pk)) {
+			as_vector_destroy(&list);
+			return 1;
+		}
+	}
+	as_vector_destroy(&list);
+	return 0;
+}
+
+static int
 pack_map(as_packer *pk, const as_map *m)
 {
 	uint32_t size = as_map_size(m);
@@ -604,11 +843,17 @@ pack_map(as_packer *pk, const as_map *m)
 		rc = pack_type_uint32(pk, 0xdf, size, true);
 	}
 
-	if (rc == 0) {
-		rc = as_map_foreach(m, pack_map_foreach, pk) ? 0 : 1;
+	if (rc != 0) {
+		return rc;
 	}
 
-	return rc;
+	if (m->flags & AS_PACKED_MAP_FLAG_K_ORDERED) {
+		map_comparator compare_fn = map_get_comparator(m);
+		return pack_map_ordered(pk, m, size, compare_fn);
+	}
+
+	// Pack unordered map.
+	return as_map_foreach(m, pack_map_foreach, pk) ? 0 : 1;
 }
 
 static int

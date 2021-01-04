@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2020 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -246,6 +246,17 @@ AS_EXTERN int as_hashmap_clear(as_hashmap * map);
  *	@relatesalso as_hashmap
  */
 AS_EXTERN int as_hashmap_remove(as_hashmap * map, const as_val * key);
+
+/**
+ *	Set map attributes. Can be used to indicate that unordered map should
+ *	be sorted just before packing map that will be sent to the server.
+ *
+ *	@relatesalso as_hashmap
+ */
+static inline void as_hashmap_set_flags(as_hashmap * map, uint32_t flags)
+{
+	map->_.flags = flags;
+}
 
 /******************************************************************************
  *	ITERATION FUNCTIONS

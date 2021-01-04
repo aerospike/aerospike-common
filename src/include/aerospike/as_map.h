@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2020 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -333,6 +333,17 @@ static inline int as_map_clear(as_map * map)
 static inline int as_map_remove(as_map * map, const as_val * key)
 {
 	return as_util_hook(remove, 1, map, key);
+}
+
+/**
+ *	Set map attributes. Can be used to indicate that unordered map should
+ *	be sorted just before packing map that will be sent to the server.
+ *
+ *	@relatesalso as_map
+ */
+static inline void as_map_set_flags(as_map * map, uint32_t flags)
+{
+	map->flags = flags;
 }
 
 /******************************************************************************
