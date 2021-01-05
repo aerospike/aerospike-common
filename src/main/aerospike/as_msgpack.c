@@ -609,10 +609,10 @@ static int
 as_val_cmp(const as_val* v1, const as_val* v2);
 
 static int
-as_list_cmp_max(const as_list* l1, const as_list* l2, uint32_t max, uint32_t fin)
+as_list_cmp_max(const as_list* list1, const as_list* list2, uint32_t max, uint32_t fin)
 {
 	for (uint32_t i = 0; i < max; i++) {
-		int cmp = as_val_cmp(as_list_get(l1, i), as_list_get(l2, i));
+		int cmp = as_val_cmp(as_list_get(list1, i), as_list_get(list2, i));
 
 		if (cmp != 0) {
 			return cmp;
@@ -622,112 +622,88 @@ as_list_cmp_max(const as_list* l1, const as_list* l2, uint32_t max, uint32_t fin
 }
 
 static int
-as_list_cmp(const as_list* l1, const as_list* l2)
+as_list_cmp(const as_list* list1, const as_list* list2)
 {
-	uint32_t s1 = as_list_size(l1);
-	uint32_t s2 = as_list_size(l2);
+	uint32_t size1 = as_list_size(list1);
+	uint32_t size2 = as_list_size(list2);
 
-	if (s1 == s2) {
-		return as_list_cmp_max(l1, l2, s1, 0);
+	if (size1 == size2) {
+		return as_list_cmp_max(list1, list2, size1, 0);
 	}
-	else if (s1 < s2) {
-		return as_list_cmp_max(l1, l2, s1, -1);
+	else if (size1 < size2) {
+		return as_list_cmp_max(list1, list2, size1, -1);
 	}
 	else {
-		return as_list_cmp_max(l1, l2, s2, 1);
+		return as_list_cmp_max(list1, list2, size2, 1);
 	}
 }
 
-typedef struct {
-	const as_val* key;
-	const as_val* val;
-} key_val;
-
 static int
-as_vector_cmp_max(as_vector* l1, as_vector* l2, bool sort_kv, uint32_t max, uint32_t fin)
+as_vector_cmp(as_vector* list1, as_vector* list2)
 {
-	for (uint32_t i = 0; i < max; i++) {
-		key_val* kv1 = as_vector_get(l1, i);
-		key_val* kv2 = as_vector_get(l2, i);
-
-		int cmp = as_val_cmp(kv1->key, kv2->key);
-
-		if (sort_kv && cmp == 0) {
-			cmp = as_val_cmp(kv1->val, kv2->val);
-		}
+	// Size of vectors should already be the same.
+	for (uint32_t i = 0; i < list1->size; i++) {
+		int cmp = as_val_cmp(as_vector_get_ptr(list1, i), as_vector_get_ptr(list2, i));
 
 		if (cmp != 0) {
 			return cmp;
 		}
 	}
-	return fin;
-}
-
-static int
-as_vector_cmp(as_vector* l1, as_vector* l2, bool sort_kv)
-{
-	uint32_t s1 = l1->size;
-	uint32_t s2 = l2->size;
-
-	if (s1 == s2) {
-		return as_vector_cmp_max(l1, l2, sort_kv, s1, 0);
-	}
-	else if (s1 < s2) {
-		return as_vector_cmp_max(l1, l2, sort_kv, s1, -1);
-	}
-	else {
-		return as_vector_cmp_max(l1, l2, sort_kv, s2, 1);
-	}
+	return 0;
 }
 
 static bool
-map_to_list(const as_val* key, const as_val* val, void* udata)
+key_append(const as_val* key, const as_val* val, void* udata)
 {
-	key_val kv = {key, val};
-	as_vector_append(udata, &kv);
+	as_vector_append(udata, &key);
 	return true;
 }
 
-typedef int (*map_comparator)(const void *, const void *);
-
 static int
-compare_key_val(const void* v1, const void* v2)
+key_cmp(const void* v1, const void* v2)
 {
-	int cmp = as_val_cmp(((key_val*)v1)->key, ((key_val*)v2)->key);
-
-	if (cmp == 0) {
-		cmp = as_val_cmp(((key_val*)v1)->val, ((key_val*)v2)->val);
-	}
-	return cmp;
-}
-
-static int
-compare_key(const void* v1, const void* v2)
-{
-	return as_val_cmp(((key_val*)v1)->key, ((key_val*)v2)->key);
-}
-
-static inline map_comparator
-map_get_comparator(const as_map* map)
-{
-	return (map->flags & AS_PACKED_MAP_FLAG_V_ORDERED) ? compare_key_val : compare_key;
+	return as_val_cmp(*(as_val**)v1, *(as_val**)v2);
 }
 
 static bool
-map_to_sorted_keys(const as_map* map, as_vector* list)
+map_to_sorted_keys(const as_map* map, uint32_t size, as_vector* list)
 {
-	uint32_t size = as_map_size(map);
+	as_vector_init(list, sizeof(as_val*), size);
 
-	as_vector_init(list, sizeof(key_val), size);
-
-	if (! as_map_foreach(map, map_to_list, list)) {
+	if (! as_map_foreach(map, key_append, list)) {
 		return false;
 	}
 
 	// Sort list of map entries.
-	map_comparator compare_fn = map_get_comparator(map);
-	qsort(list->list, list->size, sizeof(key_val), compare_fn);
+	qsort(list->list, list->size, sizeof(as_val*), key_cmp);
 	return true;
+}
+
+static int
+as_map_cmp(const as_map* map1, const as_map* map2)
+{
+	// Map ordering documented at https://www.aerospike.com/docs/guide/cdt-ordering.html
+	uint32_t size1 = as_map_size(map1);
+	uint32_t size2 = as_map_size(map2);
+	int cmp = size1 - size2;
+
+	if (cmp != 0) {
+		return cmp;
+	}
+
+	// Convert maps to lists of keys and sort before comparing.
+	as_vector list1;
+
+	if (map_to_sorted_keys(map1, size1, &list1)) {
+		as_vector list2;
+
+		if (map_to_sorted_keys(map2, size2, &list2)) {
+			cmp = as_vector_cmp(&list1, &list2);
+		}
+		as_vector_destroy(&list2);
+	}
+	as_vector_destroy(&list1);
+	return cmp;
 }
 
 static int
@@ -761,39 +737,41 @@ as_val_cmp(const as_val* v1, const as_val* v2)
 	case AS_GEOJSON:
 		return strcmp(((as_geojson*)v1)->value, ((as_geojson*)v2)->value);
 
-	case AS_BYTES: {
+	case AS_BYTES:
 		return as_bytes_cmp((as_bytes*)v1, (as_bytes*)v2);
-	}
 
-	case AS_LIST: {
+	case AS_LIST:
 		return as_list_cmp((as_list*)v1, (as_list*)v2);
-	}
 
-	case AS_MAP: {
-		// Maps are converted to lists and sorted by key/value before comparing.
-		as_vector l1;
-		int cmp = 0;
-
-		if (map_to_sorted_keys((as_map*)v1, &l1)) {
-			as_vector l2;
-
-			if (map_to_sorted_keys((as_map*)v2, &l2)) {
-				bool sort_kv = (((as_map*)v1)->flags & AS_PACKED_MAP_FLAG_V_ORDERED) ? true : false;
-				cmp = as_vector_cmp(&l1, &l2, sort_kv);
-			}
-			as_vector_destroy(&l2);
-		}
-		as_vector_destroy(&l1);
-		return cmp;
-	}
+	case AS_MAP:
+		return as_map_cmp((as_map*)v1, (as_map*)v2);
 
 	default:
 		return 0;
 	}
 }
 
+typedef struct {
+	const as_val* key;
+	const as_val* val;
+} key_val;
+
+static bool
+key_val_append(const as_val* key, const as_val* val, void* udata)
+{
+	key_val kv = {key, val};
+	as_vector_append(udata, &kv);
+	return true;
+}
+
 static int
-pack_map_ordered(as_packer *pk, const as_map *m, uint32_t size, map_comparator compare_fn)
+key_val_cmp(const void* v1, const void* v2)
+{
+	return as_val_cmp(((key_val*)v1)->key, ((key_val*)v2)->key);
+}
+
+static int
+pack_map_ordered(as_packer* pk, const as_map* map, uint32_t size)
 {
 	// Sort map before packing.
 	// Copy map to a list.
@@ -806,13 +784,13 @@ pack_map_ordered(as_packer *pk, const as_map *m, uint32_t size, map_comparator c
 		as_vector_init(&list, sizeof(key_val), size);
 	}
 
-	if (!as_map_foreach(m, map_to_list, &list)) {
+	if (!as_map_foreach(map, key_val_append, &list)) {
 		as_vector_destroy(&list);
 		return 1;
 	}
 
 	// Sort list of map entries.
-	qsort(list.list, list.size, sizeof(key_val), compare_fn);
+	qsort(list.list, list.size, sizeof(key_val), key_val_cmp);
 
 	// Pack sorted list of map entries.
 	for (uint32_t i = 0; i < list.size; i++) {
@@ -847,9 +825,8 @@ pack_map(as_packer *pk, const as_map *m)
 		return rc;
 	}
 
-	if (m->flags & AS_PACKED_MAP_FLAG_K_ORDERED) {
-		map_comparator compare_fn = map_get_comparator(m);
-		return pack_map_ordered(pk, m, size, compare_fn);
+	if (m->flags & AS_PACKED_MAP_FLAG_KV_ORDERED) {
+		return pack_map_ordered(pk, m, size);
 	}
 
 	// Pack unordered map.
