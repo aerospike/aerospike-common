@@ -655,7 +655,7 @@ as_vector_cmp(as_vector* list1, as_vector* list2)
 static bool
 key_append(const as_val* key, const as_val* val, void* udata)
 {
-	as_vector_append(udata, &key);
+	as_vector_append(udata, (void*)&key);
 	return true;
 }
 
