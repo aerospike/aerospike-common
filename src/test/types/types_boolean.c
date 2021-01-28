@@ -58,11 +58,11 @@ TEST( types_boolean_true_msgpack, "as_boolean is true w/ msgpack" ) {
 
     assert_not_null(v);
 
-    as_integer * i = as_integer_fromval(v);
-    assert_not_null(i);
-	assert( as_integer_getorelse(i,-1) == 1 );
+    as_boolean * b = as_boolean_fromval(v);
+    assert_not_null(b);
+	assert(b->value == true);
 
-	as_integer_destroy(i);
+	as_boolean_destroy(b);
 	as_buffer_destroy(&buf);
 }
 
@@ -81,11 +81,11 @@ TEST( types_boolean_false_msgpack, "as_boolean is false w/ msgpack" ) {
 
     assert_not_null(v);
 
-    as_integer * i = as_integer_fromval(v);
-    assert_not_null(i);
-	assert( as_integer_getorelse(i,-1) == 0 );
+    as_boolean * b = as_boolean_fromval(v);
+    assert_not_null(b);
+	assert(b->value == false);
 
-	as_integer_destroy(i);
+	as_boolean_destroy(b);
 	as_buffer_destroy(&buf);
 }
 

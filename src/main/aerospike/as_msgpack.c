@@ -992,8 +992,7 @@ unpack_ext(as_unpacker *pk, uint8_t type, as_val **v)
 static inline int
 unpack_boolean(bool b, as_val **v)
 {
-	// Aerospike does not support boolean, so we convert it to integer.
-	*v = (as_val *)as_integer_new(b ? 1 : 0);
+	*v = (as_val *)as_boolean_new(b);
 	return 0;
 }
 
