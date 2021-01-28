@@ -94,6 +94,11 @@ int cf_queue_push(cf_queue *q, const void *ptr);
 bool cf_queue_push_limit(cf_queue *q, const void *ptr, uint32_t limit);
 
 /**
+ * Push element on the queue at a specified index.
+ */
+int cf_queue_push_index(cf_queue *q, const void *ptr, uint32_t ix);
+
+/**
  * Same as cf_queue_push() except it's a no-op if element is already queued.
  */
 int cf_queue_push_unique(cf_queue *q, const void *ptr);

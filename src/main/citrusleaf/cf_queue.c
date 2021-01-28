@@ -40,7 +40,7 @@ cf_queue_init(cf_queue *q, size_t element_sz, uint32_t capacity,
 	}
 
 	if (! q->threadsafe) {
-		return q;
+		return true;
 	}
 
 	if (0 != pthread_mutex_init(&q->LOCK, NULL)) {
@@ -119,17 +119,12 @@ cf_queue_sz(cf_queue *q)
 }
 
 //
-// Internal function. Call with new size with lock held. This function only
-// works on full queues.
+// Internal function. Call with new size with lock held and
+// CF_Q_SZ(q) == q->alloc_sz -- only works on full queues.
 //
 static int
 cf_queue_resize(cf_queue *q, uint32_t new_sz)
 {
-	// Check if queue is not full.
-	if (CF_Q_SZ(q) != q->alloc_sz) {
-		return CF_QUEUE_ERR;
-	}
-
 	// The rare case where the queue is not fragmented, and realloc makes sense
 	// and none of the offsets need to move.
 	if (0 == q->read_offset % q->alloc_sz) {
@@ -244,6 +239,81 @@ cf_queue_push_limit(cf_queue *q, const void *ptr, uint32_t limit)
 
 	cf_queue_unlock(q);
 	return true;
+}
+
+//
+// Push element on the queue at a specified index.
+//
+int
+cf_queue_push_index(cf_queue *q, const void *ptr, uint32_t ix)
+{
+	cf_queue_lock(q);
+
+	uint32_t size = CF_Q_SZ(q);
+
+	if (size == q->alloc_sz) {
+		if (0 != cf_queue_resize(q, q->alloc_sz * 2)) {
+			cf_queue_unlock(q);
+			return CF_QUEUE_ERR;
+		}
+	}
+
+	if (ix >= size) { // off the end - put element at tail
+		memcpy(CF_Q_ELEM_PTR(q, q->write_offset), ptr, q->element_sz);
+		q->write_offset++;
+	}
+	else if (ix > size / 2) { // nearer tail - move tail
+		uint8_t *wp = CF_Q_ELEM_PTR(q, (q->read_offset + ix));
+		uint8_t *tp = CF_Q_ELEM_PTR(q, q->write_offset);
+
+		if (tp > wp) {
+			memmove(wp + q->element_sz, wp, tp - wp);
+		}
+		else { // tp < wp - can't be equal
+			memmove(q->elements + q->element_sz, q->elements, tp - q->elements);
+
+			uint8_t *ep = q->elements + ((q->alloc_sz - 1) * q->element_sz);
+
+			memcpy(q->elements, ep, q->element_sz);
+			memmove(wp + q->element_sz, wp, ep - wp);
+		}
+
+		memcpy(wp, ptr, q->element_sz);
+		q->write_offset++;
+	}
+	else { // nearer head - move head
+		if (q->read_offset == 0) {
+			q->read_offset += q->alloc_sz;
+			q->write_offset += q->alloc_sz;
+		}
+
+		q->read_offset--;
+
+		uint8_t *wp = CF_Q_ELEM_PTR(q, (q->read_offset + ix));
+		uint8_t *hp = CF_Q_ELEM_PTR(q, q->read_offset);
+
+		if (hp <= wp) {
+			memmove(hp, hp + q->element_sz, wp - hp);
+		}
+		else { // hp > wp
+			uint8_t *ep = q->elements + ((q->alloc_sz - 1) * q->element_sz);
+
+			memmove(hp, hp + q->element_sz, ep - hp);
+			memcpy(ep, q->elements, q->element_sz);
+			memmove(q->elements, q->elements + q->element_sz, wp - q->elements);
+		}
+
+		memcpy(wp, ptr, q->element_sz);
+	}
+
+	cf_queue_unwrap(q);
+
+	if (q->threadsafe) {
+		pthread_cond_signal(&q->CV);
+	}
+
+	cf_queue_unlock(q);
+	return CF_QUEUE_OK;
 }
 
 //
