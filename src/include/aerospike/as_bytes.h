@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2020 Aerospike, Inc.
+ * Copyright 2008-2021 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -40,7 +40,7 @@ typedef enum as_bytes_type_e {
 	AS_BYTES_UNDEF		= 0,
 
 	/** 
-	 *	String
+	 *	Integer
 	 */
 	AS_BYTES_INTEGER	= 1,
 
@@ -88,6 +88,11 @@ typedef enum as_bytes_type_e {
 	 *	Serialized Erlang Data
 	 */
 	AS_BYTES_ERLANG		= 12,
+
+	/**
+	 *	Boolean
+	 */
+	AS_BYTES_BOOL		= 17,
 
 	/**
 	 *	HyperLogLog
