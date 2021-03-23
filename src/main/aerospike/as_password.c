@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2021 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -98,15 +98,7 @@ as_password_get_constant_hash(const char* password, char* hash)
 		password = "";
 	}
 	
-	if (strlen(password) == 60 && memcmp(password, "$2a$", 4) == 0) {
-		// Password already hashed.
-		strcpy(hash, password);
-		return true;
-	}
-	else {
-		// Hash password.
-		return as_password_gen_constant_hash(password, hash);
-	}
+	return as_password_gen_constant_hash(password, hash);
 }
 
 static void
