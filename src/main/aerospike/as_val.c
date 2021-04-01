@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2021 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -186,4 +186,20 @@ char * as_val_val_tostring(const as_val * v)
 {
 	if (v == 0) return 0;
 	return as_val_tostring_callbacks[ v->type ](v);
+}
+
+bool as_val_tobool(const as_val* v)
+{
+	if (!v) {
+		return false;
+	}
+
+	if (v->type == AS_BOOLEAN) {
+		return ((as_boolean*)v)->value;
+	}
+
+	if (v->type == AS_INTEGER) {
+		return ((as_integer*)v)->value;
+	}
+	return false;
 }

@@ -89,6 +89,36 @@ TEST( types_boolean_false_msgpack, "as_boolean is false w/ msgpack" ) {
 	as_buffer_destroy(&buf);
 }
 
+TEST( types_boolean_convert, "convert as_val to bool" )
+{
+	bool b = as_val_tobool(NULL);
+    assert_false(b);
+
+	as_boolean asb;
+	as_boolean_init(&asb, false);
+ 	b = as_val_tobool((as_val*)&asb);
+	assert_false(b);
+	as_boolean_init(&asb, true);
+ 	b = as_val_tobool((as_val*)&asb);
+    assert_true(b);
+
+	as_integer asi;
+	as_integer_init(&asi, 0);
+ 	b = as_val_tobool((as_val*)&asi);
+	assert_false(b);
+	as_integer_init(&asi, 1);
+ 	b = as_val_tobool((as_val*)&asi);
+    assert_true(b);
+	as_integer_init(&asi, -999);
+ 	b = as_val_tobool((as_val*)&asi);
+    assert_true(b);
+
+	// Conversions from other types should always return false.
+	as_double asd;
+	as_double_init(&asd, 1.0);
+ 	b = as_val_tobool((as_val*)&asd);
+	assert_false(b);
+}
 
 /******************************************************************************
  * TEST SUITE
@@ -103,4 +133,5 @@ SUITE( types_boolean, "as_boolean" ) {
 	suite_add( types_boolean_false_new );
 	suite_add( types_boolean_true_msgpack );
 	suite_add( types_boolean_false_msgpack );
+	suite_add( types_boolean_convert );
 }

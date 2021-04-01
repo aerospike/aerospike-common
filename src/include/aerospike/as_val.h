@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2021 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -129,6 +129,11 @@ typedef struct as_val_s {
  *	@return The string representation on success. Otherwise NULL.
  */
 #define as_val_tostring(__v) ( as_val_val_tostring((as_val *)__v) )
+
+/**
+ * Convert as_boolean or as_integer to bool. Otherwise, return false.
+ */
+AS_EXTERN bool as_val_tobool(const as_val* v);
 
 /******************************************************************************
  *	FUNCTIONS
