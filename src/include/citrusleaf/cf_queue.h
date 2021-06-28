@@ -62,6 +62,7 @@ typedef struct cf_queue_s {
 	unsigned int    alloc_sz;       // number of elements currently allocated
 	unsigned int    read_offset;    // offset (in elements) of head
 	unsigned int    write_offset;   // offset (in elements) past tail
+	uint32_t        n_eles;         // number of elements in queue
 	size_t          element_sz;     // number of bytes in an element
 	pthread_mutex_t LOCK;           // the mutex lock
 	pthread_cond_t  CV;             // the condvar
@@ -81,7 +82,11 @@ void cf_queue_destroy(cf_queue *q);
 /**
  * Get the number of elements currently in the queue.
  */
-int cf_queue_sz(cf_queue *q);
+static inline uint32_t
+cf_queue_sz(cf_queue *q)
+{
+	return q->n_eles;
+}
 
 /**
  * Push to the tail of the queue.

@@ -29,6 +29,7 @@ cf_queue_init(cf_queue *q, size_t element_sz, uint32_t capacity,
 {
 	q->alloc_sz = capacity;
 	q->write_offset = q->read_offset = 0;
+	q->n_eles = 0;
 	q->element_sz = element_sz;
 	q->threadsafe = threadsafe;
 	q->free_struct = false;
@@ -106,16 +107,6 @@ cf_queue_unlock(cf_queue *q)
 	if (q->threadsafe) {
 		pthread_mutex_unlock(&q->LOCK);
 	}
-}
-
-int
-cf_queue_sz(cf_queue *q)
-{
-	cf_queue_lock(q);
-	int rv = CF_Q_SZ(q);
-	cf_queue_unlock(q);
-
-	return rv;
 }
 
 //
@@ -196,6 +187,7 @@ cf_queue_push(cf_queue *q, const void *ptr)
 	// TODO - if queues are power of 2, this can be a shift.
 	memcpy(CF_Q_ELEM_PTR(q, q->write_offset), ptr, q->element_sz);
 	q->write_offset++;
+	q->n_eles++;
 	cf_queue_unwrap(q);
 
 	if (q->threadsafe) {
@@ -231,6 +223,7 @@ cf_queue_push_limit(cf_queue *q, const void *ptr, uint32_t limit)
 	// TODO - if queues are power of 2, this can be a shift.
 	memcpy(CF_Q_ELEM_PTR(q, q->write_offset), ptr, q->element_sz);
 	q->write_offset++;
+	q->n_eles++;
 	cf_queue_unwrap(q);
 
 	if (q->threadsafe) {
@@ -306,6 +299,7 @@ cf_queue_push_index(cf_queue *q, const void *ptr, uint32_t ix)
 		memcpy(wp, ptr, q->element_sz);
 	}
 
+	q->n_eles++;
 	cf_queue_unwrap(q);
 
 	if (q->threadsafe) {
@@ -346,6 +340,7 @@ cf_queue_push_unique(cf_queue *q, const void *ptr)
 	// TODO - if queues are power of 2, this can be a shift.
 	memcpy(CF_Q_ELEM_PTR(q, q->write_offset), ptr, q->element_sz);
 	q->write_offset++;
+	q->n_eles++;
 	cf_queue_unwrap(q);
 
 	if (q->threadsafe) {
@@ -378,7 +373,7 @@ cf_queue_push_head(cf_queue *q, const void *ptr)
 
 	q->read_offset--;
 	memcpy(CF_Q_ELEM_PTR(q, q->read_offset), ptr, q->element_sz);
-
+	q->n_eles++;
 	cf_queue_unwrap(q);
 
 	if (q->threadsafe) {
@@ -436,6 +431,7 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 
 	memcpy(buf, CF_Q_ELEM_PTR(q, q->read_offset), q->element_sz);
 	q->read_offset++;
+	q->n_eles--;
 
 	// This probably keeps the cache fresher because the queue is fully empty.
 	if (q->read_offset == q->write_offset) {
@@ -449,6 +445,8 @@ cf_queue_pop(cf_queue *q, void *buf, int ms_wait)
 void
 cf_queue_delete_offset(cf_queue *q, uint32_t index)
 {
+	q->n_eles--;
+
 	index %= q->alloc_sz;
 
 	uint32_t r_index = q->read_offset % q->alloc_sz;
