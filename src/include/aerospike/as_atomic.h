@@ -70,6 +70,12 @@
  * FETCH AND SWAP
  *****************************************************************************/
 
+// Note - this assumes pointers are 8 bytes.
+// void* as_fas_ptr(void** target, void* value)
+#define as_fas_ptr(_target, _value) ({ \
+		(void*)as_fas_uint64((uint64_t*)_target, (uint64_t)_value); \
+	})
+
 // double as_fas_double(double* target, double value)
 #define as_fas_double(_target, _value) ({ \
 		double nv = _value; \
@@ -87,6 +93,13 @@
 /******************************************************************************
  * COMPARE AND SWAP
  *****************************************************************************/
+
+// Note - this assumes pointers are 8 bytes.
+// bool as_cas_ptr(void** target, void* old_value, void* new_value)
+#define as_cas_ptr(_target, _old_value, _new_value) ({ \
+		as_cas_uint64((uint64_t*)_target, (uint64_t)_old_value, \
+				(uint64_t)_new_value); \
+	})
 
 // bool as_cas_double(double* target, double old_value, double new_value)
 #define as_cas_double(_target, _old_value, _new_value) ({ \

@@ -122,7 +122,6 @@ CITRUSLEAF-OBJECTS += cf_crypto.o
 CITRUSLEAF-OBJECTS += cf_digest.o
 CITRUSLEAF-OBJECTS += cf_ll.o
 CITRUSLEAF-OBJECTS += cf_queue.o
-CITRUSLEAF-OBJECTS += cf_queue_priority.o
 CITRUSLEAF-OBJECTS += cf_random.o
 
 OBJECTS =

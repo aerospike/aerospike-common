@@ -83,7 +83,7 @@ void cf_queue_destroy(cf_queue *q);
  * Get the number of elements currently in the queue.
  */
 static inline uint32_t
-cf_queue_sz(cf_queue *q)
+cf_queue_sz(const cf_queue *q)
 {
 	return q->n_eles;
 }
@@ -156,16 +156,6 @@ int cf_queue_delete(cf_queue *q, const void *ptr, bool only_one);
 int cf_queue_delete_all(cf_queue *q);
 
 void cf_queue_delete_offset(cf_queue *q, uint32_t index);
-
-/******************************************************************************
- * MACROS
- ******************************************************************************/
-
-#define CF_Q_SZ(__q) (__q->write_offset - __q->read_offset)
-
-#define CF_Q_EMPTY(__q) (__q->write_offset == __q->read_offset)
-
-#define CF_Q_ELEM_PTR(__q, __i) (&__q->elements[(__i % __q->alloc_sz) * __q->element_sz])
 
 /******************************************************************************/
 
