@@ -146,7 +146,6 @@
     <ClInclude Include="..\..\src\include\citrusleaf\cf_hash_math.h" />
     <ClInclude Include="..\..\src\include\citrusleaf\cf_ll.h" />
     <ClInclude Include="..\..\src\include\citrusleaf\cf_queue.h" />
-    <ClInclude Include="..\..\src\include\citrusleaf\cf_queue_priority.h" />
     <ClInclude Include="..\..\src\include\citrusleaf\cf_random.h" />
     <ClInclude Include="..\..\src\include\citrusleaf\cf_rchash.h" />
   </ItemGroup>
@@ -201,7 +200,6 @@
     <ClCompile Include="..\..\src\main\citrusleaf\cf_digest.c" />
     <ClCompile Include="..\..\src\main\citrusleaf\cf_ll.c" />
     <ClCompile Include="..\..\src\main\citrusleaf\cf_queue.c" />
-    <ClCompile Include="..\..\src\main\citrusleaf\cf_queue_priority.c" />
     <ClCompile Include="..\..\src\main\citrusleaf\cf_random.c" />
   </ItemGroup>
   <ItemGroup>
