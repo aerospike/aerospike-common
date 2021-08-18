@@ -194,10 +194,10 @@ extern "C" {
 #define as_aaf_int32(_target, _value) ((int32_t)ck_pr_faa_32((uint32_t*)(_target), (uint32_t)(_value)) + (_value))
 
 // uint16_t as_aaf_uint16(uint16_t* target, int16_t value)
-#define as_aaf_uint16(_target, _value) (ck_pr_faa_16(_target, (uint16_t)(_value)) + (uint16_t)(_value))
+#define as_aaf_uint16(_target, _value) ((uint16_t)(ck_pr_faa_16(_target, (uint16_t)(_value)) + (_value)))
 
 // int16_t as_aaf_int16(int16_t* target, int16_t value)
-#define as_aaf_int16(_target, _value) ((int16_t)ck_pr_faa_16((uint16_t*)(_target), (uint16_t)(_value)) + (_value))
+#define as_aaf_int16(_target, _value) ((int16_t)(ck_pr_faa_16((uint16_t*)(_target), (uint16_t)(_value)) + (_value)))
 
 /******************************************************************************
  * FETCH AND SWAP
