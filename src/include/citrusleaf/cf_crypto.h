@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2021 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -14,29 +14,63 @@
  * License for the specific language governing permissions and limitations under
  * the License.
  */
+
 #pragma once
 
+//==========================================================
+// Includes.
+//
+
 #include <aerospike/as_std.h>
-#include <openssl/sha.h>
-#include <pthread.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/******************************************************************************
- * CONSTANTS
- ******************************************************************************/
 
-#define CF_SHA_HEX_BUFF_LEN (SHA_DIGEST_LENGTH*2)
 
-/******************************************************************************
- * FUNCTIONS
- ******************************************************************************/
+/*
+ * Copy of SHA1 API and implementation.
+ *
+ * For FIPS 140 compliance, this is NOT to be used for crypto purposes!
+ */
 
-bool cf_convert_sha1_to_hex(unsigned char * hash, unsigned char * sha1_hex_buff);
+//==========================================================
+// Typedefs & constants.
+//
 
-/******************************************************************************/
+#define SHA_DIGEST_LENGTH 20
+
+// TODO - left here for legacy reasons, should be no need for this.
+#define CF_SHA_HEX_BUFF_LEN (SHA_DIGEST_LENGTH * 2)
+
+
+//==========================================================
+// Public API.
+//
+
+void SHA1(const uint8_t* d, size_t n, uint8_t* md);
+
+// TODO - left here for legacy reasons, should be no need for this.
+bool cf_convert_sha1_to_hex(unsigned char* hash, unsigned char* sha1_hex_buff);
+
+
+
+/*
+ * Copy of RIPEMD160 API and implementation.
+ *
+ * For FIPS 140 compliance, this is NOT to be used for crypto purposes!
+ */
+
+//==========================================================
+// Typedefs & constants.
+//
+
+
+//==========================================================
+// Public API.
+//
+
 
 #ifdef __cplusplus
 } // end extern "C"
