@@ -66,10 +66,24 @@ bool cf_convert_sha1_to_hex(unsigned char* hash, unsigned char* sha1_hex_buff);
 // Typedefs & constants.
 //
 
+#define RIPEMD160_DIGEST_LENGTH 20
+
+// Private! Do not access members.
+typedef struct RIPEMD160_CTX_s {
+	uint32_t total[2];
+	uint32_t state[5];
+	unsigned char buffer[64];
+} RIPEMD160_CTX;
+
 
 //==========================================================
 // Public API.
 //
+
+int RIPEMD160(const unsigned char* input, size_t ilen, unsigned char* output);
+int RIPEMD160_Init(RIPEMD160_CTX* ctx);
+int RIPEMD160_Update(RIPEMD160_CTX* ctx, const void* v_input, size_t ilen);
+int RIPEMD160_Final(unsigned char* output, RIPEMD160_CTX* ctx);
 
 
 #ifdef __cplusplus

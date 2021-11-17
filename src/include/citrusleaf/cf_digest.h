@@ -17,9 +17,10 @@
 #pragma once
 
 #include <aerospike/as_std.h>
-#include <openssl/ripemd.h>
 #include <string.h>
 #include <stdio.h>
+
+#include "cf_crypto.h"
 
 #ifdef __APPLE__
 // Openssl is deprecated on mac, but the library is still included.
