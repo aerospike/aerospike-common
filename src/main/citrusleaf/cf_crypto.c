@@ -89,7 +89,7 @@ SHA1(const uint8_t* d, size_t n, uint8_t* md)
 	SHA1Context sha;
 
 	SHA1Reset(&sha);
-	SHA1Input(&sha, d, n);
+	SHA1Input(&sha, d, (unsigned)n);
 	SHA1Result(&sha, md);
 }
 
@@ -433,7 +433,7 @@ RIPEMD160_Update(RIPEMD160_CTX* ctx, const void* v_input, size_t ilen)
 	}
 
 	size_t left = ctx->total[0] & 0x3F;
-	uint32_t fill = 64 - left;
+	uint32_t fill = (uint32_t)(64 - left);
 
 	ctx->total[0] += (uint32_t) ilen;
 	ctx->total[0] &= 0xFFFFFFFF;
