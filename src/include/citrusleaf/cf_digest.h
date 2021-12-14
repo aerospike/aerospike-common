@@ -38,7 +38,7 @@ extern "C" {
  * CONSTANTS & TYPES
  *****************************************************************************/
 
-#define CF_DIGEST_KEY_SZ RIPEMD160_DIGEST_LENGTH
+#define CF_DIGEST_KEY_SZ CF_RIPEMD160_DIGEST_LENGTH
 
 typedef struct cf_digest_s {
 	uint8_t digest[CF_DIGEST_KEY_SZ];
@@ -53,21 +53,23 @@ extern const cf_digest cf_digest_zero;
 static inline void
 cf_digest_compute(const void *data, size_t len, cf_digest *d)
 {
-	RIPEMD160((const unsigned char *)data, len, (unsigned char *)d->digest);
+	cf_RIPEMD160((const unsigned char *)data, len, (unsigned char *)d->digest);
 }
 
 static inline void
-cf_digest_compute2(const void *data1, size_t len1, const void *data2, size_t len2, cf_digest *d)
+cf_digest_compute2(const void *data1, size_t len1, const void *data2,
+		size_t len2, cf_digest *d)
 {
 	if (len1 == 0) {
-		RIPEMD160((const unsigned char *)data2, len2, (unsigned char *)d->digest);
+		cf_RIPEMD160((const unsigned char *)data2, len2,
+				(unsigned char *)d->digest);
 	}
 	else {
-		RIPEMD160_CTX c;
-		RIPEMD160_Init(&c);
-		RIPEMD160_Update(&c, data1, len1);
-		RIPEMD160_Update(&c, data2, len2);
-		RIPEMD160_Final((unsigned char *)(d->digest), &c);
+		cf_RIPEMD160_CTX c;
+		cf_RIPEMD160_Init(&c);
+		cf_RIPEMD160_Update(&c, data1, len1);
+		cf_RIPEMD160_Update(&c, data2, len2);
+		cf_RIPEMD160_Final((unsigned char *)d->digest, &c);
 	}
 }
 

@@ -37,16 +37,16 @@
 //
 
 enum {
-	shaSuccess = 0,
-	shaNull,
-	shaInputTooLong,
-	shaStateError
+	cf_shaSuccess = 0,
+	cf_shaNull,
+	cf_shaInputTooLong,
+	cf_shaStateError
 };
 
-#define SHA1HashSize 20
+#define CF_SHA1HashSize 20
 
-typedef struct SHA1Context {
-	uint32_t Intermediate_Hash[SHA1HashSize / 4];
+typedef struct cf_SHA1Context_s {
+	uint32_t Intermediate_Hash[CF_SHA1HashSize / 4];
 
 	uint32_t Length_Low;
 	uint32_t Length_High;
@@ -56,26 +56,26 @@ typedef struct SHA1Context {
 
 	int Computed;
 	int Corrupted;
-} SHA1Context;
+} cf_SHA1Context;
 
 
 //==========================================================
 // Forward declarations.
 //
 
-static int SHA1Reset(SHA1Context *context);
-static int SHA1Input(SHA1Context *context, const uint8_t *message_array, unsigned length);
-static int SHA1Result(SHA1Context *context, uint8_t Message_Digest[SHA1HashSize]);
+static int cf_SHA1Reset(cf_SHA1Context *context);
+static int cf_SHA1Input(cf_SHA1Context *context, const uint8_t *message_array, unsigned length);
+static int cf_SHA1Result(cf_SHA1Context *context, uint8_t Message_Digest[CF_SHA1HashSize]);
 
-static void SHA1ProcessMessageBlock(SHA1Context *);
-static void SHA1PadMessage(SHA1Context *);
+static void cf_SHA1ProcessMessageBlock(cf_SHA1Context *);
+static void cf_SHA1PadMessage(cf_SHA1Context *);
 
 
 //==========================================================
 // Inlines & macros.
 //
 
-#define SHA1CircularShift(bits,word) \
+#define cf_SHA1CircularShift(bits,word) \
 	(((word) << (bits)) | ((word) >> (32-(bits))))
 
 
@@ -84,28 +84,13 @@ static void SHA1PadMessage(SHA1Context *);
 //
 
 void
-SHA1(const uint8_t* d, size_t n, uint8_t* md)
+cf_SHA1(const uint8_t* d, size_t n, uint8_t* md)
 {
-	SHA1Context sha;
+	cf_SHA1Context sha;
 
-	SHA1Reset(&sha);
-	SHA1Input(&sha, d, (unsigned)n);
-	SHA1Result(&sha, md);
-}
-
-// TODO - left here for legacy reasons, should be no need for this.
-bool
-cf_convert_sha1_to_hex(unsigned char* hash, unsigned char* sha1_hex_buff)
-{
-	if (! sha1_hex_buff || ! hash) {
-		return false;
-	}
-
-	for (unsigned int i = 0; i < SHA_DIGEST_LENGTH; i++) {
-		sprintf((char*)(sha1_hex_buff + (i * 2)), "%02x", hash[i]);
-	}
-
-	return true;
+	cf_SHA1Reset(&sha);
+	cf_SHA1Input(&sha, d, (unsigned)n);
+	cf_SHA1Result(&sha, md);
 }
 
 
@@ -114,10 +99,10 @@ cf_convert_sha1_to_hex(unsigned char* hash, unsigned char* sha1_hex_buff)
 //
 
 static int
-SHA1Reset(SHA1Context *context)
+cf_SHA1Reset(cf_SHA1Context *context)
 {
 	if (! context) {
-		return shaNull;
+		return cf_shaNull;
 	}
 
 	context->Length_Low = 0;
@@ -133,23 +118,24 @@ SHA1Reset(SHA1Context *context)
 	context->Computed = 0;
 	context->Corrupted = 0;
 
-	return shaSuccess;
+	return cf_shaSuccess;
 }
 
 static int
-SHA1Input(SHA1Context *context, const uint8_t *message_array, unsigned length)
+cf_SHA1Input(cf_SHA1Context *context, const uint8_t *message_array,
+		unsigned length)
 {
 	if (! length) {
-		return shaSuccess;
+		return cf_shaSuccess;
 	}
 
 	if (! context || ! message_array) {
-		return shaNull;
+		return cf_shaNull;
 	}
 
 	if (context->Computed) {
-		context->Corrupted = shaStateError;
-		return shaStateError;
+		context->Corrupted = cf_shaStateError;
+		return cf_shaStateError;
 	}
 
 	if (context->Corrupted) {
@@ -172,22 +158,22 @@ SHA1Input(SHA1Context *context, const uint8_t *message_array, unsigned length)
 		}
 
 		if (context->Message_Block_Index == 64) {
-			SHA1ProcessMessageBlock(context);
+			cf_SHA1ProcessMessageBlock(context);
 		}
 
 		message_array++;
 	}
 
-	return shaSuccess;
+	return cf_shaSuccess;
 }
 
 static int
-SHA1Result( SHA1Context *context, uint8_t Message_Digest[SHA1HashSize])
+cf_SHA1Result( cf_SHA1Context *context, uint8_t Message_Digest[CF_SHA1HashSize])
 {
 	int i;
 
 	if (! context || ! Message_Digest) {
-		return shaNull;
+		return cf_shaNull;
 	}
 
 	if (context->Corrupted) {
@@ -195,7 +181,7 @@ SHA1Result( SHA1Context *context, uint8_t Message_Digest[SHA1HashSize])
 	}
 
 	if (! context->Computed) {
-		SHA1PadMessage(context);
+		cf_SHA1PadMessage(context);
 
 		for (i = 0; i < 64; ++i) {
 			context->Message_Block[i] = 0;
@@ -206,16 +192,16 @@ SHA1Result( SHA1Context *context, uint8_t Message_Digest[SHA1HashSize])
 		context->Computed = 1;
 	}
 
-	for (i = 0; i < SHA1HashSize; ++i) {
+	for (i = 0; i < CF_SHA1HashSize; ++i) {
 		Message_Digest[i] =
 				context->Intermediate_Hash[i >> 2] >> 8 * (3 - (i & 0x03));
 	}
 
-	return shaSuccess;
+	return cf_shaSuccess;
 }
 
 static void
-SHA1ProcessMessageBlock(SHA1Context *context)
+cf_SHA1ProcessMessageBlock(cf_SHA1Context *context)
 {
 	const uint32_t K[] = {
 			0x5A827999,
@@ -237,7 +223,7 @@ SHA1ProcessMessageBlock(SHA1Context *context)
 	}
 
 	for (t = 16; t < 80; t++) {
-		W[t] = SHA1CircularShift(1,
+		W[t] = cf_SHA1CircularShift(1,
 				W[t - 3] ^ W[t - 8] ^ W[t - 14] ^ W[t - 16]);
 	}
 
@@ -248,39 +234,39 @@ SHA1ProcessMessageBlock(SHA1Context *context)
 	E = context->Intermediate_Hash[4];
 
 	for (t = 0; t < 20; t++) {
-		temp =  SHA1CircularShift(5, A) +
+		temp = cf_SHA1CircularShift(5, A) +
 				((B & C) | ((~B) & D)) + E + W[t] + K[0];
 		E = D;
 		D = C;
-		C = SHA1CircularShift(30, B);
+		C = cf_SHA1CircularShift(30, B);
 		B = A;
 		A = temp;
 	}
 
 	for (t = 20; t < 40; t++) {
-		temp = SHA1CircularShift(5, A) + (B ^ C ^ D) + E + W[t] + K[1];
+		temp = cf_SHA1CircularShift(5, A) + (B ^ C ^ D) + E + W[t] + K[1];
 		E = D;
 		D = C;
-		C = SHA1CircularShift(30, B);
+		C = cf_SHA1CircularShift(30, B);
 		B = A;
 		A = temp;
 	}
 
 	for (t = 40; t < 60; t++) {
-		temp = SHA1CircularShift(5, A) +
+		temp = cf_SHA1CircularShift(5, A) +
 				((B & C) | (B & D) | (C & D)) + E + W[t] + K[2];
 		E = D;
 		D = C;
-		C = SHA1CircularShift(30, B);
+		C = cf_SHA1CircularShift(30, B);
 		B = A;
 		A = temp;
 	}
 
 	for (t = 60; t < 80; t++) {
-		temp = SHA1CircularShift(5, A) + (B ^ C ^ D) + E + W[t] + K[3];
+		temp = cf_SHA1CircularShift(5, A) + (B ^ C ^ D) + E + W[t] + K[3];
 		E = D;
 		D = C;
-		C = SHA1CircularShift(30, B);
+		C = cf_SHA1CircularShift(30, B);
 		B = A;
 		A = temp;
 	}
@@ -295,7 +281,7 @@ SHA1ProcessMessageBlock(SHA1Context *context)
 }
 
 static void
-SHA1PadMessage(SHA1Context *context)
+cf_SHA1PadMessage(cf_SHA1Context *context)
 {
 	if (context->Message_Block_Index > 55) {
 		context->Message_Block[context->Message_Block_Index++] = 0x80;
@@ -304,7 +290,7 @@ SHA1PadMessage(SHA1Context *context)
 			context->Message_Block[context->Message_Block_Index++] = 0;
 		}
 
-		SHA1ProcessMessageBlock(context);
+		cf_SHA1ProcessMessageBlock(context);
 
 		while(context->Message_Block_Index < 56) {
 			context->Message_Block[context->Message_Block_Index++] = 0;
@@ -327,7 +313,7 @@ SHA1PadMessage(SHA1Context *context)
 	context->Message_Block[62] = context->Length_Low >> 8;
 	context->Message_Block[63] = context->Length_Low;
 
-	SHA1ProcessMessageBlock(context);
+	cf_SHA1ProcessMessageBlock(context);
 }
 
 
@@ -342,7 +328,7 @@ SHA1PadMessage(SHA1Context *context)
 // Typedefs & constants.
 //
 
-static const unsigned char ripemd160_padding[64] =
+static const unsigned char cf_ripemd160_padding[64] =
 {
 	0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 	0,    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -355,7 +341,7 @@ static const unsigned char ripemd160_padding[64] =
 // Forward declarations.
 //
 
-static int ripemd160_process(RIPEMD160_CTX* ctx, const unsigned char data[64]);
+static int cf_ripemd160_process(cf_RIPEMD160_CTX* ctx, const unsigned char data[64]);
 
 
 //==========================================================
@@ -384,20 +370,20 @@ static int ripemd160_process(RIPEMD160_CTX* ctx, const unsigned char data[64]);
 //
 
 int
-RIPEMD160(const unsigned char* input, size_t ilen, unsigned char* output)
+cf_RIPEMD160(const unsigned char* input, size_t ilen, unsigned char* output)
 {
 	int ret;
-	RIPEMD160_CTX ctx;
+	cf_RIPEMD160_CTX ctx;
 
-	if ((ret = RIPEMD160_Init(&ctx)) != 0) {
+	if ((ret = cf_RIPEMD160_Init(&ctx)) != 0) {
 		return ret;
 	}
 
-	if ((ret = RIPEMD160_Update(&ctx, input, ilen)) != 0) {
+	if ((ret = cf_RIPEMD160_Update(&ctx, input, ilen)) != 0) {
 		return ret;
 	}
 
-	if ((ret = RIPEMD160_Final(output, &ctx)) != 0) {
+	if ((ret = cf_RIPEMD160_Final(output, &ctx)) != 0) {
 		return ret;
 	}
 
@@ -405,9 +391,9 @@ RIPEMD160(const unsigned char* input, size_t ilen, unsigned char* output)
 }
 
 int
-RIPEMD160_Init(RIPEMD160_CTX* ctx)
+cf_RIPEMD160_Init(cf_RIPEMD160_CTX* ctx)
 {
-	memset(ctx, 0, sizeof(RIPEMD160_CTX));
+	memset(ctx, 0, sizeof(cf_RIPEMD160_CTX));
 
 	ctx->total[0] = 0;
 	ctx->total[1] = 0;
@@ -422,7 +408,7 @@ RIPEMD160_Init(RIPEMD160_CTX* ctx)
 }
 
 int
-RIPEMD160_Update(RIPEMD160_CTX* ctx, const void* v_input, size_t ilen)
+cf_RIPEMD160_Update(cf_RIPEMD160_CTX* ctx, const void* v_input, size_t ilen)
 {
 	const unsigned char* input = (const unsigned char*)v_input;
 
@@ -445,7 +431,7 @@ RIPEMD160_Update(RIPEMD160_CTX* ctx, const void* v_input, size_t ilen)
 	if (left && ilen >= fill) {
 		memcpy((void*)(ctx->buffer + left), input, fill);
 
-		if ((ret = ripemd160_process(ctx, ctx->buffer)) != 0) {
+		if ((ret = cf_ripemd160_process(ctx, ctx->buffer)) != 0) {
 			return ret;
 		}
 
@@ -455,7 +441,7 @@ RIPEMD160_Update(RIPEMD160_CTX* ctx, const void* v_input, size_t ilen)
 	}
 
 	while (ilen >= 64) {
-		if ((ret = ripemd160_process(ctx, input)) != 0) {
+		if ((ret = cf_ripemd160_process(ctx, input)) != 0) {
 			return ret;
 		}
 
@@ -471,7 +457,7 @@ RIPEMD160_Update(RIPEMD160_CTX* ctx, const void* v_input, size_t ilen)
 }
 
 int
-RIPEMD160_Final(unsigned char* output, RIPEMD160_CTX* ctx)
+cf_RIPEMD160_Final(unsigned char* output, cf_RIPEMD160_CTX* ctx)
 {
 	uint32_t high = (ctx->total[0] >> 29) | (ctx->total[1] <<  3);
 	uint32_t low  = (ctx->total[0] <<  3);
@@ -484,13 +470,13 @@ RIPEMD160_Final(unsigned char* output, RIPEMD160_CTX* ctx)
 	uint32_t last = ctx->total[0] & 0x3F;
 	uint32_t padn = (last < 56) ? (56 - last) : (120 - last);
 
-	int ret = RIPEMD160_Update(ctx, ripemd160_padding, padn);
+	int ret = cf_RIPEMD160_Update(ctx, cf_ripemd160_padding, padn);
 
 	if (ret != 0) {
 		return ret;
 	}
 
-	ret = RIPEMD160_Update(ctx, msglen, 8);
+	ret = cf_RIPEMD160_Update(ctx, msglen, 8);
 
 	if (ret != 0) {
 		return ret;
@@ -511,7 +497,7 @@ RIPEMD160_Final(unsigned char* output, RIPEMD160_CTX* ctx)
 //
 
 static int
-ripemd160_process(RIPEMD160_CTX* ctx, const unsigned char data[64])
+cf_ripemd160_process(cf_RIPEMD160_CTX* ctx, const unsigned char data[64])
 {
 	struct {
 		uint32_t A, B, C, D, E, Ap, Bp, Cp, Dp, Ep, X[16];

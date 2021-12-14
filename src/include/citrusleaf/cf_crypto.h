@@ -39,20 +39,14 @@ extern "C" {
 // Typedefs & constants.
 //
 
-#define SHA_DIGEST_LENGTH 20
-
-// TODO - left here for legacy reasons, should be no need for this.
-#define CF_SHA_HEX_BUFF_LEN (SHA_DIGEST_LENGTH * 2)
+#define CF_SHA_DIGEST_LENGTH 20
 
 
 //==========================================================
 // Public API.
 //
 
-void SHA1(const uint8_t* d, size_t n, uint8_t* md);
-
-// TODO - left here for legacy reasons, should be no need for this.
-bool cf_convert_sha1_to_hex(unsigned char* hash, unsigned char* sha1_hex_buff);
+void cf_SHA1(const uint8_t* d, size_t n, uint8_t* md);
 
 
 
@@ -66,24 +60,24 @@ bool cf_convert_sha1_to_hex(unsigned char* hash, unsigned char* sha1_hex_buff);
 // Typedefs & constants.
 //
 
-#define RIPEMD160_DIGEST_LENGTH 20
+#define CF_RIPEMD160_DIGEST_LENGTH 20
 
 // Private! Do not access members.
-typedef struct RIPEMD160_CTX_s {
+typedef struct cf_RIPEMD160_CTX_s {
 	uint32_t total[2];
 	uint32_t state[5];
 	unsigned char buffer[64];
-} RIPEMD160_CTX;
+} cf_RIPEMD160_CTX;
 
 
 //==========================================================
 // Public API.
 //
 
-int RIPEMD160(const unsigned char* input, size_t ilen, unsigned char* output);
-int RIPEMD160_Init(RIPEMD160_CTX* ctx);
-int RIPEMD160_Update(RIPEMD160_CTX* ctx, const void* v_input, size_t ilen);
-int RIPEMD160_Final(unsigned char* output, RIPEMD160_CTX* ctx);
+int cf_RIPEMD160(const unsigned char* input, size_t ilen, unsigned char* output);
+int cf_RIPEMD160_Init(cf_RIPEMD160_CTX* ctx);
+int cf_RIPEMD160_Update(cf_RIPEMD160_CTX* ctx, const void* v_input, size_t ilen);
+int cf_RIPEMD160_Final(unsigned char* output, cf_RIPEMD160_CTX* ctx);
 
 
 #ifdef __cplusplus
