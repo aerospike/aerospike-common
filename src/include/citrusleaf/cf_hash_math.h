@@ -130,6 +130,7 @@ fmix64(uint64_t k)
 	return k;
 }
 
+// Public API.
 static inline void
 murmurHash3_x64_128(const uint8_t* key, const size_t len, uint8_t* out)
 {
@@ -316,7 +317,7 @@ _wyr3(const uint8_t* p, size_t k)
 	return (((uint64_t)p[0]) << 16) | (((uint64_t)p[k >> 1]) << 8) | p[k - 1];
 }
 
-// Public API for wyhash.
+// Public API - based on wyhash_final_version_3.
 static inline uint64_t
 cf_wyhash(const void* key, size_t len)
 {
@@ -327,6 +328,7 @@ cf_wyhash(const void* key, size_t len)
 			0x589965cc75374cc3
 	};
 
+	// This seed is known to be good.
 	uint64_t seed = 0x29FBB14cc886f ^ *secret;
 
 	const uint8_t* p = (const uint8_t*)key;
