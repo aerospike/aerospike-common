@@ -148,8 +148,8 @@ murmurHash3_x64_128(const uint8_t* key, const size_t len, uint8_t* out)
 	const uint64_t* blocks = (const uint64_t*)(data);
 
 	for (size_t i = 0; i < nblocks; i++) {
-		uint64_t k1 = blocks[i * 2 + 0];
-		uint64_t k2 = blocks[i * 2 + 1];
+		uint64_t k1 = cf_swap_from_le64(blocks[i * 2 + 0]);
+		uint64_t k2 = cf_swap_from_le64(blocks[i * 2 + 1]);
 
 		k1 *= c1;
 		k1 = ROTL(k1, 31);
