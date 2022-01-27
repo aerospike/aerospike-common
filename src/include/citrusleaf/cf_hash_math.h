@@ -21,7 +21,15 @@
 // Includes.
 //
 
+#include <aerospike/as_std.h>
 #include <stddef.h>
+
+#include "cf_byte_order.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 //==========================================================
 // Public API.
@@ -42,7 +50,6 @@ cf_hash_fnv32(const uint8_t* buf, size_t size)
 	return hash;
 }
 
-
 // 64-bit Fowler-Noll-Vo hash function (FNV-1a).
 static inline uint64_t
 cf_hash_fnv64(const uint8_t* buf, size_t size)
@@ -57,7 +64,6 @@ cf_hash_fnv64(const uint8_t* buf, size_t size)
 
 	return hash;
 }
-
 
 // 32-bit Jenkins One-at-a-Time hash function.
 static inline uint32_t
@@ -79,7 +85,6 @@ cf_hash_jen32(const uint8_t* buf, size_t size)
 	return hash;
 }
 
-
 // 64-bit Jenkins One-at-a-Time hash function.
 static inline uint64_t
 cf_hash_jen64(const uint8_t* buf, size_t size)
@@ -100,7 +105,6 @@ cf_hash_jen64(const uint8_t* buf, size_t size)
 	return hash;
 }
 
-
 // 32-bit pointer hash.
 static inline uint32_t
 cf_hash_ptr32(const void* p_ptr)
@@ -108,9 +112,11 @@ cf_hash_ptr32(const void* p_ptr)
 	return (uint32_t)((*(const uint64_t*)p_ptr * 0xe221f97c30e94e1dULL) >> 32);
 }
 
+//------------------------------------------------
 // murmurhash3_x64_128
-#define ROTL(x, r) ((x << r) | (x >> (64 - r)))
+//
 
+#define ROTL(x, r) ((x << r) | (x >> (64 - r)))
 
 static inline uint64_t
 fmix64(uint64_t k)
@@ -123,7 +129,6 @@ fmix64(uint64_t k)
 
 	return k;
 }
-
 
 static inline void
 murmurHash3_x64_128(const uint8_t* key, const size_t len, uint8_t* out)
@@ -248,3 +253,131 @@ murmurHash3_x64_128(const uint8_t* key, const size_t len, uint8_t* out)
 	((uint64_t*)out)[1] = h2;
 }
 
+//------------------------------------------------
+// wyhash
+//
+
+static inline void
+cf_mult128(uint64_t* A, uint64_t* B)
+{
+#if defined(__SIZEOF_INT128__)
+	// Safe for gcc, clang with ARM and X86_64.
+	__uint128_t r = *A;
+	r *= *B;
+	*A = (uint64_t)r;
+	*B = (uint64_t)(r >> 64);
+#elif defined(_MSC_VER) && defined(_M_X64)
+	// Microsoft, has 128 bit native type, no combining.
+	#include <intrin.h>
+	#pragma intrinsic(_umul128)
+	*A = _umul128(*A, *B, B);
+#else
+	// Very much reduced performance!
+	#warning "128-bit multiplication by hand"
+	uint64_t ha = *A >> 32;
+	uint64_t hb = *B >> 32;
+	uint64_t la = (uint32_t)*A;
+	uint64_t lb = (uint32_t)*B;
+	uint64_t rh = ha * hb;
+	uint64_t rm0 = ha * lb;
+	uint64_t rm1 = hb * la;
+	uint64_t rl = la * lb;
+	uint64_t t = rl + (rm0 << 32);
+	uint64_t lo = t + (rm1 << 32);
+	uint64_t c = (lo < t) + (t < rl);
+	uint64_t hi = rh + (rm0 >> 32) + (rm1 >> 32) + c;
+	*A = lo;  *B = hi;
+#endif
+}
+
+static inline uint64_t
+_wymix(uint64_t A, uint64_t B)
+{
+	cf_mult128(&A, &B);
+	return A ^ B;
+}
+
+static inline uint64_t
+_wyr8(const uint8_t* p)
+{
+	return cf_swap_from_le64(*(uint64_t*)p);
+}
+
+static inline uint64_t
+_wyr4(const uint8_t* p)
+{
+	return (uint64_t)cf_swap_from_le32(*(uint32_t*)p);
+}
+
+static inline uint64_t
+_wyr3(const uint8_t* p, size_t k)
+{
+	// Note - this is endian independent.
+	return (((uint64_t)p[0]) << 16) | (((uint64_t)p[k >> 1]) << 8) | p[k - 1];
+}
+
+// Public API for wyhash.
+static inline uint64_t
+cf_wyhash(const void* key, size_t len)
+{
+	static const uint64_t secret[4] = {
+			0xa0761d6478bd642f,
+			0xe7037ed1a0b428db,
+			0x8ebc6af09c88c6e3,
+			0x589965cc75374cc3
+	};
+
+	uint64_t seed = 0x29FBB14cc886f ^ *secret;
+
+	const uint8_t* p = (const uint8_t*)key;
+	uint64_t a;
+	uint64_t b;
+
+	if (len <= 16) {
+		if (len >= 4) {
+			a = (_wyr4(p) << 32) | _wyr4(p + ((len >> 3) << 2));
+			b = (_wyr4(p + len - 4) << 32) |
+				_wyr4(p + len - 4 - ((len >> 3) << 2));
+		}
+		else if (len > 0) {
+			a = _wyr3(p, len);
+			b = 0;
+		}
+		else {
+			a = b = 0;
+		}
+	}
+	else {
+		size_t i = len;
+
+		if (i > 48) {
+			uint64_t see1 = seed;
+			uint64_t see2 = seed;
+
+			do {
+				seed = _wymix(_wyr8(p) ^ secret[1], _wyr8(p + 8) ^ seed);
+				see1 = _wymix(_wyr8(p + 16) ^ secret[2], _wyr8(p + 24) ^ see1);
+				see2 = _wymix(_wyr8(p + 32) ^ secret[3], _wyr8(p + 40) ^ see2);
+				p += 48;
+				i -= 48;
+			} while (i > 48);
+
+			seed ^= see1 ^ see2;
+		}
+
+		while (i > 16) {
+			seed = _wymix(_wyr8(p) ^ secret[1], _wyr8(p + 8) ^ seed);
+			i -= 16;
+			p += 16;
+		}
+
+		a = _wyr8(p + i - 16);
+		b = _wyr8(p + i - 8);
+	}
+
+	return _wymix(secret[1] ^ len, _wymix(a ^ secret[1], b ^ seed));
+}
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif
