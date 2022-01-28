@@ -317,9 +317,16 @@ _wyr3(const uint8_t* p, size_t k)
 	return (((uint64_t)p[0]) << 16) | (((uint64_t)p[k >> 1]) << 8) | p[k - 1];
 }
 
+// Public API - for now just use low bits of 64-bit hash.
+static inline uint32_t
+cf_wyhash32(const void* key, size_t len)
+{
+	return (uint32_t)cf_wyhash64(key, len);
+}
+
 // Public API - based on wyhash_final_version_3.
 static inline uint64_t
-cf_wyhash(const void* key, size_t len)
+cf_wyhash64(const void* key, size_t len)
 {
 	static const uint64_t secret[4] = {
 			0xa0761d6478bd642f,
