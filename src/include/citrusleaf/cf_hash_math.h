@@ -258,6 +258,12 @@ murmurHash3_x64_128(const uint8_t* key, const size_t len, uint8_t* out)
 // wyhash
 //
 
+#if ! defined(__SIZEOF_INT128__) && defined(_MSC_VER) && defined(_M_X64)
+// Microsoft, has 128 bit native type, no combining.
+#include <intrin.h>
+#pragma intrinsic(_umul128)
+#endif
+
 static inline void
 cf_mult128(uint64_t* A, uint64_t* B)
 {
@@ -268,9 +274,6 @@ cf_mult128(uint64_t* A, uint64_t* B)
 	*A = (uint64_t)r;
 	*B = (uint64_t)(r >> 64);
 #elif defined(_MSC_VER) && defined(_M_X64)
-	// Microsoft, has 128 bit native type, no combining.
-	#include <intrin.h>
-	#pragma intrinsic(_umul128)
 	*A = _umul128(*A, *B, B);
 #else
 	// Very much reduced performance!
