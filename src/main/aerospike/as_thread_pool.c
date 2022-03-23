@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2022 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,6 +15,7 @@
  * the License.
  */
 #include <aerospike/as_thread_pool.h>
+#include <aerospike/as_thread.h>
 #include <string.h>
 
 /******************************************************************************
@@ -34,6 +35,8 @@ void*
 as_thread_worker(void* data)
 {
 	as_thread_pool* pool = data;
+
+	as_thread_set_name("tpool");
 	
 	if (pool->task_size == 0) {
 		// Run variable tasks.

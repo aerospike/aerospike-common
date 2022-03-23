@@ -219,6 +219,9 @@
     <ClInclude Include="..\..\src\include\aerospike\as_msgpack_ext.h">
       <Filter>Header Files\aerospike</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_thread.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main\aerospike\as_aerospike.c">
