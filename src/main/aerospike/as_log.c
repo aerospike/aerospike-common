@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2022 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -20,7 +20,7 @@
  *	GLOBAL VARIABLES
  *****************************************************************************/
 
-as_log g_as_log = {AS_LOG_LEVEL_INFO, 0};
+as_log g_as_log = {AS_LOG_LEVEL_INFO, false, NULL};
 
 const char* as_log_level_strings[] = {
 	[AS_LOG_LEVEL_ERROR]	= "ERROR",

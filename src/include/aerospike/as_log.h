@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2022 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -62,7 +62,6 @@ typedef enum as_log_level_e {
  *	~~~~~~~~~~
  *
  *	The function should return true on success.
- *
  *
  *	@param level 		The log level of the message.
  *	@param func 		The function where the message was logged.
@@ -132,6 +131,11 @@ typedef struct as_log_s {
 	as_log_level level;
 
 	/**
+	 *	Was callback explicitly set.
+	 */
+	bool callback_set;
+
+	/**
 	 *	Logging Callback
 	 */
 	as_log_callback callback;
@@ -164,6 +168,7 @@ as_log_set_level(as_log_level level)
 
 /**
  *	Set logging callback for the global client log.
+ *	To silence the log, set callback to NULL.
  *
  *	@param callback 	The log callback.
  *
@@ -173,6 +178,7 @@ static inline void
 as_log_set_callback(as_log_callback callback)
 {
 	g_as_log.callback = callback;
+	g_as_log.callback_set = true;
 }
 
 /**
