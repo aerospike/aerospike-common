@@ -96,6 +96,7 @@ AEROSPIKE-OBJECTS += as_msgpack.o
 AEROSPIKE-OBJECTS += as_msgpack_ext.o
 AEROSPIKE-OBJECTS += as_msgpack_serializer.o
 AEROSPIKE-OBJECTS += as_nil.o
+AEROSPIKE-OBJECTS += as_orderedmap.o
 AEROSPIKE-OBJECTS += as_pair.o
 AEROSPIKE-OBJECTS += as_password.o
 AEROSPIKE-OBJECTS += as_queue.o

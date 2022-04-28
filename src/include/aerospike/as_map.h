@@ -30,6 +30,9 @@ extern "C" {
  *	TYPES
  *****************************************************************************/
 
+#define AS_MAP_FLAGS_MASK        0x3
+#define AS_MAP_FLAGS_ORDERED_MAP 0x10000
+
 union as_map_iterator_u;
 
 struct as_map_hooks_s;
@@ -52,6 +55,7 @@ typedef bool (* as_map_foreach_callback) (const as_val * key, const as_val * val
  *
  *	Implementations:
  *	- as_hashmap
+ *	- as_orderedmap
  *	
  *	@extends as_val
  *	@ingroup aerospike_t

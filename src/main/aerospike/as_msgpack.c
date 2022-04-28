@@ -20,6 +20,7 @@
 #include <string.h>
 
 #include <aerospike/as_msgpack_ext.h>
+#include <aerospike/as_orderedmap.h>
 #include <aerospike/as_serializer.h>
 #include <aerospike/as_types.h>
 #include <aerospike/as_vector.h>
@@ -54,11 +55,11 @@ typedef struct msgpack_parse_memblock_s {
 	size_t count;
 } msgpack_parse_memblock;
 
-#define MSGPACK_COMPARE_RET_LESS_OR_GREATER(arg1, arg2) { \
-	if (arg1 < arg2) { \
+#define MSGPACK_COMPARE_RET_LESS_OR_GREATER(_arg1, _arg2) { \
+	if ((_arg1) < (_arg2)) { \
 		return MSGPACK_COMPARE_LESS; \
 	} \
-	if (arg1 > arg2) { \
+	if ((_arg1) > (_arg2)) { \
 		return MSGPACK_COMPARE_GREATER; \
 	} \
 }
@@ -577,79 +578,85 @@ pack_list(as_packer *pk, as_list *l)
 }
 
 static bool
-pack_map_foreach(const as_val *key, const as_val *val, void *udata)
+pack_map_foreach(const as_val* key, const as_val* val, void* udata)
 {
-	as_packer *pk = (as_packer *)udata;
-	int rc = as_pack_val(pk, (as_val *)key);
+	as_packer* pk = (as_packer*)udata;
+	int rc = as_pack_val(pk, (as_val*)key);
 
 	if (rc == 0) {
-		rc = as_pack_val(pk, (as_val *)val);
+		rc = as_pack_val(pk, (as_val*)val);
 	}
 
 	return rc == 0;
 }
 
-static int
-as_bytes_cmp(as_bytes* b1, as_bytes* b2)
+static inline msgpack_compare_t
+str_cmp(const char* v1, const char* v2)
 {
-	if (b1->size == b2->size) {
-		return memcmp(b1->value, b2->value, b1->size);
-	}
-	else if (b1->size < b2->size) {
-		int cmp = memcmp(b1->value, b2->value, b1->size);
-		return cmp != 0 ? cmp : -1;
-	}
-	else {
-		int cmp = memcmp(b1->value, b2->value, b2->size);
-		return cmp != 0 ? cmp : 1;
-	}
+	int c = strcmp(v1, v2);
+
+	MSGPACK_COMPARE_RET_LESS_OR_GREATER(c, 0);
+
+	return MSGPACK_COMPARE_EQUAL;
 }
 
-static int
-as_val_cmp(const as_val* v1, const as_val* v2);
-
-static int
-as_list_cmp_max(const as_list* list1, const as_list* list2, uint32_t max, uint32_t fin)
+static inline msgpack_compare_t
+as_bytes_cmp(as_bytes* v1, as_bytes* v2)
 {
-	for (uint32_t i = 0; i < max; i++) {
-		int cmp = as_val_cmp(as_list_get(list1, i), as_list_get(list2, i));
+	uint32_t s1 = as_bytes_size((const as_bytes*)v1);
+	uint32_t s2 = as_bytes_size((const as_bytes*)v2);
+	uint32_t min_sz = s1 < s2 ? s1 : s2;
+	int c = memcmp(as_bytes_get((const as_bytes*)v1),
+			as_bytes_get((const as_bytes*)v2), min_sz);
 
-		if (cmp != 0) {
+	MSGPACK_COMPARE_RET_LESS_OR_GREATER(c, 0);
+	MSGPACK_COMPARE_RET_LESS_OR_GREATER(s1, s2);
+
+	return MSGPACK_COMPARE_EQUAL;
+}
+
+static msgpack_compare_t
+as_list_cmp(const as_list* list1, const as_list* list2)
+{
+	uint32_t s1 = as_list_size(list1);
+	uint32_t s2 = as_list_size(list2);
+	uint32_t min_sz = s1 < s2 ? s1 : s2;
+
+	for (uint32_t i = 0; i < min_sz; i++) {
+		as_val* v1 = as_list_get(list1, i);
+		as_val* v2 = as_list_get(list2, i);
+
+		if (as_val_type(v1) == AS_CMP_WILDCARD ||
+				as_val_type(v2) == AS_CMP_WILDCARD) {
+			return MSGPACK_COMPARE_EQUAL;
+		}
+
+		msgpack_compare_t cmp = as_val_cmp(v1, v2);
+
+		if (cmp != MSGPACK_COMPARE_EQUAL) {
 			return cmp;
 		}
 	}
-	return fin;
+
+	MSGPACK_COMPARE_RET_LESS_OR_GREATER(s1, s2);
+
+	return MSGPACK_COMPARE_EQUAL;
 }
 
-static int
-as_list_cmp(const as_list* list1, const as_list* list2)
-{
-	uint32_t size1 = as_list_size(list1);
-	uint32_t size2 = as_list_size(list2);
-
-	if (size1 == size2) {
-		return as_list_cmp_max(list1, list2, size1, 0);
-	}
-	else if (size1 < size2) {
-		return as_list_cmp_max(list1, list2, size1, -1);
-	}
-	else {
-		return as_list_cmp_max(list1, list2, size2, 1);
-	}
-}
-
-static int
+static msgpack_compare_t
 as_vector_cmp(as_vector* list1, as_vector* list2)
 {
 	// Size of vectors should already be the same.
 	for (uint32_t i = 0; i < list1->size; i++) {
-		int cmp = as_val_cmp(as_vector_get_ptr(list1, i), as_vector_get_ptr(list2, i));
+		msgpack_compare_t cmp = as_val_cmp(as_vector_get_ptr(list1, i),
+				as_vector_get_ptr(list2, i));
 
-		if (cmp != 0) {
+		if (cmp != MSGPACK_COMPARE_EQUAL) {
 			return cmp;
 		}
 	}
-	return 0;
+
+	return MSGPACK_COMPARE_EQUAL;
 }
 
 static bool
@@ -662,7 +669,10 @@ key_append(const as_val* key, const as_val* val, void* udata)
 static int
 key_cmp(const void* v1, const void* v2)
 {
-	return as_val_cmp(*(as_val**)v1, *(as_val**)v2);
+	msgpack_compare_t cmp = as_val_cmp(*(as_val**)v1, *(as_val**)v2);
+
+	return cmp == MSGPACK_COMPARE_LESS ?
+			-1 : (cmp == MSGPACK_COMPARE_GREATER ? 1 : 0); // default to 0 on error
 }
 
 static bool
@@ -676,23 +686,49 @@ map_to_sorted_keys(const as_map* map, uint32_t size, as_vector* list)
 
 	// Sort list of map entries.
 	qsort(list->list, list->size, sizeof(as_val*), key_cmp);
+
 	return true;
 }
 
-static int
+static msgpack_compare_t
+as_orderedmap_cmp(const as_map* map1, const as_map* map2)
+{
+	uint32_t sz = as_map_size(map1);
+	as_orderedmap_iterator it1;
+	as_orderedmap_iterator it2;
+
+	as_orderedmap_iterator_init(&it1, (const as_orderedmap*)map1);
+	as_orderedmap_iterator_init(&it2, (const as_orderedmap*)map2);
+
+	for (uint32_t i = 0; i < sz; i++) {
+		as_pair* p1 = (as_pair*)as_orderedmap_iterator_next(&it1);
+		as_pair* p2 = (as_pair*)as_orderedmap_iterator_next(&it2);
+		msgpack_compare_t cmp = as_val_cmp(as_pair_1(p1), as_pair_1(p2));
+
+		if (cmp != MSGPACK_COMPARE_EQUAL) {
+			return cmp;
+		}
+	}
+
+	return MSGPACK_COMPARE_EQUAL;
+}
+
+static msgpack_compare_t
 as_map_cmp(const as_map* map1, const as_map* map2)
 {
-	// Map ordering documented at https://www.aerospike.com/docs/guide/cdt-ordering.html
+	// Map ordering documented at https://docs.aerospike.com/server/guide/data-types/cdt-ordering
 	uint32_t size1 = as_map_size(map1);
 	uint32_t size2 = as_map_size(map2);
-	int cmp = size1 - size2;
 
-	if (cmp != 0) {
-		return cmp;
+	MSGPACK_COMPARE_RET_LESS_OR_GREATER(size1, size2);
+
+	if ((map1->flags & AS_MAP_FLAGS_ORDERED_MAP) != 0) {
+		return as_orderedmap_cmp(map1, map2);
 	}
 
 	// Convert maps to lists of keys and sort before comparing.
 	as_vector list1;
+	msgpack_compare_t cmp;
 
 	if (map_to_sorted_keys(map1, size1, &list1)) {
 		as_vector list2;
@@ -700,55 +736,61 @@ as_map_cmp(const as_map* map1, const as_map* map2)
 		if (map_to_sorted_keys(map2, size2, &list2)) {
 			cmp = as_vector_cmp(&list1, &list2);
 		}
+
 		as_vector_destroy(&list2);
 	}
+
 	as_vector_destroy(&list1);
+
 	return cmp;
 }
 
-static int
+msgpack_compare_t
 as_val_cmp(const as_val* v1, const as_val* v2)
 {
-	if (v1->type == AS_CMP_WILDCARD || v2->type == AS_CMP_WILDCARD) {
-		return 0;
+	as_val_t t1 = as_val_type(v1);
+	as_val_t t2 = as_val_type(v2);
+
+	MSGPACK_COMPARE_RET_LESS_OR_GREATER(t1, t2);
+
+	if (t1 == AS_CMP_WILDCARD || t2 == AS_CMP_WILDCARD) {
+		return MSGPACK_COMPARE_EQUAL;
 	}
 
-	if (v1->type != v2->type) {
-		return v1->type - v2->type;
-	}
-
-	switch (v1->type) {
+	switch (t1) {
+	case AS_NIL:
+		break;
 	case AS_BOOLEAN:
-		return ((as_boolean*)v1)->value - ((as_boolean*)v2)->value;
-
-	case AS_INTEGER: {
-		int64_t cmp = ((as_integer*)v1)->value - ((as_integer*)v2)->value;
-		return cmp < 0 ? -1 : cmp > 0 ? 1 : 0;
-	}
-
-	case AS_DOUBLE: {
-		double cmp = ((as_double*)v1)->value - ((as_double*)v2)->value;
-		return cmp < 0.0 ? -1 : cmp > 0.0 ? 1 : 0;
-	}
-
+		MSGPACK_COMPARE_RET_LESS_OR_GREATER(
+				(unsigned int)((as_boolean*)v1)->value,
+				(unsigned int)((as_boolean*)v2)->value);
+		break;
+	case AS_INTEGER:
+		MSGPACK_COMPARE_RET_LESS_OR_GREATER(
+				as_integer_get((const as_integer*)v1),
+				as_integer_get((const as_integer*)v2));
+		break;
+	case AS_DOUBLE:
+		MSGPACK_COMPARE_RET_LESS_OR_GREATER(as_double_get((const as_double*)v1),
+				as_double_get((const as_double*)v2));
+		break;
 	case AS_STRING:
-		return strcmp(((as_string*)v1)->value, ((as_string*)v2)->value);
-
+		return str_cmp(as_string_get((const as_string*)v1),
+				as_string_get((const as_string*)v2));
 	case AS_GEOJSON:
-		return strcmp(((as_geojson*)v1)->value, ((as_geojson*)v2)->value);
-
+		return str_cmp(as_geojson_get((const as_geojson*)v1),
+				as_geojson_get((const as_geojson*)v2));
 	case AS_BYTES:
 		return as_bytes_cmp((as_bytes*)v1, (as_bytes*)v2);
-
 	case AS_LIST:
 		return as_list_cmp((as_list*)v1, (as_list*)v2);
-
 	case AS_MAP:
 		return as_map_cmp((as_map*)v1, (as_map*)v2);
-
 	default:
-		return 0;
+		return MSGPACK_COMPARE_ERROR;
 	}
+
+	return MSGPACK_COMPARE_EQUAL;
 }
 
 typedef struct {
@@ -784,7 +826,7 @@ pack_map_ordered(as_packer* pk, const as_map* map, uint32_t size)
 		as_vector_init(&list, sizeof(key_val), size);
 	}
 
-	if (!as_map_foreach(map, key_val_append, &list)) {
+	if (! as_map_foreach(map, key_val_append, &list)) {
 		as_vector_destroy(&list);
 		return 1;
 	}
@@ -796,40 +838,44 @@ pack_map_ordered(as_packer* pk, const as_map* map, uint32_t size)
 	for (uint32_t i = 0; i < list.size; i++) {
 		key_val* kv = as_vector_get(&list, i);
 
-		if (!pack_map_foreach(kv->key, kv->val, pk)) {
+		if (! pack_map_foreach(kv->key, kv->val, pk)) {
 			as_vector_destroy(&list);
 			return 1;
 		}
 	}
+
 	as_vector_destroy(&list);
+
 	return 0;
 }
 
 static int
-pack_map(as_packer *pk, const as_map *m)
+pack_map(as_packer* pk, const as_map* m)
 {
-	uint32_t size = as_map_size(m);
-	int rc;
+	uint32_t ele_count = as_map_size(m);
 
-	if (size < 16) {
-		rc = pack_byte(pk, (uint8_t)(0x80 | size), true);
-	}
-	else if (size < 65536) {
-		rc = pack_type_uint16(pk, 0xde, (uint16_t)size, true);
+	if ((m->flags & AS_PACKED_MAP_FLAG_K_ORDERED) != 0) {
+		ele_count++;
+		int rc = as_pack_map_header(pk, ele_count);
+		rc += as_pack_ext_header(pk, 0, m->flags);
+		rc += as_pack_nil(pk);
+
+		if (rc != 0) {
+			return rc;
+		}
+
+		if ((m->flags & AS_MAP_FLAGS_ORDERED_MAP) == 0) {
+			return pack_map_ordered(pk, m, ele_count);
+		}
 	}
 	else {
-		rc = pack_type_uint32(pk, 0xdf, size, true);
+		int rc = as_pack_map_header(pk, ele_count);
+
+		if (rc != 0) {
+			return rc;
+		}
 	}
 
-	if (rc != 0) {
-		return rc;
-	}
-
-	if (m->flags & AS_PACKED_MAP_FLAG_KV_ORDERED) {
-		return pack_map_ordered(pk, m, size);
-	}
-
-	// Pack unordered map.
 	return as_map_foreach(m, pack_map_foreach, pk) ? 0 : 1;
 }
 
@@ -1148,7 +1194,46 @@ unpack_map_create_list(as_unpacker *pk, uint32_t size, as_val **val)
 }
 
 static int
-unpack_map(as_unpacker *pk, uint32_t size, as_val **val)
+unpack_orderedmap(as_unpacker* pk, uint32_t ele_count, as_val** val,
+		uint8_t flags)
+{
+	as_orderedmap *map = as_orderedmap_new(ele_count);
+
+	if (map == NULL) {
+		return -2;
+	}
+
+	for (uint32_t i = 0; i < ele_count; i++) {
+		as_val* k = NULL;
+		as_val* v = NULL;
+
+		if (as_unpack_val(pk, &k) != 0) {
+			as_orderedmap_destroy(map);
+			return -3;
+		}
+
+		if (as_unpack_val(pk, &v) != 0) {
+			as_val_destroy(k);
+			as_orderedmap_destroy(map);
+			return -4;
+		}
+
+		if (k == NULL || v == NULL || ! as_orderedmap_set(map, k, v)) {
+			as_val_destroy(k);
+			as_val_destroy(v);
+			as_orderedmap_destroy(map);
+			return -5;
+		}
+	}
+
+	*val = (as_val*)map;
+	as_orderedmap_set_flags(map, flags);
+
+	return 0;
+}
+
+static int
+unpack_map(as_unpacker* pk, uint32_t size, as_val** val)
 {
 	uint8_t flags = 0;
 
@@ -1167,6 +1252,10 @@ unpack_map(as_unpacker *pk, uint32_t size, as_val **val)
 	// Check preserve order bit.
 	if ((flags & AS_PACKED_MAP_FLAG_PRESERVE_ORDER) != 0) {
 		return unpack_map_create_list(pk, size, val);
+	}
+
+	if ((flags & AS_PACKED_MAP_FLAG_K_ORDERED) != 0) {
+		return unpack_orderedmap(pk, size, val, flags);
 	}
 
 	as_hashmap *map = as_hashmap_new(size > 32 ? size : 32);

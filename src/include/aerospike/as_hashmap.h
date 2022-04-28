@@ -255,7 +255,7 @@ AS_EXTERN int as_hashmap_remove(as_hashmap * map, const as_val * key);
  */
 static inline void as_hashmap_set_flags(as_hashmap * map, uint32_t flags)
 {
-	map->_.flags = flags;
+	map->_.flags = flags & AS_MAP_FLAGS_MASK;
 }
 
 /******************************************************************************

@@ -82,6 +82,8 @@ int as_pack_val(as_packer *pk, const as_val *val);
  */
 int as_unpack_val(as_unpacker *pk, as_val **val);
 
+msgpack_compare_t as_val_cmp(const as_val* v1, const as_val* v2);
+
 /******************************************************************************
  * Pack direct functions
  ******************************************************************************/
