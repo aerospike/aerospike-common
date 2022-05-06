@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <aerospike/as_hashmap_iterator.h>
+#include <aerospike/as_orderedmap.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,9 +31,7 @@ extern "C" {
  *	Union of standard map iterators
  */
 typedef union as_map_iterator_u {
-	
-	as_hashmap_iterator 	hashmap;
-
+	as_orderedmap_iterator orderedmap;
 } as_map_iterator;
 
 #ifdef __cplusplus

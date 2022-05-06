@@ -47,6 +47,7 @@ typedef enum {
 	AS_GEOJSON      = 11,
 
 	// Non-storage types, need to be after storage types.
+	AS_CMP_EXT,
 	AS_CMP_WILDCARD, // not a storage type
 	AS_CMP_INF,      // not a storage type, must be last (biggest value)
 

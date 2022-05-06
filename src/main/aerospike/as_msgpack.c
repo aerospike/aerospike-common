@@ -644,55 +644,14 @@ as_list_cmp(const as_list* list1, const as_list* list2)
 }
 
 static msgpack_compare_t
-as_vector_cmp(as_vector* list1, as_vector* list2)
+as_map_cmp(const as_map* map1, const as_map* map2)
 {
-	// Size of vectors should already be the same.
-	for (uint32_t i = 0; i < list1->size; i++) {
-		msgpack_compare_t cmp = as_val_cmp(as_vector_get_ptr(list1, i),
-				as_vector_get_ptr(list2, i));
+	// Map ordering documented at https://docs.aerospike.com/server/guide/data-types/cdt-ordering
+	uint32_t size1 = as_map_size(map1);
+	uint32_t size2 = as_map_size(map2);
 
-		if (cmp != MSGPACK_COMPARE_EQUAL) {
-			return cmp;
-		}
-	}
+	MSGPACK_COMPARE_RET_LESS_OR_GREATER(size1, size2);
 
-	return MSGPACK_COMPARE_EQUAL;
-}
-
-static bool
-key_append(const as_val* key, const as_val* val, void* udata)
-{
-	as_vector_append(udata, (void*)&key);
-	return true;
-}
-
-static int
-key_cmp(const void* v1, const void* v2)
-{
-	msgpack_compare_t cmp = as_val_cmp(*(as_val**)v1, *(as_val**)v2);
-
-	return cmp == MSGPACK_COMPARE_LESS ?
-			-1 : (cmp == MSGPACK_COMPARE_GREATER ? 1 : 0); // default to 0 on error
-}
-
-static bool
-map_to_sorted_keys(const as_map* map, uint32_t size, as_vector* list)
-{
-	as_vector_init(list, sizeof(as_val*), size);
-
-	if (! as_map_foreach(map, key_append, list)) {
-		return false;
-	}
-
-	// Sort list of map entries.
-	qsort(list->list, list->size, sizeof(as_val*), key_cmp);
-
-	return true;
-}
-
-static msgpack_compare_t
-as_orderedmap_cmp(const as_map* map1, const as_map* map2)
-{
 	uint32_t sz = as_map_size(map1);
 	as_orderedmap_iterator it1;
 	as_orderedmap_iterator it2;
@@ -711,38 +670,6 @@ as_orderedmap_cmp(const as_map* map1, const as_map* map2)
 	}
 
 	return MSGPACK_COMPARE_EQUAL;
-}
-
-static msgpack_compare_t
-as_map_cmp(const as_map* map1, const as_map* map2)
-{
-	// Map ordering documented at https://docs.aerospike.com/server/guide/data-types/cdt-ordering
-	uint32_t size1 = as_map_size(map1);
-	uint32_t size2 = as_map_size(map2);
-
-	MSGPACK_COMPARE_RET_LESS_OR_GREATER(size1, size2);
-
-	if ((map1->flags & AS_MAP_FLAGS_ORDERED_MAP) != 0) {
-		return as_orderedmap_cmp(map1, map2);
-	}
-
-	// Convert maps to lists of keys and sort before comparing.
-	as_vector list1;
-	msgpack_compare_t cmp;
-
-	if (map_to_sorted_keys(map1, size1, &list1)) {
-		as_vector list2;
-
-		if (map_to_sorted_keys(map2, size2, &list2)) {
-			cmp = as_vector_cmp(&list1, &list2);
-		}
-
-		as_vector_destroy(&list2);
-	}
-
-	as_vector_destroy(&list1);
-
-	return cmp;
 }
 
 msgpack_compare_t
@@ -1218,7 +1145,7 @@ unpack_orderedmap(as_unpacker* pk, uint32_t ele_count, as_val** val,
 			return -4;
 		}
 
-		if (k == NULL || v == NULL || ! as_orderedmap_set(map, k, v)) {
+		if (k == NULL || v == NULL || as_orderedmap_set(map, k, v) < 0) {
 			as_val_destroy(k);
 			as_val_destroy(v);
 			as_orderedmap_destroy(map);
@@ -1258,7 +1185,7 @@ unpack_map(as_unpacker* pk, uint32_t size, as_val** val)
 		return unpack_orderedmap(pk, size, val, flags);
 	}
 
-	as_hashmap *map = as_hashmap_new(size > 32 ? size : 32);
+	as_orderedmap *map = as_orderedmap_new(size);
 
 	if (! map) {
 		return -2;
@@ -1269,21 +1196,21 @@ unpack_map(as_unpacker* pk, uint32_t size, as_val** val)
 		as_val *v = NULL;
 
 		if (as_unpack_val(pk, &k) != 0) {
-			as_hashmap_destroy(map);
+			as_orderedmap_destroy(map);
 			return -3;
 		}
 
 		if (as_unpack_val(pk, &v) != 0) {
 			as_val_destroy(k);
-			as_hashmap_destroy(map);
+			as_orderedmap_destroy(map);
 			return -4;
 		}
 
 		if (k && v) {
-			if (as_hashmap_set(map, k, v) != 0) {
+			if (as_orderedmap_set(map, k, v) != 0) {
 				as_val_destroy(k);
 				as_val_destroy(v);
-				as_hashmap_destroy(map);
+				as_orderedmap_destroy(map);
 				return -5;
 			}
  		}
@@ -1863,7 +1790,7 @@ as_unpack_peek_type(const as_unpacker *pk)
 	case 0xdf: // map with 32 bit header
 		return AS_MAP;
 
-	case 0xd4: {
+	case 0xd4: { // fixext1
 		uint8_t ext_type = pk->buffer[pk->offset + 1];
 
 		if (ext_type == ASVAL_CMP_EXT_TYPE) {
@@ -1878,9 +1805,16 @@ as_unpack_peek_type(const as_unpacker *pk)
 			}
 		}
 
-		return AS_UNDEF;
+		return AS_CMP_EXT;
 	}
-
+	case 0xd5: // fixext2
+	case 0xd6: // fixext4
+	case 0xd7: // fixext8
+	case 0xd8: // fixext16
+	case 0xc7: // ext8
+	case 0xc8: // ext16
+	case 0xc9: // ext32
+		return AS_CMP_EXT;
 	default:
 		if ((type & 0xe0) == 0xa0) { // raw bytes with 8 bit combined header
 			uint8_t type1 = pk->buffer[pk->offset + 1];
@@ -2795,36 +2729,33 @@ msgpack_compare_list(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 }
 
 static msgpack_compare_t
-msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
+compare_ext(as_unpacker *pk1, as_unpacker *pk2)
 {
-	if (++depth > MSGPACK_COMPARE_MAX_DEPTH) {
-		msgpack_parse_memblock *block = msgpack_parse_memblock_create(NULL);
-		msgpack_parse_state *state = msgpack_parse_memblock_next(&block);
+	as_msgpack_ext ext1;
+	as_msgpack_ext ext2;
 
-		if (! msgpack_parse_state_map_cmp_init(state, pk1, pk2)) {
-			msgpack_parse_memblock_destroy(block);
-			return MSGPACK_COMPARE_ERROR;
-		}
-
-		if (state->default_compare_type != MSGPACK_COMPARE_EQUAL) {
-			msgpack_parse_memblock_destroy(block);
-			return state->default_compare_type;
-		}
-
-		msgpack_compare_t ret = msgpack_compare_non_recursive(pk1, pk2, &block,
-				state);
-
-		if (ret == MSGPACK_COMPARE_ERROR ||
-				! msgpack_compare_unwind_all(pk1, pk2, &block)) {
-			msgpack_parse_memblock_destroy(block);
-			return MSGPACK_COMPARE_ERROR;
-		}
-
-		msgpack_parse_memblock_destroy(block);
-
-		return ret;
+	if (as_unpack_ext(pk1, &ext1) != 0) {
+		return MSGPACK_COMPARE_ERROR;
 	}
 
+	if (as_unpack_ext(pk2, &ext2) != 0) {
+		return MSGPACK_COMPARE_ERROR;
+	}
+
+	MSGPACK_COMPARE_RET_LESS_OR_GREATER(ext1.type, ext2.type);
+
+	int64_t minsz = ext1.size < ext2.size ? ext1.size : ext2.size;
+	int cmp = memcmp(ext1.data, ext2.data, minsz);
+
+	MSGPACK_COMPARE_RET_LESS_OR_GREATER(cmp, 0);
+	MSGPACK_COMPARE_RET_LESS_OR_GREATER(ext1.size, ext2.size);
+
+	return MSGPACK_COMPARE_EQUAL;
+}
+
+static msgpack_compare_t
+msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
+{
 	int64_t len1 = as_unpack_map_header_element_count(pk1);
 	int64_t len2 = as_unpack_map_header_element_count(pk2);
 	int64_t minlen = (len1 < len2) ? len1 : len2;
@@ -2843,6 +2774,36 @@ msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 		}
 
 		MSGPACK_COMPARE_RET_LESS_OR_GREATER(len1, len2);
+	}
+
+	if (minlen == 0) {
+		return MSGPACK_COMPARE_EQUAL;
+	}
+
+	as_val_t type1 = as_unpack_peek_type(pk1);
+	as_val_t type2 = as_unpack_peek_type(pk2);
+
+	if (type1 == type2 && type1 == AS_CMP_EXT) {
+		msgpack_compare_t ret = compare_ext(pk1, pk2);
+
+		if (ret == MSGPACK_COMPARE_ERROR ||
+				! msgpack_skip(pk1, 1) || ! msgpack_skip(pk2, 1)) {
+			return MSGPACK_COMPARE_ERROR;
+		}
+
+		if (ret != MSGPACK_COMPARE_EQUAL) {
+			if (! msgpack_skip(pk1, len1 - 1)) {
+				return MSGPACK_COMPARE_ERROR;
+			}
+
+			if (! msgpack_skip(pk2, len2 - 1)) {
+				return MSGPACK_COMPARE_ERROR;
+			}
+
+			return ret;
+		}
+
+		minlen--;
 	}
 
 	for (int64_t i = 0; i < minlen; i++) {

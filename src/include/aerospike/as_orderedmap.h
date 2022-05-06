@@ -241,22 +241,22 @@ AS_EXTERN as_val* as_orderedmap_get(const as_orderedmap* map, const as_val* key)
  *	@param key		The key.
  *	@param val		The value for the given key.
  *
- *	@return true on success. Otherwise an error occurred.
+ *	@return 0 on success. Otherwise an error occurred.
  *
  *	@relatesalso as_orderedmap
  */
-AS_EXTERN bool as_orderedmap_set(as_orderedmap* map, const as_val* key, const as_val* val);
+AS_EXTERN int as_orderedmap_set(as_orderedmap* map, const as_val* key, const as_val* val);
 
 /**
  *	Remove all entries from the map.
  *
  *	@param map		The map.
  *
- *	@return true on success. Otherwise an error occurred.
+ *	@return 0 on success. Otherwise an error occurred.
  *
  *	@relatesalso as_orderedmap
  */
-AS_EXTERN bool as_orderedmap_clear(as_orderedmap* map);
+AS_EXTERN int as_orderedmap_clear(as_orderedmap* map);
 
 /**
  *	Remove the entry specified by the key.
@@ -264,11 +264,11 @@ AS_EXTERN bool as_orderedmap_clear(as_orderedmap* map);
  *	@param map 	The map to remove the entry from.
  *	@param key 	The key of the entry to be removed.
  *
- *	@return true on success. Otherwise an error occurred.
+ *	@return 0 on success. Otherwise an error occurred.
  *
  *	@relatesalso as_orderedmap
  */
-AS_EXTERN bool as_orderedmap_remove(as_orderedmap* map, const as_val* key);
+AS_EXTERN int as_orderedmap_remove(as_orderedmap* map, const as_val* key);
 
 /**
  *	Set map attributes.

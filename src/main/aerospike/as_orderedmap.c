@@ -50,13 +50,11 @@ static const as_iterator_hooks as_orderedmap_iterator_hooks;
  *	STATIC FUNCTIONS
  ******************************************************************************/
 
-#define MIN_CAPACITY 1
-
 static as_orderedmap*
 as_orderedmap_cons(as_orderedmap* map, uint32_t capacity)
 {
 	map->count = 0;
-	map->capacity = capacity > MIN_CAPACITY ? capacity : MIN_CAPACITY;
+	map->capacity = ((capacity + 8) / 8) * 8; // can add 1 without realloc
 
 	size_t size = map->capacity * sizeof(as_val*) * 2;
 
@@ -94,11 +92,37 @@ is_valid_key_type(const as_val* k)
 }
 
 static bool
-val_find(uint32_t count, const as_val* v, as_val** table, uint32_t* idx_r)
+val_find(uint32_t count, const as_val* v, as_val** table, uint32_t* idx_r,
+		bool check_last_first)
 {
 	if (count == 0) {
 		*idx_r = 0;
 		return false;
+	}
+
+	if (check_last_first) {
+		msgpack_compare_t cmp = as_val_cmp(v, table[(count - 1) * 2]);
+
+		switch (cmp) {
+		case MSGPACK_COMPARE_EQUAL:
+			*idx_r = count - 1;
+			return true;
+		case MSGPACK_COMPARE_GREATER:
+			*idx_r = count;
+			return false;
+		case MSGPACK_COMPARE_LESS:
+			count--;
+
+			if (count == 0) {
+				*idx_r = 0;
+				return false;
+			}
+
+			break;
+		default:
+			*idx_r = UINT32_MAX;
+			return false;
+		}
 	}
 
 	uint32_t lower = 0;
@@ -209,7 +233,7 @@ as_orderedmap_get(const as_orderedmap* map, const as_val* key)
 	}
 
 	uint32_t idx;
-	bool found = val_find(map->count, key, map->table, &idx);
+	bool found = val_find(map->count, key, map->table, &idx, false);
 
 	if (! found) {
 		return NULL;
@@ -218,20 +242,20 @@ as_orderedmap_get(const as_orderedmap* map, const as_val* key)
 	return (as_val*)map->table[idx * 2 + 1];
 }
 
-bool
+int
 as_orderedmap_set(as_orderedmap* map, const as_val* key, const as_val* val)
 {
 	if (map == NULL || ! is_valid_key_type(key)) {
-		return false;
+		return -1;
 	}
 
 	as_val* cval = (as_val*)(val != NULL ? val : &as_nil);
 	as_val* ckey = (as_val*)key;
 	uint32_t idx;
-	bool found = val_find(map->count, key, map->table, &idx);
+	bool found = val_find(map->count, key, map->table, &idx, true);
 
 	if (idx == UINT32_MAX) {
-		return false;
+		return -1;
 	}
 
 	idx *= 2;
@@ -242,7 +266,7 @@ as_orderedmap_set(as_orderedmap* map, const as_val* key, const as_val* val)
 		map->table[idx] = ckey;
 		map->table[idx + 1] = cval;
 
-		return true;
+		return 0;
 	}
 
 	if (map->count == map->capacity) {
@@ -252,7 +276,7 @@ as_orderedmap_set(as_orderedmap* map, const as_val* key, const as_val* val)
 				map->capacity * sizeof(as_val*) * 2);
 
 		if (table == NULL) {
-			return false;
+			return -1;
 		}
 
 		map->table = table;
@@ -264,14 +288,14 @@ as_orderedmap_set(as_orderedmap* map, const as_val* key, const as_val* val)
 	map->table[idx + 1] = cval;
 	map->count++;
 
-	return true;
+	return 0;
 }
 
-bool
+int
 as_orderedmap_clear(as_orderedmap* map)
 {
 	if (map == NULL) {
-		return false;
+		return -1;
 	}
 
 	for (uint32_t i = 0; i < map->count * 2; i++) {
@@ -280,21 +304,21 @@ as_orderedmap_clear(as_orderedmap* map)
 
 	map->count = 0;
 
-	return true;
+	return 0;
 }
 
-bool
+int
 as_orderedmap_remove(as_orderedmap* map, const as_val* key)
 {
 	if (map == NULL || ! is_valid_key_type(key)) {
-		return false;
+		return -1;
 	}
 
 	uint32_t idx;
-	bool found = val_find(map->count, key, map->table, &idx);
+	bool found = val_find(map->count, key, map->table, &idx, false);
 
 	if (! found) {
-		return true;
+		return 0;
 	}
 
 	idx *= 2;
@@ -304,7 +328,7 @@ as_orderedmap_remove(as_orderedmap* map, const as_val* key)
 			sizeof(as_val*) * (map->count * 2 - (idx + 2)));
 	map->count--;
 
-	return true;
+	return 0;
 }
 
 
@@ -423,7 +447,7 @@ _map_size(const as_map* map)
 static int
 _map_set(as_map* map, const as_val* key, const as_val* val)
 {
-	return as_orderedmap_set((as_orderedmap*)map, key, val) ? 0 : -1;
+	return as_orderedmap_set((as_orderedmap*)map, key, val);
 }
 
 static as_val*
@@ -435,13 +459,13 @@ _map_get(const as_map* map, const as_val* key)
 static int
 _map_clear(as_map* map)
 {
-	return as_orderedmap_clear((as_orderedmap*)map) ? 0 : -1;
+	return as_orderedmap_clear((as_orderedmap*)map);
 }
 
 static int
 _map_remove(as_map *map, const as_val* key)
 {
-	return as_orderedmap_remove((as_orderedmap*)map, key) ? 0 : -1;
+	return as_orderedmap_remove((as_orderedmap*)map, key);
 }
 
 static bool

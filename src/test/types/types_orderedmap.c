@@ -68,7 +68,7 @@ TEST(types_orderedmap_ops, "as_orderedmap ops") {
 
 	// remove an entry
 
-	bool success = as_orderedmap_remove(m, a);
+	bool success = as_orderedmap_remove(m, a) == 0;
 
 	assert_true(success);
 	assert_int_eq(as_orderedmap_size(m), 2);
