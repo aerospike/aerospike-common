@@ -110,6 +110,7 @@
     <ClCompile Include="..\..\src\test\types\types_hashmap.c" />
     <ClCompile Include="..\..\src\test\types\types_integer.c" />
     <ClCompile Include="..\..\src\test\types\types_nil.c" />
+    <ClCompile Include="..\..\src\test\types\types_orderedmap.c" />
     <ClCompile Include="..\..\src\test\types\types_queue.c" />
     <ClCompile Include="..\..\src\test\types\types_queue_mt.c" />
     <ClCompile Include="..\..\src\test\types\types_string.c" />

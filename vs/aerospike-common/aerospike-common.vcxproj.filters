@@ -222,6 +222,9 @@
     <ClInclude Include="..\..\src\include\aerospike\as_thread.h">
       <Filter>Header Files\aerospike</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_orderedmap.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main\aerospike\as_aerospike.c">
@@ -255,18 +258,6 @@
       <Filter>Source Files\aerospike</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\main\aerospike\as_geojson.c">
-      <Filter>Source Files\aerospike</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\main\aerospike\as_hashmap.c">
-      <Filter>Source Files\aerospike</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\main\aerospike\as_hashmap_hooks.c">
-      <Filter>Source Files\aerospike</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\main\aerospike\as_hashmap_iterator.c">
-      <Filter>Source Files\aerospike</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\main\aerospike\as_hashmap_iterator_hooks.c">
       <Filter>Source Files\aerospike</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\main\aerospike\as_integer.c">
@@ -375,6 +366,9 @@
       <Filter>Source Files\aerospike</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\main\aerospike\as_msgpack_ext.c">
+      <Filter>Source Files\aerospike</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\main\aerospike\as_orderedmap.c">
       <Filter>Source Files\aerospike</Filter>
     </ClCompile>
   </ItemGroup>

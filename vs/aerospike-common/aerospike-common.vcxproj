@@ -114,6 +114,7 @@
     <ClInclude Include="..\..\src\include\aerospike\as_msgpack_ext.h" />
     <ClInclude Include="..\..\src\include\aerospike\as_msgpack_serializer.h" />
     <ClInclude Include="..\..\src\include\aerospike\as_nil.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_orderedmap.h" />
     <ClInclude Include="..\..\src\include\aerospike\as_pair.h" />
     <ClInclude Include="..\..\src\include\aerospike\as_password.h" />
     <ClInclude Include="..\..\src\include\aerospike\as_queue.h" />
@@ -162,10 +163,6 @@
     <ClCompile Include="..\..\src\main\aerospike\as_bytes.c" />
     <ClCompile Include="..\..\src\main\aerospike\as_double.c" />
     <ClCompile Include="..\..\src\main\aerospike\as_geojson.c" />
-    <ClCompile Include="..\..\src\main\aerospike\as_hashmap.c" />
-    <ClCompile Include="..\..\src\main\aerospike\as_hashmap_hooks.c" />
-    <ClCompile Include="..\..\src\main\aerospike\as_hashmap_iterator.c" />
-    <ClCompile Include="..\..\src\main\aerospike\as_hashmap_iterator_hooks.c" />
     <ClCompile Include="..\..\src\main\aerospike\as_integer.c" />
     <ClCompile Include="..\..\src\main\aerospike\as_iterator.c" />
     <ClCompile Include="..\..\src\main\aerospike\as_list.c" />
@@ -177,6 +174,7 @@
     <ClCompile Include="..\..\src\main\aerospike\as_msgpack_ext.c" />
     <ClCompile Include="..\..\src\main\aerospike\as_msgpack_serializer.c" />
     <ClCompile Include="..\..\src\main\aerospike\as_nil.c" />
+    <ClCompile Include="..\..\src\main\aerospike\as_orderedmap.c" />
     <ClCompile Include="..\..\src\main\aerospike\as_pair.c" />
     <ClCompile Include="..\..\src\main\aerospike\as_password.c" />
     <ClCompile Include="..\..\src\main\aerospike\as_queue.c" />
