@@ -175,7 +175,6 @@
 		BFC65E911C9370740079DF5A /* aerospike */ = {
 			isa = PBXGroup;
 			children = (
-				BF2886E9282C6276008E441C /* as_orderedmap.c */,
 				BFBB7EF618C001560080851E /* as_aerospike.c */,
 				BFBB7EF718C001560080851E /* as_arraylist_hooks.c */,
 				BFBB7EF818C001560080851E /* as_arraylist_iterator_hooks.c */,
@@ -198,6 +197,7 @@
 				BFBB7F0A18C001560080851E /* as_msgpack.c */,
 				BF7E78A8215C235800D0C520 /* as_msgpack_ext.c */,
 				BFBB7F0B18C001560080851E /* as_nil.c */,
+				BF2886E9282C6276008E441C /* as_orderedmap.c */,
 				BFBB7F0C18C001560080851E /* as_pair.c */,
 				BFBA04B91947DE0800F9924E /* as_password.c */,
 				BF222D071BB3511C006827A6 /* as_queue.c */,

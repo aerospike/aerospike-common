@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2020 Aerospike, Inc.
+ * Copyright 2008-2022 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -31,7 +31,6 @@ extern "C" {
  *****************************************************************************/
 
 #define AS_MAP_FLAGS_MASK        0x3
-#define AS_MAP_FLAGS_ORDERED_MAP 0x10000
 
 union as_map_iterator_u;
 

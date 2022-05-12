@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2020 Aerospike, Inc.
+ * Copyright 2008-2022 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -720,62 +720,6 @@ as_val_cmp(const as_val* v1, const as_val* v2)
 	return MSGPACK_COMPARE_EQUAL;
 }
 
-typedef struct {
-	const as_val* key;
-	const as_val* val;
-} key_val;
-
-static bool
-key_val_append(const as_val* key, const as_val* val, void* udata)
-{
-	key_val kv = {key, val};
-	as_vector_append(udata, &kv);
-	return true;
-}
-
-static int
-key_val_cmp(const void* v1, const void* v2)
-{
-	return as_val_cmp(((key_val*)v1)->key, ((key_val*)v2)->key);
-}
-
-static int
-pack_map_ordered(as_packer* pk, const as_map* map, uint32_t size)
-{
-	// Sort map before packing.
-	// Copy map to a list.
-	as_vector list;
-
-	if (size <= 500) {
-		as_vector_inita(&list, sizeof(key_val), size);
-	}
-	else {
-		as_vector_init(&list, sizeof(key_val), size);
-	}
-
-	if (! as_map_foreach(map, key_val_append, &list)) {
-		as_vector_destroy(&list);
-		return 1;
-	}
-
-	// Sort list of map entries.
-	qsort(list.list, list.size, sizeof(key_val), key_val_cmp);
-
-	// Pack sorted list of map entries.
-	for (uint32_t i = 0; i < list.size; i++) {
-		key_val* kv = as_vector_get(&list, i);
-
-		if (! pack_map_foreach(kv->key, kv->val, pk)) {
-			as_vector_destroy(&list);
-			return 1;
-		}
-	}
-
-	as_vector_destroy(&list);
-
-	return 0;
-}
-
 static int
 pack_map(as_packer* pk, const as_map* m)
 {
@@ -790,17 +734,10 @@ pack_map(as_packer* pk, const as_map* m)
 		if (rc != 0) {
 			return rc;
 		}
-
-		if ((m->flags & AS_MAP_FLAGS_ORDERED_MAP) == 0) {
-			return pack_map_ordered(pk, m, ele_count);
-		}
 	}
 	else {
-		int rc = as_pack_map_header(pk, ele_count);
-
-		if (rc != 0) {
-			return rc;
-		}
+		// Unordered maps should not be possible here.
+		return -1;
 	}
 
 	return as_map_foreach(m, pack_map_foreach, pk) ? 0 : 1;

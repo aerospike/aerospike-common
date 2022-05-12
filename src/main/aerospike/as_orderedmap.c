@@ -179,7 +179,7 @@ as_orderedmap_init(as_orderedmap* map, uint32_t capacity)
 		return NULL;
 	}
 
-	as_map_cons((as_map*)map, false, 1 | AS_MAP_FLAGS_ORDERED_MAP,
+	as_map_cons((as_map*)map, false, 1,
 			&as_orderedmap_map_hooks);
 
 	return as_orderedmap_cons(map, capacity);
@@ -194,7 +194,7 @@ as_orderedmap_new(uint32_t capacity)
 		return NULL;
 	}
 
-	as_map_cons((as_map*)map, true, 1 | AS_MAP_FLAGS_ORDERED_MAP,
+	as_map_cons((as_map*)map, true, 1,
 			&as_orderedmap_map_hooks);
 
 	return as_orderedmap_cons(map, capacity);
