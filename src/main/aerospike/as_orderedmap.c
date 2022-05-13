@@ -471,7 +471,7 @@ _map_remove(as_map *map, const as_val* key)
 static void
 _map_set_flags(as_map *map, uint32_t flags)
 {
-	as_orderedmap_set_flags(map, flags);
+	as_orderedmap_set_flags((as_orderedmap*)map, flags);
 }
 
 static bool
