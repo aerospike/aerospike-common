@@ -1157,8 +1157,8 @@ unpack_map(as_unpacker* pk, uint32_t size, as_val** val)
 		}
 	}
 
+	as_orderedmap_set_flags(map, flags);
 	*val = (as_val *)map;
-	map->_.flags = flags;
 
 	return 0;
 }

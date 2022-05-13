@@ -164,6 +164,16 @@ typedef struct as_map_hooks_s {
 	 */
 	int (* remove)(as_map * map, const as_val * key);
 
+	/**
+	 *	Set map attributes.
+	 *
+	 *	@param map 	The map to remove the entry from.
+	 *	@param flags Flags to set.
+	 *
+	 *	@return 0 on success. Otherwise an error occurred.
+	 */
+	void (* set_flags)(as_map * map, uint32_t flags);
+
 	/***************************************************************************
 	 *	iteration hooks
 	 **************************************************************************/
@@ -339,14 +349,13 @@ static inline int as_map_remove(as_map * map, const as_val * key)
 }
 
 /**
- *	Set map attributes. Can be used to indicate that unordered map should
- *	be sorted just before packing map that will be sent to the server.
+ *	Set map attributes.
  *
  *	@relatesalso as_map
  */
 static inline void as_map_set_flags(as_map * map, uint32_t flags)
 {
-	map->flags = flags;
+	as_util_hook_ret_void(set_flags, map, flags);
 }
 
 /******************************************************************************

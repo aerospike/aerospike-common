@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2022 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -33,6 +33,9 @@ extern "C" {
  */
 #define as_util_hook(hook,default,object,...) \
 	(object && object->hooks && object->hooks->hook ? object->hooks->hook(object, ##__VA_ARGS__) : default)
+
+#define as_util_hook_ret_void(hook,object,...) \
+	if (object && object->hooks && object->hooks->hook) object->hooks->hook(object, ##__VA_ARGS__)
 
 /**
  * Converts from an as_val.

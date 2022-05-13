@@ -468,6 +468,12 @@ _map_remove(as_map *map, const as_val* key)
 	return as_orderedmap_remove((as_orderedmap*)map, key);
 }
 
+static void
+_map_set_flags(as_map *map, uint32_t flags)
+{
+	as_orderedmap_set_flags(map, flags);
+}
+
 static bool
 _map_foreach(const as_map* map, as_map_foreach_callback callback, void* udata)
 {
@@ -511,6 +517,7 @@ static const as_map_hooks as_orderedmap_map_hooks = {
 	.get		= _map_get,
 	.clear		= _map_clear,
 	.remove		= _map_remove,
+	.set_flags	= _map_set_flags,
 
 	/***************************************************************************
 	 *	iteration hooks
