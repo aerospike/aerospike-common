@@ -44,8 +44,34 @@ extern "C" {
  *	INSTANCE FUNCTIONS
  ******************************************************************************/
 
-#define as_hashmap_init as_orderedmap_init
-#define as_hashmap_new as_orderedmap_new
+static inline as_hashmap*
+as_hashmap_init(as_hashmap* map, uint32_t capacity)
+{
+	map = as_orderedmap_init(map, capacity);
+
+	if (map == NULL) {
+		return NULL;
+	}
+
+	as_orderedmap_set_flags(map, 0);
+
+	return map;
+}
+
+static inline as_hashmap*
+as_hashmap_new(uint32_t capacity)
+{
+	as_orderedmap* map = as_orderedmap_new(capacity);
+
+	if (map == NULL) {
+		return NULL;
+	}
+
+	as_orderedmap_set_flags(map, 0);
+
+	return map;
+}
+
 #define as_hashmap_destroy as_orderedmap_destroy
 
 /*******************************************************************************

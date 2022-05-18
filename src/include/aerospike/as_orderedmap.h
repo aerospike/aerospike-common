@@ -278,7 +278,8 @@ AS_EXTERN int as_orderedmap_remove(as_orderedmap* map, const as_val* key);
 static inline void
 as_orderedmap_set_flags(as_orderedmap* map, uint32_t flags)
 {
-	map->_.flags = ((flags | 1) & AS_MAP_FLAGS_MASK);
+	map->_.flags = flags & AS_MAP_FLAGS_MASK;
+	map->_.flags |= map->_.flags >> 1; // ensure setting v-ordered also set k-ordered
 }
 
 

@@ -735,8 +735,11 @@ pack_map(as_packer* pk, const as_map* m)
 			return rc;
 		}
 	}
-	else {
-		// Unordered maps should not be possible here.
+	else if ((m->flags & AS_PACKED_MAP_FLAG_V_ORDERED) != 0) {
+		// Only V ordered should not be possible.
+		return -1;
+	}
+	else if (as_pack_map_header(pk, ele_count) != 0) {
 		return -1;
 	}
 
