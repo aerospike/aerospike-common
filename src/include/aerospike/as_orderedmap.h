@@ -303,8 +303,8 @@ AS_EXTERN bool as_orderedmap_foreach(const as_orderedmap* map, as_map_foreach_ca
 /**
  *	Initializes a stack allocated as_iterator for the given as_orderedmap.
  *
- *	@param iterator 	The iterator to initialize.
- *	@param map			The map to iterate.
+ *	@param it		The iterator to initialize.
+ *	@param map		The map to iterate.
  *
  *	@return On success, the initialized iterator. Otherwise NULL.
  *
@@ -315,7 +315,7 @@ AS_EXTERN as_orderedmap_iterator* as_orderedmap_iterator_init(as_orderedmap_iter
 /**
  *	Creates a heap allocated as_iterator for the given as_orderedmap.
  *
- *	@param map 			The map to iterate.
+ *	@param map 		The map to iterate.
  *
  *	@return On success, the new iterator. Otherwise NULL.
  *
@@ -326,7 +326,7 @@ AS_EXTERN as_orderedmap_iterator* as_orderedmap_iterator_new(const as_orderedmap
 /**
  *	Destroy the iterator and releases resources used by the iterator.
  *
- *	@param iterator 	The iterator to release
+ *	@param it		The iterator to release
  *
  *	@relatesalso as_orderedmap_iterator
  */
@@ -335,7 +335,7 @@ AS_EXTERN void as_orderedmap_iterator_destroy(as_orderedmap_iterator* it);
 /**
  *	Tests if there are more values available in the iterator.
  *
- *	@param iterator 	The iterator to be tested.
+ *	@param it		The iterator to be tested.
  *
  *	@return true if there are more values. Otherwise false.
  *
@@ -347,7 +347,7 @@ AS_EXTERN bool as_orderedmap_iterator_has_next(const as_orderedmap_iterator* it)
  *	Attempts to get the next value from the iterator.
  *	This will return the next value, and iterate past the value.
  *
- *	@param iterator 	The iterator to get the next value from.
+ *	@param it		The iterator to get the next value from.
  *
  *	@return The next value in the list if available. Otherwise NULL.
  *
