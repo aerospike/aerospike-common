@@ -98,7 +98,10 @@ static inline msgpack_compare_t msgpack_compare_internal(as_unpacker *pk1, as_un
 
 // pack direct
 static int as_pack_inf_internal(as_packer *pk, bool resize);
+static inline int pack_nil_internal(as_packer *pk, bool resize);
 static int as_pack_wildcard_internal(as_packer *pk, bool resize);
+static inline int pack_map_header_internal(as_packer *pk, uint32_t ele_count, bool resize);
+static inline int pack_ext_header_internal(as_packer *pk, uint32_t content_size, uint8_t type, bool resize);
 
 // unpack direct
 static int64_t unpack_list_elements_size(as_unpacker *pk, uint32_t ele_count, uint32_t depth);
@@ -727,9 +730,20 @@ pack_map(as_packer* pk, const as_map* m)
 
 	if ((m->flags & AS_PACKED_MAP_FLAG_K_ORDERED) != 0) {
 		ele_count++;
-		int rc = as_pack_map_header(pk, ele_count);
-		rc += as_pack_ext_header(pk, 0, m->flags);
-		rc += as_pack_nil(pk);
+
+		int rc = pack_map_header_internal(pk, ele_count, true);
+
+		if (rc != 0) {
+			return rc;
+		}
+
+		rc = pack_ext_header_internal(pk, 0, m->flags, true);
+
+		if (rc != 0) {
+			return rc;
+		}
+
+		rc = pack_nil_internal(pk, true);
 
 		if (rc != 0) {
 			return rc;
@@ -739,7 +753,7 @@ pack_map(as_packer* pk, const as_map* m)
 		// Only V ordered should not be possible.
 		return -1;
 	}
-	else if (as_pack_map_header(pk, ele_count) != 0) {
+	else if (pack_map_header_internal(pk, ele_count, true) != 0) {
 		return -1;
 	}
 
@@ -1263,10 +1277,16 @@ as_unpack_val(as_unpacker *pk, as_val **val)
  * Pack direct functions
  ******************************************************************************/
 
+static inline int
+pack_nil_internal(as_packer *pk, bool resize)
+{
+	return pack_byte(pk, 0xc0, resize);
+}
+
 int
 as_pack_nil(as_packer *pk)
 {
-	return pack_byte(pk, 0xc0, false);
+	return pack_nil_internal(pk, false);
 }
 
 int
@@ -1478,22 +1498,28 @@ as_pack_list_header_get_size(uint32_t ele_count)
 	}
 }
 
-int
-as_pack_map_header(as_packer *pk, uint32_t ele_count)
+static inline int
+pack_map_header_internal(as_packer *pk, uint32_t ele_count, bool resize)
 {
 	int rc;
 
 	if (ele_count < 16) {
-		rc = pack_byte(pk, (uint8_t)(0x80 | ele_count), false);
+		rc = pack_byte(pk, (uint8_t)(0x80 | ele_count), resize);
 	}
 	else if (ele_count < (1 << 16)) {
-		rc = pack_type_uint16(pk, 0xde, (uint16_t)ele_count, false);
+		rc = pack_type_uint16(pk, 0xde, (uint16_t)ele_count, resize);
 	}
 	else {
-		rc = pack_type_uint32(pk, 0xdf, ele_count, false);
+		rc = pack_type_uint32(pk, 0xdf, ele_count, resize);
 	}
 
 	return rc;
+}
+
+int
+as_pack_map_header(as_packer *pk, uint32_t ele_count)
+{
+	return pack_map_header_internal(pk, ele_count, false);
 }
 
 uint32_t
@@ -1513,41 +1539,48 @@ as_pack_ext_header_get_size(uint32_t content_size)
 	return 1 + 4 + 1;
 }
 
-int
-as_pack_ext_header(as_packer *pk, uint32_t content_size, uint8_t type)
+static inline int
+pack_ext_header_internal(as_packer *pk, uint32_t content_size, uint8_t type,
+		bool resize)
 {
 	int rc;
 
 	if (content_size == 1) {
-		rc = pack_byte(pk, 0xd4, false);
+		rc = pack_byte(pk, 0xd4, resize);
 	}
 	else if (content_size == 2) {
-		rc = pack_byte(pk, 0xd5, false);
+		rc = pack_byte(pk, 0xd5, resize);
 	}
 	else if (content_size == 4) {
-		rc = pack_byte(pk, 0xd6, false);
+		rc = pack_byte(pk, 0xd6, resize);
 	}
 	else if (content_size == 8) {
-		rc = pack_byte(pk, 0xd7, false);
+		rc = pack_byte(pk, 0xd7, resize);
 	}
 	else if (content_size == 16) {
-		rc = pack_byte(pk, 0xd8, false);
+		rc = pack_byte(pk, 0xd8, resize);
 	}
 	else if (content_size < (1 << 8)) {
-		rc = pack_type_uint8(pk, 0xc7, (uint8_t)content_size, false);
+		rc = pack_type_uint8(pk, 0xc7, (uint8_t)content_size, resize);
 	}
 	else if (content_size < (1 << 16)) {
-		rc = pack_type_uint16(pk, 0xc8, (uint16_t)content_size, false);
+		rc = pack_type_uint16(pk, 0xc8, (uint16_t)content_size, resize);
 	}
 	else {
-		rc = pack_type_uint32(pk, 0xc9, content_size, false);
+		rc = pack_type_uint32(pk, 0xc9, content_size, resize);
 	}
 
 	if (rc != 0) {
 		return rc;
 	}
 
-	return pack_byte(pk, type, false);
+	return pack_byte(pk, type, resize);
+}
+
+int
+as_pack_ext_header(as_packer *pk, uint32_t content_size, uint8_t type)
+{
+	return pack_ext_header_internal(pk, content_size, type, false);
 }
 
 int
