@@ -18,6 +18,10 @@ ifeq ($(ARCH),x86_64)
   CC_FLAGS += -march=nocona
 endif
 
+ifeq ($(ARCH),aarch64)
+  CC_CFLAGS += -mcpu=neoverse-n1
+endif
+
 PREPRO_SUFFIX = .cpp
 ifeq ($(PREPRO),1)
   SUFFIX = $(PREPRO_SUFFIX)
