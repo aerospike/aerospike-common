@@ -31,6 +31,14 @@ extern "C" {
  ******************************************************************************/
 
 /**
+ * Private helper structure.
+ */
+typedef struct map_entry_s {
+	as_val* key;
+	as_val* value;
+} map_entry;
+
+/**
  *	A sorted array based implementation of `as_map`.
  *
  *	To use the map, you can either initialize a stack allocated map,
@@ -100,7 +108,11 @@ typedef struct as_orderedmap_s {
 
 	uint32_t count;
 	uint32_t capacity;
-	as_val** table;
+	map_entry* table;
+
+	uint32_t hold_count;
+	map_entry* hold_table;
+	uint32_t* hold_locations;
 } as_orderedmap;
 
 /**
@@ -170,7 +182,7 @@ typedef struct as_orderedmap_iterator_s {
 	as_iterator _;
 
 	const as_orderedmap* map;
-	uint32_t idx;
+	uint32_t ix;
 	as_pair pair;
 } as_orderedmap_iterator;
 

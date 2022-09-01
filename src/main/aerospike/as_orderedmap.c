@@ -45,6 +45,7 @@
 static const as_map_hooks as_orderedmap_map_hooks;
 static const as_iterator_hooks as_orderedmap_iterator_hooks;
 
+#define HOLD_TABLE_CAP 1000
 
 /******************************************************************************
  *	STATIC FUNCTIONS
@@ -56,25 +57,29 @@ as_orderedmap_cons(as_orderedmap* map, uint32_t capacity)
 	map->count = 0;
 	map->capacity = ((capacity + 8) / 8) * 8; // can add 1 without realloc
 
-	size_t size = map->capacity * sizeof(as_val*) * 2;
+	size_t size = map->capacity * sizeof(map_entry);
 
-	map->table = (as_val**)cf_malloc(size);
+	map->table = (map_entry*)cf_malloc(size);
 
 	if (map->table == NULL) {
 		return NULL;
 	}
 
+	map->hold_count = 0;
+	map->hold_table = NULL;
+	map->hold_locations = NULL;
+
 	return map;
 }
 
 static bool
-is_valid_key_type(const as_val* k)
+is_valid_key_type(const as_val* key)
 {
-	if (k == NULL) {
+	if (key == NULL) {
 		return false;
 	}
 
-	switch (as_val_type(k)) {
+	switch (as_val_type(key)) {
 	case AS_NIL:
 	case AS_BOOLEAN:
 	case AS_INTEGER:
@@ -92,79 +97,130 @@ is_valid_key_type(const as_val* k)
 }
 
 static bool
-val_find(uint32_t count, const as_val* v, as_val** table, uint32_t* idx_r,
-		bool check_last_first)
+key_find(const map_entry* table, uint32_t count, const as_val* key,
+		uint32_t* ix_r, bool check_last_first)
 {
 	if (count == 0) {
-		*idx_r = 0;
+		*ix_r = 0;
 		return false;
 	}
 
 	if (check_last_first) {
-		msgpack_compare_t cmp = as_val_cmp(v, table[(count - 1) * 2]);
+		msgpack_compare_t cmp = as_val_cmp(key, table[count - 1].key);
 
 		switch (cmp) {
 		case MSGPACK_COMPARE_EQUAL:
-			*idx_r = count - 1;
+			*ix_r = count - 1;
 			return true;
 		case MSGPACK_COMPARE_GREATER:
-			*idx_r = count;
+			*ix_r = count;
 			return false;
 		case MSGPACK_COMPARE_LESS:
 			count--;
 
 			if (count == 0) {
-				*idx_r = 0;
+				*ix_r = 0;
 				return false;
 			}
 
 			break;
 		default:
-			*idx_r = UINT32_MAX;
+			*ix_r = UINT32_MAX;
 			return false;
 		}
 	}
 
 	uint32_t lower = 0;
-	uint32_t idx = count / 2;
+	uint32_t ix = count / 2;
 	uint32_t upper = count;
 
 	while (true) {
-		msgpack_compare_t cmp = as_val_cmp(v, table[idx * 2]);
+		msgpack_compare_t cmp = as_val_cmp(key, table[ix].key);
 
 		if (cmp == MSGPACK_COMPARE_EQUAL) {
-			*idx_r = idx;
+			*ix_r = ix;
 			return true;
 		}
 
 		if (cmp == MSGPACK_COMPARE_GREATER) {
-			if (idx >= upper - 1) {
-				*idx_r = idx + 1;
+			if (ix >= upper - 1) {
+				*ix_r = ix + 1;
 				return false;
 			}
 
-			lower = idx;
-			idx += upper;
-			idx /= 2;
+			lower = ix;
+			ix += upper;
+			ix /= 2;
 		}
 		else if (cmp == MSGPACK_COMPARE_LESS) {
-			if (idx == lower) {
-				*idx_r = idx;
+			if (ix == lower) {
+				*ix_r = ix;
 				return false;
 			}
 
-			upper = idx;
-			idx += lower;
-			idx /= 2;
+			upper = ix;
+			ix += lower;
+			ix /= 2;
 		}
 		else {
 			break;
 		}
 	}
 
-	*idx_r = UINT32_MAX; // error
+	*ix_r = UINT32_MAX; // error
 
 	return false;
+}
+
+static bool
+as_orderedmap_merge(as_orderedmap* map)
+{
+	if (map->hold_count == 0) {
+		return true;
+	}
+
+	uint32_t new_capacity = map->count + map->hold_count;
+
+	if (new_capacity < map->capacity) {
+		new_capacity = map->capacity;
+	}
+
+	map_entry* new_table = cf_malloc(new_capacity * sizeof(map_entry));
+
+	if (new_table == NULL) {
+		return false;
+	}
+
+	uint32_t src_ix = 0;
+	uint32_t dst_ix = 0;
+
+	for (uint32_t ix = 0; ix < map->hold_count; ix++) {
+		uint32_t n_entries = map->hold_locations[ix] - src_ix;
+
+		memcpy(new_table + dst_ix, map->table + src_ix,
+				n_entries * sizeof(map_entry));
+
+		src_ix += n_entries;
+		dst_ix += n_entries;
+
+		new_table[dst_ix].key = map->hold_table[ix].key;
+		new_table[dst_ix].value = map->hold_table[ix].value;
+
+		dst_ix++;
+	}
+
+	memcpy(new_table + dst_ix, map->table + src_ix,
+			(map->count - src_ix) * sizeof(map_entry));
+
+	cf_free(map->table);
+
+	map->count += map->hold_count;
+	map->capacity = new_capacity;
+	map->table = new_table;
+
+	map->hold_count = 0;
+
+	return true;
 }
 
 
@@ -208,6 +264,11 @@ as_orderedmap_release(as_orderedmap* map)
 	as_orderedmap_clear(map);
 	cf_free(map->table);
 
+	if (map->hold_table != NULL) {
+		cf_free(map->hold_table);
+		cf_free(map->hold_locations);
+	}
+
 	return true;
 }
 
@@ -220,7 +281,7 @@ as_orderedmap_destroy(as_orderedmap* map)
 uint32_t
 as_orderedmap_size(const as_orderedmap* map)
 {
-	return map == NULL ? 0 : map->count;
+	return map == NULL ? 0 : map->count + map->hold_count;
 }
 
 as_val*
@@ -230,14 +291,17 @@ as_orderedmap_get(const as_orderedmap* map, const as_val* key)
 		return NULL;
 	}
 
-	uint32_t idx;
-	bool found = val_find(map->count, key, map->table, &idx, false);
+	uint32_t ix;
 
-	if (! found) {
-		return NULL;
+	if (key_find(map->table, map->count, key, &ix, false)) {
+		return (as_val*)map->table[ix].value;
 	}
 
-	return (as_val*)map->table[idx * 2 + 1];
+	if (key_find(map->hold_table, map->hold_count, key, &ix, false)) {
+		return (as_val*)map->hold_table[ix].value;
+	}
+
+	return NULL;
 }
 
 int
@@ -249,42 +313,90 @@ as_orderedmap_set(as_orderedmap* map, const as_val* key, const as_val* val)
 
 	as_val* cval = (as_val*)(val != NULL ? val : &as_nil);
 	as_val* ckey = (as_val*)key;
-	uint32_t idx;
-	bool found = val_find(map->count, key, map->table, &idx, true);
+	uint32_t ix;
+	bool found = key_find(map->table, map->count, key, &ix, true);
 
-	if (idx == UINT32_MAX) {
+	if (ix == UINT32_MAX) {
 		return -1;
 	}
 
-	idx *= 2;
-
 	if (found) {
-		as_val_destroy(map->table[idx]);
-		as_val_destroy(map->table[idx + 1]);
-		map->table[idx] = ckey;
-		map->table[idx + 1] = cval;
+		as_val_destroy(map->table[ix].key);
+		as_val_destroy(map->table[ix].value);
+		map->table[ix].key = ckey;
+		map->table[ix].value = cval;
 
 		return 0;
 	}
 
-	if (map->count == map->capacity) {
-		map->capacity *= 2;
+	if (ix + HOLD_TABLE_CAP > map->count) {
+		// Near end of main table - insert directly.
 
-		as_val** table = (as_val**)cf_realloc(map->table,
-				map->capacity * sizeof(as_val*) * 2);
+		if (map->count == map->capacity) {
+			map->capacity *= 2;
 
-		if (table == NULL) {
-			return -1;
+			map_entry* table = (map_entry*)cf_realloc(map->table,
+					map->capacity * sizeof(map_entry));
+
+			if (table == NULL) {
+				return -1;
+			}
+
+			map->table = table;
 		}
 
-		map->table = table;
+		memmove(&map->table[ix + 1], &map->table[ix],
+				sizeof(map_entry) * (map->count - ix));
+		map->table[ix].key = ckey;
+		map->table[ix].value = cval;
+		map->count++;
+
+		return 0;
 	}
 
-	memmove(&map->table[idx + 2], &map->table[idx],
-			sizeof(as_val*) * (map->count * 2 - idx));
-	map->table[idx] = ckey;
-	map->table[idx + 1] = cval;
-	map->count++;
+	// Far from end of main table - insert in hold table.
+
+	if (map->hold_table == NULL) {
+		map->hold_table = cf_malloc(HOLD_TABLE_CAP * sizeof(map_entry));
+		map->hold_locations = cf_malloc(HOLD_TABLE_CAP * sizeof(uint32_t));
+	}
+
+	uint32_t hold_ix;
+
+	found = key_find(map->hold_table, map->hold_count, key, &hold_ix, false);
+
+	if (hold_ix == UINT32_MAX) {
+		return -1;
+	}
+
+	if (found) {
+		as_val_destroy(map->hold_table[hold_ix].key);
+		as_val_destroy(map->hold_table[hold_ix].value);
+		map->hold_table[hold_ix].key = ckey;
+		map->hold_table[hold_ix].value = cval;
+
+		return 0;
+	}
+
+	if (map->hold_count == HOLD_TABLE_CAP) {
+		return -1; // previous merge failed
+	}
+
+	memmove(&map->hold_table[hold_ix + 1], &map->hold_table[hold_ix],
+			sizeof(map_entry) * (map->hold_count - hold_ix));
+	map->hold_table[hold_ix].key = ckey;
+	map->hold_table[hold_ix].value = cval;
+
+	memmove(&map->hold_locations[hold_ix + 1], &map->hold_locations[hold_ix],
+			sizeof(uint32_t) * (map->hold_count - hold_ix));
+	map->hold_locations[hold_ix] = ix;
+
+	map->hold_count++;
+
+	if (map->hold_count == HOLD_TABLE_CAP) {
+		as_orderedmap_merge(map);
+		// Ignore merge allocation failure, next insert will fail.
+	}
 
 	return 0;
 }
@@ -296,11 +408,19 @@ as_orderedmap_clear(as_orderedmap* map)
 		return -1;
 	}
 
-	for (uint32_t i = 0; i < map->count * 2; i++) {
-		as_val_destroy(map->table[i]);
+	for (uint32_t ix = 0; ix < map->count; ix++) {
+		as_val_destroy(map->table[ix].key);
+		as_val_destroy(map->table[ix].value);
 	}
 
 	map->count = 0;
+
+	for (uint32_t ix = 0; ix < map->hold_count; ix++) {
+		as_val_destroy(map->hold_table[ix].key);
+		as_val_destroy(map->hold_table[ix].value);
+	}
+
+	map->hold_count = 0;
 
 	return 0;
 }
@@ -312,19 +432,19 @@ as_orderedmap_remove(as_orderedmap* map, const as_val* key)
 		return -1;
 	}
 
-	uint32_t idx;
-	bool found = val_find(map->count, key, map->table, &idx, false);
-
-	if (! found) {
-		return 0;
+	if (! as_orderedmap_merge(map)) {
+		return -1;
 	}
 
-	idx *= 2;
-	as_val_destroy(map->table[idx]);
-	as_val_destroy(map->table[idx + 1]);
-	memmove(&map->table[idx], &map->table[idx + 2],
-			sizeof(as_val*) * (map->count * 2 - (idx + 2)));
-	map->count--;
+	uint32_t ix;
+
+	if (key_find(map->table, map->count, key, &ix, false)) {
+		as_val_destroy(map->table[ix].key);
+		as_val_destroy(map->table[ix].value);
+		memmove(&map->table[ix], &map->table[ix + 1],
+				sizeof(map_entry) * (map->count - (ix + 1)));
+		map->count--;
+	}
 
 	return 0;
 }
@@ -342,8 +462,12 @@ as_orderedmap_foreach(const as_orderedmap* map,
 		return false;
 	}
 
-	for (uint32_t i = 0; i < map->count; i++) {
-		if (! callback(map->table[i * 2], map->table[i * 2 + 1], udata)) {
+	if (! as_orderedmap_merge((as_orderedmap*)map)) {
+		return false;
+	}
+
+	for (uint32_t ix = 0; ix < map->count; ix++) {
+		if (! callback(map->table[ix].key, map->table[ix].value, udata)) {
 			return false;
 		}
 	}
@@ -359,9 +483,13 @@ as_orderedmap_iterator_init(as_orderedmap_iterator* it,
 		return NULL;
 	}
 
+	if (! as_orderedmap_merge((as_orderedmap*)map)) {
+		return NULL;
+	}
+
 	as_iterator_init((as_iterator*)it, false, NULL,
 			&as_orderedmap_iterator_hooks);
-	it->idx = 0;
+	it->ix = 0;
 	it->map = map;
 
 	return it;
@@ -377,9 +505,13 @@ as_orderedmap_iterator_new(const as_orderedmap* map)
 		return NULL;
 	}
 
+	if (! as_orderedmap_merge((as_orderedmap*)map)) {
+		return NULL;
+	}
+
 	as_iterator_init((as_iterator*)it, true, NULL,
 			&as_orderedmap_iterator_hooks);
-	it->idx = 0;
+	it->ix = 0;
 	it->map = map;
 
 	return it;
@@ -389,7 +521,7 @@ bool
 as_orderedmap_iterator_release(as_orderedmap_iterator* it)
 {
 	it->map = NULL;
-	it->idx = 0;
+	it->ix = 0;
 	return true;
 }
 
@@ -402,19 +534,19 @@ as_orderedmap_iterator_destroy(as_orderedmap_iterator* it)
 bool
 as_orderedmap_iterator_has_next(const as_orderedmap_iterator* it)
 {
-	return it->idx < it->map->count;
+	return it->ix < it->map->count;
 }
 
 const as_val*
 as_orderedmap_iterator_next(as_orderedmap_iterator* it)
 {
-	if (it->idx >= it->map->count) {
+	if (it->ix >= it->map->count) {
 		return NULL;
 	}
 
-	as_pair_init(&it->pair, it->map->table[it->idx * 2],
-			it->map->table[it->idx * 2 + 1]);
-	it->idx++;
+	as_pair_init(&it->pair, it->map->table[it->ix].key,
+			it->map->table[it->ix].value);
+	it->ix++;
 
 	return (as_val*)&it->pair;
 }

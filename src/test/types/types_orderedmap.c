@@ -396,6 +396,66 @@ TEST(types_orderedmap_types, "as_orderedmap types") {
 	as_map_destroy(m);
 }
 
+TEST(types_orderedmap_huge_ordered, "as_orderedmap insert huge ordered") {
+	as_orderedmap* m = as_orderedmap_new(100);
+
+	for (uint32_t i = 0; i < 0x100000; i++) {
+		as_orderedmap_set(m, (as_val*)as_integer_new(i),
+				(as_val*)as_integer_new(i * 10));
+	}
+
+	assert_int_eq(as_orderedmap_size(m), 0x100000);
+
+	as_iterator* i = (as_iterator*)as_orderedmap_iterator_new(m);
+	int count = 0;
+
+	while (as_iterator_has_next(i)) {
+		as_pair* p = (as_pair*)as_iterator_next(i);
+		as_integer* k = (as_integer*)as_pair_1(p);
+		as_integer* v = (as_integer*)as_pair_2(p);
+		assert_int_eq(k->value, count);
+		assert_int_eq(v->value, k->value * 10);
+		count++;
+	}
+
+	assert_int_eq(count, 0x100000);
+
+	as_iterator_destroy(i);
+
+	as_orderedmap_destroy(m);
+}
+
+TEST(types_orderedmap_huge_random, "as_orderedmap insert huge random") {
+	as_orderedmap* m = as_orderedmap_new(100);
+
+	for (uint32_t i = 0; i < 0x100000; i++) {
+		uint32_t k = (i * 531441) & 0xFFFFF;
+
+		as_orderedmap_set(m, (as_val*)as_integer_new(k),
+				(as_val*)as_integer_new(i));
+	}
+
+	assert_int_eq(as_orderedmap_size(m), 0x100000);
+
+	as_iterator* i = (as_iterator*)as_orderedmap_iterator_new(m);
+	int count = 0;
+
+	while (as_iterator_has_next(i)) {
+		as_pair* p = (as_pair*)as_iterator_next(i);
+		as_integer* k = (as_integer*)as_pair_1(p);
+		as_integer* v = (as_integer*)as_pair_2(p);
+		assert_int_eq(k->value, count);
+		assert_int_eq(k->value, (v->value * 531441) & 0xFFFFF);
+		count++;
+	}
+
+	assert_int_eq(count, 0x100000);
+
+	as_iterator_destroy(i);
+
+	as_orderedmap_destroy(m);
+}
+
 
 /******************************************************************************
  * TEST SUITE
@@ -409,4 +469,6 @@ SUITE(types_orderedmap, "as_orderedmap") {
 	suite_add(types_orderedmap_iterator);
 	suite_add(types_orderedmap_foreach);
 	suite_add(types_orderedmap_msgpack);
+	suite_add(types_orderedmap_huge_ordered);
+	suite_add(types_orderedmap_huge_random);
 }
