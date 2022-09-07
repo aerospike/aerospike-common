@@ -30,13 +30,13 @@ else
   DYNAMIC_FLAG=-shared
 endif
 
-CC = cc
+CC ?= cc
 CC_FLAGS =
 
-LD = cc
+LD ?= cc
 LD_FLAGS =
 
-AR = ar
+AR ?= ar
 AR_FLAGS =
 
 ###############################################################################
