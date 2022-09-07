@@ -100,41 +100,15 @@ static bool
 key_find(const map_entry* table, uint32_t count, const as_val* key,
 		uint32_t* ix_r, bool check_last_first)
 {
-	if (count == 0) {
-		*ix_r = 0;
-		return false;
-	}
+	int64_t low = 0;
+	int64_t high = (int64_t)count - 1;
 
-	if (check_last_first) {
-		msgpack_compare_t cmp = as_val_cmp(key, table[count - 1].key);
+	while (low <= high) {
+		// On the first iteration, probe at the end when 'check_last_first' is
+		// set. Otherwise, fall back to binary search.
+		int64_t ix = check_last_first ?
+				(check_last_first = false), high : (low + high) / 2;
 
-		switch (cmp) {
-		case MSGPACK_COMPARE_EQUAL:
-			*ix_r = count - 1;
-			return true;
-		case MSGPACK_COMPARE_GREATER:
-			*ix_r = count;
-			return false;
-		case MSGPACK_COMPARE_LESS:
-			count--;
-
-			if (count == 0) {
-				*ix_r = 0;
-				return false;
-			}
-
-			break;
-		default:
-			*ix_r = UINT32_MAX;
-			return false;
-		}
-	}
-
-	uint32_t lower = 0;
-	uint32_t ix = count / 2;
-	uint32_t upper = count;
-
-	while (true) {
 		msgpack_compare_t cmp = as_val_cmp(key, table[ix].key);
 
 		if (cmp == MSGPACK_COMPARE_EQUAL) {
@@ -143,31 +117,18 @@ key_find(const map_entry* table, uint32_t count, const as_val* key,
 		}
 
 		if (cmp == MSGPACK_COMPARE_GREATER) {
-			if (ix >= upper - 1) {
-				*ix_r = ix + 1;
-				return false;
-			}
-
-			lower = ix;
-			ix += upper;
-			ix /= 2;
+			low = ix + 1;
 		}
 		else if (cmp == MSGPACK_COMPARE_LESS) {
-			if (ix == lower) {
-				*ix_r = ix;
-				return false;
-			}
-
-			upper = ix;
-			ix += lower;
-			ix /= 2;
+			high = ix - 1;
 		}
 		else {
-			break;
+			*ix_r = UINT32_MAX; // error
+			return false;
 		}
 	}
 
-	*ix_r = UINT32_MAX; // error
+	*ix_r = low; // location to insert the key at
 
 	return false;
 }

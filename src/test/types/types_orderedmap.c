@@ -9,6 +9,7 @@
 #include <aerospike/as_msgpack.h>
 #include <aerospike/as_serializer.h>
 #include <citrusleaf/alloc.h>
+#include <citrusleaf/cf_clock.h>
 
 /******************************************************************************
  * TEST CASES
@@ -397,6 +398,7 @@ TEST(types_orderedmap_types, "as_orderedmap types") {
 }
 
 TEST(types_orderedmap_huge_ordered, "as_orderedmap insert huge ordered") {
+	uint64_t start_ms = cf_getms();
 	as_orderedmap* m = as_orderedmap_new(100);
 
 	for (uint32_t i = 0; i < 0x100000; i++) {
@@ -421,11 +423,13 @@ TEST(types_orderedmap_huge_ordered, "as_orderedmap insert huge ordered") {
 	assert_int_eq(count, 0x100000);
 
 	as_iterator_destroy(i);
-
 	as_orderedmap_destroy(m);
+
+	info("total time in ms = %lu", cf_getms() - start_ms);
 }
 
 TEST(types_orderedmap_huge_random, "as_orderedmap insert huge random") {
+	uint64_t start_ms = cf_getms();
 	as_orderedmap* m = as_orderedmap_new(100);
 
 	for (uint32_t i = 0; i < 0x100000; i++) {
@@ -452,8 +456,9 @@ TEST(types_orderedmap_huge_random, "as_orderedmap insert huge random") {
 	assert_int_eq(count, 0x100000);
 
 	as_iterator_destroy(i);
-
 	as_orderedmap_destroy(m);
+
+	info("total time in ms = %lu", cf_getms() - start_ms);
 }
 
 
