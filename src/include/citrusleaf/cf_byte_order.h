@@ -26,20 +26,88 @@
 #include <sys/endian.h>
 #endif
 
-#define cf_swap_to_be16(_n) htobe16(_n)
-#define cf_swap_to_le16(_n) htole16(_n)
-#define cf_swap_from_be16(_n) be16toh(_n)
-#define cf_swap_from_le16(_n) le16toh(_n)
+// For the benefit of the server's ARM build plugin, use inlines instead of
+// macros. (When we exclude this file from the plugin's barriers, macros would
+// mean that has no effect.)
 
-#define cf_swap_to_be32(_n) htobe32(_n)
-#define cf_swap_to_le32(_n) htole32(_n)
-#define cf_swap_from_be32(_n) be32toh(_n)
-#define cf_swap_from_le32(_n) le32toh(_n)
+// 16-bit swaps:
 
-#define cf_swap_to_be64(_n) htobe64(_n)
-#define cf_swap_to_le64(_n) htole64(_n)
-#define cf_swap_from_be64(_n) be64toh(_n)
-#define cf_swap_from_le64(_n) le64toh(_n)
+static inline uint16_t
+cf_swap_to_be16(uint16_t _n)
+{
+	return htobe16(_n);
+}
+
+static inline uint16_t
+cf_swap_to_le16(uint16_t _n)
+{
+	return htole16(_n);
+}
+
+static inline uint16_t
+cf_swap_from_be16(uint16_t _n)
+{
+	return be16toh(_n);
+}
+
+static inline uint16_t
+cf_swap_from_le16(uint16_t _n)
+{
+	return le16toh(_n);
+}
+
+// 32-bit swaps:
+
+static inline uint32_t
+cf_swap_to_be32(uint32_t _n)
+{
+	return htobe32(_n);
+}
+
+static inline uint32_t
+cf_swap_to_le32(uint32_t _n)
+{
+	return htole32(_n);
+}
+
+static inline uint32_t
+cf_swap_from_be32(uint32_t _n)
+{
+	return be32toh(_n);
+}
+
+static inline uint32_t
+cf_swap_from_le32(uint32_t _n)
+{
+	return le32toh(_n);
+}
+
+// 64-bit swaps:
+
+static inline uint64_t
+cf_swap_to_be64(uint64_t _n)
+{
+	return htobe64(_n);
+}
+
+static inline uint64_t
+cf_swap_to_le64(uint64_t _n)
+{
+	return htole64(_n);
+}
+
+static inline uint64_t
+cf_swap_from_be64(uint64_t _n)
+{
+	return be64toh(_n);
+}
+
+static inline uint64_t
+cf_swap_from_le64(uint64_t _n)
+{
+	return le64toh(_n);
+}
+
 #endif // __linux__ || __FreeBSD__
 
 #if defined(__APPLE__)

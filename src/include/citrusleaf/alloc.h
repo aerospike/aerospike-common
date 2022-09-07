@@ -22,21 +22,6 @@
 extern "C" {
 #endif
 
-#ifdef MEM_COUNT
-
-#include "mem_count.h"
-
-#endif // defined(MEM_COUNT)
-
-/*
- *  Trivial hash function for storing 64-bit values in hash tables.
- */
-static inline uint32_t
-ptr_hash_fn(const void *key)
-{
-    return (uint32_t) * (const uint64_t *) key;
-}
-
 #ifdef ENHANCED_ALLOC
 
 #include "enhanced_alloc.h"
