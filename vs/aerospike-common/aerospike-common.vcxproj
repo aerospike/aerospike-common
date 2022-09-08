@@ -85,6 +85,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\include\aerospike\as_aerospike.h" />
+    <ClInclude Include="..\..\src\include\aerospike\as_arch.h" />
     <ClInclude Include="..\..\src\include\aerospike\as_arraylist.h" />
     <ClInclude Include="..\..\src\include\aerospike\as_arraylist_iterator.h" />
     <ClInclude Include="..\..\src\include\aerospike\as_atomic.h" />

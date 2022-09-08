@@ -225,6 +225,9 @@
     <ClInclude Include="..\..\src\include\aerospike\as_orderedmap.h">
       <Filter>Header Files\aerospike</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\include\aerospike\as_arch.h">
+      <Filter>Header Files\aerospike</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\src\main\aerospike\as_aerospike.c">

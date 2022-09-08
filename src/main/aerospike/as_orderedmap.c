@@ -112,7 +112,7 @@ key_find(const map_entry* table, uint32_t count, const as_val* key,
 		msgpack_compare_t cmp = as_val_cmp(key, table[ix].key);
 
 		if (cmp == MSGPACK_COMPARE_EQUAL) {
-			*ix_r = ix;
+			*ix_r = (uint32_t)ix;
 			return true;
 		}
 
@@ -128,7 +128,7 @@ key_find(const map_entry* table, uint32_t count, const as_val* key,
 		}
 	}
 
-	*ix_r = low; // location to insert the key at
+	*ix_r = (uint32_t)low; // location to insert the key at
 
 	return false;
 }
