@@ -22,16 +22,18 @@
 #define as_arch_prefetch_nt(_p)
 #define as_arch_pause()
 
-#elif defined __x86_64__
+#else // gcc & clang
 
-#include <xmmintrin.h>
+#define as_arch_prefetch_nt(_p) __builtin_prefetch((_p), 0, 0)
 
-#define as_arch_prefetch_nt(_p) _mm_prefetch(_p, _MM_HINT_NTA)
-#define as_arch_pause() _mm_pause()
+#if defined __x86_64__
+
+#define as_arch_pause() __builtin_ia32_pause()
 
 #elif defined __aarch64__
 
-#define as_arch_prefetch_nt(_p)
-#define as_arch_pause()
+#define as_arch_pause() asm volatile("yield" : : : "memory")
 
 #endif
+
+#endif // gcc & clang

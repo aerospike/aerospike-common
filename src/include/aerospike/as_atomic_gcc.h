@@ -58,6 +58,15 @@ extern "C" {
 // int8_t as_load_int8(const int8_t* target)
 #define as_load_int8(_target) (int8_t)ck_pr_load_8((uint8_t*)(_target))
 
+// type as_load_acq(const type* target)
+#define as_load_acq(_target) __atomic_load_n(_target, __ATOMIC_ACQUIRE)
+
+// type as_load_rlx(const type* target)
+#define as_load_rlx(_target) __atomic_load_n(_target, __ATOMIC_RELAXED)
+
+// type as_load_seq(const type* target)
+#define as_load_seq(_target) __atomic_load_n(_target, __ATOMIC_SEQ_CST)
+
 /******************************************************************************
  * STORE
  *****************************************************************************/
@@ -88,6 +97,15 @@ extern "C" {
 
 // void as_store_int8(int8_t* target, int8_t value)
 #define as_store_int8(_target, _value) ck_pr_store_8((uint8_t*)(_target), (uint8_t)(_value))
+
+// void as_store_rel(type* target, type value)
+#define as_store_rel(_target, _value) __atomic_store_n(_target, _value, __ATOMIC_RELEASE)
+
+// void as_store_rlx(type* target, type value)
+#define as_store_rlx(_target, _value) __atomic_store_n(_target, _value, __ATOMIC_RELAXED)
+
+// void as_store_seq(type* target, type value)
+#define as_store_seq(_target, _value) __atomic_store_n(_target, _value, __ATOMIC_SEQ_CST)
 
 /******************************************************************************
  * INCREMENT
@@ -177,6 +195,20 @@ extern "C" {
 // int16_t as_faa_int16(int16_t* target, int16_t value)
 #define as_faa_int16(_target, _value) ck_pr_faa_16((uint16_t*)(_target), (uint16_t)(_value))
 
+// type as_faa_acq(type* target, type value)
+#define as_faa_acq(_target, _value) __atomic_fetch_add(_target, _value, __ATOMIC_ACQUIRE)
+
+// type as_faa_rel(type* target, type value)
+#define as_faa_rel(_target, _value) __atomic_fetch_add(_target, _value, __ATOMIC_RELEASE)
+
+// type as_faa_rlx(type* target, type value)
+#define as_faa_rlx(_target, _value) __atomic_fetch_add(_target, _value, __ATOMIC_RELAXED)
+
+// type as_faa_seq(type* target, type value)
+#define as_faa_seq(_target, _value) __atomic_fetch_add(_target, _value, __ATOMIC_SEQ_CST)
+
+
+
 /******************************************************************************
  * ADD AND FETCH
  *****************************************************************************/
@@ -199,6 +231,18 @@ extern "C" {
 // int16_t as_aaf_int16(int16_t* target, int16_t value)
 #define as_aaf_int16(_target, _value) ((int16_t)(ck_pr_faa_16((uint16_t*)(_target), (uint16_t)(_value)) + (_value)))
 
+// type as_aaf_acq(type* target, type value)
+#define as_aaf_acq(_target, _value) __atomic_add_fetch(_target, _value, __ATOMIC_ACQUIRE)
+
+// type as_aaf_rel(type* target, type value)
+#define as_aaf_rel(_target, _value) __atomic_add_fetch(_target, _value, __ATOMIC_RELEASE)
+
+// type as_aaf_rlx(type* target, type value)
+#define as_aaf_rlx(_target, _value) __atomic_add_fetch(_target, _value, __ATOMIC_RELAXED)
+
+// type as_aaf_seq(type* target, type value)
+#define as_aaf_seq(_target, _value) __atomic_add_fetch(_target, _value, __ATOMIC_SEQ_CST)
+
 /******************************************************************************
  * FETCH AND SWAP
  *****************************************************************************/
@@ -220,6 +264,18 @@ extern "C" {
 
 // int16_t as_fas_int16(int16_t* target, int16_t value)
 #define as_fas_int16(_target, _value) (int16_t)ck_pr_fas_16((uint16_t*)(_target), (uint16_t)(_value))
+
+// type as_fas_acq(type* target, type value)
+#define as_fas_acq(_target, _value) __atomic_exchange_n(_target, _value, __ATOMIC_ACQUIRE)
+
+// type as_fas_rel(type* target, type value)
+#define as_fas_rel(_target, _value) __atomic_exchange_n(_target, _value, __ATOMIC_RELEASE)
+
+// type as_fas_rlx(type* target, type value)
+#define as_fas_rlx(_target, _value) __atomic_exchange_n(_target, _value, __ATOMIC_RELAXED)
+
+// type as_fas_seq(type* target, type value)
+#define as_fas_seq(_target, _value) __atomic_exchange_n(_target, _value, __ATOMIC_SEQ_CST)
 
 /******************************************************************************
  * COMPARE AND SWAP
@@ -246,6 +302,22 @@ extern "C" {
 // bool as_cas_uint8(uint8_t* target, uint8_t old_value, uint8_t new_value)
 #define as_cas_uint8(_target, _old_value, _new_value) ck_pr_cas_8(_target, _old_value, _new_value)
 
+// bool as_cas_acq(type* target, type* old_value, type new_value)
+// Note - old_value is returned by pointer.
+#define as_cas_acq(_target, _old_value, _new_value) __atomic_compare_exchange_n(_target, _old_value, _new_value, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED)
+
+// bool as_cas_rel(type* target, type* old_value, type new_value)
+// Note - old_value is returned by pointer.
+#define as_cas_rel(_target, _old_value, _new_value) __atomic_compare_exchange_n(_target, _old_value, _new_value, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED)
+
+// bool as_cas_rlx(type* target, type* old_value, type new_value)
+// Note - old_value is returned by pointer.
+#define as_cas_rlx(_target, _old_value, _new_value) __atomic_compare_exchange_n(_target, _old_value, _new_value, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED)
+
+// bool as_cas_seq(type* target, type* old_value, type new_value)
+// Note - old_value is returned by pointer.
+#define as_cas_seq(_target, _old_value, _new_value) __atomic_compare_exchange_n(_target, _old_value, _new_value, false, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED)
+
 /******************************************************************************
  * MEMORY FENCE
  *****************************************************************************/
@@ -261,6 +333,19 @@ extern "C" {
 
 // void as_fence_unlock()
 #define as_fence_unlock ck_pr_fence_unlock
+
+// void as_fence_acq()
+#define as_fence_acq() __atomic_thread_fence(__ATOMIC_ACQUIRE)
+
+// void as_fence_rel()
+#define as_fence_rel() __atomic_thread_fence(__ATOMIC_RELEASE)
+
+// void as_fence_rlx()
+// Note - can be used as a compiler barrier, emits no code.
+#define as_fence_rlx() __atomic_thread_fence(__ATOMIC_RELAXED)
+
+// void as_fence_seq()
+#define as_fence_seq() __atomic_thread_fence(__ATOMIC_SEQ_CST)
 
 /******************************************************************************
  * SPIN LOCK
@@ -306,13 +391,14 @@ as_setmax_int64(int64_t* target, int64_t x)
 
 	while (x > cur) {
 		// Proposed value is larger than current - attempt compare-and-swap.
-		if (ck_pr_cas_64_value((uint64_t*)target, cur, x, &prior)) {
+		if (ck_pr_cas_64_value((uint64_t*)target, (uint64_t)cur, (uint64_t)x,
+				&prior)) {
 			// Current value was unchanged, proposed value swapped in.
 			return true;
 		}
 
 		// Current value had changed, set cur to prior and go around again.
-		cur = prior;
+		cur = (int64_t)prior;
 	}
 
 	// Proposed value not swapped in as new maximum.
@@ -329,12 +415,13 @@ as_setmax_int32(int32_t* target, int32_t x)
 
 	while (x > cur) {
 		// Proposed value is larger than current - attempt compare-and-swap.
-		if (ck_pr_cas_32_value((uint32_t*)target, cur, x, &prior)) {
+		if (ck_pr_cas_32_value((uint32_t*)target, (uint32_t)cur, (uint32_t)x,
+				&prior)) {
 			return true;
 		}
 
 		// Current value had changed, set cur to prior and go around again.
-		cur = prior;
+		cur = (int32_t)prior;
 	}
 
 	// Proposed value not swapped in as new maximum.

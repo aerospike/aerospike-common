@@ -26,86 +26,82 @@
 #include <sys/endian.h>
 #endif
 
-// For the benefit of the server's ARM build plugin, use inlines instead of
-// macros. (When we exclude this file from the plugin's barriers, macros would
-// mean that has no effect.)
-
 // 16-bit swaps:
 
 static inline uint16_t
-cf_swap_to_be16(uint16_t _n)
+cf_swap_to_be16(uint16_t n)
 {
-	return htobe16(_n);
+	return htobe16(n);
 }
 
 static inline uint16_t
-cf_swap_to_le16(uint16_t _n)
+cf_swap_to_le16(uint16_t n)
 {
-	return htole16(_n);
+	return htole16(n);
 }
 
 static inline uint16_t
-cf_swap_from_be16(uint16_t _n)
+cf_swap_from_be16(uint16_t n)
 {
-	return be16toh(_n);
+	return be16toh(n);
 }
 
 static inline uint16_t
-cf_swap_from_le16(uint16_t _n)
+cf_swap_from_le16(uint16_t n)
 {
-	return le16toh(_n);
+	return le16toh(n);
 }
 
 // 32-bit swaps:
 
 static inline uint32_t
-cf_swap_to_be32(uint32_t _n)
+cf_swap_to_be32(uint32_t n)
 {
-	return htobe32(_n);
+	return htobe32(n);
 }
 
 static inline uint32_t
-cf_swap_to_le32(uint32_t _n)
+cf_swap_to_le32(uint32_t n)
 {
-	return htole32(_n);
+	return htole32(n);
 }
 
 static inline uint32_t
-cf_swap_from_be32(uint32_t _n)
+cf_swap_from_be32(uint32_t n)
 {
-	return be32toh(_n);
+	return be32toh(n);
 }
 
 static inline uint32_t
-cf_swap_from_le32(uint32_t _n)
+cf_swap_from_le32(uint32_t n)
 {
-	return le32toh(_n);
+	return le32toh(n);
 }
 
 // 64-bit swaps:
 
 static inline uint64_t
-cf_swap_to_be64(uint64_t _n)
+cf_swap_to_be64(uint64_t n)
 {
-	return htobe64(_n);
+	return htobe64(n);
 }
 
 static inline uint64_t
-cf_swap_to_le64(uint64_t _n)
+cf_swap_to_le64(uint64_t n)
 {
-	return htole64(_n);
+	return htole64(n);
 }
 
 static inline uint64_t
-cf_swap_from_be64(uint64_t _n)
+cf_swap_from_be64(uint64_t n)
 {
-	return be64toh(_n);
+	return be64toh(n);
 }
 
 static inline uint64_t
-cf_swap_from_le64(uint64_t _n)
+cf_swap_from_le64(uint64_t n)
 {
-	return le64toh(_n);
+	return le64toh(n);
 }
 
 #endif // __linux__ || __FreeBSD__
