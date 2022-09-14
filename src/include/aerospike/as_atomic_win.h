@@ -213,6 +213,10 @@ extern "C" {
 // int32_t as_aaf_int32(int32_t* target, int32_t value)
 #define as_aaf_int32(_target, _value) InterlockedAdd((LONG volatile*)(_target), _value)
 
+// int32_t as_aaf_int32_rls(int32_t* target, int32_t value)
+// Note - InterlockedAdd() (on x86) has a strong enough barrier.
+#define as_aaf_int32_rls(_target, _value) InterlockedAdd((LONG volatile*)(_target), _value)
+
 /******************************************************************************
  * FETCH AND SWAP
  *****************************************************************************/

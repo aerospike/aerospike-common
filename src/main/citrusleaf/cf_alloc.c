@@ -88,7 +88,7 @@ int
 cf_rc_reserve(void* addr)
 {
 	cf_rc_hdr* head = (cf_rc_hdr*)addr - 1;
-	return as_aaf_uint32(&head->count, 1);
+	return as_aaf_int32(&head->count, 1);
 }
 
 void*
@@ -96,7 +96,7 @@ cf_rc_alloc(size_t sz)
 {
 	cf_rc_hdr* head = malloc(sizeof(cf_rc_hdr) + sz);
 
-	as_store_uint32(&head->count, 1);  // Need atomic store?
+	head->count = 1;
 	head->sz = (uint32_t)sz;
 
 	return head + 1;
@@ -113,14 +113,14 @@ int
 cf_rc_release(void* addr)
 {
 	cf_rc_hdr* head = (cf_rc_hdr*)addr - 1;
-	return (int)as_aaf_uint32(&head->count, -1);
+	return as_aaf_int32_rls(&head->count, -1);
 }
 
 int
 cf_rc_releaseandfree(void* addr)
 {
 	cf_rc_hdr* head = (cf_rc_hdr*)addr - 1;
-	int rc = (int)as_aaf_uint32(&head->count, -1);
+	int rc = as_aaf_int32_rls(&head->count, -1);
 
 	if (rc == 0) {
 		free(head);

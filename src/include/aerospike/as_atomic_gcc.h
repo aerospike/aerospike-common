@@ -252,6 +252,13 @@ as_aaf_int32(int32_t* target, int32_t value)
 	return as_aaf_rlx(target, value);
 }
 
+// Note - API needed for rc decrement on Windows where types are required.
+static inline int32_t
+as_aaf_int32_rls(int32_t* target, int32_t value)
+{
+	return as_aaf_rls(target, value);
+}
+
 static inline uint16_t
 as_aaf_uint16(uint16_t* target, int16_t value)
 {

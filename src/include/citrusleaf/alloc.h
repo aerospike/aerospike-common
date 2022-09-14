@@ -60,7 +60,7 @@ AS_EXTERN void cf_free(void* p);
  */
 
 typedef struct {
-	uint32_t count;
+	int32_t count;
 	uint32_t sz;
 } cf_rc_hdr;
 
