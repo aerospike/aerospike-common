@@ -7,9 +7,16 @@ TEST_VALGRIND = --tool=memcheck --leak-check=yes --show-reachable=yes --num-call
 TEST_CFLAGS = -I$(TARGET_INCL)
 
 ifeq ($(OS),Darwin)
-TEST_LDFLAGS = -L/usr/local/opt/openssl/lib -lssl -lcrypto -lpthread -lm
+  ifneq ($(wildcard /opt/homebrew/opt/openssl/lib),)
+    # Mac new homebrew openssl lib path
+    TEST_LDFLAGS = -L/opt/homebrew/opt/openssl/lib
+  else
+    # Mac old homebrew openssl lib path
+    TEST_LDFLAGS = -L/usr/local/opt/openssl/lib
+  endif
+  TEST_LDFLAGS += -lssl -lcrypto -lpthread -lm
 else
-TEST_LDFLAGS = -lssl -lcrypto -lpthread -lm -lrt
+  TEST_LDFLAGS = -lssl -lcrypto -lpthread -lm -lrt
 endif
 
 TEST_DEPS =

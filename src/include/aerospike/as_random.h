@@ -50,7 +50,7 @@ as_random_init(as_random* random);
  * Get thread local random instance.
  */
 AS_EXTERN as_random*
-as_random_instance();
+as_random_instance(void);
 
 /**
  * Get random unsigned 64 bit integer from given as_random instance

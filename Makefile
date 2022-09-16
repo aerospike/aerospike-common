@@ -32,13 +32,14 @@ endif
 ifeq ($(OS),Darwin)
   CC_FLAGS += -D_DARWIN_UNLIMITED_SELECT
 
-  # homebrew openssl include path
-  ifneq ($(wildcard /usr/local/opt/openssl/include),)
+  ifneq ($(wildcard /opt/homebrew/opt/openssl/include),)
+    # Mac new homebrew openssl include path
+    CC_FLAGS += -I/opt/homebrew/opt/openssl/include
+  else ifneq ($(wildcard /usr/local/opt/openssl/include),)
+    # Mac old homebrew openssl include path
     CC_FLAGS += -I/usr/local/opt/openssl/include
-  endif
-
-  # macports openssl include path
-  ifneq ($(wildcard /opt/local/include/openssl),)
+  else ifneq ($(wildcard /opt/local/include/openssl),)
+    # macports openssl include path
     CC_FLAGS += -I/opt/local/include
   endif
 else ifeq ($(OS),FreeBSD)

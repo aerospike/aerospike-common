@@ -341,7 +341,7 @@ cf_get_seconds()
 
  // Required on windows only.  Should be called once on dll initialization. 
 bool
-cf_clock_init();
+cf_clock_init(void);
 
 static inline void
 cf_clock_set_timespec_ms(int ms, struct timespec* out)

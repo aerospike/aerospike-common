@@ -27,8 +27,8 @@ extern "C" {
  ******************************************************************************/
 
 extern int cf_get_rand_buf(uint8_t *buf, int len);
-extern uint64_t cf_get_rand64();
-extern uint32_t cf_get_rand32();
+extern uint64_t cf_get_rand64(void);
+extern uint32_t cf_get_rand32(void);
 
 #ifdef __cplusplus
 } // end extern "C"

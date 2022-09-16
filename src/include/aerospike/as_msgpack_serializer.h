@@ -30,7 +30,7 @@ extern "C" {
 /**
  * Creates a new serializer for msgpack.
  */
-AS_EXTERN as_serializer *as_msgpack_new();
+AS_EXTERN as_serializer *as_msgpack_new(void);
 
 /**
  * Initializes a serializer for msgpack.

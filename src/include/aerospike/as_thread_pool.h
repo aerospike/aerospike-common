@@ -38,7 +38,7 @@ typedef void (*as_task_fn)(void* user_data);
  *	@private
  *	Thread finalization function callback.
  */
-typedef void (*as_fini_fn)();
+typedef void (*as_fini_fn)(void);
 	
 /**
  *	@private

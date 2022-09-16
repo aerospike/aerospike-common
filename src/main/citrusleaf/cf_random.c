@@ -65,7 +65,7 @@ cf_rand_reload()
 #elif defined (__APPLE__)
 
 int
-cf_rand_reload()
+cf_rand_reload(void)
 {
     if (seeded == 0) {
         arc4random_stir();

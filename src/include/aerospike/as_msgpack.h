@@ -70,7 +70,7 @@ typedef enum msgpack_compare_e {
  * FUNCTIONS
  ******************************************************************************/
 
-AS_EXTERN as_serializer *as_msgpack_new();
+AS_EXTERN as_serializer *as_msgpack_new(void);
 AS_EXTERN as_serializer *as_msgpack_init(as_serializer *);
 
 /**

@@ -23,7 +23,7 @@
  * STATIC FUNCTIONS
  *****************************************************************************/
 
-static as_val *random_val();
+static as_val *random_val(void);
 
 static msgpack_compare_t
 compare_vals(as_val *v1, as_val *v2)
@@ -155,7 +155,7 @@ random_map()
 	return (as_val *)val;
 }
 
-typedef as_val *(*random_val_func)();
+typedef as_val *(*random_val_func)(void);
 
 static as_val *
 random_val()

@@ -39,7 +39,7 @@ typedef struct as_result_s {
  ******************************************************************************/
 
 as_result * as_result_init(as_result *r);
-as_result * as_result_new();
+as_result * as_result_new(void);
 
 as_result * as_result_reserve(as_result *r);
 
