@@ -98,25 +98,25 @@ compare_bufs(uint8_t *buf1, uint32_t size1, uint8_t *buf2, uint32_t size2)
 }
 
 static as_val *
-random_nil()
+random_nil(void)
 {
 	return (as_val *)&as_nil;
 }
 
 static as_val *
-random_bool()
+random_bool(void)
 {
 	return (as_val *)(rand() % 2 == 0 ? &as_false : &as_true);
 }
 
 static as_val *
-random_integer()
+random_integer(void)
 {
 	return (as_val *)as_integer_new(rand());
 }
 
 static as_val *
-random_string()
+random_string(void)
 {
 	int len = rand() % 200;
 	char* str = alloca(len + 1);
@@ -130,7 +130,7 @@ random_string()
 }
 
 static as_val *
-random_list()
+random_list(void)
 {
 	int cap = rand() % 4 + 1;
 	as_arraylist *list = as_arraylist_new(cap, cap);
@@ -143,7 +143,7 @@ random_list()
 }
 
 static as_val *
-random_map()
+random_map(void)
 {
 	int cap = rand() % 3 + 1;
 	as_hashmap *val = as_hashmap_new(cap);

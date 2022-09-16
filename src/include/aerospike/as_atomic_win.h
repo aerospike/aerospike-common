@@ -1,46 +1,19 @@
 /*
-* Copyright 2008-2018 Aerospike, Inc.
-*
-* Portions may be licensed to Aerospike, Inc. under one or more contributor
-* license agreements.
-*
-* Licensed under the Apache License, Version 2.0 (the "License"); you may not
-* use this file except in compliance with the License. You may obtain a copy of
-* the License at http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
-* WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
-* License for the specific language governing permissions and limitations under
-* the License.
-*/
-/*
- * Copyright 2014 Jaidev Sridhar.
- * Copyright 2014 Samy Al Bahra.
- * All rights reserved.
+ * Copyright 2008-2022 Aerospike, Inc.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * Portions may be licensed to Aerospike, Inc. under one or more contributor
+ * license agreements.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
-
 #pragma once
 
 // Atomics for Windows
@@ -122,6 +95,82 @@ extern "C" {
 #define as_store_int8(_target, _value) *(int8_t volatile*)(_target) = _value
 
 /******************************************************************************
+ * FETCH AND ADD
+ *****************************************************************************/
+
+// uint64_t as_faa_uint64(uint64_t* target, int64_t value)
+#define as_faa_uint64(_target, _value) (uint64_t)InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
+
+// int64_t as_faa_int64(int64_t* target, int64_t value)
+#define as_faa_int64(_target, _value) InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
+
+// uint32_t as_faa_uint32(uint32_t* target, int32_t value)
+#define as_faa_uint32(_target, _value) (uint32_t)InterlockedExchangeAdd((LONG volatile*)(_target), _value)
+
+// int32_t as_faa_int32(int32_t* target, int32_t value)
+#define as_faa_int32(_target, _value) InterlockedExchangeAdd((LONG volatile*)(_target), _value)
+
+// Windows does not support 16 bit atomic fetch/add.
+// uint16_t as_faa_uint16(uint16_t* target, int16_t value)
+// int16_t as_faa_int16(int16_t* target, int16_t value)
+
+/******************************************************************************
+ * ADD AND FETCH
+ *****************************************************************************/
+
+// Note - InterlockedAdd() (on x86) has a strong enough barrier for "rls" release semantics.
+
+// uint64_t as_aaf_uint64(uint64_t* target, int64_t value)
+#define as_aaf_uint64(_target, _value) (uint64_t)InterlockedAdd64((LONGLONG volatile*)(_target), _value)
+
+// uint64_t as_aaf_uint64_rls(uint64_t* target, int64_t value)
+#define as_aaf_uint64_rls(_target, _value) (uint64_t)InterlockedAdd64((LONGLONG volatile*)(_target), _value)
+
+// int64_t as_aaf_int64(int64_t* target, int64_t value)
+#define as_aaf_int64(_target, _value) InterlockedAdd64((LONGLONG volatile*)(_target), _value)
+
+// int64_t as_aaf_int64_rls(int64_t* target, int64_t value)
+#define as_aaf_int64_rls(_target, _value) InterlockedAdd64((LONGLONG volatile*)(_target), _value)
+
+// uint32_t as_aaf_uint32(uint32_t* target, int32_t value)
+#define as_aaf_uint32(_target, _value) (uint32_t)InterlockedAdd((LONG volatile*)(_target), _value)
+
+// uint32_t as_aaf_uint32_rls(uint32_t* target, int32_t value)
+#define as_aaf_uint32_rls(_target, _value) (uint32_t)InterlockedAdd((LONG volatile*)(_target), _value)
+
+// int32_t as_aaf_int32(int32_t* target, int32_t value)
+#define as_aaf_int32(_target, _value) InterlockedAdd((LONG volatile*)(_target), _value)
+
+// int32_t as_aaf_int32_rls(int32_t* target, int32_t value)
+#define as_aaf_int32_rls(_target, _value) InterlockedAdd((LONG volatile*)(_target), _value)
+
+// Windows does not support 16 bit atomic add/fetch.
+// uint16_t as_aaf_uint16(uint16_t* target, int16_t value)
+// uint16_t as_aaf_uint16_rls(uint16_t* target, int16_t value)
+// int16_t as_aaf_int16(int16_t* target, int16_t value)
+// int16_t as_aaf_int16_rls(int16_t* target, int16_t value)
+
+/******************************************************************************
+ * ADD
+ *****************************************************************************/
+
+// void as_add_uint64(uint64_t* target, int64_t value)
+#define as_add_uint64(_target, _value) InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
+
+// void as_add_int64(int64_t* target, int64_t value)
+#define as_add_int64(_target, _value) InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
+
+// void as_add_uint32(uint32_t* target, int32_t value)
+#define as_add_uint32(_target, _value) InterlockedExchangeAdd((LONG volatile*)(_target), _value)
+
+// void as_add_int32(int32_t* target, int32_t value)
+#define as_add_int32(_target, _value) InterlockedExchangeAdd((LONG volatile*)(_target), _value)
+
+// Windows does not support 16 bit atomic add.
+// void as_add_uint16(uint16_t* target, int16_t value)
+// void as_add_int16(int16_t* target, int16_t value)
+
+/******************************************************************************
  * INCREMENT
  *****************************************************************************/
 
@@ -164,58 +213,6 @@ extern "C" {
 
 // void as_decr_int16(int16_t* target)
 #define as_decr_int16(_target) InterlockedDecrement16((short volatile*)(_target))
-
-/******************************************************************************
- * ADD
- *****************************************************************************/
-
-// void as_add_uint64(uint64_t* target, int64_t value)
-#define as_add_uint64(_target, _value) InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
-
-// void as_add_int64(int64_t* target, int64_t value)
-#define as_add_int64(_target, _value) InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
-
-// void as_add_uint32(uint32_t* target, int32_t value)
-#define as_add_uint32(_target, _value) InterlockedExchangeAdd((LONG volatile*)(_target), _value)
-
-// void as_add_int32(int32_t* target, int32_t value)
-#define as_add_int32(_target, _value) InterlockedExchangeAdd((LONG volatile*)(_target), _value)
-
-/******************************************************************************
- * FETCH AND ADD
- *****************************************************************************/
-
-// uint64_t as_faa_uint64(uint64_t* target, int64_t value)
-#define as_faa_uint64(_target, _value) (uint64_t)InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
-
-// int64_t as_faa_int64(int64_t* target, int64_t value)
-#define as_faa_int64(_target, _value) InterlockedExchangeAdd64((LONGLONG volatile*)(_target), _value)
-
-// uint32_t as_faa_uint32(uint32_t* target, int32_t value)
-#define as_faa_uint32(_target, _value) (uint32_t)InterlockedExchangeAdd((LONG volatile*)(_target), _value)
-
-// int32_t as_faa_int32(int32_t* target, int32_t value)
-#define as_faa_int32(_target, _value) InterlockedExchangeAdd((LONG volatile*)(_target), _value)
-
-/******************************************************************************
- * ADD AND FETCH
- *****************************************************************************/
-
-// uint64_t as_aaf_uint64(uint64_t* target, int64_t value)
-#define as_aaf_uint64(_target, _value) (uint64_t)InterlockedAdd64((LONGLONG volatile*)(_target), _value)
-
-// int64_t as_aaf_int64(int64_t* target, int64_t value)
-#define as_aaf_int64(_target, _value) InterlockedAdd64((LONGLONG volatile*)(_target), _value)
-
-// uint32_t as_aaf_uint32(uint32_t* target, int32_t value)
-#define as_aaf_uint32(_target, _value) (uint32_t)InterlockedAdd((LONG volatile*)(_target), _value)
-
-// int32_t as_aaf_int32(int32_t* target, int32_t value)
-#define as_aaf_int32(_target, _value) InterlockedAdd((LONG volatile*)(_target), _value)
-
-// int32_t as_aaf_int32_rls(int32_t* target, int32_t value)
-// Note - InterlockedAdd() (on x86) has a strong enough barrier.
-#define as_aaf_int32_rls(_target, _value) InterlockedAdd((LONG volatile*)(_target), _value)
 
 /******************************************************************************
  * FETCH AND SWAP
@@ -270,17 +267,18 @@ extern "C" {
 /******************************************************************************
  * MEMORY FENCE
  *****************************************************************************/
-// TODO - re-evaluate in general, since MemoryBarrier is deprecated.
+
+// The atomic include causes compiler errors in Visual Studio 17. Therefore,
+// the new atomic_thread_fence() memory barriers can't be used yet.
+// #include <atomic>
 
 // void as_fence_acq()
 #define as_fence_acq MemoryBarrier
 
 // void as_fence_rls()
-// TODO - should this be _WriteBarrier?
 #define as_fence_rls MemoryBarrier
 
 // void as_fence_rlx()
-// Note - can be used as a compiler barrier, emits no code.
 #define as_fence_rlx MemoryBarrier
 
 // void as_fence_seq()
