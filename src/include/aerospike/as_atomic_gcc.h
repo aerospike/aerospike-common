@@ -16,15 +16,12 @@
  */
 #pragma once
 
+#include <aerospike/as_arch.h>
 #include <aerospike/as_std.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-// Concurrency kit needs to be under extern "C" when compiling C++.
-#include <aerospike/ck/ck_spinlock.h>
-#include <aerospike/ck/ck_swlock.h>
 
 /******************************************************************************
  * LOAD
@@ -234,10 +231,22 @@ as_aaf_uint64(uint64_t* target, int64_t value)
 	return as_aaf_rlx(target, value);
 }
 
+static inline uint64_t
+as_aaf_uint64_rls(uint64_t* target, int64_t value)
+{
+	return as_aaf_rls(target, value);
+}
+
 static inline int64_t
 as_aaf_int64(int64_t* target, int64_t value)
 {
 	return as_aaf_rlx(target, value);
+}
+
+static inline int64_t
+as_aaf_int64_rls(int64_t* target, int64_t value)
+{
+	return as_aaf_rls(target, value);
 }
 
 static inline uint32_t
@@ -246,13 +255,18 @@ as_aaf_uint32(uint32_t* target, int32_t value)
 	return as_aaf_rlx(target, value);
 }
 
+static inline uint32_t
+as_aaf_uint32_rls(uint32_t* target, int32_t value)
+{
+	return as_aaf_rls(target, value);
+}
+
 static inline int32_t
 as_aaf_int32(int32_t* target, int32_t value)
 {
 	return as_aaf_rlx(target, value);
 }
 
-// Note - API needed for rc decrement on Windows where types are required.
 static inline int32_t
 as_aaf_int32_rls(int32_t* target, int32_t value)
 {
@@ -265,10 +279,22 @@ as_aaf_uint16(uint16_t* target, int16_t value)
 	return as_aaf_rlx(target, value);
 }
 
+static inline uint16_t
+as_aaf_uint16_rls(uint16_t* target, int16_t value)
+{
+	return as_aaf_rls(target, value);
+}
+
 static inline int16_t
 as_aaf_int16(int16_t* target, int16_t value)
 {
 	return as_aaf_rlx(target, value);
+}
+
+static inline int16_t
+as_aaf_int16_rls(int16_t* target, int16_t value)
+{
+	return as_aaf_rls(target, value);
 }
 
 /******************************************************************************
@@ -505,6 +531,12 @@ as_cas_uint8(uint8_t* target, uint8_t old_value, uint8_t new_value)
 	return as_cas_rlx(target, &old_value, new_value);
 }
 
+static inline bool
+as_cas_int8(int8_t* target, int8_t old_value, int8_t new_value)
+{
+	return as_cas_rlx(target, &old_value, new_value);
+}
+
 /******************************************************************************
  * MEMORY FENCE
  *****************************************************************************/
@@ -522,48 +554,34 @@ as_cas_uint8(uint8_t* target, uint8_t old_value, uint8_t new_value)
 // void as_fence_seq()
 #define as_fence_seq() __atomic_thread_fence(__ATOMIC_SEQ_CST)
 
-// void as_fence_memory()
-#define as_fence_memory as_fence_seq
-
-// void as_fence_store()
-// Note - no intrinsic equivalent?
-#define as_fence_store as_fence_rls
-
-// void as_fence_lock()
-#define as_fence_lock as_fence_acq
-
-// void as_fence_unlock()
-#define as_fence_unlock as_fence_rls
-
 /******************************************************************************
  * SPIN LOCK
  *****************************************************************************/
 
-typedef ck_spinlock_t as_spinlock;
+typedef struct as_spinlock_s {
+	uint32_t u32;
+} as_spinlock __attribute__ ((aligned(4)));
 
-// void as_spinlock_lock(as_spinlock* lock)
-#define as_spinlock_lock ck_spinlock_lock
+static inline void
+as_spinlock_lock(as_spinlock* s)
+{
+	while (true) {
+		if (as_fas_acq(&s->u32, 1) == 0) {
+			return;
+		}
 
-// void as_spinlock_unlock(as_spinlock* lock)
-#define as_spinlock_unlock ck_spinlock_unlock
+		// Spin on load to avoid hammering cache with write.
+		while (as_load_rlx(&s->u32) != 0) {
+			as_arch_pause();
+		}
+	}
+}
 
-/******************************************************************************
- * READ/WRITE LOCK
- *****************************************************************************/
-
-typedef ck_swlock_t as_swlock;
-
-// void as_swlock_read_lock(as_swlock* lock)
-#define as_swlock_read_lock ck_swlock_read_lock
-
-// void as_swlock_read_unlock(as_swlock* lock)
-#define as_swlock_read_unlock ck_swlock_read_unlock
-
-// void as_swlock_write_lock(as_swlock* lock)
-#define as_swlock_write_lock ck_swlock_write_lock
-
-// void as_swlock_write_unlock(as_swlock* lock)
-#define as_swlock_write_unlock ck_swlock_write_unlock
+static inline void
+as_spinlock_unlock(as_spinlock* s)
+{
+	as_store_rls(&s->u32, 0);
+}
 
 /******************************************************************************
  * SET MAX

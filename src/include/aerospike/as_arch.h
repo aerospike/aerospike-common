@@ -20,7 +20,7 @@
 #if defined _MSC_VER
 
 #define as_arch_prefetch_nt(_p)
-#define as_arch_pause()
+#define as_arch_pause() YieldProcessor()
 
 #else // gcc & clang
 

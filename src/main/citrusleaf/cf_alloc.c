@@ -84,11 +84,11 @@ cf_free(void *p)
 	free(p);
 }
 
-int
+uint32_t
 cf_rc_reserve(void* addr)
 {
 	cf_rc_hdr* head = (cf_rc_hdr*)addr - 1;
-	return as_aaf_int32(&head->count, 1);
+	return as_aaf_uint32(&head->count, 1);
 }
 
 void*
@@ -109,18 +109,18 @@ cf_rc_free(void* addr)
 	free(head);
 }
 
-int
+uint32_t
 cf_rc_release(void* addr)
 {
 	cf_rc_hdr* head = (cf_rc_hdr*)addr - 1;
-	return as_aaf_int32_rls(&head->count, -1);
+	return as_aaf_uint32_rls(&head->count, -1);
 }
 
-int
+uint32_t
 cf_rc_releaseandfree(void* addr)
 {
 	cf_rc_hdr* head = (cf_rc_hdr*)addr - 1;
-	int rc = as_aaf_int32_rls(&head->count, -1);
+	uint32_t rc = as_aaf_uint32_rls(&head->count, -1);
 
 	if (rc == 0) {
 		free(head);

@@ -104,23 +104,29 @@ key_find(const map_entry* table, uint32_t count, const as_val* key,
 	int64_t high = (int64_t)count - 1;
 
 	while (low <= high) {
+		int64_t ix;
+
 		// On the first iteration, probe at the end when 'check_last_first' is
 		// set. Otherwise, fall back to binary search.
-		int64_t ix = check_last_first ?
-				(check_last_first = false), high : (low + high) / 2;
+		if (check_last_first) {
+			check_last_first = false;
+			ix = high;
+		}
+		else {
+			ix = (low + high) / 2;
+		}
 
 		msgpack_compare_t cmp = as_val_cmp(key, table[ix].key);
-
-		if (cmp == MSGPACK_COMPARE_EQUAL) {
-			*ix_r = (uint32_t)ix;
-			return true;
-		}
 
 		if (cmp == MSGPACK_COMPARE_GREATER) {
 			low = ix + 1;
 		}
 		else if (cmp == MSGPACK_COMPARE_LESS) {
 			high = ix - 1;
+		}
+		else if (cmp == MSGPACK_COMPARE_EQUAL) {
+			*ix_r = (uint32_t)ix;
+			return true;
 		}
 		else {
 			*ix_r = UINT32_MAX; // error

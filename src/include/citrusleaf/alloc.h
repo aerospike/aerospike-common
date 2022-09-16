@@ -60,15 +60,15 @@ AS_EXTERN void cf_free(void* p);
  */
 
 typedef struct {
-	int32_t count;
+	uint32_t count;
 	uint32_t sz;
 } cf_rc_hdr;
 
 void* cf_rc_alloc(size_t sz);
 void cf_rc_free(void* addr);
-int cf_rc_reserve(void* addr);
-int cf_rc_release(void* addr);
-int cf_rc_releaseandfree(void* addr);
+uint32_t cf_rc_reserve(void* addr);
+uint32_t cf_rc_release(void* addr);
+uint32_t cf_rc_releaseandfree(void* addr);
 
 #endif // defined(ENHANCED_ALLOC)
 

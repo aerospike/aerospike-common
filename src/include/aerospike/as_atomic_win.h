@@ -264,21 +264,27 @@ extern "C" {
 // bool as_cas_uint8(uint8_t* target, uint8_t old_value, uint8_t new_value)
 #define as_cas_uint8(_target, _old_value, _new_value) (_InterlockedCompareExchange8((char volatile*)(_target), (char)(_new_value), (char)(_old_value)) == (char)(_old_value))
 
+// bool as_cas_int8(int8_t* target, int8_t old_value, int8_t new_value)
+#define as_cas_int8(_target, _old_value, _new_value) (_InterlockedCompareExchange8((char volatile*)(_target), (char)(_new_value), (char)(_old_value)) == (char)(_old_value))
+
 /******************************************************************************
  * MEMORY FENCE
  *****************************************************************************/
+// TODO - re-evaluate in general, since MemoryBarrier is deprecated.
 
-// void as_fence_memory()
-#define as_fence_memory MemoryBarrier
+// void as_fence_acq()
+#define as_fence_acq MemoryBarrier
 
-// void as_fence_store()
-#define as_fence_store _WriteBarrier
+// void as_fence_rls()
+// TODO - should this be _WriteBarrier?
+#define as_fence_rls MemoryBarrier
 
-// void as_fence_lock()
-#define as_fence_lock MemoryBarrier
+// void as_fence_rlx()
+// Note - can be used as a compiler barrier, emits no code.
+#define as_fence_rlx MemoryBarrier
 
-// void as_fence_unlock()
-#define as_fence_unlock MemoryBarrier
+// void as_fence_seq()
+#define as_fence_seq MemoryBarrier
 
 /******************************************************************************
  * SPIN LOCK
@@ -302,63 +308,6 @@ as_spinlock_unlock(as_spinlock* lock)
 {
 	MemoryBarrier();
 	as_store_uint32(lock, 0);
-}
-
-/******************************************************************************
- * READ/WRITE LOCK
- *****************************************************************************/
-
-#define AS_SWLOCK_INITIALIZER {0}
-#define AS_SWLOCK_WRITER_BIT (1UL << 31)
-#define AS_SWLOCK_LATCH_BIT	(1UL << 30)
-#define AS_SWLOCK_WRITER_MASK (AS_SWLOCK_LATCH_BIT | AS_SWLOCK_WRITER_BIT)
-#define AS_SWLOCK_READER_MASK (UINT32_MAX ^ AS_SWLOCK_WRITER_MASK)
-
-typedef uint32_t as_swlock;
-
-static inline void
-as_swlock_read_lock(as_swlock* lock)
-{
-	uint32_t l;
-
-	for (;;) {
-		while (as_load_uint32(lock) & AS_SWLOCK_WRITER_BIT)
-			YieldProcessor();
-
-		l = as_faa_uint32(lock, 1) & AS_SWLOCK_WRITER_MASK;
-		if (l == 0)
-			break;
-
-		if (l == AS_SWLOCK_WRITER_BIT)
-			as_decr_uint32(lock);
-	}
-
-	MemoryBarrier();
-}
-
-static inline void
-as_swlock_read_unlock(as_swlock* lock)
-{
-	MemoryBarrier();
-	as_decr_uint32(lock);
-}
-
-static inline void
-as_swlock_write_lock(as_swlock* lock)
-{
-	InterlockedOr((LONG volatile*)lock, AS_SWLOCK_WRITER_BIT);
-	while (as_load_uint32(lock) & AS_SWLOCK_READER_MASK)
-		YieldProcessor();
-
-	MemoryBarrier();
-}
-
-static inline void
-as_swlock_write_unlock(as_swlock* lock)
-{
-	MemoryBarrier();
-	InterlockedAnd((LONG volatile*)lock, AS_SWLOCK_READER_MASK);
-	return;
 }
 
 /******************************************************************************
