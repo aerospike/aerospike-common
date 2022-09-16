@@ -165,7 +165,7 @@ as_val * as_val_val_destroy(as_val * v)
 	}
 
 	// if we reach the last reference, call the destructor, and free
-	if (as_aaf_uint32(&v->count, -1) == 0) {
+	if (as_aaf_uint32_rls(&v->count, -1) == 0) {
 		as_val_destroy_callbacks[v->type](v);
 
 		if (v->free) {
