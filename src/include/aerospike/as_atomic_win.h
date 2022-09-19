@@ -313,12 +313,12 @@ as_spinlock_unlock(as_spinlock* lock)
  *****************************************************************************/
 
 static inline bool
-as_setmax_int64(int64_t* target, int64_t x)
+as_setmax_uint64(uint64_t* target, uint64_t x)
 {
-	int64_t prior;
+	uint64_t prior;
 
 	// Get the current value of the atomic integer.
-	int64_t cur = as_load_int64(target);
+	uint64_t cur = as_load_uint64(target);
 
 	while (x > cur) {
 		// Proposed value is larger than current - attempt compare-and-swap.
@@ -338,12 +338,12 @@ as_setmax_int64(int64_t* target, int64_t x)
 }
 
 static inline bool
-as_setmax_int32(int32_t* target, int32_t x)
+as_setmax_uint32(uint32_t* target, uint32_t x)
 {
-	int32_t prior;
+	uint32_t prior;
 
 	// Get the current value of the atomic integer.
-	int32_t cur = as_load_int32(target);
+	uint32_t cur = as_load_uint32(target);
 
 	while (x > cur) {
 		// Proposed value is larger than current - attempt compare-and-swap.

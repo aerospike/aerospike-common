@@ -588,15 +588,15 @@ as_spinlock_unlock(as_spinlock* s)
  *****************************************************************************/
 
 static inline bool
-as_setmax_int64(int64_t* target, int64_t x)
+as_setmax_uint64(uint64_t* target, uint64_t x)
 {
 	// Get the current value of the atomic integer.
-	int64_t cur = as_load_int64(target);
+	uint64_t cur = as_load_uint64(target);
 
 	while (x > cur) {
 		// Proposed value is larger than current - attempt compare-and-swap.
 
-		// Note - can't use as_cas_int64() since we need cur to change.
+		// Note - can't use as_cas_uint64() since we need cur to change.
 		if (as_cas_rlx(target, &cur, x)) {
 			return true;
 		}
@@ -607,15 +607,15 @@ as_setmax_int64(int64_t* target, int64_t x)
 }
 
 static inline bool
-as_setmax_int32(int32_t* target, int32_t x)
+as_setmax_uint32(uint32_t* target, uint32_t x)
 {
 	// Get the current value of the atomic integer.
-	int32_t cur = as_load_int32(target);
+	uint32_t cur = as_load_uint32(target);
 
 	while (x > cur) {
 		// Proposed value is larger than current - attempt compare-and-swap.
 
-		// Note - can't use as_cas_int32() since we need cur to change.
+		// Note - can't use as_cas_uint32() since we need cur to change.
 		if (as_cas_rlx(target, &cur, x)) {
 			return true;
 		}
