@@ -93,9 +93,6 @@
     <ClInclude Include="..\..\src\include\aerospike\as_map_iterator.h">
       <Filter>Header Files\aerospike</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\include\aerospike\as_memtracker.h">
-      <Filter>Header Files\aerospike</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\include\aerospike\as_module.h">
       <Filter>Header Files\aerospike</Filter>
     </ClInclude>
@@ -172,9 +169,6 @@
       <Filter>Header Files\aerospike</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\include\citrusleaf\alloc.h">
-      <Filter>Header Files\citrusleaf</Filter>
-    </ClInclude>
-    <ClInclude Include="..\..\src\include\citrusleaf\cf_atomic.h">
       <Filter>Header Files\citrusleaf</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\include\citrusleaf\cf_b64.h">
@@ -276,9 +270,6 @@
       <Filter>Source Files\aerospike</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\main\aerospike\as_map.c">
-      <Filter>Source Files\aerospike</Filter>
-    </ClCompile>
-    <ClCompile Include="..\..\src\main\aerospike\as_memtracker.c">
       <Filter>Source Files\aerospike</Filter>
     </ClCompile>
     <ClCompile Include="..\..\src\main\aerospike\as_module.c">

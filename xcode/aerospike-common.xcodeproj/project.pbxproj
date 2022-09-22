@@ -34,7 +34,6 @@
 		BFBB7F2218C001560080851E /* as_iterator.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F0318C001560080851E /* as_iterator.c */; };
 		BFBB7F2318C001560080851E /* as_list.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F0418C001560080851E /* as_list.c */; };
 		BFBB7F2518C001560080851E /* as_map.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F0618C001560080851E /* as_map.c */; };
-		BFBB7F2618C001560080851E /* as_memtracker.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F0718C001560080851E /* as_memtracker.c */; };
 		BFBB7F2718C001560080851E /* as_module.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F0818C001560080851E /* as_module.c */; };
 		BFBB7F2818C001560080851E /* as_msgpack_serializer.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F0918C001560080851E /* as_msgpack_serializer.c */; };
 		BFBB7F2918C001560080851E /* as_msgpack.c in Sources */ = {isa = PBXBuildFile; fileRef = BFBB7F0A18C001560080851E /* as_msgpack.c */; };
@@ -87,7 +86,6 @@
 		BFBB7F0318C001560080851E /* as_iterator.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_iterator.c; path = ../src/main/aerospike/as_iterator.c; sourceTree = "<group>"; };
 		BFBB7F0418C001560080851E /* as_list.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_list.c; path = ../src/main/aerospike/as_list.c; sourceTree = "<group>"; };
 		BFBB7F0618C001560080851E /* as_map.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_map.c; path = ../src/main/aerospike/as_map.c; sourceTree = "<group>"; };
-		BFBB7F0718C001560080851E /* as_memtracker.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_memtracker.c; path = ../src/main/aerospike/as_memtracker.c; sourceTree = "<group>"; };
 		BFBB7F0818C001560080851E /* as_module.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_module.c; path = ../src/main/aerospike/as_module.c; sourceTree = "<group>"; };
 		BFBB7F0918C001560080851E /* as_msgpack_serializer.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_msgpack_serializer.c; path = ../src/main/aerospike/as_msgpack_serializer.c; sourceTree = "<group>"; };
 		BFBB7F0A18C001560080851E /* as_msgpack.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = as_msgpack.c; path = ../src/main/aerospike/as_msgpack.c; sourceTree = "<group>"; };
@@ -191,7 +189,6 @@
 				BFBB7F0418C001560080851E /* as_list.c */,
 				BF27197E19E4AF6B0059CE60 /* as_log.c */,
 				BFBB7F0618C001560080851E /* as_map.c */,
-				BFBB7F0718C001560080851E /* as_memtracker.c */,
 				BFBB7F0818C001560080851E /* as_module.c */,
 				BFBB7F0918C001560080851E /* as_msgpack_serializer.c */,
 				BFBB7F0A18C001560080851E /* as_msgpack.c */,
@@ -305,7 +302,6 @@
 				BFBB7F1518C001560080851E /* as_aerospike.c in Sources */,
 				BFE31C1018C96462002318FE /* cf_queue.c in Sources */,
 				BFBB6C9318C80E3E00756BB0 /* cf_alloc.c in Sources */,
-				BFBB7F2618C001560080851E /* as_memtracker.c in Sources */,
 				BF6B745F1AFAB36E0014B530 /* as_thread_pool.c in Sources */,
 				BF27197F19E4AF6B0059CE60 /* as_log.c in Sources */,
 				BFBB7F1C18C001560080851E /* as_bytes.c in Sources */,
