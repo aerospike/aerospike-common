@@ -28,7 +28,7 @@
 
 #if defined __x86_64__
 
-#define as_arch_pause() __builtin_ia32_pause()
+#define as_arch_pause() asm volatile("pause" : : : "memory")
 
 #elif defined __aarch64__
 

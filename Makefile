@@ -91,7 +91,6 @@ AEROSPIKE-OBJECTS += as_iterator.o
 AEROSPIKE-OBJECTS += as_list.o
 AEROSPIKE-OBJECTS += as_log.o
 AEROSPIKE-OBJECTS += as_map.o
-AEROSPIKE-OBJECTS += as_memtracker.o
 AEROSPIKE-OBJECTS += as_module.o
 AEROSPIKE-OBJECTS += as_msgpack.o
 AEROSPIKE-OBJECTS += as_msgpack_ext.o

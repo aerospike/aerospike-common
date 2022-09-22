@@ -309,6 +309,69 @@ as_spinlock_unlock(as_spinlock* lock)
 }
 
 /******************************************************************************
+ * SPIN WRITER/READERS LOCK
+ *****************************************************************************/
+
+typedef uint32_t as_swlock;
+
+#define AS_SWLOCK_INIT { 0 }
+#define as_swlock_init(_s) (_s) = 0
+#define as_swlock_destroy(_s) ((void)_s) // no-op
+
+#define AS_SWLOCK_WRITER_BIT (1 << 31)
+#define AS_SWLOCK_LATCH_BIT (1 << 30)
+#define AS_SWLOCK_WRITER_MASK (AS_SWLOCK_LATCH_BIT | AS_SWLOCK_WRITER_BIT)
+#define AS_SWLOCK_READER_MASK (UINT32_MAX ^ AS_SWLOCK_WRITER_MASK)
+
+static inline void
+as_swlock_write_lock(as_swlock* lock)
+{
+	InterlockedOr((LONG volatile*)lock, AS_SWLOCK_WRITER_BIT);
+
+	while ((as_load_uint32(lock) & AS_SWLOCK_READER_MASK) != 0) {
+		YieldProcessor();
+	}
+
+	MemoryBarrier();
+}
+
+static inline void
+as_swlock_write_unlock(as_swlock* lock)
+{
+	MemoryBarrier();
+	InterlockedAnd((LONG volatile*)lock, AS_SWLOCK_READER_MASK);
+}
+
+static inline void
+as_swlock_read_lock(as_swlock* lock)
+{
+	while (true) {
+		while ((as_load_uint32(lock) & AS_SWLOCK_WRITER_BIT) != 0) {
+			YieldProcessor();
+		}
+
+		uint32_t l = as_faa_uint32(lock, 1) & AS_SWLOCK_WRITER_MASK;
+
+		if (l == 0) {
+			break;
+		}
+
+		if (l == AS_SWLOCK_WRITER_BIT) {
+			as_decr_uint32(lock);
+		}
+	}
+
+	MemoryBarrier();
+}
+
+static inline void
+as_swlock_read_unlock(as_swlock* lock)
+{
+	MemoryBarrier();
+	as_decr_uint32(lock);
+}
+
+/******************************************************************************
  * SET MAX
  *****************************************************************************/
 

@@ -560,18 +560,18 @@ as_cas_int8(int8_t* target, int8_t old_value, int8_t new_value)
 
 typedef struct as_spinlock_s {
 	uint32_t u32;
-} as_spinlock __attribute__ ((aligned(4)));
+} as_spinlock;
+
+#define AS_SPINLOCK_INIT { 0 }
+#define as_spinlock_init(_s) (_s)->u32 = 0
+#define as_spinlock_destroy(_s) ((void)_s) // no-op
 
 static inline void
 as_spinlock_lock(as_spinlock* s)
 {
-	while (true) {
-		if (as_fas_acq(&s->u32, 1) == 0) {
-			return;
-		}
-
+	while (as_fas_acq(&s->u32, 1) == 1) {
 		// Spin on load to avoid hammering cache with write.
-		while (as_load_rlx(&s->u32) != 0) {
+		while (s->u32 == 1) {
 			as_arch_pause();
 		}
 	}
@@ -581,6 +581,67 @@ static inline void
 as_spinlock_unlock(as_spinlock* s)
 {
 	as_store_rls(&s->u32, 0);
+}
+
+/******************************************************************************
+ * SPIN WRITER/READERS LOCK
+ *****************************************************************************/
+
+typedef struct as_swlock_s {
+	uint32_t u32;
+} as_swlock;
+
+#define AS_SWLOCK_INIT { 0 }
+#define as_swlock_init(_s) (_s)->u32 = 0
+#define as_swlock_destroy(_s) ((void)_s) // no-op
+
+#define AS_SWLOCK_WRITER_BIT (1 << 31)
+#define AS_SWLOCK_LATCH_BIT (1 << 30)
+#define AS_SWLOCK_WRITER_MASK (AS_SWLOCK_LATCH_BIT | AS_SWLOCK_WRITER_BIT)
+#define AS_SWLOCK_READER_MASK (UINT32_MAX ^ AS_SWLOCK_WRITER_MASK)
+
+static inline void
+as_swlock_write_lock(as_swlock* rw)
+{
+	__atomic_fetch_or(&rw->u32, AS_SWLOCK_WRITER_BIT, __ATOMIC_RELAXED);
+
+	while ((as_load_acq(&rw->u32) & AS_SWLOCK_READER_MASK) != 0) {
+		as_arch_pause();
+	}
+}
+
+static inline void
+as_swlock_write_unlock(as_swlock* rw)
+{
+	__atomic_fetch_and(&rw->u32, AS_SWLOCK_READER_MASK, __ATOMIC_RELEASE);
+}
+
+static inline void
+as_swlock_read_lock(as_swlock* rw)
+{
+	while (true) {
+		while ((as_load_acq(&rw->u32) & AS_SWLOCK_WRITER_BIT) != 0) {
+			as_arch_pause();
+		}
+
+		uint32_t l = as_faa_uint32(&rw->u32, 1) & AS_SWLOCK_WRITER_MASK;
+
+		if (l == 0) {
+			break;
+		}
+
+		// If latch bit has not been set, then writer would have observed reader
+		// and will wait to completion of read-side critical section.
+		if (l == AS_SWLOCK_WRITER_BIT) {
+			as_decr_uint32(&rw->u32);
+		}
+	}
+}
+
+static inline void
+as_swlock_read_unlock(as_swlock* rw)
+{
+	as_faa_rls(&rw->u32, -1);
 }
 
 /******************************************************************************

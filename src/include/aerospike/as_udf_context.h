@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2022 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -16,9 +16,8 @@
  */
 #pragma once
 
-#include <aerospike/as_memtracker.h>
-#include <aerospike/as_timer.h>
 #include <aerospike/as_aerospike.h>
+#include <aerospike/as_timer.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,7 +30,6 @@ extern "C" {
 typedef struct as_udf_context_s {
 	as_aerospike  * as;
 	as_timer      * timer; 
-	as_memtracker * memtracker;
 } as_udf_context;
 
 #ifdef __cplusplus

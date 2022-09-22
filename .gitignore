@@ -9,6 +9,9 @@ xcuserdata
 *.VC.db
 *.VC.VC.opendb
 .vs
+.cproject
+.project
+.settings/
 Debug
 x64
 ipch
