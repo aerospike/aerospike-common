@@ -15,6 +15,7 @@
  * the License.
  */
 #include <aerospike/as_thread_pool.h>
+#include <aerospike/as_atomic.h>
 #include <aerospike/as_thread.h>
 #include <citrusleaf/alloc.h>
 #include <string.h>
@@ -105,6 +106,13 @@ as_thread_pool_queue_task(as_thread_pool* pool, as_task_fn task_fn, void* task)
 int
 as_thread_pool_destroy(as_thread_pool* pool)
 {
+	// Prevent double destroy.
+	uint32_t thread_size = as_fas_uint32(&pool->thread_size, 0);
+
+	if (thread_size == 0) {
+		return 0;
+	}
+
 	// Tells worker threads to stop by setting NULL task_fn. We do this to allow the
 	// workers to "wait forever" on processing the work dispatch queue, which has
 	// minimum impact when the queue is empty. This also means all queued requests
@@ -114,21 +122,16 @@ as_thread_pool_destroy(as_thread_pool* pool)
 	task.task_data = NULL;
 
 	// Send shutdown signal for variable tasks.
-	for (uint32_t i = 0; i < pool->thread_size; i++) {
+	for (uint32_t i = 0; i < thread_size; i++) {
 		cf_queue_push(pool->dispatch_queue, &task);
 	}
 
 	// Wait till threads finish.
-	for (uint32_t i = 0; i < pool->thread_size; i++) {
+	for (uint32_t i = 0; i < thread_size; i++) {
 		pthread_join(pool->threads[i], NULL);
 	}
 
-	if (pool->threads) {
-		cf_free(pool->threads);
-	}
-
-	if (pool->dispatch_queue) {
-		cf_queue_destroy(pool->dispatch_queue);
-	}
+	cf_free(pool->threads);
+	cf_queue_destroy(pool->dispatch_queue);
 	return 0;
 }
