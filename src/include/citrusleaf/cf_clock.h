@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2022 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -145,9 +145,7 @@ cf_secs_since_clepoch()
 static inline cf_clock
 cf_getns()
 {
-	// mach_absolute_time() currently returns nanoseconds, but is not
-	// guaranteed to do so. This code may have to be revised at a later date.
-	return mach_absolute_time();
+	return clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
 }
 
 // WALL CLOCK (system epoch)
