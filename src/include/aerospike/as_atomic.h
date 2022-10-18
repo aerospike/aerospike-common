@@ -44,6 +44,12 @@
 		(bool)as_load_uint8((const uint8_t*)_target); \
 	})
 
+// Note - this assumes bool is implemented as a single byte.
+// bool as_load_bool_acq(const bool* target)
+#define as_load_bool_acq(_target) ({ \
+		(bool)as_load_uint8_acq((const uint8_t*)_target); \
+	})
+
 /******************************************************************************
  * STORE
  *****************************************************************************/
@@ -64,6 +70,12 @@
 // void as_store_bool(bool* target, bool value)
 #define as_store_bool(_target, _value) ({ \
 		as_store_uint8((uint8_t*)_target, (uint8_t)_value); \
+	})
+
+// Note - this assumes bool is implemented as a single byte.
+// void as_store_bool_rls(bool* target, bool value)
+#define as_store_bool_rls(_target, _value) ({ \
+		as_store_uint8_rls((uint8_t*)_target, (uint8_t)_value); \
 	})
 
 /******************************************************************************

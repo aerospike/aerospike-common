@@ -27,14 +27,16 @@ extern "C" {
  * LOAD
  *****************************************************************************/
 
-// type as_load_acq(const type* target)
-#define as_load_acq(_target) __atomic_load_n(_target, __ATOMIC_ACQUIRE)
-
 // type as_load_rlx(const type* target)
 #define as_load_rlx(_target) __atomic_load_n(_target, __ATOMIC_RELAXED)
 
+// type as_load_acq(const type* target)
+#define as_load_acq(_target) __atomic_load_n(_target, __ATOMIC_ACQUIRE)
+
 // type as_load_seq(const type* target)
 #define as_load_seq(_target) __atomic_load_n(_target, __ATOMIC_SEQ_CST)
+
+// "Relaxed" wrappers.
 
 static inline void*
 as_load_ptr(void* const* target)
@@ -90,18 +92,76 @@ as_load_int8(const int8_t* target)
 	return as_load_rlx(target);
 }
 
+// "Acquire" wrappers.
+
+static inline void*
+as_load_ptr_acq(void* const* target)
+{
+	return as_load_acq(target);
+}
+
+static inline uint64_t
+as_load_uint64_acq(const uint64_t* target)
+{
+	return as_load_acq(target);
+}
+
+static inline int64_t
+as_load_int64_acq(const int64_t* target)
+{
+	return as_load_acq(target);
+}
+
+static inline uint32_t
+as_load_uint32_acq(const uint32_t* target)
+{
+	return as_load_acq(target);
+}
+
+static inline int32_t
+as_load_int32_acq(const int32_t* target)
+{
+	return as_load_acq(target);
+}
+
+static inline uint16_t
+as_load_uint16_acq(const uint16_t* target)
+{
+	return as_load_acq(target);
+}
+
+static inline int16_t
+as_load_int16_acq(const int16_t* target)
+{
+	return as_load_acq(target);
+}
+
+static inline uint8_t
+as_load_uint8_acq(const uint8_t* target)
+{
+	return as_load_acq(target);
+}
+
+static inline int8_t
+as_load_int8_acq(const int8_t* target)
+{
+	return as_load_acq(target);
+}
+
 /******************************************************************************
  * STORE
  *****************************************************************************/
 
-// void as_store_rls(type* target, type value)
-#define as_store_rls(_target, _value) __atomic_store_n(_target, _value, __ATOMIC_RELEASE)
-
 // void as_store_rlx(type* target, type value)
 #define as_store_rlx(_target, _value) __atomic_store_n(_target, _value, __ATOMIC_RELAXED)
 
+// void as_store_rls(type* target, type value)
+#define as_store_rls(_target, _value) __atomic_store_n(_target, _value, __ATOMIC_RELEASE)
+
 // void as_store_seq(type* target, type value)
 #define as_store_seq(_target, _value) __atomic_store_n(_target, _value, __ATOMIC_SEQ_CST)
+
+// "Relaxed" wrappers.
 
 static inline void
 as_store_ptr(void** target, void* value)
@@ -157,9 +217,68 @@ as_store_int8(int8_t* target, int8_t value)
 	as_store_rlx(target, value);
 }
 
+// "Release" wrappers.
+
+static inline void
+as_store_ptr_rls(void** target, void* value)
+{
+	as_store_rls(target, value);
+}
+
+static inline void
+as_store_uint64_rls(uint64_t* target, uint64_t value)
+{
+	as_store_rls(target, value);
+}
+
+static inline void
+as_store_int64_rls(int64_t* target, int64_t value)
+{
+	as_store_rls(target, value);
+}
+
+static inline void
+as_store_uint32_rls(uint32_t* target, uint32_t value)
+{
+	as_store_rls(target, value);
+}
+
+static inline void
+as_store_int32_rls(int32_t* target, int32_t value)
+{
+	as_store_rls(target, value);
+}
+
+static inline void
+as_store_uint16_rls(uint16_t* target, uint16_t value)
+{
+	as_store_rls(target, value);
+}
+
+static inline void
+as_store_int16_rls(int16_t* target, int16_t value)
+{
+	as_store_rls(target, value);
+}
+
+static inline void
+as_store_uint8_rls(uint8_t* target, uint8_t value)
+{
+	as_store_rls(target, value);
+}
+
+static inline void
+as_store_int8_rls(int8_t* target, int8_t value)
+{
+	as_store_rls(target, value);
+}
+
 /******************************************************************************
  * FETCH AND ADD
  *****************************************************************************/
+
+// type as_faa_rlx(type* target, type value)
+#define as_faa_rlx(_target, _value) __atomic_fetch_add(_target, _value, __ATOMIC_RELAXED)
 
 // type as_faa_acq(type* target, type value)
 #define as_faa_acq(_target, _value) __atomic_fetch_add(_target, _value, __ATOMIC_ACQUIRE)
@@ -167,11 +286,10 @@ as_store_int8(int8_t* target, int8_t value)
 // type as_faa_rls(type* target, type value)
 #define as_faa_rls(_target, _value) __atomic_fetch_add(_target, _value, __ATOMIC_RELEASE)
 
-// type as_faa_rlx(type* target, type value)
-#define as_faa_rlx(_target, _value) __atomic_fetch_add(_target, _value, __ATOMIC_RELAXED)
-
 // type as_faa_seq(type* target, type value)
 #define as_faa_seq(_target, _value) __atomic_fetch_add(_target, _value, __ATOMIC_SEQ_CST)
+
+// "Relaxed" wrappers.
 
 static inline uint64_t
 as_faa_uint64(uint64_t* target, int64_t value)
@@ -213,17 +331,19 @@ as_faa_int16(int16_t* target, int16_t value)
  * ADD AND FETCH
  *****************************************************************************/
 
+// type as_aaf_rlx(type* target, type value)
+#define as_aaf_rlx(_target, _value) __atomic_add_fetch(_target, _value, __ATOMIC_RELAXED)
+
 // type as_aaf_acq(type* target, type value)
 #define as_aaf_acq(_target, _value) __atomic_add_fetch(_target, _value, __ATOMIC_ACQUIRE)
 
 // type as_aaf_rls(type* target, type value)
 #define as_aaf_rls(_target, _value) __atomic_add_fetch(_target, _value, __ATOMIC_RELEASE)
 
-// type as_aaf_rlx(type* target, type value)
-#define as_aaf_rlx(_target, _value) __atomic_add_fetch(_target, _value, __ATOMIC_RELAXED)
-
 // type as_aaf_seq(type* target, type value)
 #define as_aaf_seq(_target, _value) __atomic_add_fetch(_target, _value, __ATOMIC_SEQ_CST)
+
+// "Relaxed" wrappers.
 
 static inline uint64_t
 as_aaf_uint64(uint64_t* target, int64_t value)
@@ -231,16 +351,42 @@ as_aaf_uint64(uint64_t* target, int64_t value)
 	return as_aaf_rlx(target, value);
 }
 
-static inline uint64_t
-as_aaf_uint64_rls(uint64_t* target, int64_t value)
-{
-	return as_aaf_rls(target, value);
-}
-
 static inline int64_t
 as_aaf_int64(int64_t* target, int64_t value)
 {
 	return as_aaf_rlx(target, value);
+}
+
+static inline uint32_t
+as_aaf_uint32(uint32_t* target, int32_t value)
+{
+	return as_aaf_rlx(target, value);
+}
+
+static inline int32_t
+as_aaf_int32(int32_t* target, int32_t value)
+{
+	return as_aaf_rlx(target, value);
+}
+
+static inline uint16_t
+as_aaf_uint16(uint16_t* target, int16_t value)
+{
+	return as_aaf_rlx(target, value);
+}
+
+static inline int16_t
+as_aaf_int16(int16_t* target, int16_t value)
+{
+	return as_aaf_rlx(target, value);
+}
+
+// "Release" wrappers.
+
+static inline uint64_t
+as_aaf_uint64_rls(uint64_t* target, int64_t value)
+{
+	return as_aaf_rls(target, value);
 }
 
 static inline int64_t
@@ -250,21 +396,9 @@ as_aaf_int64_rls(int64_t* target, int64_t value)
 }
 
 static inline uint32_t
-as_aaf_uint32(uint32_t* target, int32_t value)
-{
-	return as_aaf_rlx(target, value);
-}
-
-static inline uint32_t
 as_aaf_uint32_rls(uint32_t* target, int32_t value)
 {
 	return as_aaf_rls(target, value);
-}
-
-static inline int32_t
-as_aaf_int32(int32_t* target, int32_t value)
-{
-	return as_aaf_rlx(target, value);
 }
 
 static inline int32_t
@@ -274,21 +408,9 @@ as_aaf_int32_rls(int32_t* target, int32_t value)
 }
 
 static inline uint16_t
-as_aaf_uint16(uint16_t* target, int16_t value)
-{
-	return as_aaf_rlx(target, value);
-}
-
-static inline uint16_t
 as_aaf_uint16_rls(uint16_t* target, int16_t value)
 {
 	return as_aaf_rls(target, value);
-}
-
-static inline int16_t
-as_aaf_int16(int16_t* target, int16_t value)
-{
-	return as_aaf_rlx(target, value);
 }
 
 static inline int16_t
@@ -300,6 +422,8 @@ as_aaf_int16_rls(int16_t* target, int16_t value)
 /******************************************************************************
  * ADD
  *****************************************************************************/
+
+// "Relaxed" wrappers.
 
 static inline void
 as_add_uint64(uint64_t* target, int64_t value)
@@ -341,6 +465,8 @@ as_add_int16(int16_t* target, int16_t value)
  * INCREMENT
  *****************************************************************************/
 
+// "Relaxed" wrappers.
+
 static inline void
 as_incr_uint64(uint64_t* target)
 {
@@ -377,9 +503,49 @@ as_incr_int16(int16_t* target)
 	as_faa_rlx(target, 1);
 }
 
+// "Release" wrappers.
+
+static inline void
+as_incr_uint64_rls(uint64_t* target)
+{
+	as_faa_rls(target, 1);
+}
+
+static inline void
+as_incr_int64_rls(int64_t* target)
+{
+	as_faa_rls(target, 1);
+}
+
+static inline void
+as_incr_uint32_rls(uint32_t* target)
+{
+	as_faa_rls(target, 1);
+}
+
+static inline void
+as_incr_int32_rls(int32_t* target)
+{
+	as_faa_rls(target, 1);
+}
+
+static inline void
+as_incr_uint16_rls(uint16_t* target)
+{
+	as_faa_rls(target, 1);
+}
+
+static inline void
+as_incr_int16_rls(int16_t* target)
+{
+	as_faa_rls(target, 1);
+}
+
 /******************************************************************************
  * DECREMENT
  *****************************************************************************/
+
+// "Relaxed" wrappers.
 
 static inline void
 as_decr_uint64(uint64_t* target)
@@ -417,9 +583,50 @@ as_decr_int16(int16_t* target)
 	as_faa_rlx(target, -1);
 }
 
+// "Release" wrappers.
+
+static inline void
+as_decr_uint64_rls(uint64_t* target)
+{
+	as_faa_rls(target, -1);
+}
+
+static inline void
+as_decr_int64_rls(int64_t* target)
+{
+	as_faa_rls(target, -1);
+}
+
+static inline void
+as_decr_uint32_rls(uint32_t* target)
+{
+	as_faa_rls(target, -1);
+}
+
+static inline void
+as_decr_int32_rls(int32_t* target)
+{
+	as_faa_rls(target, -1);
+}
+
+static inline void
+as_decr_uint16_rls(uint16_t* target)
+{
+	as_faa_rls(target, -1);
+}
+
+static inline void
+as_decr_int16_rls(int16_t* target)
+{
+	as_faa_rls(target, -1);
+}
+
 /******************************************************************************
  * FETCH AND SWAP
  *****************************************************************************/
+
+// type as_fas_rlx(type* target, type value)
+#define as_fas_rlx(_target, _value) __atomic_exchange_n(_target, _value, __ATOMIC_RELAXED)
 
 // type as_fas_acq(type* target, type value)
 #define as_fas_acq(_target, _value) __atomic_exchange_n(_target, _value, __ATOMIC_ACQUIRE)
@@ -427,11 +634,10 @@ as_decr_int16(int16_t* target)
 // type as_fas_rls(type* target, type value)
 #define as_fas_rls(_target, _value) __atomic_exchange_n(_target, _value, __ATOMIC_RELEASE)
 
-// type as_fas_rlx(type* target, type value)
-#define as_fas_rlx(_target, _value) __atomic_exchange_n(_target, _value, __ATOMIC_RELAXED)
-
 // type as_fas_seq(type* target, type value)
 #define as_fas_seq(_target, _value) __atomic_exchange_n(_target, _value, __ATOMIC_SEQ_CST)
+
+// "Relaxed" wrappers.
 
 static inline uint64_t
 as_fas_uint64(uint64_t* target, uint64_t value)
@@ -473,6 +679,10 @@ as_fas_int16(int16_t* target, int16_t value)
  * COMPARE AND SWAP
  *****************************************************************************/
 
+// bool as_cas_rlx(type* target, type* old_value, type new_value)
+// Note - old_value is returned by pointer.
+#define as_cas_rlx(_target, _old_value, _new_value) __atomic_compare_exchange_n(_target, _old_value, _new_value, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED)
+
 // bool as_cas_acq(type* target, type* old_value, type new_value)
 // Note - old_value is returned by pointer.
 #define as_cas_acq(_target, _old_value, _new_value) __atomic_compare_exchange_n(_target, _old_value, _new_value, false, __ATOMIC_ACQUIRE, __ATOMIC_RELAXED)
@@ -481,13 +691,11 @@ as_fas_int16(int16_t* target, int16_t value)
 // Note - old_value is returned by pointer.
 #define as_cas_rls(_target, _old_value, _new_value) __atomic_compare_exchange_n(_target, _old_value, _new_value, false, __ATOMIC_RELEASE, __ATOMIC_RELAXED)
 
-// bool as_cas_rlx(type* target, type* old_value, type new_value)
-// Note - old_value is returned by pointer.
-#define as_cas_rlx(_target, _old_value, _new_value) __atomic_compare_exchange_n(_target, _old_value, _new_value, false, __ATOMIC_RELAXED, __ATOMIC_RELAXED)
-
 // bool as_cas_seq(type* target, type* old_value, type new_value)
 // Note - old_value is returned by pointer.
 #define as_cas_seq(_target, _old_value, _new_value) __atomic_compare_exchange_n(_target, _old_value, _new_value, false, __ATOMIC_SEQ_CST, __ATOMIC_RELAXED)
+
+// "Relaxed" wrappers.
 
 static inline bool
 as_cas_uint64(uint64_t* target, uint64_t old_value, uint64_t new_value)

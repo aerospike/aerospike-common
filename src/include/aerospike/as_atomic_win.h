@@ -32,6 +32,13 @@
 extern "C" {
 #endif
 
+// We assume for now that our Windows clients will be run only on x86. The
+// wrappers with "acquire" and "release" barrier semantics do not actually
+// enforce the barriers - the wrappers are there to enable compilation only.
+
+// TODO - if we find we need the Windows client to run on ARM, revisit the
+// acquire and release wrapped methods and implement them correctly.
+
 /******************************************************************************
  * LOAD
  *****************************************************************************/
@@ -62,6 +69,35 @@ extern "C" {
 
 // int8_t as_load_int8(const int8_t* target)
 #define as_load_int8(_target) (*(int8_t volatile*)(_target))
+
+// Assume Windows clients run only on x86 - wrappers to enable compilation only.
+
+// void* as_load_ptr_acq(const void** target)
+#define as_load_ptr_acq(_target) (*(void volatile**)(_target))
+
+// uint64_t as_load_uint64_acq(const uint64_t* target)
+#define as_load_uint64_acq(_target) (*(uint64_t volatile*)(_target))
+
+// int64_t as_load_int64_acq(const int64_t* target)
+#define as_load_int64_acq(_target) (*(int64_t volatile*)(_target))
+
+// uint32_t as_load_uint32_acq(const uint32_t* target)
+#define as_load_uint32_acq(_target) (*(uint32_t volatile*)(_target))
+
+// int32_t as_load_int32_acq(const int32_t* target)
+#define as_load_int32_acq(_target) (*(int32_t volatile*)(_target))
+
+// uint16_t as_load_uint16_acq(const uint16_t* target)
+#define as_load_uint16_acq(_target) (*(uint16_t volatile*)(_target))
+
+// int16_t as_load_int16_acq(const int16_t* target)
+#define as_load_int16_acq(_target) (*(int16_t volatile*)(_target))
+
+// uint8_t as_load_uint8_acq(const uint8_t* target)
+#define as_load_uint8_acq(_target) (*(uint8_t volatile*)(_target))
+
+// int8_t as_load_int8_acq(const int8_t* target)
+#define as_load_int8_acq(_target) (*(int8_t volatile*)(_target))
 
 /******************************************************************************
  * STORE
@@ -94,6 +130,35 @@ extern "C" {
 // void as_store_int8(int8_t* target, int8_t value)
 #define as_store_int8(_target, _value) *(int8_t volatile*)(_target) = _value
 
+// Assume Windows clients run only on x86 - wrappers to enable compilation only.
+
+// void as_store_ptr_rls(void** target, void* value)
+#define as_store_ptr_rls(_target, _value) *(void volatile**)(_target) = _value
+
+// void as_store_uint64_rls(uint64_t* target, uint64_t value)
+#define as_store_uint64_rls(_target, _value) *(uint64_t volatile*)(_target) = _value
+
+// void as_store_int64_rls(int64_t* target, int64_t value)
+#define as_store_int64_rls(_target, _value) *(int64_t volatile*)(_target) = _value
+
+// void as_store_uint32_rls(uint32_t* target, uint32_t value)
+#define as_store_uint32_rls(_target, _value) *(uint32_t volatile*)(_target) = _value
+
+// void as_store_int32_rls(uint32_t* target, int32_t value)
+#define as_store_int32_rls(_target, _value) *(int32_t volatile*)(_target) = _value
+
+// void as_store_uint16_rls(uint16_t* target, uint16_t value)
+#define as_store_uint16_rls(_target, _value) *(uint16_t volatile*)(_target) = _value
+
+// void as_store_int16_rls(uint16_t* target, int16_t value)
+#define as_store_int16_rls(_target, _value) *(int16_t volatile*)(_target) = _value
+
+// void as_store_uint8_rls(uint8_t* target, uint8_t value)
+#define as_store_uint8_rls(_target, _value) *(uint8_t volatile*)(_target) = _value
+
+// void as_store_int8_rls(int8_t* target, int8_t value)
+#define as_store_int8_rls(_target, _value) *(int8_t volatile*)(_target) = _value
+
 /******************************************************************************
  * FETCH AND ADD
  *****************************************************************************/
@@ -118,36 +183,36 @@ extern "C" {
  * ADD AND FETCH
  *****************************************************************************/
 
-// Note - InterlockedAdd() (on x86) has a strong enough barrier for "rls" release semantics.
-
 // uint64_t as_aaf_uint64(uint64_t* target, int64_t value)
 #define as_aaf_uint64(_target, _value) (uint64_t)InterlockedAdd64((LONGLONG volatile*)(_target), _value)
-
-// uint64_t as_aaf_uint64_rls(uint64_t* target, int64_t value)
-#define as_aaf_uint64_rls(_target, _value) (uint64_t)InterlockedAdd64((LONGLONG volatile*)(_target), _value)
 
 // int64_t as_aaf_int64(int64_t* target, int64_t value)
 #define as_aaf_int64(_target, _value) InterlockedAdd64((LONGLONG volatile*)(_target), _value)
 
-// int64_t as_aaf_int64_rls(int64_t* target, int64_t value)
-#define as_aaf_int64_rls(_target, _value) InterlockedAdd64((LONGLONG volatile*)(_target), _value)
-
 // uint32_t as_aaf_uint32(uint32_t* target, int32_t value)
 #define as_aaf_uint32(_target, _value) (uint32_t)InterlockedAdd((LONG volatile*)(_target), _value)
 
-// uint32_t as_aaf_uint32_rls(uint32_t* target, int32_t value)
-#define as_aaf_uint32_rls(_target, _value) (uint32_t)InterlockedAdd((LONG volatile*)(_target), _value)
-
 // int32_t as_aaf_int32(int32_t* target, int32_t value)
 #define as_aaf_int32(_target, _value) InterlockedAdd((LONG volatile*)(_target), _value)
+
+// Assume Windows clients run only on x86 - wrappers to enable compilation only.
+
+// uint64_t as_aaf_uint64_rls(uint64_t* target, int64_t value)
+#define as_aaf_uint64_rls(_target, _value) (uint64_t)InterlockedAdd64((LONGLONG volatile*)(_target), _value)
+
+// int64_t as_aaf_int64_rls(int64_t* target, int64_t value)
+#define as_aaf_int64_rls(_target, _value) InterlockedAdd64((LONGLONG volatile*)(_target), _value)
+
+// uint32_t as_aaf_uint32_rls(uint32_t* target, int32_t value)
+#define as_aaf_uint32_rls(_target, _value) (uint32_t)InterlockedAdd((LONG volatile*)(_target), _value)
 
 // int32_t as_aaf_int32_rls(int32_t* target, int32_t value)
 #define as_aaf_int32_rls(_target, _value) InterlockedAdd((LONG volatile*)(_target), _value)
 
 // Windows does not support 16 bit atomic add/fetch.
 // uint16_t as_aaf_uint16(uint16_t* target, int16_t value)
-// uint16_t as_aaf_uint16_rls(uint16_t* target, int16_t value)
 // int16_t as_aaf_int16(int16_t* target, int16_t value)
+// uint16_t as_aaf_uint16_rls(uint16_t* target, int16_t value)
 // int16_t as_aaf_int16_rls(int16_t* target, int16_t value)
 
 /******************************************************************************
@@ -192,6 +257,26 @@ extern "C" {
 // void as_incr_int16(int16_t* target)
 #define as_incr_int16(_target) InterlockedIncrement16((short volatile*)(_target))
 
+// Assume Windows clients run only on x86 - wrappers to enable compilation only.
+
+// void as_incr_uint64_rls(uint64_t* target)
+#define as_incr_uint64_rls(_target) InterlockedIncrement64((LONGLONG volatile*)(_target))
+
+// void as_incr_int64_rls(int64_t* target)
+#define as_incr_int64_rls(_target) InterlockedIncrement64((LONGLONG volatile*)(_target))
+
+// void as_incr_uint32_rls(uint32_t* target)
+#define as_incr_uint32_rls(_target) InterlockedIncrement((LONG volatile*)(_target))
+
+// void as_incr_int32_rls(int32_t* target)
+#define as_incr_int32_rls(_target) InterlockedIncrement((LONG volatile*)(_target))
+
+// void as_incr_uint16_rls(uint16_t* target)
+#define as_incr_uint16_rls(_target) InterlockedIncrement16((short volatile*)(_target))
+
+// void as_incr_int16_rls(int16_t* target)
+#define as_incr_int16_rls(_target) InterlockedIncrement16((short volatile*)(_target))
+
 /******************************************************************************
  * DECREMENT
  *****************************************************************************/
@@ -213,6 +298,26 @@ extern "C" {
 
 // void as_decr_int16(int16_t* target)
 #define as_decr_int16(_target) InterlockedDecrement16((short volatile*)(_target))
+
+// Assume Windows clients run only on x86 - wrappers to enable compilation only.
+
+// void as_decr_uint64_rls(uint64_t* target)
+#define as_decr_uint64_rls(_target) InterlockedDecrement64((LONGLONG volatile*)(_target))
+
+// void as_decr_int64_rls(int64_t* target)
+#define as_decr_int64_rls(_target) InterlockedDecrement64((LONGLONG volatile*)(_target))
+
+// void as_decr_uint32_rls(uint32_t* target)
+#define as_decr_uint32_rls(_target) InterlockedDecrement((LONG volatile*)(_target))
+
+// void as_decr_int32_rls(int32_t* target)
+#define as_decr_int32_rls(_target) InterlockedDecrement((LONG volatile*)(_target))
+
+// void as_decr_uint16_rls(uint16_t* target)
+#define as_decr_uint16_rls(_target) InterlockedDecrement16((short volatile*)(_target))
+
+// void as_decr_int16_rls(int16_t* target)
+#define as_decr_int16_rls(_target) InterlockedDecrement16((short volatile*)(_target))
 
 /******************************************************************************
  * FETCH AND SWAP
