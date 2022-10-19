@@ -113,7 +113,14 @@ uint32_t
 cf_rc_release(void* addr)
 {
 	cf_rc_hdr* head = (cf_rc_hdr*)addr - 1;
-	return as_aaf_uint32_rls(&head->count, -1);
+	uint32_t rc = as_aaf_uint32_rls(&head->count, -1);
+
+	if (rc == 0) {
+		// Subsequent destructor may require a full barrier.
+		as_fence_seq();
+	}
+
+	return rc;
 }
 
 uint32_t
