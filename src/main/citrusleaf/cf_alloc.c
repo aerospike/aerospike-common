@@ -116,8 +116,8 @@ cf_rc_release(void* addr)
 	uint32_t rc = as_aaf_uint32_rls(&head->count, -1);
 
 	if (rc == 0) {
-		// Subsequent destructor may require a full barrier.
-		as_fence_seq();
+		// Subsequent destructor may require an 'acquire' barrier.
+		as_fence_acq();
 	}
 
 	return rc;
