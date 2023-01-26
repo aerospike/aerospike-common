@@ -32,7 +32,7 @@
 
 #elif defined __aarch64__
 
-#define as_arch_pause() asm volatile("yield" : : : "memory")
+#define as_arch_pause() asm volatile("isb" : : : "memory")
 
 #endif
 
