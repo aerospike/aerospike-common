@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Aerospike, Inc.
+ * Copyright 2023 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -32,7 +32,7 @@
 
 #elif defined __aarch64__
 
-#define as_arch_pause() asm volatile("yield" : : : "memory")
+#define as_arch_pause() asm volatile("isb" : : : "memory")
 
 #endif
 
