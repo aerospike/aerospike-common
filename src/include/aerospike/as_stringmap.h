@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2023 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -13,14 +13,6 @@
  * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
  * License for the specific language governing permissions and limitations under
  * the License.
- */
-
-/**
- *	as_stringmap provides a convenience interface for populating a map with
- *	string keys.
- *
- *	@addtogroup stringmap_t StringMap
- *	@{
  */
 
 #pragma once
