@@ -446,11 +446,11 @@ as_orderedmap_iterator*
 as_orderedmap_iterator_init(as_orderedmap_iterator* it,
 		const as_orderedmap* map)
 {
-	if (it == NULL) {
+	if (map != NULL && ! as_orderedmap_merge((as_orderedmap*)map)) {
 		return NULL;
 	}
 
-	if (! as_orderedmap_merge((as_orderedmap*)map)) {
+	if (it == NULL) {
 		return NULL;
 	}
 
@@ -465,14 +465,14 @@ as_orderedmap_iterator_init(as_orderedmap_iterator* it,
 as_orderedmap_iterator*
 as_orderedmap_iterator_new(const as_orderedmap* map)
 {
+	if (map != NULL && ! as_orderedmap_merge((as_orderedmap*)map)) {
+		return NULL;
+	}
+
 	as_orderedmap_iterator* it =
 			(as_orderedmap_iterator*)cf_malloc(sizeof(as_orderedmap_iterator));
 
 	if (it == NULL) {
-		return NULL;
-	}
-
-	if (! as_orderedmap_merge((as_orderedmap*)map)) {
 		return NULL;
 	}
 
