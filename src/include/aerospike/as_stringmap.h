@@ -221,10 +221,6 @@ static inline as_map * as_stringmap_get_map(as_map * m, const char * k)
 	return as_map_fromval(v);
 }
 
-/**
- *	@}
- */
-
 #ifdef __cplusplus
 } // end extern "C"
 #endif
