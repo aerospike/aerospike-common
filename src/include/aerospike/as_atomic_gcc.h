@@ -803,8 +803,8 @@ typedef struct as_swlock_s {
 #define as_swlock_init(_s) (_s)->u32 = 0
 #define as_swlock_destroy(_s) ((void)_s) // no-op
 
-#define AS_SWLOCK_WRITER_BIT (1 << 31)
-#define AS_SWLOCK_LATCH_BIT (1 << 30)
+#define AS_SWLOCK_WRITER_BIT ((uint32_t)1 << 31)
+#define AS_SWLOCK_LATCH_BIT ((uint32_t)1 << 30)
 #define AS_SWLOCK_WRITER_MASK (AS_SWLOCK_LATCH_BIT | AS_SWLOCK_WRITER_BIT)
 #define AS_SWLOCK_READER_MASK (UINT32_MAX ^ AS_SWLOCK_WRITER_MASK)
 
