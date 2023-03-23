@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2019 Aerospike, Inc.
+ * Copyright 2008-2023 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -82,7 +82,7 @@ int as_pack_val(as_packer *pk, const as_val *val);
  */
 int as_unpack_val(as_unpacker *pk, as_val **val);
 
-msgpack_compare_t as_val_cmp(const as_val* v1, const as_val* v2);
+AS_EXTERN msgpack_compare_t as_val_cmp(const as_val* v1, const as_val* v2);
 
 /******************************************************************************
  * Pack direct functions
