@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2022 Aerospike, Inc.
+ * Copyright 2008-2023 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -394,6 +394,10 @@ extern "C" {
  *****************************************************************************/
 
 typedef uint32_t as_spinlock;
+
+#define AS_SPINLOCK_INIT { 0 }
+#define as_spinlock_init(_s) *(_s) = 0
+#define as_spinlock_destroy(_s) ((void)_s) // no-op
 
 static inline void
 as_spinlock_lock(as_spinlock* lock)
