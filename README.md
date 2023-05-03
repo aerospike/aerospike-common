@@ -15,7 +15,7 @@ Used by Aerospike Server and Aerospike C Client.
 - Double click xcode/aerospike-common.xcworkspace
 - Click Product -> Build
 
-### Windows Visual Studio 2017 (or greater)
+### Windows Visual Studio 2022+
 
 - Double click vs/aerospike-common.sln
 - Click Build -> Build Solution
