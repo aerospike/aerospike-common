@@ -114,6 +114,11 @@ int cf_queue_push_unique(cf_queue *q, const void *ptr);
 int cf_queue_push_head(cf_queue *q, const void *ptr);
 
 /**
+ * Peek at the head of the queue - copies element without changing queue.
+ */
+int cf_queue_peek(cf_queue *q, void *buf);
+
+/**
  * Pops from the head of the queue.
  */
 int cf_queue_pop(cf_queue *q, void *buf, int ms_wait);

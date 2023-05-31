@@ -395,6 +395,25 @@ cf_queue_push_head(cf_queue *q, const void *ptr)
 }
 
 //
+// Peek at the head element - copies element (like pop) without changing queue.
+//
+int
+cf_queue_peek(cf_queue *q, void *buf)
+{
+	cf_queue_lock(q);
+
+	if (CF_Q_EMPTY(q)) {
+		cf_queue_unlock(q);
+		return CF_QUEUE_EMPTY;
+	}
+
+	memcpy(buf, CF_Q_ELEM_PTR(q, q->read_offset), q->element_sz);
+
+	cf_queue_unlock(q);
+	return CF_QUEUE_OK;
+}
+
+//
 // If ms_wait < 0, wait forever.
 // If ms_wait = 0, don't wait at all.
 // If ms_wait > 0, wait that number of milliseconds.
