@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2019 Aerospike, Inc.
+ * Copyright 2008-2023 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -22,27 +22,27 @@
 #include <string.h>
 
 /******************************************************************************
- *	FUNCTIONS
+ * FUNCTIONS
  *****************************************************************************/
 
-as_map * as_map_cons(as_map * map, bool free, uint32_t flags, const as_map_hooks * hooks)
+as_map* as_map_cons(as_map* map, bool free, uint32_t flags, const as_map_hooks* hooks)
 {
 	if ( !map ) return map;
 
-	as_val_cons((as_val *) map, AS_MAP, free);
+	as_val_cons((as_val*) map, AS_MAP, free);
 	map->flags = flags;
 	map->hooks = hooks;
 	return map;
 }
 
-as_map * as_map_init(as_map * map, const as_map_hooks * hooks)
+as_map* as_map_init(as_map* map, const as_map_hooks* hooks)
 {
 	return as_map_cons(map, false, 0, hooks);
 }
 
-as_map * as_map_new(const as_map_hooks * hooks)
+as_map* as_map_new(const as_map_hooks* hooks)
 {
-	as_map * map = (as_map *) cf_malloc(sizeof(as_map));
+	as_map* map = (as_map*) cf_malloc(sizeof(as_map));
 	return as_map_cons(map, true, 0, hooks);
 }
 
@@ -50,13 +50,13 @@ as_map * as_map_new(const as_map_hooks * hooks)
  * as_val FUNCTIONS
  ******************************************************************************/
 
-void as_map_val_destroy(as_val * v) {
-	as_map * m = as_map_fromval(v);
+void as_map_val_destroy(as_val* v) {
+	as_map* m = as_map_fromval(v);
 	as_util_hook(destroy, false, m);
 }
 
-uint32_t as_map_val_hashcode(const as_val *v) {
-	as_map * m = as_map_fromval(v);
+uint32_t as_map_val_hashcode(const as_val* v) {
+	as_map* m = as_map_fromval(v);
 	return as_util_hook(hashcode, 0, m);
 }
 
@@ -68,7 +68,7 @@ typedef struct as_map_val_tostring_data_s {
 	bool		sep;
 } as_map_val_tostring_data;
 
-static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, void * udata)
+static bool as_map_val_tostring_foreach(const as_val* key, const as_val* val, void* udata)
 {
 	as_map_val_tostring_data * data = (as_map_val_tostring_data *) udata;
 
@@ -120,7 +120,7 @@ static bool as_map_val_tostring_foreach(const as_val * key, const as_val * val, 
 	return true;
 }
 
-char * as_map_val_tostring(const as_val * v)
+char * as_map_val_tostring(const as_val* v)
 {
 	as_map_val_tostring_data data = {
 		.buf = NULL,
@@ -136,7 +136,7 @@ char * as_map_val_tostring(const as_val * v)
 	data.pos += 1;
 	
 	if ( v ) {
-		as_map_foreach((as_map *) v, as_map_val_tostring_foreach, &data);
+		as_map_foreach((as_map*) v, as_map_val_tostring_foreach, &data);
 	}
 
 	if ( data.pos + 2 >= data.cap ) {
