@@ -34,7 +34,10 @@
 #include <assert.h>
 #include <string.h>
 
+#if !defined(_MSC_VER)
 #include <arpa/inet.h>
+#endif
+
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -381,6 +384,8 @@ bool as_tls_match_name(X509 *x509, const char *name, bool allow_wildcard)
 								  (server_rec *) NULL);
 }
 
+#if !defined(_MSC_VER)
+
 bool as_tls_match_san(X509 *x509, const char *name) {
 	STACK_OF(GENERAL_NAME) *san_names = X509_get_ext_d2i(x509,
 			NID_subject_alt_name, NULL, NULL);
@@ -454,3 +459,4 @@ bool as_tls_match_san(X509 *x509, const char *name) {
 
 	return match;
 }
+#endif

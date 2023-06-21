@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2023 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -24,5 +24,8 @@
 bool
 as_tls_match_name(X509 *x509, const char *name, bool allow_wildcard);
 
+#if !defined(_MSC_VER)
 bool
 as_tls_match_san(X509 *x509, const char *name);
+#endif
+
