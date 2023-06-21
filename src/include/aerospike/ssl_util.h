@@ -23,3 +23,6 @@
 
 bool
 as_tls_match_name(X509 *x509, const char *name, bool allow_wildcard);
+
+bool
+as_tls_match_san(X509 *x509, const char *name);

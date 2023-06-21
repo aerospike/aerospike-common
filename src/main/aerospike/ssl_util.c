@@ -34,6 +34,8 @@
 #include <assert.h>
 #include <string.h>
 
+#include <arpa/inet.h>
+#include <openssl/ssl.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
@@ -377,4 +379,78 @@ bool as_tls_match_name(X509 *x509, const char *name, bool allow_wildcard)
 								  name,
 								  allow_wildcard,
 								  (server_rec *) NULL);
+}
+
+bool as_tls_match_san(X509 *x509, const char *name) {
+	STACK_OF(GENERAL_NAME) *san_names = X509_get_ext_d2i(x509,
+			NID_subject_alt_name, NULL, NULL);
+
+	if (san_names == NULL) {
+		return false;
+	}
+
+	bool match = false;
+
+	for (int j = 0; j < sk_GENERAL_NAME_num(san_names); j++) {
+		GENERAL_NAME *san_ele = sk_GENERAL_NAME_value(san_names, j);
+
+		if (san_ele->type == GEN_IPADD) {
+			ASN1_OCTET_STRING *ip_str = san_ele->d.iPAddress;
+			int ip_length = ASN1_STRING_length(ip_str);
+			const unsigned char *ip = ASN1_STRING_get0_data(ip_str);
+
+			if (ip_length == 4) {
+				// IPv4 address.
+				char san[INET_ADDRSTRLEN];
+
+				if (inet_ntop(AF_INET, ip, san, INET_ADDRSTRLEN) == NULL) {
+					continue;
+				}
+
+				if (strcmp(name, san) == 0) {
+					match = true;
+					break;
+				}
+			}
+			else if (ip_length == 16) {
+				// IPv6 address.
+				char san[INET6_ADDRSTRLEN];
+				char name_short[INET6_ADDRSTRLEN];
+				struct in6_addr name_in6;
+
+				// Convert peer name to short form and compare.
+
+				if (inet_pton(AF_INET6, name, &name_in6) != 1) {
+					continue;
+				}
+
+				if (inet_ntop(AF_INET6, &name_in6, name_short,
+						INET6_ADDRSTRLEN) == NULL) {
+					continue;
+				}
+
+				if (inet_ntop(AF_INET6, ip, san, INET6_ADDRSTRLEN) == NULL) {
+					continue;
+				}
+
+				if (strcmp(name_short, san) == 0) {
+					match = true;
+					break;
+				}
+			}
+		}
+		else if (san_ele->type == GEN_DNS) {
+			ASN1_STRING *dns_name = san_ele->d.dNSName;
+			char *san = (char*)ASN1_STRING_get0_data(dns_name);
+
+			if (strcmp(name, san) == 0) {
+				match = true;
+				break;
+			}
+		}
+	}
+
+	sk_GENERAL_NAME_pop_free(san_names, GENERAL_NAME_free);
+
+	return match;
 }
