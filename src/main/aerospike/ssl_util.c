@@ -402,7 +402,12 @@ bool as_tls_match_san(X509 *x509, const char *name) {
 		if (san_ele->type == GEN_IPADD) {
 			ASN1_OCTET_STRING *ip_str = san_ele->d.iPAddress;
 			int ip_length = ASN1_STRING_length(ip_str);
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000
+			const unsigned char *ip = ASN1_STRING_data(ip_str);
+#else
 			const unsigned char *ip = ASN1_STRING_get0_data(ip_str);
+#endif
 
 			if (ip_length == 4) {
 				// IPv4 address.
@@ -423,6 +428,10 @@ bool as_tls_match_san(X509 *x509, const char *name) {
 				char name_short[INET6_ADDRSTRLEN];
 				struct in6_addr name_in6;
 
+				if (inet_ntop(AF_INET6, ip, san, INET6_ADDRSTRLEN) == NULL) {
+					continue;
+				}
+
 				// Convert peer name to short form and compare.
 
 				if (inet_pton(AF_INET6, name, &name_in6) != 1) {
@@ -434,10 +443,6 @@ bool as_tls_match_san(X509 *x509, const char *name) {
 					continue;
 				}
 
-				if (inet_ntop(AF_INET6, ip, san, INET6_ADDRSTRLEN) == NULL) {
-					continue;
-				}
-
 				if (strcmp(name_short, san) == 0) {
 					match = true;
 					break;
@@ -446,7 +451,12 @@ bool as_tls_match_san(X509 *x509, const char *name) {
 		}
 		else if (san_ele->type == GEN_DNS) {
 			ASN1_STRING *dns_name = san_ele->d.dNSName;
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000
+			char *san = (char*)ASN1_STRING_data(dns_name);
+#else
 			char *san = (char*)ASN1_STRING_get0_data(dns_name);
+#endif
 
 			if (strcmp(name, san) == 0) {
 				match = true;
