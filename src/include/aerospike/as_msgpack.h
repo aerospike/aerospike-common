@@ -31,6 +31,11 @@ extern "C" {
 #define AS_PACKED_MAP_FLAG_PRESERVE_ORDER	0x08
 #define AS_PACKED_MAP_FLAG_KV_ORDERED	(AS_PACKED_MAP_FLAG_K_ORDERED | AS_PACKED_MAP_FLAG_V_ORDERED)
 
+#define AS_PACKED_LIST_FLAG_NONE			0x00
+#define AS_PACKED_LIST_FLAG_ORDERED			0x01
+
+#define AS_PACKED_PERSIST_INDEX				0x10
+
 typedef struct as_packer_buffer {
 	struct as_packer_buffer *next;
 	unsigned char *buffer;

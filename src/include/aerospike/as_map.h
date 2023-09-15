@@ -30,7 +30,7 @@ extern "C" {
  * TYPES
  *****************************************************************************/
 
-#define AS_MAP_FLAGS_MASK        0x3
+#define AS_MAP_FLAGS_MASK        0x13
 
 union as_map_iterator_u;
 struct as_map_hooks_s;

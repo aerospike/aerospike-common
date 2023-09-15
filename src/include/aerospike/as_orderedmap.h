@@ -291,7 +291,11 @@ static inline void
 as_orderedmap_set_flags(as_orderedmap* map, uint32_t flags)
 {
 	map->_.flags = flags & AS_MAP_FLAGS_MASK;
-	map->_.flags |= map->_.flags >> 1; // ensure setting v-ordered also set k-ordered
+
+	// Ensure k-ordered is set when other bits require k-ordered to be set.
+	if (map->_.flags != 0) {
+		map->_.flags |= 1;
+	}
 }
 
 
