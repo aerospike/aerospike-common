@@ -141,12 +141,17 @@ typedef struct as_rec_hooks_s {
 	uint16_t (* gen)(const as_rec * rec);
 
 	/**
-	 *	Get the memory storage size of the record.
+	 *	Get the stored size (bytes) of the record.
+	 */
+	uint32_t (* size)(const as_rec * rec);
+
+	/**
+	 *	Get the memory storage size of the record. Deprecated!
 	 */
 	uint32_t (* memory_size)(const as_rec * rec);
 
 	/**
-	 *	Get the device storage size of the record.
+	 *	Get the device storage size of the record. Deprecated!
 	 */
 	uint32_t (* device_size)(const as_rec * rec);
 
@@ -307,7 +312,17 @@ static inline uint16_t as_rec_gen(const as_rec * rec)
 }
 
 /**
- *	Get the memory storage size of the record
+ *	Get the stored size (bytes) of the record
+ *
+ *	@relatesalso as_rec
+ */
+static inline uint32_t as_rec_size(const as_rec * rec)
+{
+	return as_util_hook(size, 0, rec);
+}
+
+/**
+ *	Get the memory storage size of the record - deprecated!
  *
  *	@relatesalso as_rec
  */
@@ -317,7 +332,7 @@ static inline uint32_t as_rec_memory_size(const as_rec * rec)
 }
 
 /**
- *	Get the device storage size of the record
+ *	Get the device storage size of the record - deprecated!
  *
  *	@relatesalso as_rec
  */
