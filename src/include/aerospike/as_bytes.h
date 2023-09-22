@@ -90,6 +90,11 @@ typedef enum as_bytes_type_e {
 	AS_BYTES_ERLANG		= 12,
 
 	/**
+	 *	Vector
+	 */
+	AS_BYTES_VECTOR		= 16,
+
+	/**
 	 *	Boolean
 	 */
 	AS_BYTES_BOOL		= 17,
