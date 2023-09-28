@@ -24,7 +24,7 @@
 
 #else // gcc & clang
 
-#define as_arch_compile_barrier() asm volatile ("" : : : "memory")
+#define as_arch_compiler_barrier() asm volatile ("" : : : "memory")
 
 #define as_arch_prefetch_nt(_p) __builtin_prefetch((_p), 0, 0)
 
