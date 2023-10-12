@@ -23,13 +23,6 @@ ifeq ($(ARCH),aarch64)
   CC_CFLAGS += -mcpu=neoverse-n1
 endif
 
-PREPRO_SUFFIX = .cpp
-ifeq ($(PREPRO),1)
-  SUFFIX = $(PREPRO_SUFFIX)
-  CC_FLAGS += -E -DPREPRO=$(PREPRO) -DGEN_TAG=$(GEN_TAG)"\
-"
-endif
-
 ifeq ($(OS),Darwin)
   CC_FLAGS += -D_DARWIN_UNLIMITED_SELECT
 
