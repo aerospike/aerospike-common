@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2024 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -154,8 +154,6 @@ static inline as_stream * as_stream_new(void * data, const as_stream_hooks * hoo
  *	Destroy the as_stream and associated resources.
  *
  *	@param stream 	The stream to destroy.
- *
- *	@return 0 on success, otherwise 1.
  *
  *	@relatesalso as_stream
  */
