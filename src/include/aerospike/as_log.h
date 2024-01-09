@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2022 Aerospike, Inc.
+ * Copyright 2008-2024 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -23,12 +23,12 @@
 extern "C" {
 #endif
 
-/******************************************************************************
- *	TYPES
- *****************************************************************************/
+//---------------------------------
+// Types
+//---------------------------------
 
 /**
- *	Log Level
+ * Log Level
  */
 typedef enum as_log_level_e {
 	AS_LOG_LEVEL_ERROR = 0,
@@ -39,126 +39,122 @@ typedef enum as_log_level_e {
 } as_log_level;
 
 /**
- *	Callback function for as_log related logging calls.
+ * Callback function for as_log related logging calls.
  *
- *	The following is a simple log callback:
- *	~~~~~~~~~~{.c}
- *	bool my_log_callback(
- *		as_log_level level, const char * func, const char * file, uint32_t line,
- *		const char * fmt, ...)
- *	{
- *		char msg[1024] = {0};
- *	
- *		va_list ap;
- *		va_start(ap, fmt);
- *		vsnprintf(msg, 1024, fmt, ap);
- *		msg[1023] = '\0';
- *		va_end(ap);
- *		
- *		fprintf(stderr, "[%s:%d][%s] %d - %s\n", file, line, func, level, msg);
- *	
- *		return true;
- *	}
- *	~~~~~~~~~~
+ * The following is a simple log callback:
+ * ~~~~~~~~~~{.c}
+ * bool my_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...)
+ * {
+ *     char msg[1024] = {0};
  *
- *	The function should return true on success.
+ *     va_list ap;
+ *     va_start(ap, fmt);
+ *     vsnprintf(msg, 1024, fmt, ap);
+ *     msg[1023] = '\0';
+ *     va_end(ap);
  *
- *	@param level 		The log level of the message.
- *	@param func 		The function where the message was logged.
- *	@param file 		The file where the message was logged.
- *	@param line 		The line where the message was logged.
- *	@param fmt 			The format string used.
- *	@param ... 			The format argument.
+ *     fprintf(stderr, "[%s:%d][%s] %d - %s\n", file, line, func, level, msg);
  *
- *	@return true if the message was logged. Otherwise false.
+ *     return true;
+ * }
+ * ~~~~~~~~~~
  *
- *	@ingroup as_log_object
+ * The function should return true on success.
+ *
+ * @param level 		The log level of the message.
+ * @param func 		The function where the message was logged.
+ * @param file 		The file where the message was logged.
+ * @param line 		The line where the message was logged.
+ * @param fmt 		The format string used.
+ * @param ... 		The format argument.
+ *
+ * @return true if the message was logged. Otherwise false.
+ *
+ * @relates as_log
  */
 typedef bool (* as_log_callback)(
 	as_log_level level, const char * func, const char * file, uint32_t line,
 	const char * fmt, ...);
 
 /**
- *	Aerospike Client exposed logging functionality including:
- *	- Ability to control the verbosity of log messages.
- *	- Direct where log messages are sent to.
+ * Aerospike Client exposed logging functionality including:
+ *  - Ability to control the verbosity of log messages.
+ *  - Direct where log messages are sent to.
  *
- *	## Setting Log Level
+ * ## Setting Log Level
  *
- *	To set the log level for the aerospike client, simply use 
- *	as_log_set_level() and pass in the client log to set.
+ * To set the log level for the aerospike client, simply use
+ * as_log_set_level() and pass in the client log to set.
  *
- *	~~~~~~~~~~{.c}
- *	as_log_set_level(AS_LOG_LEVEL_INFO);
- *	~~~~~~~~~~
+ * ~~~~~~~~~~{.c}
+ * as_log_set_level(AS_LOG_LEVEL_INFO);
+ * ~~~~~~~~~~
  *
- *	## Redirecting Log Output
+ * ## Redirecting Log Output
  *
- *	By default, the logger is not enabled.
+ * By default, the logger is not enabled.
  *
- *	To enable where log messages are sent, simply define a new @ref as_log_callback,
- *	and set it for the client using as_log_set_callback():
+ * To enable where log messages are sent, simply define a new @ref as_log_callback,
+ * and set it for the client using as_log_set_callback():
  *
- *	~~~~~~~~~~{.c}
- *	as_log_set_callback(my_log_callback);
- *	~~~~~~~~~~
+ * ~~~~~~~~~~{.c}
+ * as_log_set_callback(my_log_callback);
+ * ~~~~~~~~~~
  *
- *	Where the `my_log_callback` could be defined as 
+ * Where the `my_log_callback` could be defined as
  *
- *	~~~~~~~~~~{.c}
- *	bool my_log_callback(
- *	    as_log_level level, const char * func, const char * file, uint32_t line,
- *	    const char * fmt, ...)
- *	{
- *	    char msg[1024] = {0};
- *	    va_list ap;
- *	    va_start(ap, fmt);
- *	    vsnprintf(msg, 1024, fmt, ap);
- *	    msg[1023] = '\0';
- *	    va_end(ap);
- *	    fprintf(stderr, "[%s:%d][%s] %d - %s\n", file, line, func, level, msg);
- *	    return true;
- *	}
- *	~~~~~~~~~~
+ * ~~~~~~~~~~{.c}
+ * bool my_log_callback(as_log_level level, const char * func, const char * file, uint32_t line, const char * fmt, ...)
+ * {
+ *     char msg[1024] = {0};
+ *     va_list ap;
+ *     va_start(ap, fmt);
+ *     vsnprintf(msg, 1024, fmt, ap);
+ *     msg[1023] = '\0';
+ *     va_end(ap);
+ *     fprintf(stderr, "[%s:%d][%s] %d - %s\n", file, line, func, level, msg);
+ *     return true;
+ * }
+ * ~~~~~~~~~~
  *
- *	@ingroup client_objects
+ * @ingroup client_objects
  */
 typedef struct as_log_s {
 
 	/**
-	 *	Log Level
+	 * Log Level
 	 */
 	as_log_level level;
 
 	/**
-	 *	Was callback explicitly set.
+	 * Was callback explicitly set.
 	 */
 	bool callback_set;
 
 	/**
-	 *	Logging Callback
+	 * Logging Callback
 	 */
 	as_log_callback callback;
 
 } as_log;
 
-/******************************************************************************
- *	GLOBAL VARIABLES
- *****************************************************************************/
+//---------------------------------
+// Globals
+//---------------------------------
 
 AS_EXTERN extern as_log g_as_log;
 AS_EXTERN extern const char* as_log_level_strings[];
 
-/******************************************************************************
- *	FUNCTIONS
- *****************************************************************************/
+//---------------------------------
+// Functions
+//---------------------------------
 
 /**
- *	Set logging level for the global client log.
+ * Set logging level for the global client log.
  *
- *	@param level 	The log level.
+ * @param level 	The log level.
  *
- *	@relates as_log
+ * @relates as_log
  */
 static inline void
 as_log_set_level(as_log_level level)
@@ -167,12 +163,12 @@ as_log_set_level(as_log_level level)
 }
 
 /**
- *	Set logging callback for the global client log.
- *	To silence the log, set callback to NULL.
+ * Set logging callback for the global client log.
+ * To silence the log, set callback to NULL.
  *
- *	@param callback 	The log callback.
+ * @param callback 	The log callback.
  *
- *	@relates as_log
+ * @relates as_log
  */
 static inline void
 as_log_set_callback(as_log_callback callback)
@@ -182,11 +178,11 @@ as_log_set_callback(as_log_callback callback)
 }
 
 /**
- *	Convert log level to a string.
+ * Convert log level to a string.
  *
- *	@param level 	The log level.
+ * @param level 	The log level.
  *
- *	@relates as_log
+ * @relates as_log
  */
 static inline const char*
 as_log_level_tostring(as_log_level level)
