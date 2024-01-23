@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2020 Aerospike, Inc.
+ * Copyright 2008-2024 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -219,5 +219,21 @@ as_string_builder_append_uint(as_string_builder* sb, uint32_t val)
 {
 	char buf[64];
 	snprintf(buf, sizeof(buf), "%u", val);
+	return as_string_builder_append(sb, buf);
+}
+
+bool
+as_string_builder_append_int64(as_string_builder* sb, int64_t val)
+{
+	char buf[64];
+	snprintf(buf, sizeof(buf), "%" PRId64, val);
+	return as_string_builder_append(sb, buf);
+}
+
+bool
+as_string_builder_append_uint64(as_string_builder* sb, uint64_t val)
+{
+	char buf[64];
+	snprintf(buf, sizeof(buf), "%" PRIu64, val);
 	return as_string_builder_append(sb, buf);
 }

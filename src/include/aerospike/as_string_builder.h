@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2019 Aerospike, Inc.
+ * Copyright 2008-2024 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -22,9 +22,9 @@
 extern "C" {
 #endif
 
-/******************************************************************************
- * TYPES
- ******************************************************************************/
+//---------------------------------
+// Types
+//---------------------------------
 
 /**
  * Fast, non thread safe string builder implementation.
@@ -56,9 +56,9 @@ typedef struct as_string_builder_s {
 	bool free;
 } as_string_builder;
 
-/******************************************************************************
- * MACROS
- ******************************************************************************/
+//---------------------------------
+// Macros
+//---------------------------------
 	
 /**
  * Initialize string builder with a stack allocated buffer.
@@ -71,9 +71,9 @@ typedef struct as_string_builder_s {
 (__sb)->resize = (__resize);\
 (__sb)->free = false;
 	
-/******************************************************************************
- * INSTANCE FUNCTIONS
- ******************************************************************************/
+//---------------------------------
+// Functions
+//---------------------------------
 	
 /**
  * Initialize string builder with a heap allocated buffer.
@@ -146,6 +146,20 @@ as_string_builder_append_int(as_string_builder* sb, int val);
  */
 AS_EXTERN bool
 as_string_builder_append_uint(as_string_builder* sb, uint32_t val);
+
+/**
+ * Append signed 64 bit integer to string buffer.
+ * Returns if successful or not.
+ */
+AS_EXTERN bool
+as_string_builder_append_int64(as_string_builder* sb, int64_t val);
+
+/**
+ * Append unsigned 64 bit integer to string buffer.
+ * Returns if successful or not.
+ */
+AS_EXTERN bool
+as_string_builder_append_uint64(as_string_builder* sb, uint64_t val);
 
 /**
  * Append newline to string buffer.
