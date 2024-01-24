@@ -1,5 +1,5 @@
-/* 
- * Copyright 2008-2023 Aerospike, Inc.
+/*
+ * Copyright 2008-2024 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -23,6 +23,10 @@
 extern "C" {
 #endif
 
+//---------------------------------
+// Macros
+//---------------------------------
+
 #define AS_PACKER_BUFFER_SIZE 8192
 
 #define AS_PACKED_MAP_FLAG_NONE				0x00
@@ -35,6 +39,10 @@ extern "C" {
 #define AS_PACKED_LIST_FLAG_ORDERED			0x01
 
 #define AS_PACKED_PERSIST_INDEX				0x10
+
+//---------------------------------
+// Types
+//---------------------------------
 
 typedef struct as_packer_buffer {
 	struct as_packer_buffer *next;
@@ -71,9 +79,9 @@ typedef enum msgpack_compare_e {
 	MSGPACK_COMPARE_GREATER = 2,
 } msgpack_compare_t;
 
-/******************************************************************************
- * FUNCTIONS
- ******************************************************************************/
+//---------------------------------
+// Functions
+//---------------------------------
 
 AS_EXTERN as_serializer *as_msgpack_new(void);
 AS_EXTERN as_serializer *as_msgpack_init(as_serializer *);
@@ -89,9 +97,9 @@ int as_unpack_val(as_unpacker *pk, as_val **val);
 
 AS_EXTERN msgpack_compare_t as_val_cmp(const as_val* v1, const as_val* v2);
 
-/******************************************************************************
- * Pack direct functions
- ******************************************************************************/
+//---------------------------------
+// Pack direct functions
+//---------------------------------
 
 static inline uint32_t as_pack_nil_size()
 {
@@ -101,7 +109,7 @@ static inline uint32_t as_pack_bool_size()
 {
 	return 1;
 }
-int as_pack_nil(as_packer *pk);
+AS_EXTERN int as_pack_nil(as_packer *pk);
 int as_pack_bool(as_packer *pk, bool val);
 
 static inline uint32_t as_pack_cmp_inf_size()
@@ -117,8 +125,8 @@ int as_pack_cmp_wildcard(as_packer *pk);
 
 uint32_t as_pack_uint64_size(uint64_t val);
 uint32_t as_pack_int64_size(int64_t val);
-int as_pack_uint64(as_packer *pk, uint64_t val);
-int as_pack_int64(as_packer *pk, int64_t val);
+AS_EXTERN int as_pack_uint64(as_packer *pk, uint64_t val);
+AS_EXTERN int as_pack_int64(as_packer *pk, int64_t val);
 
 static inline uint32_t as_pack_float_size()
 {
@@ -149,7 +157,7 @@ int as_pack_bin(as_packer *pk, const uint8_t *buf, uint32_t sz);
  * Pack a list header with ele_count.
  * @return 0 on success
  */
-int as_pack_list_header(as_packer *pk, uint32_t ele_count);
+AS_EXTERN int as_pack_list_header(as_packer *pk, uint32_t ele_count);
 /**
  * Get packed header size for list with ele_count.
  * @return header size in bytes
@@ -159,7 +167,7 @@ uint32_t as_pack_list_header_get_size(uint32_t ele_count);
  * Pack a map header with ele_count.
  * @return 0 on success
  */
-int as_pack_map_header(as_packer *pk, uint32_t ele_count);
+AS_EXTERN int as_pack_map_header(as_packer *pk, uint32_t ele_count);
 /**
  * Get packed header size for map with ele_count.
  * @return header size in bytes
@@ -178,14 +186,14 @@ uint32_t as_pack_ext_header_get_size(uint32_t content_size);
  * Pack an ext type.
  * @return 0 on success
  */
-int as_pack_ext_header(as_packer *pk, uint32_t content_size, uint8_t type);
+AS_EXTERN int as_pack_ext_header(as_packer *pk, uint32_t content_size, uint8_t type);
 int as_pack_buf_ext_header(uint8_t *buf, uint32_t size, uint32_t content_size, uint8_t type);
 
-int as_pack_append(as_packer *pk, const unsigned char *buf, uint32_t sz);
+AS_EXTERN int as_pack_append(as_packer *pk, const unsigned char *buf, uint32_t sz);
 
-/******************************************************************************
- * Unpack direct functions
- ******************************************************************************/
+//---------------------------------
+// Unpack direct functions
+//---------------------------------
 
 /**
  * Check next element without consuming any bytes.
