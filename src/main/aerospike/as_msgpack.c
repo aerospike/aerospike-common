@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2022 Aerospike, Inc.
+ * Copyright 2008-2024 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -1114,12 +1114,12 @@ unpack_orderedmap(as_unpacker* pk, uint32_t ele_count, as_val** val,
 }
 
 static int
-unpack_map(as_unpacker* pk, uint32_t size, as_val** val)
+unpack_map(as_unpacker* pk, uint32_t ele_count, as_val** val)
 {
 	uint8_t flags = 0;
 
 	// Skip ext element key which is only at the start for metadata.
-	if (size != 0 && as_unpack_peek_is_ext(pk)) {
+	if (ele_count != 0 && as_unpack_peek_is_ext(pk)) {
 		as_msgpack_ext ext;
 
 		if (as_unpack_ext(pk, &ext) != 0 || as_unpack_size(pk) < 0) {
@@ -1127,57 +1127,15 @@ unpack_map(as_unpacker* pk, uint32_t size, as_val** val)
 		}
 
 		flags = ext.type;
-		size--;
+		ele_count--;
 	}
 
 	// Check preserve order bit.
 	if ((flags & AS_PACKED_MAP_FLAG_PRESERVE_ORDER) != 0) {
-		return unpack_map_create_list(pk, size, val);
+		return unpack_map_create_list(pk, ele_count, val);
 	}
 
-	if ((flags & AS_PACKED_MAP_FLAG_K_ORDERED) != 0) {
-		return unpack_orderedmap(pk, size, val, flags);
-	}
-
-	as_orderedmap *map = as_orderedmap_new(size);
-
-	if (! map) {
-		return -2;
-	}
-
-	for (uint32_t i = 0; i < size; i++) {
-		as_val *k = NULL;
-		as_val *v = NULL;
-
-		if (as_unpack_val(pk, &k) != 0) {
-			as_orderedmap_destroy(map);
-			return -3;
-		}
-
-		if (as_unpack_val(pk, &v) != 0) {
-			as_val_destroy(k);
-			as_orderedmap_destroy(map);
-			return -4;
-		}
-
-		if (k && v) {
-			if (as_orderedmap_set(map, k, v) != 0) {
-				as_val_destroy(k);
-				as_val_destroy(v);
-				as_orderedmap_destroy(map);
-				return -5;
-			}
- 		}
-		else {
-			as_val_destroy(k);
-			as_val_destroy(v);
-		}
-	}
-
-	as_orderedmap_set_flags(map, flags);
-	*val = (as_val *)map;
-
-	return 0;
+	return unpack_orderedmap(pk, ele_count, val, flags);
 }
 
 int

@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Aerospike, Inc.
+ * Copyright 2022-2024 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -80,15 +80,11 @@ is_valid_key_type(const as_val* key)
 	}
 
 	switch (as_val_type(key)) {
-	case AS_NIL:
-	case AS_BOOLEAN:
 	case AS_INTEGER:
-	case AS_LIST:
-	case AS_DOUBLE:
 	case AS_STRING:
-	case AS_BYTES:
-	case AS_GEOJSON:
 		break;
+	case AS_BYTES:
+		return as_bytes_get_type((as_bytes*)key) == AS_BYTES_BLOB;
 	default:
 		return false;
 	}
