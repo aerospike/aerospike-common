@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2020 Aerospike, Inc.
+ * Copyright 2008-2024 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -51,7 +51,7 @@ as_random_init(as_random* random)
 }
 
 as_random*
-as_random_instance()
+as_random_instance(void)
 {
 	as_random* random = &as_rand;
 

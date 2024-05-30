@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2024 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -19,7 +19,7 @@
 #if !defined(_MSC_VER)
 
 bool
-cf_clock_init()
+cf_clock_init(void)
 {
 	return true;
 }

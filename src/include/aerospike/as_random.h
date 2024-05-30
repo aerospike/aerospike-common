@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2020 Aerospike, Inc.
+ * Copyright 2008-2024 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -81,7 +81,7 @@ as_random_next_uint32(as_random* random)
  * Get random unsigned 64 bit integer from thread local instance.
  */
 static inline uint64_t
-as_random_get_uint64()
+as_random_get_uint64(void)
 {
 	as_random* random = as_random_instance();
 	return as_random_next_uint64(random);
@@ -91,7 +91,7 @@ as_random_get_uint64()
  * Get random unsigned 32 bit integer from thread local instance.
  */
 static inline uint32_t
-as_random_get_uint32()
+as_random_get_uint32(void)
 {
 	return (uint32_t)as_random_get_uint64();
 }

@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2024 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -31,7 +31,7 @@ as_result * as_result_init(as_result * r) {
     return r;
 }
 
-as_result * as_result_new() {
+as_result * as_result_new(void) {
     as_result * r = (as_result *) cf_malloc(sizeof(as_result));
     if (!r) return r;
     r->is_malloc = true;

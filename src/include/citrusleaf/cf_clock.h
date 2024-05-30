@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2022 Aerospike, Inc.
+ * Copyright 2008-2024 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -143,7 +143,7 @@ cf_secs_since_clepoch()
 // MONOTONIC
 
 static inline cf_clock
-cf_getns()
+cf_getns(void)
 {
 	return clock_gettime_nsec_np(CLOCK_UPTIME_RAW);
 }
@@ -151,7 +151,7 @@ cf_getns()
 // WALL CLOCK (system epoch)
 
 static inline cf_clock
-cf_clock_getabsolute()  // wall clock time in milliseconds
+cf_clock_getabsolute(void)  // wall clock time in milliseconds
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -191,7 +191,7 @@ cf_clock_current_add(struct timespec* delta, struct timespec* out)
 // WALL CLOCK (citrusleaf epoch)
 
 static inline cf_clock
-cf_clepoch_milliseconds()
+cf_clepoch_milliseconds(void)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -199,7 +199,7 @@ cf_clepoch_milliseconds()
 }
 
 static inline cf_clock
-cf_secs_since_clepoch()
+cf_secs_since_clepoch(void)
 {
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
@@ -314,19 +314,19 @@ cf_secs_since_clepoch()
 // MONOTONIC
 
 static inline cf_clock
-cf_getus()
+cf_getus(void)
 {
 	return cf_getns() / 1000;
 }
 
 static inline cf_clock
-cf_getms()
+cf_getms(void)
 {
 	return cf_getns() / (1000 * 1000);
 }
 
 static inline cf_clock
-cf_get_seconds()
+cf_get_seconds(void)
 {
 	return cf_getns() / (1000 * 1000 * 1000);
 }
@@ -401,7 +401,7 @@ cf_utc_ns_from_clepoch_sec(uint64_t clepoch_sec)
 }
 
 static inline uint32_t
-cf_clepoch_seconds()
+cf_clepoch_seconds(void)
 {
 	return (uint32_t)cf_secs_since_clepoch();
 }

@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2024 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -48,7 +48,7 @@ static const as_serializer_hooks as_msgpack_serializer_hooks = {
  * FUNCTIONS
  *****************************************************************************/
 
-as_serializer *as_msgpack_new()
+as_serializer *as_msgpack_new(void)
 {
 	return as_serializer_new(&as_msgpack_serializer_hooks);
 }

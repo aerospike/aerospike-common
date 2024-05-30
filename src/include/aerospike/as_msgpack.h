@@ -101,22 +101,22 @@ AS_EXTERN msgpack_compare_t as_val_cmp(const as_val* v1, const as_val* v2);
 // Pack direct functions
 //---------------------------------
 
-static inline uint32_t as_pack_nil_size()
+static inline uint32_t as_pack_nil_size(void)
 {
 	return 1;
 }
-static inline uint32_t as_pack_bool_size()
+static inline uint32_t as_pack_bool_size(void)
 {
 	return 1;
 }
 AS_EXTERN int as_pack_nil(as_packer *pk);
 int as_pack_bool(as_packer *pk, bool val);
 
-static inline uint32_t as_pack_cmp_inf_size()
+static inline uint32_t as_pack_cmp_inf_size(void)
 {
 	return 3;
 }
-static inline uint32_t as_pack_cmp_wildcard_size()
+static inline uint32_t as_pack_cmp_wildcard_size(void)
 {
 	return 3;
 }
@@ -128,11 +128,11 @@ uint32_t as_pack_int64_size(int64_t val);
 AS_EXTERN int as_pack_uint64(as_packer *pk, uint64_t val);
 AS_EXTERN int as_pack_int64(as_packer *pk, int64_t val);
 
-static inline uint32_t as_pack_float_size()
+static inline uint32_t as_pack_float_size(void)
 {
 	return 1 + 4;
 }
-static inline uint32_t as_pack_double_size()
+static inline uint32_t as_pack_double_size(void)
 {
 	return 1 + 8;
 }
