@@ -476,35 +476,35 @@ pack_as_double(as_packer *pk, const as_double *d)
 }
 
 static int
-pack_string_header(as_packer *pk, uint32_t size)
+pack_string_header(as_packer *pk, uint32_t size, bool resize)
 {
 	if (size < 32) {
-		return pack_byte(pk, (uint8_t)(0xa0 | size), true);
+		return pack_byte(pk, (uint8_t)(0xa0 | size), resize);
 	}
 
 	if (size < 256) {
-		return pack_type_uint8(pk, 0xd9, (uint8_t)size, true);
+		return pack_type_uint8(pk, 0xd9, (uint8_t)size, resize);
 	}
 
 	if (size < 65536) {
-		return pack_type_uint16(pk, 0xda, (uint16_t)size, true);
+		return pack_type_uint16(pk, 0xda, (uint16_t)size, resize);
 	}
 
-	return pack_type_uint32(pk, 0xdb, size, true);
+	return pack_type_uint32(pk, 0xdb, size, resize);
 }
 
 static inline int
 pack_byte_array_header(as_packer *pk, uint32_t size)
 {
 	// Use string header codes for byte arrays.
-	return pack_string_header(pk, size);
+	return pack_string_header(pk, size, true);
 }
 
 static int
 pack_string(as_packer *pk, as_string *s)
 {
 	uint32_t length = (uint32_t)as_string_len(s);
-	int rc = pack_string_header(pk, length + 1);
+	int rc = pack_string_header(pk, length + 1, true);
 
 	if (rc == 0) {
 		rc = pack_byte(pk, AS_BYTES_STRING, true);
@@ -1393,10 +1393,25 @@ as_pack_bin_size(uint32_t buf_sz)
 int
 as_pack_str(as_packer *pk, const uint8_t *buf, uint32_t sz)
 {
-	int rc = pack_string_header(pk, sz);
+	int rc = pack_string_header(pk, sz, false);
 
 	if (rc == 0 && buf) {
 		return pack_append(pk, buf, sz, false);
+	}
+
+	return rc;
+}
+
+int
+as_pack_str_with_type(as_packer *pk, uint8_t type, const uint8_t *buf,
+		uint32_t sz)
+{
+	int rc = pack_string_header(pk, sz + 1, false);
+
+	if (rc == 0 && buf) {
+		if ((rc = pack_byte(pk, type, false)) == 0) {
+			return pack_append(pk, buf, sz, false);
+		}
 	}
 
 	return rc;

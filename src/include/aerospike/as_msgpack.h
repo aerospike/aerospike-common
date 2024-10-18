@@ -152,7 +152,9 @@ uint32_t as_pack_bin_size(uint32_t buf_sz);
  * @return 0 on success
  */
 int as_pack_str(as_packer *pk, const uint8_t *buf, uint32_t sz);
+int as_pack_str_with_type(as_packer *pk, uint8_t type, const uint8_t *buf, uint32_t sz);
 int as_pack_bin(as_packer *pk, const uint8_t *buf, uint32_t sz);
+
 /**
  * Pack a list header with ele_count.
  * @return 0 on success
