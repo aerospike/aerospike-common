@@ -299,6 +299,19 @@ pack_resize(as_packer *pk, uint32_t sz)
 }
 
 static inline int
+advance_offset(as_packer *pk, uint32_t sz)
+{
+	uint64_t offset = (uint64_t)pk->offset + sz;
+
+	if (offset > INT32_MAX) {
+		return -1;
+	}
+
+	pk->offset = (uint32_t)offset;
+	return 0;
+}
+
+static inline int
 pack_append(as_packer *pk, const unsigned char *src, uint32_t sz, bool resize)
 {
 	if (pk->buffer) {
@@ -309,8 +322,7 @@ pack_append(as_packer *pk, const unsigned char *src, uint32_t sz, bool resize)
 		}
 		memcpy(pk->buffer + pk->offset, src, (size_t)sz);
 	}
-	pk->offset += sz;
-	return 0;
+	return advance_offset(pk, sz);
 }
 
 static inline int
@@ -324,8 +336,7 @@ pack_byte(as_packer *pk, uint8_t val, bool resize)
 		}
 		*(pk->buffer + pk->offset) = val;
 	}
-	pk->offset++;
-	return 0;
+	return advance_offset(pk, 1);
 }
 
 static inline int
@@ -341,8 +352,7 @@ pack_type_uint8(as_packer *pk, unsigned char type, uint8_t val, bool resize)
 		*p++ = type;
 		*p = val;
 	}
-	pk->offset += 2;
-	return 0;
+	return advance_offset(pk, 2);
 }
 
 static inline int
@@ -361,8 +371,7 @@ pack_type_uint16(as_packer *pk, unsigned char type, uint16_t val, bool resize)
 		*p++ = *s++;
 		*p = *s;
 	}
-	pk->offset += 3;
-	return 0;
+	return advance_offset(pk, 3);
 }
 
 static inline int
@@ -379,8 +388,7 @@ pack_type_uint32(as_packer *pk, unsigned char type, uint32_t val, bool resize)
 		*p++ = type;
 		memcpy(p, &swapped, 4);
 	}
-	pk->offset += 5;
-	return 0;
+	return advance_offset(pk, 5);
 }
 
 static inline int
@@ -397,8 +405,7 @@ pack_type_uint64(as_packer *pk, unsigned char type, uint64_t val, bool resize)
 		*p++ = type;
 		memcpy(p, &swapped, 8);
 	}
-	pk->offset += 9;
-	return 0;
+	return advance_offset(pk, 9);
 }
 
 static inline int

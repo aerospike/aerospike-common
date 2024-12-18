@@ -19,7 +19,6 @@
 #include <aerospike/as_serializer.h>
 #include <aerospike/as_types.h>
 #include <citrusleaf/alloc.h>
-#include <limits.h>
 #include <string.h>
 
 /******************************************************************************
@@ -91,7 +90,7 @@ static int32_t as_msgpack_serializer_serialize_presized(as_serializer *s, const 
 		.buffer = buf,
 		// Prevent extra allocation.
 		// buf should contain (pre-sized) space for the unpacking.
-		.capacity = INT_MAX,
+		.capacity = INT32_MAX,
 		.offset = 0,
 		.head = 0,
 		.tail = 0,
