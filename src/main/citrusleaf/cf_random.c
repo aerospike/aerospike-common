@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2023 Aerospike, Inc.
+ * Copyright 2008-2025 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -15,8 +15,6 @@
  * the License.
  */
 #include <citrusleaf/cf_random.h>
-#include <fcntl.h>
-#include <openssl/rand.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <string.h>
@@ -33,6 +31,8 @@ static pthread_mutex_t rand_buf_lock = PTHREAD_MUTEX_INITIALIZER;
 
 #if defined(__linux__) || defined(__FreeBSD__)
 #include <unistd.h>
+#include <fcntl.h>
+#include <openssl/rand.h>
 
 static int
 cf_rand_reload(void)
@@ -96,34 +96,22 @@ cf_rand_reload(void)
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <bcrypt.h>
 
 static int
 cf_rand_reload(void)
 {
-	// Acquire/Release context every buffer reload.
-	HCRYPTPROV hProvider;
+	NTSTATUS Status;
+	Status = BCryptGenRandom(NULL, rand_buf, sizeof(rand_buf), BCRYPT_USE_SYSTEM_PREFERRED_RNG);
 
-	if (! CryptAcquireContext(&hProvider, NULL, NULL, PROV_RSA_FULL,
-			CRYPT_VERIFYCONTEXT | CRYPT_SILENT)) {
-#if ! defined ENHANCED_ALLOC
+	if (!BCRYPT_SUCCESS(Status)) {
+	#if !defined ENHANCED_ALLOC
 		as_log_error("Failed to seed random number generator");
-#endif
-
+	#endif
 		return -1;
 	}
 
-	if (! CryptGenRandom(hProvider, sizeof(rand_buf), rand_buf)) {
-#if ! defined ENHANCED_ALLOC
-		as_log_error("Failed to reload random buffer");
-#endif
-		CryptReleaseContext(hProvider, 0);
-
-		return -1;
-	}
-
-	CryptReleaseContext(hProvider, 0);
 	rand_buf_off = sizeof(rand_buf);
-
 	return 0;
 }
 #endif
