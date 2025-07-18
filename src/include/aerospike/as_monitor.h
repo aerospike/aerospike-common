@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 Aerospike, Inc.
+ * Copyright 2008-2025 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -18,6 +18,10 @@
 
 #include <aerospike/as_std.h>
 #include <pthread.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef struct {
 	pthread_mutex_t lock;
@@ -64,3 +68,7 @@ as_monitor_wait(as_monitor* monitor)
 	}
 	pthread_mutex_unlock(&monitor->lock);
 }
+
+#ifdef __cplusplus
+} // end extern "C"
+#endif

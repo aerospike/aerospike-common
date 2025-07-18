@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2023 Aerospike, Inc.
+ * Copyright 2008-2025 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -21,6 +21,10 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 bool
 as_tls_match_name(X509 *x509, const char *name, bool allow_wildcard);
 
@@ -29,3 +33,6 @@ bool
 as_tls_match_san(X509 *x509, const char *name);
 #endif
 
+#ifdef __cplusplus
+} // end extern "C"
+#endif
