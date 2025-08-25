@@ -106,6 +106,8 @@ as_thread_pool_queue_task(as_thread_pool* pool, as_task_fn task_fn, void* task)
 int
 as_thread_pool_destroy(as_thread_pool* pool)
 {
+	as_log_info("as_thread_pool_destroy() called");
+
 	// Prevent double destroy.
 	uint32_t thread_size = as_fas_uint32(&pool->thread_size, 0);
 
