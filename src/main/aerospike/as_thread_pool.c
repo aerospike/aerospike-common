@@ -17,6 +17,7 @@
 #include <aerospike/as_thread_pool.h>
 #include <aerospike/as_atomic.h>
 #include <aerospike/as_thread.h>
+#include <aerospike/as_log_macros.h>
 #include <citrusleaf/alloc.h>
 #include <string.h>
 
