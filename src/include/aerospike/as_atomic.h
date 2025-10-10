@@ -126,3 +126,24 @@
 		float nv = _new_value; \
 		as_cas_uint32((uint32_t*)_target, *(uint32_t*)&ov, *(uint32_t*)&nv); \
 	})
+
+/******************************************************************************
+ * DECREMENT
+ *****************************************************************************/
+ 
+// Safe decrement that only decrements if target > 0 (prevents underflow).
+static inline bool
+as_try_decr_uint32(uint32_t* target)
+{
+	uint32_t current = as_load_uint32(target);
+
+	while (current > 0) {
+		if (as_cas_uint32(target, current, current - 1)) {
+			return true;
+		}
+
+		current = as_load_uint32(target);
+	}
+
+	return false;
+}
