@@ -9,7 +9,12 @@ jobs:
         os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v4
+    - name: Harden the runner (Audit all outbound calls)
+      uses: step-security/harden-runner@df199fb7be9f65074067a9eb93f12bb4c5547cf2 # v2.13.3
+      with:
+        egress-policy: audit
+
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       with:
         fetch-depth: 0
     - name: Build
