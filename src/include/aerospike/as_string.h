@@ -104,8 +104,8 @@ typedef struct as_string_s {
 	
 	/**
 	 *	@private
-	 *	as_boolean is a subtype of as_val.
-	 *	You can cast as_boolean to as_val.
+	 *	as_string is a subtype of as_val.
+	 *	You can cast as_string to as_val.
 	 */
 	as_val _;
 
