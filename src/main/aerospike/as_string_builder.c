@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2024 Aerospike, Inc.
+ * Copyright 2008-2026 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -98,6 +98,32 @@ as_string_builder_append(as_string_builder* sb, const char* src)
 	char* trg = &sb->data[sb->length];
 
 	while (*src) {
+		if (++sb->length < sb->capacity) {
+			*trg++ = *src++;
+			continue;
+		}
+
+		// Optimistic increase of length failed. Roll it back.
+		sb->length--;
+
+		if (sb->resize) {
+			return as_sb_expand(sb, src);
+		}
+		else {
+			*trg = 0;
+			return false;
+		}
+	}
+	*trg = 0;
+	return true;
+}
+
+bool
+as_string_builder_append_chars(as_string_builder* sb, const char* src, uint32_t len)
+{
+	char* trg = &sb->data[sb->length];
+
+	for (uint32_t i = 0; i < len; i++) {
 		if (++sb->length < sb->capacity) {
 			*trg++ = *src++;
 			continue;

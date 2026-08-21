@@ -1,5 +1,5 @@
 /* 
- * Copyright 2008-2024 Aerospike, Inc.
+ * Copyright 2008-2026 Aerospike, Inc.
  *
  * Portions may be licensed to Aerospike, Inc. under one or more contributor
  * license agreements.
@@ -117,7 +117,14 @@ as_string_builder_reset(as_string_builder* sb)
  * Returns if successful or not.
  */
 AS_EXTERN bool
-as_string_builder_append(as_string_builder* sb, const char* value);
+as_string_builder_append(as_string_builder* sb, const char* src);
+
+/**
+ * Append non-null terminated string with length to string buffer.
+ * Returns if successful or not.
+ */
+AS_EXTERN bool
+as_string_builder_append_chars(as_string_builder* sb, const char* src, uint32_t len);
 
 /**
  * Append a single character to string buffer.

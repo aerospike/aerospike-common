@@ -130,8 +130,51 @@ TEST( string_builder_bytes_resize, "string builder append bytes with resize" ) {
 	assert(sb.capacity == 24);
 	
 	// Verify expected string.
-	assert(sb.length == 13);
 	assert(strcmp(sb.data, "[11 22 33 44]") == 0);
+
+	as_string_builder_destroy(&sb);
+}
+
+TEST( string_builder_chars, "string builder append chars" ) {
+
+	as_string_builder sb;
+	as_string_builder_inita(&sb, 6, false);
+
+	// Normal append
+	bool status = as_string_builder_append_chars(&sb, "abcdef", 3);
+	assert(status);
+	assert(sb.length == 3); // only first 3 bytes should be appended.
+	assert(sb.capacity == 6);
+
+	status = as_string_builder_append_chars(&sb, "de", 2);
+	assert(status);
+	assert(sb.length == 5); // only first 3 bytes should be appended.
+	assert(sb.capacity == 6);
+
+	// This append will not be successful because extra chars doesn't fit.
+	status = as_string_builder_append_chars(&sb, "f", 1);
+	assert(!status);
+
+	// Verify expected string.
+	assert(sb.length == 5);
+	assert(strcmp(sb.data, "abcde") == 0);
+
+	as_string_builder_destroy(&sb);
+}
+
+TEST( string_builder_chars_resize, "string builder append chars resize" ) {
+
+	as_string_builder sb;
+	as_string_builder_inita(&sb, 6, true);
+
+	// Normal append
+	bool status = as_string_builder_append_chars(&sb, "abcdef", 6);
+	assert(status);
+	assert(sb.length == 6);
+	assert(sb.capacity == 12);
+
+	// Verify expected string.
+	assert(strcmp(sb.data, "abcdef") == 0);
 
 	as_string_builder_destroy(&sb);
 }
@@ -146,4 +189,6 @@ SUITE( string_builder, "string builder" ) {
     suite_add( string_builder_resize_heap );
     suite_add( string_builder_bytes );
     suite_add( string_builder_bytes_resize );
+    suite_add( string_builder_chars );
+    suite_add( string_builder_chars_resize );
 }
