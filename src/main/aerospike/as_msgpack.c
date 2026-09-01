@@ -32,28 +32,14 @@
  * INTERNAL TYPEDEFS & CONSTANTS
  ******************************************************************************/
 
-#define MSGPACK_COMPARE_MAX_DEPTH	256
-#define MSGPACK_PARSE_MEMBLOCK_STATE_COUNT	256
+// Product-set bound on nesting, and a refusal rather than a threshold: past
+// this the input is rejected, not walked another way. Must agree with what
+// the server accepts for a stored list/map.
+#define MSGPACK_MAX_DEPTH	64
 
 #define ASVAL_CMP_EXT_TYPE	0xFF
 #define ASVAL_CMP_WILDCARD	0x00
 #define ASVAL_CMP_INF		0x01
-
-typedef struct msgpack_parse_state_s {
-	uint32_t len1;
-	uint32_t len2;
-	uint32_t len;
-	uint32_t index;
-	uint8_t map_pair;
-	as_val_t type;
-	msgpack_compare_t default_compare_type;
-} msgpack_parse_state;
-
-typedef struct msgpack_parse_memblock_s {
-	struct msgpack_parse_memblock_s *prev;
-	msgpack_parse_state buffer[MSGPACK_PARSE_MEMBLOCK_STATE_COUNT];
-	size_t count;
-} msgpack_parse_memblock;
 
 #define MSGPACK_COMPARE_RET_LESS_OR_GREATER(_arg1, _arg2) { \
 	if ((_arg1) < (_arg2)) { \
@@ -68,17 +54,6 @@ typedef struct msgpack_parse_memblock_s {
  * FORWARD DECLARATIONS
  ******************************************************************************/
 
-// msgpack_parse
-static msgpack_parse_memblock *msgpack_parse_memblock_create(msgpack_parse_memblock *prev);
-static void msgpack_parse_memblock_destroy(msgpack_parse_memblock *block);
-static msgpack_parse_state *msgpack_parse_memblock_next(msgpack_parse_memblock **block);
-static inline bool msgpack_parse_memblock_has_prev(const msgpack_parse_memblock *block);
-static msgpack_parse_state *msgpack_parse_memblock_prev(msgpack_parse_memblock **block);
-static bool msgpack_parse_state_list_cmp_init(msgpack_parse_state *state, as_unpacker *pk1, as_unpacker *pk2);
-static bool msgpack_parse_state_list_size_init(msgpack_parse_state *state, as_unpacker *pk);
-static bool msgpack_parse_state_map_cmp_init(msgpack_parse_state *state, as_unpacker *pk1, as_unpacker *pk2);
-static bool msgpack_parse_state_map_size_init(msgpack_parse_state *state, as_unpacker *pk);
-
 // msgpack_compare
 static inline msgpack_compare_t msgpack_compare_int(as_unpacker *pk1, as_unpacker *pk2);
 static inline msgpack_compare_t msgpack_compare_double(as_unpacker *pk1, as_unpacker *pk2);
@@ -86,13 +61,10 @@ static inline int64_t msgpack_get_blob_len(as_unpacker *pk);
 static msgpack_compare_t msgpack_compare_blob_internal(as_unpacker *pk1, uint32_t len1, as_unpacker *pk2, uint32_t len2);
 static inline msgpack_compare_t msgpack_compare_blob(as_unpacker *pk1, as_unpacker *pk2);
 static inline msgpack_compare_t msgpack_compare_int64_t(int64_t x1, int64_t x2);
-static bool msgpack_skip(as_unpacker *pk, size_t n);
-static bool msgpack_compare_unwind(as_unpacker *pk1, as_unpacker *pk2, const msgpack_parse_state *state);
-static bool msgpack_compare_unwind_all(as_unpacker *pk1, as_unpacker *pk2, msgpack_parse_memblock **block);
+static bool msgpack_skip(as_unpacker *pk, size_t n, size_t depth);
 static msgpack_compare_t msgpack_compare_list(as_unpacker *pk1, as_unpacker *pk2, size_t depth);
 static msgpack_compare_t msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth);
 static inline msgpack_compare_t msgpack_peek_compare_type(const as_unpacker *pk1, const as_unpacker *pk2, as_val_t *type);
-static msgpack_compare_t msgpack_compare_non_recursive(as_unpacker *pk1, as_unpacker *pk2, msgpack_parse_memblock **block, msgpack_parse_state *state);
 static inline msgpack_compare_t msgpack_compare_type(as_unpacker *pk1, as_unpacker *pk2, as_val_t type, size_t depth);
 static inline msgpack_compare_t msgpack_compare_internal(as_unpacker *pk1, as_unpacker *pk2, size_t depth, as_val_t *type);
 
@@ -107,155 +79,9 @@ static inline int pack_ext_header_internal(as_packer *pk, uint32_t content_size,
 static int64_t unpack_list_elements_size(as_unpacker *pk, uint32_t ele_count, uint32_t depth);
 static int64_t unpack_map_elements_size(as_unpacker *pk, uint32_t ele_count, uint32_t depth);
 static inline as_val_t bytes_internal_type_to_as_val_t(uint8_t type);
-static int64_t unpack_size_non_recursive(as_unpacker *pk, msgpack_parse_memblock *block, msgpack_parse_state *state);
 static inline int64_t unpack_size_internal(as_unpacker *pk, uint32_t depth);
 static inline const uint8_t *unpack_str_bin(as_unpacker *pk, uint32_t *sz_r);
 
-
-/******************************************************************************
- * MSGPACK_PARSE FUNCTIONS
- ******************************************************************************/
-
-static msgpack_parse_memblock *
-msgpack_parse_memblock_create(msgpack_parse_memblock *prev)
-{
-	msgpack_parse_memblock *p = cf_malloc(sizeof(msgpack_parse_memblock));
-	p->prev = prev;
-	p->count = 0;
-	return p;
-}
-
-static void
-msgpack_parse_memblock_destroy(msgpack_parse_memblock *block)
-{
-	while (block) {
-		msgpack_parse_memblock *p = block;
-		block = block->prev;
-		cf_free(p);
-	}
-}
-
-static msgpack_parse_state *
-msgpack_parse_memblock_next(msgpack_parse_memblock **block)
-{
-	msgpack_parse_memblock *ptr = *block;
-
-	if (ptr->count >= MSGPACK_PARSE_MEMBLOCK_STATE_COUNT) {
-		ptr = msgpack_parse_memblock_create(ptr);
-		*block = ptr;
-	}
-
-	return &ptr->buffer[ptr->count++];
-}
-
-static inline bool
-msgpack_parse_memblock_has_prev(const msgpack_parse_memblock *block)
-{
-	if (block->prev || block->count > 1) {
-		return true;
-	}
-
-	return false;
-}
-
-static msgpack_parse_state *
-msgpack_parse_memblock_prev(msgpack_parse_memblock **block)
-{
-	msgpack_parse_memblock *ptr = *block;
-
-	if (ptr->count <= 1) {
-		ptr = ptr->prev;
-		cf_free(*block);
-		*block = ptr;
-	}
-	else {
-		ptr->count--;
-	}
-
-	// No check for NULL ptr here, use has_prev to make sure it doesn't happen.
-
-	return &ptr->buffer[ptr->count - 1];
-}
-
-static bool
-msgpack_parse_state_list_cmp_init(msgpack_parse_state *state, as_unpacker *pk1,
-		as_unpacker *pk2)
-{
-	int64_t len1 = as_unpack_list_header_element_count(pk1);
-	int64_t len2 = as_unpack_list_header_element_count(pk2);
-	int64_t minlen = (len1 < len2) ? len1 : len2;
-
-	if (minlen < 0) {
-		return false;
-	}
-
-	state->len1 = (uint32_t)len1;
-	state->len2 = (uint32_t)len2;
-	state->index = 0;
-	state->map_pair = 0;
-	state->len = (uint32_t)minlen;
-	state->type = AS_LIST;
-	state->default_compare_type = msgpack_compare_int64_t(len1, len2);
-
-	return true;
-}
-
-static bool
-msgpack_parse_state_list_size_init(msgpack_parse_state *state, as_unpacker *pk)
-{
-	int64_t len = as_unpack_list_header_element_count(pk);
-
-	if (len < 0) {
-		return false;
-	}
-
-	state->index = 0;
-	state->map_pair = 0;
-	state->len = (uint32_t)len;
-	state->type = AS_LIST;
-
-	return true;
-}
-
-static bool
-msgpack_parse_state_map_cmp_init(msgpack_parse_state *state, as_unpacker *pk1,
-		as_unpacker *pk2)
-{
-	int64_t len1 = as_unpack_map_header_element_count(pk1);
-	int64_t len2 = as_unpack_map_header_element_count(pk2);
-	int64_t minlen = (len1 < len2) ? len1 : len2;
-
-	if (minlen < 0) {
-		return false;
-	}
-
-	state->len1 = (uint32_t)len1;
-	state->len2 = (uint32_t)len2;
-	state->index = 0;
-	state->map_pair = 0;
-	state->len = (uint32_t)minlen;
-	state->type = AS_MAP;
-	state->default_compare_type = msgpack_compare_int64_t(len1, len2);
-
-	return true;
-}
-
-static bool
-msgpack_parse_state_map_size_init(msgpack_parse_state *state, as_unpacker *pk)
-{
-	int64_t len = as_unpack_map_header_element_count(pk);
-
-	if (len < 0) {
-		return false;
-	}
-
-	state->index = 0;
-	state->map_pair = 0;
-	state->len = (uint32_t)len;
-	state->type = AS_MAP;
-
-	return true;
-}
 
 /******************************************************************************
  * PACK FUNCTIONS
@@ -851,49 +677,106 @@ as_pack_val(as_packer *pk, const as_val *val)
  * UNPACK FUNCTIONS
  ******************************************************************************/
 
+static int unpack_val(as_unpacker *pk, as_val **val, uint32_t depth);
+
+// Saturates rather than trusting offset <= length - the unpacker is caller
+// initialized, and every guard below is built on this.
+static inline uint32_t
+unpack_remaining(const as_unpacker *pk)
+{
+	return pk->offset <= pk->length ? pk->length - pk->offset : 0;
+}
+
+// Subtraction, not offset + sz, which wraps for an attacker supplied sz.
+static inline bool
+unpack_have(const as_unpacker *pk, uint32_t sz)
+{
+	return sz <= unpack_remaining(pk);
+}
+
+static inline bool
+unpack_skip(as_unpacker *pk, uint32_t sz)
+{
+	if (! unpack_have(pk, sz)) {
+		return false;
+	}
+
+	pk->offset += sz;
+
+	return true;
+}
+
+#define UNPACK_HAVE_OR_RETURN(_pk, _sz) { \
+	if (! unpack_have(_pk, _sz)) { \
+		return -1; \
+	} \
+}
+
+#define UNPACK_SKIP_OR_RETURN(_pk, _sz) { \
+	if (! unpack_skip(_pk, _sz)) { \
+		return -1; \
+	} \
+}
+
 static inline uint16_t
 extract_uint16(as_unpacker *pk)
 {
-	uint16_t v = *(uint16_t *)(pk->buffer + pk->offset);
-	uint16_t swapped = cf_swap_from_be16(v);
+	uint16_t v;
+
+	memcpy(&v, pk->buffer + pk->offset, sizeof(v));
 	pk->offset += 2;
-	return swapped;
+
+	return cf_swap_from_be16(v);
 }
 
 static inline uint32_t
 extract_uint32(as_unpacker *pk)
 {
-	uint32_t v = *(uint32_t *)(pk->buffer + pk->offset);
-	uint32_t swapped = cf_swap_from_be32(v);
+	uint32_t v;
+
+	memcpy(&v, pk->buffer + pk->offset, sizeof(v));
 	pk->offset += 4;
-	return swapped;
+
+	return cf_swap_from_be32(v);
 }
 
 static inline uint64_t
 extract_uint64(as_unpacker *pk)
 {
-	uint64_t v = *(uint64_t *)(pk->buffer + pk->offset);
-	uint64_t swapped = cf_swap_from_be64(v);
+	uint64_t v;
+
+	memcpy(&v, pk->buffer + pk->offset, sizeof(v));
 	pk->offset += 8;
-	return swapped;
+
+	return cf_swap_from_be64(v);
 }
 
 static inline float
 extract_float(as_unpacker *pk)
 {
-	uint32_t v = *(uint32_t *)(pk->buffer + pk->offset);
-	uint32_t swapped = cf_swap_from_be32(v);
+	uint32_t v;
+	float x;
+
+	memcpy(&v, pk->buffer + pk->offset, sizeof(v));
+	v = cf_swap_from_be32(v);
+	memcpy(&x, &v, sizeof(x));
 	pk->offset += 4;
-	return *(float*)&swapped;
+
+	return x;
 }
 
 static inline double
 extract_double(as_unpacker *pk)
 {
-	uint64_t v = *(uint64_t *)(pk->buffer + pk->offset);
-	uint64_t swapped = cf_swap_from_be64(v);
+	uint64_t v;
+	double x;
+
+	memcpy(&v, pk->buffer + pk->offset, sizeof(v));
+	v = cf_swap_from_be64(v);
+	memcpy(&x, &v, sizeof(x));
 	pk->offset += 8;
-	return *(double*)&swapped;
+
+	return x;
 }
 
 static inline int
@@ -906,6 +789,8 @@ unpack_nil(as_val **v)
 static inline int
 unpack_ext(as_unpacker *pk, uint8_t type, as_val **v)
 {
+	UNPACK_HAVE_OR_RETURN(pk, 2);
+
 	uint8_t ext_type = pk->buffer[pk->offset++];
 	uint8_t data = pk->buffer[pk->offset++];
 
@@ -947,6 +832,8 @@ unpack_double_val(double d, as_val **v)
 static int
 unpack_blob(as_unpacker *pk, uint32_t size, as_val **val)
 {
+	UNPACK_HAVE_OR_RETURN(pk, size);
+
 	unsigned char type = 0;
 
 	if (size != 0) {
@@ -1002,8 +889,16 @@ unpack_blob(as_unpacker *pk, uint32_t size, as_val **val)
 }
 
 static int
-unpack_list(as_unpacker *pk, uint32_t size, as_val **val)
+unpack_list(as_unpacker *pk, uint32_t size, as_val **val, uint32_t depth)
 {
+	if (++depth > MSGPACK_MAX_DEPTH) {
+		return -1;
+	}
+
+	// An element is at least one byte, so the bytes left cap the count -
+	// without this the header alone dictates the allocation below.
+	UNPACK_HAVE_OR_RETURN(pk, size);
+
 	uint8_t flags = 0;
 
 	// Skip ext element key which is only at the start for metadata.
@@ -1027,7 +922,7 @@ unpack_list(as_unpacker *pk, uint32_t size, as_val **val)
 	for (uint32_t i = 0; i < size; i++) {
 		as_val *v = NULL;
 
-		if (as_unpack_val(pk, &v) != 0 || ! v) {
+		if (unpack_val(pk, &v, depth) != 0 || ! v) {
 			as_arraylist_destroy(list);
 			return -3;
 		}
@@ -1042,7 +937,8 @@ unpack_list(as_unpacker *pk, uint32_t size, as_val **val)
 }
 
 static int
-unpack_map_create_list(as_unpacker *pk, uint32_t size, as_val **val)
+unpack_map_create_list(as_unpacker *pk, uint32_t size, as_val **val,
+		uint32_t depth)
 {
 	// Create list of key value pairs.
 	as_arraylist *list = as_arraylist_new(2 * size, 2 * size);
@@ -1055,12 +951,12 @@ unpack_map_create_list(as_unpacker *pk, uint32_t size, as_val **val)
 		as_val *k = NULL;
 		as_val *v = NULL;
 
-		if (as_unpack_val(pk, &k) != 0) {
+		if (unpack_val(pk, &k, depth) != 0) {
 			as_arraylist_destroy(list);
 			return -2;
 		}
 
-		if (as_unpack_val(pk, &v) != 0) {
+		if (unpack_val(pk, &v, depth) != 0) {
 			as_val_destroy(k);
 			as_arraylist_destroy(list);
 			return -3;
@@ -1083,7 +979,7 @@ unpack_map_create_list(as_unpacker *pk, uint32_t size, as_val **val)
 
 static int
 unpack_orderedmap(as_unpacker* pk, uint32_t ele_count, as_val** val,
-		uint8_t flags)
+		uint8_t flags, uint32_t depth)
 {
 	as_orderedmap *map = as_orderedmap_new(ele_count);
 
@@ -1095,12 +991,12 @@ unpack_orderedmap(as_unpacker* pk, uint32_t ele_count, as_val** val,
 		as_val* k = NULL;
 		as_val* v = NULL;
 
-		if (as_unpack_val(pk, &k) != 0) {
+		if (unpack_val(pk, &k, depth) != 0) {
 			as_orderedmap_destroy(map);
 			return -3;
 		}
 
-		if (as_unpack_val(pk, &v) != 0) {
+		if (unpack_val(pk, &v, depth) != 0) {
 			as_val_destroy(k);
 			as_orderedmap_destroy(map);
 			return -4;
@@ -1121,15 +1017,28 @@ unpack_orderedmap(as_unpacker* pk, uint32_t ele_count, as_val** val,
 }
 
 static int
-unpack_map(as_unpacker* pk, uint32_t ele_count, as_val** val)
+unpack_map(as_unpacker* pk, uint32_t ele_count, as_val** val, uint32_t depth)
 {
+	if (++depth > MSGPACK_MAX_DEPTH) {
+		return -1;
+	}
+
+	// A pair is at least two bytes. Capping the count here is also what stops
+	// 2 * ele_count and the ordered map's capacity from wrapping.
+	if (ele_count > unpack_remaining(pk) / 2) {
+		return -1;
+	}
+
 	uint8_t flags = 0;
 
 	// Skip ext element key which is only at the start for metadata.
 	if (ele_count != 0 && as_unpack_peek_is_ext(pk)) {
 		as_msgpack_ext ext;
 
-		if (as_unpack_ext(pk, &ext) != 0 || as_unpack_size(pk) < 0) {
+		// The skipped value sits at the level already counted, so it
+		// carries depth in rather than depth + 1.
+		if (as_unpack_ext(pk, &ext) != 0 ||
+				unpack_size_internal(pk, depth) < 0) {
 			return -1;
 		}
 
@@ -1139,17 +1048,31 @@ unpack_map(as_unpacker* pk, uint32_t ele_count, as_val** val)
 
 	// Check preserve order bit.
 	if ((flags & AS_PACKED_MAP_FLAG_PRESERVE_ORDER) != 0) {
-		return unpack_map_create_list(pk, ele_count, val);
+		return unpack_map_create_list(pk, ele_count, val, depth);
 	}
 
-	return unpack_orderedmap(pk, ele_count, val, flags);
+	return unpack_orderedmap(pk, ele_count, val, flags, depth);
 }
+
 
 int
 as_unpack_val(as_unpacker *pk, as_val **val)
 {
+	return unpack_val(pk, val, 0);
+}
+
+static int
+unpack_val(as_unpacker *pk, as_val **val, uint32_t depth)
+{
+	// Ahead of the ext peek, which reports an exhausted unpacker as "not ext"
+	// and would otherwise fall through to the type byte read below.
+	UNPACK_HAVE_OR_RETURN(pk, 1);
+
 	if (as_unpack_peek_is_ext(pk)) {
-		as_unpack_size(pk);
+		if (as_unpack_size(pk) < 0) {
+			return -1;
+		}
+
 		*val = NULL;
 		return 0;
 	}
@@ -1166,49 +1089,65 @@ as_unpack_val(as_unpacker *pk, as_val **val)
 		return unpack_boolean(false, val);
 
 	case 0xca: // float
+		UNPACK_HAVE_OR_RETURN(pk, 4);
 		return unpack_double_val((double)extract_float(pk), val);
 	case 0xcb: // double
+		UNPACK_HAVE_OR_RETURN(pk, 8);
 		return unpack_double_val(extract_double(pk), val);
 
 	case 0xd0: // signed 8 bit integer
+		UNPACK_HAVE_OR_RETURN(pk, 1);
 		return unpack_integer_val((int64_t)(int8_t)pk->buffer[pk->offset++],
 				val);
 	case 0xcc: // unsigned 8 bit integer
+		UNPACK_HAVE_OR_RETURN(pk, 1);
 		return unpack_integer_val((int64_t)pk->buffer[pk->offset++], val);
 
 	case 0xd1: // signed 16 bit integer
+		UNPACK_HAVE_OR_RETURN(pk, 2);
 		return unpack_integer_val((int64_t)(int16_t)extract_uint16(pk), val);
 	case 0xcd: // unsigned 16 bit integer
+		UNPACK_HAVE_OR_RETURN(pk, 2);
 		return unpack_integer_val((int64_t)extract_uint16(pk), val);
 
 	case 0xd2: // signed 32 bit integer
+		UNPACK_HAVE_OR_RETURN(pk, 4);
 		return unpack_integer_val((int64_t)(int32_t)extract_uint32(pk), val);
 	case 0xce: // unsigned 32 bit integer
+		UNPACK_HAVE_OR_RETURN(pk, 4);
 		return unpack_integer_val((int64_t)extract_uint32(pk), val);
 
 	case 0xd3: // signed 64 bit integer
 	case 0xcf: // unsigned 64 bit integer
+		UNPACK_HAVE_OR_RETURN(pk, 8);
 		return unpack_integer_val((int64_t)extract_uint64(pk), val);
 
 	case 0xc4:
 	case 0xd9: // string/raw bytes with 8 bit header
+		UNPACK_HAVE_OR_RETURN(pk, 1);
 		return unpack_blob(pk, (uint32_t)pk->buffer[pk->offset++], val);
 	case 0xc5:
 	case 0xda: // string/raw bytes with 16 bit header
+		UNPACK_HAVE_OR_RETURN(pk, 2);
 		return unpack_blob(pk, (uint32_t)extract_uint16(pk), val);
 	case 0xc6:
 	case 0xdb: // string/raw bytes with 32 bit header
+		UNPACK_HAVE_OR_RETURN(pk, 4);
 		return unpack_blob(pk, extract_uint32(pk), val);
 
 	case 0xdc: // list with 16 bit header
-		return unpack_list(pk, (uint32_t)extract_uint16(pk), val);
+		UNPACK_HAVE_OR_RETURN(pk, 2);
+		return unpack_list(pk, (uint32_t)extract_uint16(pk), val, depth);
 	case 0xdd: // list with 32 bit header
-		return unpack_list(pk, extract_uint32(pk), val);
+		UNPACK_HAVE_OR_RETURN(pk, 4);
+		return unpack_list(pk, extract_uint32(pk), val, depth);
 
 	case 0xde: // map with 16 bit header
-		return unpack_map(pk, (uint32_t)extract_uint16(pk), val);
+		UNPACK_HAVE_OR_RETURN(pk, 2);
+		return unpack_map(pk, (uint32_t)extract_uint16(pk), val, depth);
 	case 0xdf: // map with 32 bit header
-		return unpack_map(pk, extract_uint32(pk), val);
+		UNPACK_HAVE_OR_RETURN(pk, 4);
+		return unpack_map(pk, extract_uint32(pk), val, depth);
 
 	case 0xd4: // fixext 1
 		return unpack_ext(pk, type, val);
@@ -1219,11 +1158,11 @@ as_unpack_val(as_unpacker *pk, as_val **val)
 		}
 
 		if ((type & 0xf0) == 0x80) { // map with 8 bit combined header
-			return unpack_map(pk, (uint32_t)(type & 0x0f), val);
+			return unpack_map(pk, (uint32_t)(type & 0x0f), val, depth);
 		}
 
 		if ((type & 0xf0) == 0x90) { // list with 8 bit combined header
-			return unpack_list(pk, (uint32_t)(type & 0x0f), val);
+			return unpack_list(pk, (uint32_t)(type & 0x0f), val, depth);
 		}
 
 		if (type < 0x80) { // 8 bit combined unsigned integer
@@ -1596,20 +1535,8 @@ as_pack_append(as_packer *pk, const unsigned char *buf, uint32_t sz)
 static int64_t
 unpack_list_elements_size(as_unpacker *pk, uint32_t ele_count, uint32_t depth)
 {
-	if (++depth > MSGPACK_COMPARE_MAX_DEPTH) {
-		msgpack_parse_memblock *block = msgpack_parse_memblock_create(NULL);
-		msgpack_parse_state *state = msgpack_parse_memblock_next(&block);
-
-		state->index = 0;
-		state->map_pair = 0;
-		state->len = ele_count;
-		state->type = AS_LIST;
-
-		int64_t ret = unpack_size_non_recursive(pk, block, state);
-
-		msgpack_parse_memblock_destroy(block);
-
-		return ret;
+	if (++depth > MSGPACK_MAX_DEPTH) {
+		return -1;
 	}
 
 	int64_t total = 0;
@@ -1635,19 +1562,8 @@ unpack_list_elements_size(as_unpacker *pk, uint32_t ele_count, uint32_t depth)
 static int64_t
 unpack_map_elements_size(as_unpacker *pk, uint32_t ele_count, uint32_t depth)
 {
-	if (++depth > MSGPACK_COMPARE_MAX_DEPTH) {
-		msgpack_parse_memblock *block = msgpack_parse_memblock_create(NULL);
-		msgpack_parse_state *state = msgpack_parse_memblock_next(&block);
-
-		state->index = 0;
-		state->map_pair = 0;
-		state->len = ele_count;
-		state->type = AS_MAP;
-
-		int64_t ret = unpack_size_non_recursive(pk, block, state);
-		msgpack_parse_memblock_destroy(block);
-
-		return ret;
+	if (++depth > MSGPACK_MAX_DEPTH) {
+		return -1;
 	}
 
 	int64_t total = 0;
@@ -1719,18 +1635,30 @@ as_unpack_peek_type(const as_unpacker *pk)
 
 	case 0xc4:
 	case 0xd9: { // string/raw bytes with 8 bit header
+		if (! unpack_have(pk, 3)) {
+			return AS_UNDEF;
+		}
+
 		uint8_t type1 = pk->buffer[pk->offset + 2];
 		return bytes_internal_type_to_as_val_t(type1);
 	}
 
 	case 0xc5:
 	case 0xda: { // string/raw bytes with 16 bit header
+		if (! unpack_have(pk, 4)) {
+			return AS_UNDEF;
+		}
+
 		uint8_t type1 = pk->buffer[pk->offset + 3];
 		return bytes_internal_type_to_as_val_t(type1);
 	}
 
 	case 0xc6:
 	case 0xdb: { // string/raw bytes with 32 bit header
+		if (! unpack_have(pk, 6)) {
+			return AS_UNDEF;
+		}
+
 		uint8_t type1 = pk->buffer[pk->offset + 5];
 		return bytes_internal_type_to_as_val_t(type1);
 	}
@@ -1744,9 +1672,17 @@ as_unpack_peek_type(const as_unpacker *pk)
 		return AS_MAP;
 
 	case 0xd4: { // fixext1
+		if (! unpack_have(pk, 2)) {
+			return AS_UNDEF;
+		}
+
 		uint8_t ext_type = pk->buffer[pk->offset + 1];
 
 		if (ext_type == ASVAL_CMP_EXT_TYPE) {
+			if (! unpack_have(pk, 3)) {
+				return AS_UNDEF;
+			}
+
 			uint8_t data = pk->buffer[pk->offset + 2];
 
 			if (data == ASVAL_CMP_WILDCARD) {
@@ -1770,6 +1706,10 @@ as_unpack_peek_type(const as_unpacker *pk)
 		return AS_CMP_EXT;
 	default:
 		if ((type & 0xe0) == 0xa0) { // raw bytes with 8 bit combined header
+			if (! unpack_have(pk, 2)) {
+				return AS_UNDEF;
+			}
+
 			uint8_t type1 = pk->buffer[pk->offset + 1];
 			return bytes_internal_type_to_as_val_t(type1);
 		}
@@ -1808,71 +1748,6 @@ as_unpack_buf_peek_type(const uint8_t *buf, uint32_t size)
 	return as_unpack_peek_type(&pk);
 }
 
-static int64_t
-unpack_size_non_recursive(as_unpacker *pk, msgpack_parse_memblock *block,
-		msgpack_parse_state *state)
-{
-	int start = pk->offset;
-
-	while (state) {
-		while (state->index >= state->len) {
-			if (! msgpack_parse_memblock_has_prev(block)) {
-				return (int64_t)(pk->offset - start);
-			}
-
-			state = msgpack_parse_memblock_prev(&block);
-		}
-
-		if (state->type == AS_LIST) {
-			state->index++;
-		}
-		else if (state->type == AS_MAP) {
-			if (state->map_pair == 0) {
-				state->map_pair++;
-			}
-			else {
-				state->map_pair = 0;
-				state->index++;
-			}
-		}
-		else {
-			return -1;
-		}
-
-		as_val_t type = as_unpack_peek_type(pk);
-
-		if (type == AS_UNDEF) {
-			return -2;
-		}
-
-		if (type == AS_LIST ) {
-			state = msgpack_parse_memblock_next(&block);
-
-			if (! msgpack_parse_state_list_size_init(state, pk)) {
-				return -3;
-			}
-
-			continue;
-		}
-
-		if (type == AS_MAP) {
-			state = msgpack_parse_memblock_next(&block);
-
-			if (! msgpack_parse_state_map_size_init(state, pk)) {
-				return -4;
-			}
-
-			continue;
-		}
-
-		if (unpack_size_internal(pk, 0) < 0) {
-			return -5;
-		}
-	}
-
-	return -6;
-}
-
 static inline int64_t
 unpack_size_internal(as_unpacker *pk, uint32_t depth)
 {
@@ -1890,48 +1765,59 @@ unpack_size_internal(as_unpacker *pk, uint32_t depth)
 
 	case 0xd0: // signed 8 bit integer
 	case 0xcc: // unsigned 8 bit integer
-		pk->offset++;
+		UNPACK_SKIP_OR_RETURN(pk, 1);
 		return 1 + 1;
 
 	case 0xd1: // signed 16 bit integer
 	case 0xcd: // unsigned 16 bit integer
-		pk->offset += 2;
+		UNPACK_SKIP_OR_RETURN(pk, 2);
 		return 1 + 2;
 
 	case 0xca: // float
 	case 0xd2: // signed 32 bit integer
 	case 0xce: // unsigned 32 bit integer
-		pk->offset += 4;
+		UNPACK_SKIP_OR_RETURN(pk, 4);
 		return 1 + 4;
 
 	case 0xcb: // double
 	case 0xd3: // signed 64 bit integer
 	case 0xcf: // unsigned 64 bit integer
-		pk->offset += 8;
+		UNPACK_SKIP_OR_RETURN(pk, 8);
 		return 1 + 8;
 
 	case 0xc4:
 	case 0xd9: { // string/raw bytes with 8 bit header
+		UNPACK_HAVE_OR_RETURN(pk, 1);
+
 		uint8_t length = pk->buffer[pk->offset++];
-		pk->offset += length;
+
+		UNPACK_SKIP_OR_RETURN(pk, length);
 		return 1 + 1 + length;
 	}
 
 	case 0xc5:
 	case 0xda: { // string/raw bytes with 16 bit header
+		UNPACK_HAVE_OR_RETURN(pk, 2);
+
 		uint16_t length = extract_uint16(pk);
-		pk->offset += length;
+
+		UNPACK_SKIP_OR_RETURN(pk, length);
 		return 1 + 2 + length;
 	}
 
 	case 0xc6:
 	case 0xdb: { // string/raw bytes with 32 bit header
+		UNPACK_HAVE_OR_RETURN(pk, 4);
+
 		uint32_t length = extract_uint32(pk);
-		pk->offset += length;
-		return 1 + 4 + length;
+
+		UNPACK_SKIP_OR_RETURN(pk, length);
+		return 1 + 4 + (int64_t)length;
 	}
 
 	case 0xdc: { // list with 16 bit header
+		UNPACK_HAVE_OR_RETURN(pk, 2);
+
 		uint16_t length = extract_uint16(pk);
 		int64_t ret = unpack_list_elements_size(pk, length, depth);
 		if (ret < 0) {
@@ -1941,6 +1827,8 @@ unpack_size_internal(as_unpacker *pk, uint32_t depth)
 	}
 
 	case 0xdd: { // list with 32 bit header
+		UNPACK_HAVE_OR_RETURN(pk, 4);
+
 		uint32_t length = extract_uint32(pk);
 		int64_t ret = unpack_list_elements_size(pk, length, depth);
 		if (ret < 0) {
@@ -1950,6 +1838,8 @@ unpack_size_internal(as_unpacker *pk, uint32_t depth)
 	}
 
 	case 0xde: { // map with 16 bit header
+		UNPACK_HAVE_OR_RETURN(pk, 2);
+
 		uint16_t length = extract_uint16(pk);
 		int64_t ret = unpack_map_elements_size(pk, length, depth);
 		if (ret < 0) {
@@ -1959,6 +1849,8 @@ unpack_size_internal(as_unpacker *pk, uint32_t depth)
 	}
 
 	case 0xdf: { // map with 32 bit header
+		UNPACK_HAVE_OR_RETURN(pk, 4);
+
 		uint32_t length = extract_uint32(pk);
 		int64_t ret = unpack_map_elements_size(pk, length, depth);
 		if (ret < 0) {
@@ -1968,34 +1860,46 @@ unpack_size_internal(as_unpacker *pk, uint32_t depth)
 	}
 
 	case 0xd4: // fixext 1
-		pk->offset += 1 + 1;
+		UNPACK_SKIP_OR_RETURN(pk, 1 + 1);
 		return 1 + 1 + 1;
 	case 0xd5: // fixext 2
-		pk->offset += 1 + 2;
+		UNPACK_SKIP_OR_RETURN(pk, 1 + 2);
 		return 1 + 1 + 2;
 	case 0xd6: // fixext 4
-		pk->offset += 1 + 4;
+		UNPACK_SKIP_OR_RETURN(pk, 1 + 4);
 		return 1 + 1 + 4;
 	case 0xd7: // fixext 8
-		pk->offset += 1 + 8;
+		UNPACK_SKIP_OR_RETURN(pk, 1 + 8);
 		return 1 + 1 + 8;
 	case 0xd8: // fixext 16
-		pk->offset += 1 + 16;
+		UNPACK_SKIP_OR_RETURN(pk, 1 + 16);
 		return 1 + 1 + 16;
 	case 0xc7: { // ext 8
+		UNPACK_HAVE_OR_RETURN(pk, 1);
+
 		uint8_t length = pk->buffer[pk->offset++];
-		pk->offset += 1 + length;
+
+		UNPACK_SKIP_OR_RETURN(pk, 1);
+		UNPACK_SKIP_OR_RETURN(pk, length);
 		return 1 + 1 + 1 + length;
 	}
 	case 0xc8: { // ext 16
+		UNPACK_HAVE_OR_RETURN(pk, 2);
+
 		uint16_t length = extract_uint16(pk);
-		pk->offset += 1 + length;
+
+		UNPACK_SKIP_OR_RETURN(pk, 1);
+		UNPACK_SKIP_OR_RETURN(pk, length);
 		return 1 + 2 + 1 + length;
 	}
 	case 0xc9: { // ext 32
+		UNPACK_HAVE_OR_RETURN(pk, 4);
+
 		uint32_t length = extract_uint32(pk);
-		pk->offset += 1 + length;
-		return 1 + 4 + 1 + length;
+
+		UNPACK_SKIP_OR_RETURN(pk, 1);
+		UNPACK_SKIP_OR_RETURN(pk, length);
+		return 1 + 4 + 1 + (int64_t)length;
 	}
 	default:
 		break;
@@ -2003,7 +1907,8 @@ unpack_size_internal(as_unpacker *pk, uint32_t depth)
 
 	if ((type & 0xe0) == 0xa0) { // raw bytes with 8 bit combined header
 		int length = type & 0x1f;
-		pk->offset += length;
+
+		UNPACK_SKIP_OR_RETURN(pk, (uint32_t)length);
 		return 1 + length;
 	}
 
@@ -2037,6 +1942,8 @@ unpack_size_internal(as_unpacker *pk, uint32_t depth)
 int
 as_unpack_boolean(as_unpacker *pk, bool *value)
 {
+	UNPACK_HAVE_OR_RETURN(pk, 1);
+
 	uint8_t type = pk->buffer[pk->offset++];
 
 	if (type == 0xc3 || type == 0xc2) {
@@ -2050,6 +1957,8 @@ as_unpack_boolean(as_unpacker *pk, bool *value)
 int
 as_unpack_nil(as_unpacker *pk)
 {
+	UNPACK_HAVE_OR_RETURN(pk, 1);
+
 	uint8_t type = pk->buffer[pk->offset++];
 
 	return type == 0xc0 ? 0 : -1;
@@ -2257,9 +2166,8 @@ unpack_str_bin(as_unpacker *pk, uint32_t *sz_r)
 
 	const uint8_t *buf = &pk->buffer[pk->offset];
 
-	pk->offset += *sz_r;
-
-	if (pk->offset > pk->length) {
+	// Advancing first and comparing after would wrap for a 32 bit size.
+	if (! unpack_skip(pk, *sz_r)) {
 		return NULL;
 	}
 
@@ -2282,7 +2190,7 @@ int
 as_unpack_ext(as_unpacker *pk, as_msgpack_ext *ext)
 {
 	// Need at least 3 bytes.
-	if (pk->length - pk->offset < 3) {
+	if (! unpack_have(pk, 3)) {
 		return -1;
 	}
 
@@ -2312,7 +2220,7 @@ as_unpack_ext(as_unpacker *pk, as_msgpack_ext *ext)
 		break;
 	case 0xc9: // ext 32
 		// Need at least 4 more bytes.
-		if (pk->length - pk->offset < 4) {
+		if (! unpack_have(pk, 4)) {
 			return -2;
 		}
 		ext->size = extract_uint32(pk);
@@ -2321,7 +2229,8 @@ as_unpack_ext(as_unpacker *pk, as_msgpack_ext *ext)
 		return -3;
 	}
 
-	if (pk->length - pk->offset < 1 + ext->size) {
+	// Not 1 + ext->size, which wraps to 0 when ext->size is UINT32_MAX.
+	if (! unpack_have(pk, 1) || ext->size > unpack_remaining(pk) - 1) {
 		return -4;
 	}
 
@@ -2552,65 +2461,12 @@ msgpack_compare_int64_t(int64_t x1, int64_t x2)
 
 // Skip n vals.
 static bool
-msgpack_skip(as_unpacker *pk, size_t n)
+msgpack_skip(as_unpacker *pk, size_t n, size_t depth)
 {
 	for (size_t i = 0; i < n; i++) {
-		if (as_unpack_size(pk) < 0) {
+		if (unpack_size_internal(pk, (uint32_t)depth) < 0) {
 			return false;
 		}
-	}
-
-	return true;
-}
-
-static bool
-msgpack_compare_unwind(as_unpacker *pk1, as_unpacker *pk2,
-		const msgpack_parse_state *state)
-{
-	if (state->type == AS_LIST) {
-		if (! msgpack_skip(pk1, state->len1 - state->index)) {
-			return false;
-		}
-
-		if (! msgpack_skip(pk2, state->len2 - state->index)) {
-			return false;
-		}
-	}
-	else if (state->type == AS_MAP) {
-		if (! msgpack_skip(pk1,
-				2 * (state->len1 - state->index) - state->map_pair)) {
-			return false;
-		}
-
-		if (! msgpack_skip(pk2,
-				2 * (state->len2 - state->index) - state->map_pair)) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-static bool
-msgpack_compare_unwind_all(as_unpacker *pk1, as_unpacker *pk2,
-		msgpack_parse_memblock **block)
-{
-	if ((*block)->count == 0) {
-		return true;
-	}
-
-	const msgpack_parse_state *state = &(*block)->buffer[(*block)->count - 1];
-
-	while (true) {
-		if (! msgpack_compare_unwind(pk1, pk2, state)) {
-			return false;
-		}
-
-		if (! msgpack_parse_memblock_has_prev(*block)) {
-			break;
-		}
-
-		state = msgpack_parse_memblock_prev(block);
 	}
 
 	return true;
@@ -2619,27 +2475,8 @@ msgpack_compare_unwind_all(as_unpacker *pk1, as_unpacker *pk2,
 static msgpack_compare_t
 msgpack_compare_list(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 {
-	if (++depth > MSGPACK_COMPARE_MAX_DEPTH) {
-		msgpack_parse_memblock *block = msgpack_parse_memblock_create(NULL);
-		msgpack_parse_state *state = msgpack_parse_memblock_next(&block);
-
-		if (! msgpack_parse_state_list_cmp_init(state, pk1, pk2)) {
-			msgpack_parse_memblock_destroy(block);
-			return MSGPACK_COMPARE_ERROR;
-		}
-
-		msgpack_compare_t ret = msgpack_compare_non_recursive(pk1, pk2, &block,
-				state);
-
-		if (ret == MSGPACK_COMPARE_ERROR ||
-				! msgpack_compare_unwind_all(pk1, pk2, &block)) {
-			msgpack_parse_memblock_destroy(block);
-			return MSGPACK_COMPARE_ERROR;
-		}
-
-		msgpack_parse_memblock_destroy(block);
-
-		return ret;
+	if (++depth > MSGPACK_MAX_DEPTH) {
+		return MSGPACK_COMPARE_ERROR;
 	}
 
 	int64_t len1 = as_unpack_list_header_element_count(pk1);
@@ -2656,11 +2493,11 @@ msgpack_compare_list(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 				&type);
 
 		if (ret != MSGPACK_COMPARE_EQUAL || type == AS_CMP_WILDCARD) {
-			if (! msgpack_skip(pk1, len1 - i - 1)) {
+			if (! msgpack_skip(pk1, len1 - i - 1, depth)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
 
-			if (! msgpack_skip(pk2, len2 - i - 1)) {
+			if (! msgpack_skip(pk2, len2 - i - 1, depth)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
 
@@ -2668,11 +2505,11 @@ msgpack_compare_list(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 		}
 	}
 
-	if (! msgpack_skip(pk1, len1 - minlen)) {
+	if (! msgpack_skip(pk1, len1 - minlen, depth)) {
 		return MSGPACK_COMPARE_ERROR;
 	}
 
-	if (! msgpack_skip(pk2, len2 - minlen)) {
+	if (! msgpack_skip(pk2, len2 - minlen, depth)) {
 		return MSGPACK_COMPARE_ERROR;
 	}
 
@@ -2709,6 +2546,10 @@ compare_ext(as_unpacker *pk1, as_unpacker *pk2)
 static msgpack_compare_t
 msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 {
+	if (++depth > MSGPACK_MAX_DEPTH) {
+		return MSGPACK_COMPARE_ERROR;
+	}
+
 	int64_t len1 = as_unpack_map_header_element_count(pk1);
 	int64_t len2 = as_unpack_map_header_element_count(pk2);
 	int64_t minlen = (len1 < len2) ? len1 : len2;
@@ -2718,11 +2559,11 @@ msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 	}
 
 	if (len1 != len2) {
-		if (! msgpack_skip(pk1, len1)) {
+		if (! msgpack_skip(pk1, len1, depth)) {
 			return MSGPACK_COMPARE_ERROR;
 		}
 
-		if (! msgpack_skip(pk2, len2)) {
+		if (! msgpack_skip(pk2, len2, depth)) {
 			return MSGPACK_COMPARE_ERROR;
 		}
 
@@ -2740,16 +2581,17 @@ msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 		msgpack_compare_t ret = compare_ext(pk1, pk2);
 
 		if (ret == MSGPACK_COMPARE_ERROR ||
-				! msgpack_skip(pk1, 1) || ! msgpack_skip(pk2, 1)) {
+				! msgpack_skip(pk1, 1, depth) ||
+				! msgpack_skip(pk2, 1, depth)) {
 			return MSGPACK_COMPARE_ERROR;
 		}
 
 		if (ret != MSGPACK_COMPARE_EQUAL) {
-			if (! msgpack_skip(pk1, len1 - 1)) {
+			if (! msgpack_skip(pk1, len1 - 1, depth)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
 
-			if (! msgpack_skip(pk2, len2 - 1)) {
+			if (! msgpack_skip(pk2, len2 - 1, depth)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
 
@@ -2765,11 +2607,11 @@ msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 				&type);
 
 		if (ret != MSGPACK_COMPARE_EQUAL|| type == AS_CMP_WILDCARD) {
-			if (! msgpack_skip(pk1, 2 * (len1 - i) - 1)) {
+			if (! msgpack_skip(pk1, 2 * (len1 - i) - 1, depth)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
 
-			if (! msgpack_skip(pk2, 2 * (len2 - i) - 1)) {
+			if (! msgpack_skip(pk2, 2 * (len2 - i) - 1, depth)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
 
@@ -2779,11 +2621,11 @@ msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth)
 		ret = msgpack_compare_internal(pk1, pk2, depth, &type);
 
 		if (ret != MSGPACK_COMPARE_EQUAL || type == AS_CMP_WILDCARD) {
-			if (! msgpack_skip(pk1, 2 * (len1 - i - 1))) {
+			if (! msgpack_skip(pk1, 2 * (len1 - i - 1), depth)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
 
-			if (! msgpack_skip(pk2, 2 * (len2 - i - 1))) {
+			if (! msgpack_skip(pk2, 2 * (len2 - i - 1), depth)) {
 				return MSGPACK_COMPARE_ERROR;
 			}
 
@@ -2825,109 +2667,6 @@ msgpack_peek_compare_type(const as_unpacker *pk1, const as_unpacker *pk2,
 	MSGPACK_COMPARE_RET_LESS_OR_GREATER(type1, type2);
 
 	*type = type1;
-
-	return MSGPACK_COMPARE_EQUAL;
-}
-
-static msgpack_compare_t
-msgpack_compare_non_recursive(as_unpacker *pk1, as_unpacker *pk2,
-		msgpack_parse_memblock **block, msgpack_parse_state *state)
-{
-	while (state) {
-		while (state->index >= state->len) {
-			if (! msgpack_compare_unwind(pk1, pk2, state)) {
-				return MSGPACK_COMPARE_ERROR;
-			}
-
-			if (! msgpack_parse_memblock_has_prev(*block)) {
-				return state->default_compare_type;
-			}
-
-			uint32_t len1 = state->len1;
-			uint32_t len2 = state->len2;
-
-			state = msgpack_parse_memblock_prev(block);
-
-			MSGPACK_COMPARE_RET_LESS_OR_GREATER(len1, len2);
-		}
-
-		if (state->type == AS_LIST) {
-			state->index++;
-		}
-		else if (state->type == AS_MAP) {
-			if (state->map_pair == 0) {
-				state->map_pair++;
-			}
-			else {
-				state->map_pair = 0;
-				state->index++;
-			}
-		}
-		else {
-			return MSGPACK_COMPARE_ERROR;
-		}
-
-		as_val_t type;
-		msgpack_compare_t ret = msgpack_peek_compare_type(pk1, pk2, &type);
-
-		if (ret == MSGPACK_COMPARE_ERROR || ret == MSGPACK_COMPARE_END) {
-			return MSGPACK_COMPARE_ERROR;
-		}
-
-		if (ret != MSGPACK_COMPARE_EQUAL) {
-			if (as_unpack_size(pk1) < 0) {
-				return MSGPACK_COMPARE_ERROR;
-			}
-			if (as_unpack_size(pk2) < 0) {
-				return MSGPACK_COMPARE_ERROR;
-			}
-			return ret;
-		}
-
-		if (type == AS_LIST ) {
-			state = msgpack_parse_memblock_next(block);
-
-			if (! msgpack_parse_state_list_cmp_init(state, pk1, pk2)) {
-				return MSGPACK_COMPARE_ERROR;
-			}
-
-			continue;
-		}
-
-		if (type == AS_MAP) {
-			state = msgpack_parse_memblock_next(block);
-
-			if (! msgpack_parse_state_map_cmp_init(state, pk1, pk2)) {
-				return MSGPACK_COMPARE_ERROR;
-			}
-
-			MSGPACK_COMPARE_RET_LESS_OR_GREATER(state->len1, state->len2);
-			continue;
-		}
-
-		if (type == AS_CMP_WILDCARD) {
-			if (! msgpack_skip(pk1, 1) || ! msgpack_skip(pk2, 1)) {
-				return MSGPACK_COMPARE_ERROR;
-			}
-
-			if (! msgpack_compare_unwind(pk1, pk2, state)) {
-				return MSGPACK_COMPARE_ERROR;
-			}
-
-			if (! msgpack_parse_memblock_has_prev(*block)) {
-				return MSGPACK_COMPARE_EQUAL;
-			}
-
-			state = msgpack_parse_memblock_prev(block);
-			continue;
-		}
-
-		ret = msgpack_compare_type(pk1, pk2, type, 0);
-
-		if (ret != MSGPACK_COMPARE_EQUAL) {
-			return ret;
-		}
-	}
 
 	return MSGPACK_COMPARE_EQUAL;
 }
@@ -2993,11 +2732,11 @@ msgpack_compare_internal(as_unpacker *pk1, as_unpacker *pk2, size_t depth,
 	}
 
 	if (ret != MSGPACK_COMPARE_EQUAL || *type == AS_CMP_WILDCARD) {
-		if (as_unpack_size(pk1) < 0) {
+		if (unpack_size_internal(pk1, (uint32_t)depth) < 0) {
 			return MSGPACK_COMPARE_ERROR;
 		}
 
-		if (as_unpack_size(pk2) < 0) {
+		if (unpack_size_internal(pk2, (uint32_t)depth) < 0) {
 			return MSGPACK_COMPARE_ERROR;
 		}
 

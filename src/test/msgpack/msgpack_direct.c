@@ -184,7 +184,7 @@ random_val()
  * TEST CASES
  *****************************************************************************/
 
-TEST( msgpack_size, "size deep list" )
+TEST( msgpack_size, "deep list is refused a size" )
 {
 	// uint8_t buf[MAX_BUF_SIZE] will cause stack overflow on windows.
 	// Use malloc instead.
@@ -202,10 +202,10 @@ TEST( msgpack_size, "size deep list" )
 	int64_t size = as_unpack_size(&pk);
 	free(buf);
 
-	assert( size == MAX_BUF_SIZE );
+	assert( size < 0 );
 }
 
-TEST( msgpack_compare, "compare deep list" )
+TEST( msgpack_compare, "deep list is refused a comparison" )
 {
 	// uint8_t buf[MAX_BUF_SIZE] will cause stack overflow on windows.
 	// Use malloc instead.
@@ -217,7 +217,7 @@ TEST( msgpack_compare, "compare deep list" )
 	msgpack_compare_t ret = as_unpack_buf_compare(buf, MAX_BUF_SIZE, buf, MAX_BUF_SIZE);
 	free(buf);
 
-	assert( ret == MSGPACK_COMPARE_EQUAL );
+	assert( ret == MSGPACK_COMPARE_ERROR );
 }
 
 TEST( msgpack_compare_utf8, "compare utf8" )
@@ -455,7 +455,7 @@ TEST( msgpack_deep, "deep list/map" )
 			.capacity = MAX_BUF_SIZE
 	};
 
-	for (int i = 0; i < 300; i++) {
+	for (int i = 0; i < 60; i++) {
 		as_pack_list_header(&pk0, 1);
 		as_pack_list_header(&pk1, 1);
 	}
@@ -463,7 +463,7 @@ TEST( msgpack_deep, "deep list/map" )
 	as_packer save0 = pk0;
 	as_packer save1 = pk1;
 	msgpack_compare_t cmp;
-	const uint32_t shift = 299;
+	const uint32_t shift = 59;
 
 	as_pack_int64(&pk0, 0);
 	as_pack_int64(&pk1, 1);

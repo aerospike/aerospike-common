@@ -28,4 +28,5 @@ PLAN(common) {
 
 	plan_add(msgpack_roundtrip);
 	plan_add(msgpack_direct);
+	plan_add(msgpack_bounds);
 }
