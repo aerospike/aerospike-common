@@ -60,7 +60,6 @@ static inline msgpack_compare_t msgpack_compare_double(as_unpacker *pk1, as_unpa
 static inline int64_t msgpack_get_blob_len(as_unpacker *pk);
 static msgpack_compare_t msgpack_compare_blob_internal(as_unpacker *pk1, uint32_t len1, as_unpacker *pk2, uint32_t len2);
 static inline msgpack_compare_t msgpack_compare_blob(as_unpacker *pk1, as_unpacker *pk2);
-static inline msgpack_compare_t msgpack_compare_int64_t(int64_t x1, int64_t x2);
 static bool msgpack_skip(as_unpacker *pk, size_t n, size_t depth);
 static msgpack_compare_t msgpack_compare_list(as_unpacker *pk1, as_unpacker *pk2, size_t depth);
 static msgpack_compare_t msgpack_compare_map(as_unpacker *pk1, as_unpacker *pk2, size_t depth);
@@ -2449,14 +2448,6 @@ msgpack_compare_blob(as_unpacker *pk1, as_unpacker *pk2)
 	}
 
 	return msgpack_compare_blob_internal(pk1, (uint32_t)len1, pk2, (uint32_t)len2);
-}
-
-static inline msgpack_compare_t
-msgpack_compare_int64_t(int64_t x1, int64_t x2)
-{
-	MSGPACK_COMPARE_RET_LESS_OR_GREATER(x1, x2);
-
-	return MSGPACK_COMPARE_EQUAL;
 }
 
 // Skip n vals.
